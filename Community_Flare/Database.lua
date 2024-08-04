@@ -1412,9 +1412,10 @@ function NS.CommunityFlare_FindCommunityMembers(type, clubId)
 			local history = NS.CommunityFlare_History_Get(k)
 			if (type == "inactive") then
 				-- get history
-				if (not history or not history.last) then
+				if (not history or not history.last or (time() - history.last) >= 60 * 24 * 60 * 60) then
 					-- display player name
-					print(strformat(L["Inactive: %s"], k))
+					local inactivityDate = date("%Y-%m-%d", history.last)
+					print(strformat(L["Inactive: %s: Last active: %s"], k, inactivityDate))
 					count = count + 1
 				end
 			-- nocompleted?
