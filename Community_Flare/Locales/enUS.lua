@@ -1,12 +1,5 @@
 local ADDON_NAME, NS = ...
-
--- create new locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:NewLocale(ADDON_NAME, "enUS", true)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):NewLocale(ADDON_NAME, "enUS", true)
 
 -- Battlegrounds.lua
 L["%d minutes, %d seconds"] = true
@@ -36,10 +29,12 @@ L["Community Counts: %s"] = true
 L["Community Members"] = true
 L["Community Members: %s"] = true
 L["Community Mercenaries: %s"] = true
+L["Currently Queued for"] = true
 L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"] = true
 L["Deepwind Gorge"] = true
 L["Defense"] = true
 L["Destroyed"] = true
+L["Dropped Popped for"] = true
 L["East"] = true
 L["Entered Mercenary Queue For Popped %s!"] = true
 L["Entered Queue For Popped %s!"] = true
@@ -53,15 +48,20 @@ L["IBT"] = true
 L["Isle of Conquest"] = true
 L["IWB"] = true
 L["Jeron"] = true
+L["Joined Queue for"] = true
 L["joined the queue for"] = true
 L["Just entered match. Gates not opened yet!"] = true
 L["Korrak's Revenge"] = true
 L["Left Mercenary Queue For Popped %s!"] = true
 L["Left Queue For Popped %s!"] = true
+L["Left Queue for Popped"] = true
+L["Level"] = true
+L["Mercenary"] = true
 L["Mercenary Counts: %s"] = true
 L["minutes"] = true
 L["Missed Mercenary Queue For Popped %s!"] = true
 L["Missed Queue For Popped %s!"] = true
+L["Missed Queue for Popped"] = true
 L["N/A"] = true
 L["North"] = true
 L["Not currently in an epic battleground or queue!"] = true
@@ -70,6 +70,8 @@ L["Offense"] = true
 L["Port Expired"] = true
 L["Queue for %s has paused!"] = true
 L["Queue for %s has resumed!"] = true
+L["Queue Popped for"] = true
+L["Raid Leader"] = true
 L["Random Battleground"] = true
 L["Random Epic Battleground"] = true
 L["Rylai"] = true
@@ -209,6 +211,7 @@ L["%s: Removed %d %s members from the database."] = true
 L["Around"] = true
 L["Count: %d"] = true
 L["Inactive: %s"] = true
+L["Inactive: %s; Last Active: %s"] = true
 L["is NOT in the Database."] = true
 L["Moved: %s to %s"] = true
 L["No Completed Matches: %s"] = true
@@ -238,6 +241,7 @@ L["%s: Reset %d profile settings to default."] = true
 L["%s: You must enable Debug Mode in Community Flare Addon settings to use this feature."] = true
 L["%s has %s %s (%s)"] = true
 L["%s is under attack!"] = true
+L["%s version %s update available. Download the latest version from curseforge!"] = true
 L["Are you really sure you want to hearthstone?"] = true
 L["Are you really sure you want to teleport?"] = true
 L["Auto declined quest from"] = true

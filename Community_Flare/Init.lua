@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
  
 -- localize stuff
 local _G                                        = _G
@@ -183,15 +177,49 @@ function CommunityFlare_GetVar(name)
 	-- version?
 	if (name == "Version") then
 		-- return community flare version
-		return strformat("%s: %s (%s)", NS.CommunityFlare_Title, NS.CommunityFlare_Version, NS.CommunityFlare_Build)
+		return strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build)
 	end
 
 	-- nothing
 	return nil
 end
 
--- sanith check
-function NS.CommunityFlare_Sanity_Checks()
+-- format number (K/M/B with 2 decimals)
+function NS:Format_Number(...)
+	local number, decimals = ...
+	if (not decimals) then
+		-- force two
+		decimals = 2
+	elseif (decimals > 9) then
+		-- force two
+		decimals = 2
+	end
+
+	-- trillions?
+	local fmt = strformat("%%.%df", decimals)
+	if (number > 999999999999) then
+		-- divide by 1 trillion
+		return strformat(fmt, number / 1000000000000) .. "T"
+	-- billions?
+	elseif (number > 999999999) then
+		-- divide by 1 billion
+		return strformat(fmt, number / 1000000000) .. "B"
+	-- millions?
+	elseif (number > 999999) then
+		-- divide by 1 million
+		return strformat(fmt, number / 1000000) .. "M"
+	-- thousands?
+	elseif (number > 999) then
+		-- divide by 1 thousand
+		return strformat(fmt, number / 1000) .. "K"
+	else
+		-- full number
+		return strformat("%d", number)
+	end
+end
+
+-- sanity check
+function NS:Sanity_Checks()
 	-- local data?
 	if (not NS.CommFlare.CF.LocalData) then
 		-- initialize
@@ -222,7 +250,7 @@ function NS.CommunityFlare_Sanity_Checks()
 end
 
 -- convert table to string
-function NS.CommunityFlare_TableToString(table)
+function NS:TableToString(table)
 	-- all loaded?
 	if (NS.Libs.AceSerializer and NS.Libs.LibDeflate) then
 		-- serialize and compress
@@ -239,7 +267,7 @@ function NS.CommunityFlare_TableToString(table)
 end
 
 -- convert string to table
-function NS.CommunityFlare_StringToTable(string)
+function NS:StringToTable(string)
 	-- all loaded?
 	if (NS.Libs.AceSerializer and NS.Libs.LibDeflate) then
 		-- decode, decompress, deserialize
@@ -259,7 +287,7 @@ function NS.CommunityFlare_StringToTable(string)
 end
 
 -- parse command
-function NS.CommunityFlare_ParseCommand(text)
+function NS:ParseCommand(text)
 	local table = {}
 	local params = strgmatch(text, "([^@]+)");
 	for param in params do
@@ -269,7 +297,7 @@ function NS.CommunityFlare_ParseCommand(text)
 end
 
 -- is player appearing offline?
-function NS.CommunityFlare_IsInvisible()
+function NS:IsInvisible()
 	-- check Battle.NET account - has focus?
 	local accountInfo = BattleNetGetAccountInfoByGUID(UnitGUID("player"))
 	if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.hasFocus) then
@@ -286,7 +314,7 @@ function NS.CommunityFlare_IsInvisible()
 	end
 
 	-- process all clubs
-	local player = NS.CommunityFlare_GetPlayerName("short")
+	local player = NS:GetPlayerName("short")
 	local clubs = ClubGetSubscribedClubs()
 	for _,v in ipairs(clubs) do
 		-- community?
@@ -320,7 +348,7 @@ function NS.CommunityFlare_IsInvisible()
 end
 
 -- promote player to party leader
-function NS.CommunityFlare_PromoteToPartyLeader(player)
+function NS:PromoteToPartyLeader(player)
 	-- is player full name in party?
 	if (UnitInParty(player) == true) then
 		PromoteToLeader(player)
@@ -342,7 +370,7 @@ function NS.CommunityFlare_PromoteToPartyLeader(player)
 end
 
 -- load session variables
-function NS.CommunityFlare_LoadSession()
+function NS:LoadSession()
 	-- load global stuff
 	NS.CommFlare.CF.SocialQueues = NS.globalDB.global.SocialQueues or {}
 
@@ -377,7 +405,7 @@ function NS.CommunityFlare_LoadSession()
 end
 
 -- save session variables
-function NS.CommunityFlare_SaveSession()
+function NS:SaveSession()
 	-- save global stuff
 	NS.globalDB.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 
@@ -432,7 +460,7 @@ function NS.CommunityFlare_SaveSession()
 end
 
 -- send to party, whisper, or Battle.NET message
-function NS.CommunityFlare_SendMessage(sender, msg)
+function NS:SendMessage(sender, msg)
 	-- party?
 	if (not sender) then
 		-- send to party chat
@@ -454,7 +482,7 @@ function NS.CommunityFlare_SendMessage(sender, msg)
 end
 
 -- readd community chat window
-function NS.CommunityFlare_ReaddCommunityChatWindow(clubId, streamId)
+function NS:ReaddCommunityChatWindow(clubId, streamId)
 	-- remove channel
 	local channel, chatFrameID = Chat_GetCommunitiesChannel(clubId, streamId)
 	if (not channel and not chatFrameID) then
@@ -481,11 +509,11 @@ function NS.CommunityFlare_ReaddCommunityChatWindow(clubId, streamId)
 end
 
 -- re-add community channels on initial load
-function NS.CommunityFlare_ReaddChannelsInitialLoad()
+function NS:ReaddChannelsInitialLoad()
 	-- has main community?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- readd community chat window
-		NS.CommunityFlare_ReaddCommunityChatWindow(NS.charDB.profile.communityMain, 1)
+		NS:ReaddCommunityChatWindow(NS.charDB.profile.communityMain, 1)
 	end
 
 	-- has other communities?
@@ -498,7 +526,7 @@ function NS.CommunityFlare_ReaddChannelsInitialLoad()
 				-- stagger readding
 				TimerAfter(timer, function ()
 					-- readd community chat window
-					NS.CommunityFlare_ReaddCommunityChatWindow(k, 1)
+					NS:ReaddCommunityChatWindow(k, 1)
 				end)
 
 				-- next
@@ -509,7 +537,7 @@ function NS.CommunityFlare_ReaddChannelsInitialLoad()
 end
 
 -- is specialization healer?
-function NS.CommunityFlare_IsHealer(spec)
+function NS:IsHealer(spec)
 	if (spec == L["Discipline"]) then
 		return true
 	elseif (spec == L["Holy"]) then
@@ -525,7 +553,7 @@ function NS.CommunityFlare_IsHealer(spec)
 end
 
 -- is specialization tank?
-function NS.CommunityFlare_IsTank(spec)
+function NS:IsTank(spec)
 	if (spec == L["Blood"]) then
 		return true
 	elseif (spec == L["Brewmaster"]) then
@@ -541,7 +569,7 @@ function NS.CommunityFlare_IsTank(spec)
 end
 
 -- enforce pvp roles
-function NS.CommunityFlare_Enforce_PVP_Roles()
+function NS:Enforce_PVP_Roles()
 	-- force tank role?
 	local isTank = false
 	if (NS.charDB.profile.forceTank == true) then
@@ -571,7 +599,7 @@ function NS.CommunityFlare_Enforce_PVP_Roles()
 end
 
 -- get full player name
-function NS.CommunityFlare_GetFullName(player)
+function NS:GetFullName(player)
 	-- force name-realm format
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -581,7 +609,7 @@ function NS.CommunityFlare_GetFullName(player)
 end
 
 -- get proper player name by type
-function NS.CommunityFlare_GetPlayerName(type)
+function NS:GetPlayerName(type)
 	local name, realm = UnitFullName("player")
 	if (type == "full") then
 		-- no realm name?
@@ -594,7 +622,7 @@ function NS.CommunityFlare_GetPlayerName(type)
 end
 
 -- is currently group leader?
-function NS.CommunityFlare_IsGroupLeader()
+function NS:IsGroupLeader()
 	-- has sub group members?
 	if (GetNumSubgroupMembers() == 0) then
 		return true
@@ -606,7 +634,7 @@ function NS.CommunityFlare_IsGroupLeader()
 end
 
 -- get party guid
-function NS.CommunityFlare_GetPartyGUID()
+function NS:GetPartyGUID()
 	-- in group and not in raid?
 	if (IsInGroup() and not IsInRaid()) then
 		-- process all group members
@@ -643,7 +671,7 @@ function NS.CommunityFlare_GetPartyGUID()
 end
 
 -- get party unit
-function NS.CommunityFlare_GetPartyUnit(player)
+function NS:GetPartyUnit(player)
 	-- in group and not in raid?
 	if (IsInGroup() and not IsInRaid()) then
 		-- force name-realm format
@@ -685,7 +713,7 @@ function NS.CommunityFlare_GetPartyUnit(player)
 end
 
 -- get current party leader
-function NS.CommunityFlare_GetPartyLeader()
+function NS:GetPartyLeader()
 	-- in group and not in raid?
 	if (IsInGroup() and not IsInRaid()) then
 		-- process all group members
@@ -716,11 +744,11 @@ function NS.CommunityFlare_GetPartyLeader()
 	end
 
 	-- solo atm
-	return NS.CommunityFlare_GetPlayerName("full")
+	return NS:GetPlayerName("full")
 end
 
 -- get party guid
-function NS.CommunityFlare_GetPartyLeaderGUID()
+function NS:GetPartyLeaderGUID()
 	-- in group and not in raid?
 	if (IsInGroup() and not IsInRaid()) then
 		-- process all group members
@@ -745,7 +773,7 @@ function NS.CommunityFlare_GetPartyLeaderGUID()
 end
 
 -- get party members
-function NS.CommunityFlare_GetPartyMembers()
+function NS:GetPartyMembers()
 	-- in group and not in raid?
 	local members = {}
 	if (IsInGroup() and not IsInRaid()) then
@@ -779,7 +807,7 @@ function NS.CommunityFlare_GetPartyMembers()
 end
 
 -- get max party count
-function NS.CommunityFlare_GetMaxPartyCount()
+function NS:GetMaxPartyCount()
 	-- get max count
 	local maxCount = NS.charDB.profile.maxPartySize
 	if (not maxCount or (type(maxCount) ~= "number")) then
@@ -796,7 +824,7 @@ function NS.CommunityFlare_GetMaxPartyCount()
 end
 
 -- get party count
-function NS.CommunityFlare_GetPartyCount()
+function NS:GetPartyCount()
 	-- in group and not in raid?
 	NS.CommFlare.CF.Count = 1
 	if (IsInGroup() and not IsInRaid()) then
@@ -815,7 +843,7 @@ function NS.CommunityFlare_GetPartyCount()
 end
 
 -- get total group count
-function NS.CommunityFlare_GetGroupCount()
+function NS:GetGroupCount()
 	-- in group and not in raid?
 	NS.CommFlare.CF.Count = 1
 	if (IsInGroup() and not IsInRaid()) then
@@ -830,12 +858,12 @@ function NS.CommunityFlare_GetGroupCount()
 	end
 
 	-- return x/y count
-	local maxCount = NS.CommunityFlare_GetMaxPartyCount()
+	local maxCount = NS:GetMaxPartyCount()
 	return strformat("%d/%d", NS.CommFlare.CF.Count, maxCount)
 end
 
 -- get group members
-function NS.CommunityFlare_GetGroupMembers()
+function NS:GetGroupMembers()
 	-- in group and not in raid?
 	local players = {}
 	if (IsInGroup() and not IsInRaid()) then
@@ -871,7 +899,7 @@ function NS.CommunityFlare_GetGroupMembers()
 		-- add yourself
 		players[1] = {
 			["guid"] = UnitGUID("player"),
-			["player"] = NS.CommunityFlare_GetPlayerName("full"),
+			["player"] = NS:GetPlayerName("full"),
 		}
 	end
 
@@ -880,7 +908,7 @@ function NS.CommunityFlare_GetGroupMembers()
 end
 
 -- get member count
-function NS.CommunityFlare_GetMemberCount()
+function NS:GetMemberCount()
 	-- process all
 	local count = 0
 	for k,v in pairs(NS.globalDB.global.members) do
@@ -893,7 +921,7 @@ function NS.CommunityFlare_GetMemberCount()
 end
 
 -- get Battle.NET character
-function NS.CommunityFlare_GetBNetFriendName(bnSenderID)
+function NS:GetBNetFriendName(bnSenderID)
 	-- not number?
 	if (type(bnSenderID) ~= "number") then
 		-- failed
@@ -923,7 +951,7 @@ function NS.CommunityFlare_GetBNetFriendName(bnSenderID)
 end
 
 -- get Battle.NET presenceID by name-server
-function NS.CommunityFlare_GetBNetPresenceIDByName(player)
+function NS:GetBNetPresenceIDByName(player)
 	-- split name / realm
 	local name, realm = strsplit("-", player)
 	if (not realm or (realm == "")) then
@@ -956,7 +984,7 @@ function NS.CommunityFlare_GetBNetPresenceIDByName(player)
 end
 
 -- send Battle.NET data
-function NS.CommunityFlare_BNSendData(player, data)
+function NS:BNSendData(player, data)
 	-- no player given?
 	if (not player) then
 		-- finished
@@ -973,7 +1001,7 @@ function NS.CommunityFlare_BNSendData(player, data)
 		end
 
 		-- get presenceID
-		presenceID = NS.CommunityFlare_GetBNetPresenceIDByName(player)
+		presenceID = NS:GetBNetPresenceIDByName(player)
 	-- number?
 	elseif (type(player) == "number") then
 		-- this is presenceID
@@ -988,16 +1016,16 @@ function NS.CommunityFlare_BNSendData(player, data)
 end
 
 -- push Battle.NET data
-function NS.CommunityFlare_BNPushData(data)
+function NS:BNPushData(data)
 	-- is player invisible?
-	local isInvisible = NS.CommunityFlare_IsInvisible()
+	local isInvisible = NS:IsInvisible()
 	if (isInvisible and (isInvisible == true)) then
 		-- finished
 		return
 	end
 
 	-- process all friends
-	local members = NS.CommunityFlare_GetPartyMembers()
+	local members = NS:GetPartyMembers()
 	for i=1, BNGetNumFriends() do
 		-- player online?
 		local accountInfo = BattleNetGetFriendAccountInfo(i)
@@ -1012,7 +1040,7 @@ function NS.CommunityFlare_BNPushData(data)
 					if (not members[player]) then
 						-- send data
 						local presenceID = gameAccountInfo.gameAccountID
-						NS.CommunityFlare_BNSendData(presenceID, data)
+						NS:BNSendData(presenceID, data)
 					end
 				end
 			end
@@ -1021,7 +1049,7 @@ function NS.CommunityFlare_BNPushData(data)
 end
 
 -- check if a unit has type aura active
-function NS.CommunityFlare_CheckForAura(unit, type, auraName)
+function NS:CheckForAura(unit, type, auraName)
 	-- save global variable if aura is active
 	NS.CommFlare.CF.HasAura = false
 	AuraUtilForEachAura(unit, type, nil, function(...)
@@ -1046,7 +1074,7 @@ function NS.CommunityFlare_CheckForAura(unit, type, auraName)
 end
 
 -- popup box
-function NS.CommunityFlare_PopupBox(dlg, message)
+function NS:PopupBox(dlg, message)
 	-- requires community id?
 	local showPopup = true
 	if (dlg == "CommunityFlare_Send_Community_Dialog") then
@@ -1077,15 +1105,15 @@ function NS.CommunityFlare_PopupBox(dlg, message)
 end
 
 -- process version check
-function NS.CommunityFlare_Process_Version_Check(sender)
+function NS:Process_Version_Check(sender)
 	-- no shared community?
-	if (NS.CommunityFlare_HasSharedCommunity(sender) == false) then
+	if (NS:Has_Shared_Community(sender) == false) then
 		-- finished
 		return
 	end
 
 	-- send community flare version number
-	NS.CommunityFlare_SendMessage(sender, strformat("%s: %s (%s)", NS.CommunityFlare_Title, NS.CommunityFlare_Version, NS.CommunityFlare_Build))
+	NS:SendMessage(sender, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 end
 
 -- send community dialog box
@@ -1132,7 +1160,7 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 		end
 
 		-- send message
-		NS.CommunityFlare_SendMessage(player, text)
+		NS:SendMessage(player, text)
 	end,
 	timeout = 0,
 	whileDead = true,
@@ -1146,7 +1174,7 @@ StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
 	button2 = L["No"],
 	OnAccept = function(self, player)
 		-- rebuild database
-		NS.CommunityFlare_Rebuild_Database_Members()
+		NS:Rebuild_Database_Members()
 	end,
 	timeout = 0,
 	whileDead = true,
@@ -1154,7 +1182,7 @@ StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
 }
 
 -- process party states
-function NS.CommunityFlare_Process_Party_States(isDead, isOffline)
+function NS:Process_Party_States(isDead, isOffline)
 	-- process all
 	for i=1, GetNumGroupMembers() do
 		local kickPlayer = false
@@ -1181,9 +1209,9 @@ function NS.CommunityFlare_Process_Party_States(isDead, isOffline)
 			-- should kick?
 			if (kickPlayer == true) then
 				-- are you leader?
-				if (NS.CommunityFlare_IsGroupLeader() == true) then
+				if (NS:IsGroupLeader() == true) then
 					-- ask to kick?
-					NS.CommunityFlare_PopupBox("CommunityFlare_Kick_Dialog", player)
+					NS:PopupBox("CommunityFlare_Kick_Dialog", player)
 				end
 			end
 		end
@@ -1191,7 +1219,7 @@ function NS.CommunityFlare_Process_Party_States(isDead, isOffline)
 end
 
 -- queue check role chosen
-function NS.CommunityFlare_Queue_Check_Role_Chosen()
+function NS:Queue_Check_Role_Chosen()
 	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
 
 	-- not in progress?
@@ -1230,9 +1258,9 @@ function NS.CommunityFlare_Queue_Check_Role_Chosen()
 			-- role not chosen?
 			if (not NS.CommFlare.CF.RoleChosen[player] or (NS.CommFlare.CF.RoleChosen[player] ~= true)) then
 				-- are you leader?
-				if (NS.CommunityFlare_IsGroupLeader() == true) then
+				if (NS:IsGroupLeader() == true) then
 					-- ask to kick?
-					NS.CommunityFlare_PopupBox("CommunityFlare_Kick_Dialog", player)
+					NS:PopupBox("CommunityFlare_Kick_Dialog", player)
 				end
 			end
 		end

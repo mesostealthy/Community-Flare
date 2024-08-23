@@ -1,12 +1,6 @@
 local ADDON_NAME, NS = ...
-
--- create new locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:NewLocale(ADDON_NAME, "frFR", true)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):NewLocale(ADDON_NAME, "frFR")
+if not L then return end
 
 -- Battlegrounds.lua
 L["%d minutes, %d seconds"] = "%d minutes, %d secondes"
@@ -36,10 +30,12 @@ L["Community Counts: %s"] = "Total de la communauté: %s"
 L["Community Members"] = "Membre de la communauté"
 L["Community Members: %s"] = "Membre de la communauté: %s"
 L["Community Mercenaries: %s"] = "Communauté mercenaire: %s"
+L["Currently Queued for"] = "Actuellement en file d'attente pour"
 L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"] = "Date: %s; Nom de la carte: %s; Chef du raid: %s; Joueur: %s; Liste: %s"
 L["Deepwind Gorge"] = "Gorge des Vents hurlants"
 L["Defense"] = "Défense"
 L["Destroyed"] = "Détruit"
+L["Dropped Popped for"] = "Abandonné Poppé pour"
 L["East"] = "À l'est"
 L["Entered Mercenary Queue For Popped %s!"] = "File d'attente des mercenaires entrée pour %s déclenché."
 L["Entered Queue For Popped %s!"] = "File d'attente entrée pour %s déclenché."
@@ -53,15 +49,20 @@ L["IBT"] = "IBT"
 L["Isle of Conquest"] = "L'Isle de la Conquête"
 L["IWB"] = "IWB"
 L["Jeron"] = "Jeron"
+L["Joined Queue for"] = "Rejoint la file d'attente pour"
 L["joined the queue for"] = "rejoint la file d’attente pour"
 L["Just entered match. Gates not opened yet!"] = "Je viens d'entrer dans un match. Les portes ne sont pas encore ouvertes."
 L["Korrak's Revenge"] = "La Vengeance de Korrak"
 L["Left Mercenary Queue For Popped %s!"] = "Annulé la file d'attente des mercenaires pour %s déclenché."
 L["Left Queue For Popped %s!"] = "Annulé la file d'attente pour %s déclenché"
+L["Left Queue for Popped"] = "File d'attente de gauche pour sauté"
+L["Level"] = "Niveau"
+L["Mercenary"] = "Mercenaire"
 L["Mercenary Counts: %s"] = "Total des mercenaires: %s"
 L["minutes"] = "Minutes"
 L["Missed Mercenary Queue For Popped %s!"] = "Raté la file d'attente des mercenaires pour %s déclenché!"
 L["Missed Queue For Popped %s!"] = "Raté la file d'attente pour %s déclenché!"
+L["Missed Queue for Popped"] = "File d'attente manquée pour un saut"
 L["N/A"] = "N/A"
 L["North"] = "Au Nord"
 L["Not currently in an epic battleground or queue!"] = "Actuellement pas dans un champ de bataille épique ou en file d'attente!"
@@ -70,6 +71,8 @@ L["Offense"] = "Offensive"
 L["Port Expired"] = "Port expiré"
 L["Queue for %s has paused!"] = "La file d'attente pour %s est en pause!"
 L["Queue for %s has resumed!"] = "La file d'attente pour %s a repris!"
+L["Queue Popped for"] = "File d'attente sautée pour"
+L["Raid Leader"] = "Chef du raid"
 L["Random Battleground"] = "Champ de bataille aléatoire"
 L["Random Epic Battleground"] = "Champ de bataille épique aléatoire"
 L["Rylai"] = "Rylai"
@@ -209,6 +212,7 @@ L["%s: Removed %d %s members from the database."] = "%s : Retiré %d %s membres 
 L["Around"] = "Aux alentours"
 L["Count: %d"] = "Compte : %d"
 L["Inactive: %s"] = "Inactif : %s"
+L["Inactive: %s; Last Active: %s"] = "Inactif : %s ; Dernier actif : %s"
 L["is NOT in the Database."] = "N'est pas dans la base de données."
 L["Moved: %s to %s"] = "Déplacé: %s à %s"
 L["No Completed Matches: %s"] = "Aucune correspondance terminée : %s"
@@ -238,6 +242,7 @@ L["%s: Reset %d profile settings to default."] = "%s : Réinitialisé %d paramè
 L["%s: You must enable Debug Mode in Community Flare Addon settings to use this feature."] = "%s : vous devez activer le mode débogage dans les paramètres du module complémentaire Community Flare pour utiliser cette fonctionnalité."
 L["%s has %s %s (%s)"] = "%s a %s %s (%s)"
 L["%s is under attack!"] = "%s se fait attaqué!"
+L["%s version %s update available. Download the latest version from curseforge!"] = "La mise à jour %s version %s est disponible. Téléchargez la dernière version depuis Curseforge!"
 L["Are you really sure you want to hearthstone?"] = "Êtes-vous vraiment sûr(e) de vouloir utiliser la pierre de foyer ?"
 L["Are you really sure you want to teleport?"] = "Êtes-vous vraiment sûr(e) de vouloir téléporter ?"
 L["Auto declined quest from"] = "Quête automatiquement refusée de la part de"

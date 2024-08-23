@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -36,7 +30,7 @@ local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
 
 -- get clubs
-function NS.CommunityFlare_Get_Clubs()
+function NS:Get_Clubs_Text()
 	-- count eligible communities
 	local text = nil
 	local player_faction = UnitFactionGroup("player")
@@ -68,7 +62,7 @@ function NS.CommunityFlare_Get_Clubs()
 end
 
 -- verify default community setup
-function NS.CommunityFlare_VerifyDefaultCommunitySetup()
+function NS:Verify_Default_Community_Setup()
 	-- default not set?
 	local count = 0
 	if (NS.charDB.profile.communityMain == 0) then
@@ -99,7 +93,7 @@ function NS.CommunityFlare_VerifyDefaultCommunitySetup()
 					NS.CommFlare.CF.DefaultVerified = true
 
 					-- display message
-					print(strformat(L["%s: No subscribed clubs found."], NS.CommunityFlare_Title))
+					print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
 				end
 			end
 		-- only one found?
@@ -109,16 +103,16 @@ function NS.CommunityFlare_VerifyDefaultCommunitySetup()
 			NS.charDB.profile.communityMain = clubId
 
 			-- remove all members
-			NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
+			NS:Remove_All_Club_Members_By_ClubID(clubId)
 
 			-- add all members
-			NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
+			NS:Add_All_Club_Members_By_ClubID(clubId)
 
 			-- set default report ID
 			NS.charDB.profile.communityReportID = clubId
 
 			-- readd community chat window
-			NS.CommunityFlare_ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
+			NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
 
 			-- save refresh date
 			NS.charDB.profile.communityRefreshed = time()
@@ -130,20 +124,20 @@ function NS.CommunityFlare_VerifyDefaultCommunitySetup()
 end
 
 -- verify report channel added
-function NS.CommunityFlare_VerifyReportChannelAdded()
+function NS:Verify_Report_Channel_Added()
 	-- has report ID?
 	if (NS.charDB.profile.communityReportID > 1) then
 		-- verify channel is added for proper reporting
 		local channel, chatFrameID = Chat_GetCommunitiesChannel(NS.charDB.profile.communityReportID, 1)
 		if (not channel or not chatFrameID) then
 			-- readd community chat window
-			NS.CommunityFlare_ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
+			NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
 		end
 	end
 end
 
 -- get club list
-function NS.CommunityFlare_GetClubsList()
+function NS:Get_Clubs_List()
 	-- find main community club
 	local count = 0
 	local clubs = {}
@@ -193,7 +187,7 @@ function NS.CommunityFlare_GetClubsList()
 end
 
 -- is community leader?
-function NS.CommunityFlare_IsCommunityLeader(name)
+function NS:Is_Community_Leader(name)
 	-- invalid name?
 	local player = name
 	if (not player or (player == "")) then
@@ -221,7 +215,7 @@ function NS.CommunityFlare_IsCommunityLeader(name)
 end
 
 -- get community member
-function NS.CommunityFlare_GetCommunityMember(name)
+function NS:Get_Community_Member(name)
 	-- invalid name?
 	local player = name
 	if (not player or (player == "")) then
@@ -246,7 +240,7 @@ function NS.CommunityFlare_GetCommunityMember(name)
 end
 
 -- get loglist status
-function NS.CommunityFlare_Get_LogList_Status(player)
+function NS:Get_LogList_Status(player)
 	-- invalid name?
 	if (not player or (player == "")) then
 		-- failed
@@ -282,7 +276,7 @@ function NS.CommunityFlare_Get_LogList_Status(player)
 end
 
 -- clean up members
-function NS.CommunityFlare_CleanUpMembers()
+function NS:Cleanup_Members()
 	-- process all members
 	for k,v in pairs(NS.globalDB.global.members) do
 		-- has space?
@@ -353,10 +347,10 @@ function NS.CommunityFlare_CleanUpMembers()
 	end
 end
 
--- check for deployed players
-function NS.CommunityFlare_Check_For_Deployed_Players()
+-- check for deployed members
+function NS:Check_For_Deployed_Members()
 	-- get clubs
-	local clubs = NS.CommunityFlare_GetClubsList()
+	local clubs = NS:Get_Clubs_List()
 	if (clubs) then
 		-- process all clubs
 		local deployed_count = 0
@@ -372,7 +366,7 @@ function NS.CommunityFlare_Check_For_Deployed_Players()
 					-- online?
 					if (mi.presence == Enum.ClubMemberPresence.Online) then
 						-- is tracked pvp?
-						local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS.CommunityFlare_IsTrackedPVP(mi.zone)
+						local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mi.zone)
 						if (isTracked == true) then
 							-- not initialized?
 							if (not deployed[mi.zone]) then
@@ -391,7 +385,7 @@ function NS.CommunityFlare_Check_For_Deployed_Players()
 			-- any deployed?
 			if (deployed and next(deployed)) then
 				-- process all deployed
-				print(strformat(L["%s: %s Deployed Members."], NS.CommunityFlare_Title, club.name))
+				print(strformat(L["%s: %s Deployed Members."], NS.CommFlare.Title, club.name))
 				for k,v in pairs(deployed) do
 					-- display result
 					print(strformat(L["-%s = %d member/s"], k, v))
@@ -401,23 +395,23 @@ function NS.CommunityFlare_Check_For_Deployed_Players()
 				deployed_count = deployed_count + 1
 			else
 				-- display message
-				print(strformat(L["%s: No members are deployed for %s."], NS.CommunityFlare_Title, club.name))
+				print(strformat(L["%s: No members are deployed for %s."], NS.CommFlare.Title, club.name))
 			end
 		end
 
 		-- noone deployed?
 		if (deployed_count == 0) then
 			-- display message
-			print(strformat(L["%s: No members are deployed."], NS.CommunityFlare_Title))
+			print(strformat(L["%s: No members are deployed."], NS.CommFlare.Title))
 		end
 	else
 		-- display message
-		print(strformat(L["%s: No subscribed clubs found."], NS.CommunityFlare_Title))
+		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
 	end
 end
 
 -- rebuild community leaders
-function NS.CommunityFlare_RebuildCommunityLeaders()
+function NS:Rebuild_Community_Leaders()
 	-- not initialized?
 	if (not NS.charDB.profile.communityLeadersList) then
 		-- initialize
@@ -662,7 +656,7 @@ function NS.CommunityFlare_RebuildCommunityLeaders()
 end
 
 -- get priority from member note
-function NS.CommunityFlare_GetMemberPriority(info)
+function NS:Get_Member_Priority(info)
 	-- leader / moderator rank?
 	if ((info.role == Enum.ClubRoleIdentifier.Leader) or (info.role == Enum.ClubRoleIdentifier.Moderator)) then
 		-- has member note?
@@ -689,7 +683,7 @@ function NS.CommunityFlare_GetMemberPriority(info)
 end
 
 -- add community
-function NS.CommunityFlare_AddCommunity(clubId, info)
+function NS:Add_Community(clubId, info)
 	-- add to clubs
 	NS.globalDB.global.clubs[clubId] = info
 
@@ -701,7 +695,7 @@ function NS.CommunityFlare_AddCommunity(clubId, info)
 end
 
 -- add member
-function NS.CommunityFlare_AddMember(clubId, info, rebuild)
+function NS:Add_Member(clubId, info, rebuild)
 	-- build proper name
 	local player = info.name
 	if (not strmatch(player, "-")) then
@@ -717,7 +711,7 @@ function NS.CommunityFlare_AddMember(clubId, info, rebuild)
 	end
 
 	-- member exists?
-	local priority = NS.CommunityFlare_GetMemberPriority(info)
+	local priority = NS:Get_Member_Priority(info)
 	if (NS.globalDB.global.members[player]) then
 		-- remove old fields
 		NS.globalDB.global.members[player].role = nil
@@ -850,18 +844,18 @@ function NS.CommunityFlare_AddMember(clubId, info, rebuild)
 		end
 
 		-- update first seen
-		NS.CommunityFlare_History_Update_First(player)
+		NS:Update_First_Seen(player)
 	end
 
 	-- rebuild leaders?
 	if (rebuild == true) then
 		-- rebuild community leaders
-		NS.CommunityFlare_RebuildCommunityLeaders()
+		NS:Rebuild_Community_Leaders()
 	end
 end
 
 -- remove member
-function NS.CommunityFlare_RemoveMember(clubId, info)
+function NS:Remove_Member(clubId, info)
 	-- build proper name
 	local player = info.name
 	if (not strmatch(player, "-")) then
@@ -907,7 +901,7 @@ function NS.CommunityFlare_RemoveMember(clubId, info)
 end
 
 -- add all club members from club id
-function NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
+function NS:Add_All_Club_Members_By_ClubID(clubId)
 	-- get club info
 	local info = ClubGetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
@@ -918,7 +912,7 @@ function NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
 			local mi = ClubGetMemberInfo(clubId, v)
 			if ((mi ~= nil) and (mi.name ~= nil)) then
 				-- add member
-				NS.CommunityFlare_AddMember(clubId, mi, false)
+				NS:Add_Member(clubId, mi, false)
 
 				-- increase
 				added = added + 1
@@ -926,18 +920,18 @@ function NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
 		end
 
 		-- rebuild community leaders
-		NS.CommunityFlare_RebuildCommunityLeaders()
+		NS:Rebuild_Community_Leaders()
 
 		-- any added?
 		if (added > 0) then
 			-- display amount added
-			print(strformat(L["%s: Added %d %s members to the database."], NS.CommunityFlare_Title, added, info.name))
+			print(strformat(L["%s: Added %d %s members to the database."], NS.CommFlare.Title, added, info.name))
 		end
 	end
 end
 
 -- remove all club members from club id
-function NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
+function NS:Remove_All_Club_Members_By_ClubID(clubId)
 	-- get club info
 	local info = ClubGetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
@@ -971,18 +965,18 @@ function NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
 		end
 
 		-- rebuild community leaders
-		NS.CommunityFlare_RebuildCommunityLeaders()
+		NS:Rebuild_Community_Leaders()
 
 		-- any removed?
 		if (removed > 0) then
 			-- display amount removed
-			print(strformat(L["%s: Removed %d %s members from the database."], NS.CommunityFlare_Title, removed, info.name))
+			print(strformat(L["%s: Removed %d %s members from the database."], NS.CommFlare.Title, removed, info.name))
 		end
 	end
 end
 
 -- update statistics for members
-function NS.CommunityFlare_Update_Member_Statistics(type)
+function NS:Update_Member_Statistics(type)
 	-- process all members found
 	for k,v in ipairs(NS.CommFlare.CF.CommNamesList) do
 		-- found member?
@@ -990,34 +984,34 @@ function NS.CommunityFlare_Update_Member_Statistics(type)
 			-- match complete?
 			if (type == "completed") then
 				-- update completed matches
-				NS.CommunityFlare_History_Update_Completed_Matches(v)
+				NS:Update_Completed_Matches(v)
 			else
 				-- update grouped matches
-				NS.CommunityFlare_History_Update_Grouped_Matches(v)
+				NS:Update_Grouped_Matches(v)
 
 				-- update last grouped
-				NS.CommunityFlare_History_Update_Last_Grouped(v)
+				NS:Update_Last_Grouped(v)
 			end
 		end
 	end
 end
 
 -- update member database
-function NS.CommunityFlare_UpdateMembers(clubId, type)
+function NS:Update_Club_Members(clubId, type)
 	-- adding?
 	if (type == true) then
 		-- add all club members
-		NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
+		NS:Add_All_Club_Members_By_ClubID(clubId)
 	else
 		-- remove all club members
-		NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
+		NS:Remove_All_Club_Members_By_ClubID(clubId)
 	end
 end
 
 -- process club members
-function NS.CommunityFlare_Process_Club_Members()
+function NS:Process_Club_Members()
 	-- get clubs list
-	local clubs = NS.CommunityFlare_GetClubsList()
+	local clubs = NS:Get_Clubs_List()
 	if (not clubs) then
 		-- no subscribed clubs found
 		return false
@@ -1029,7 +1023,7 @@ function NS.CommunityFlare_Process_Club_Members()
 		local info = ClubGetClubInfo(clubId)
 		if (info and (info.clubType == Enum.ClubType.Character)) then
 			-- add community
-			NS.CommunityFlare_AddCommunity(clubId, info)
+			NS:Add_Community(clubId, info)
 
 			-- process all members
 			local members = ClubGetClubMembers(clubId)
@@ -1037,16 +1031,16 @@ function NS.CommunityFlare_Process_Club_Members()
 				local mi = ClubGetMemberInfo(clubId, v)
 				if ((mi ~= nil) and (mi.name ~= nil)) then
 					-- add member
-					NS.CommunityFlare_AddMember(clubId, mi, false)
+					NS:Add_Member(clubId, mi, false)
 				end
 
 				-- online?
 				if (mi.presence == Enum.ClubMemberPresence.Online) then
 					-- get community member
-					local member = NS.CommunityFlare_GetCommunityMember(mi.name)
+					local member = NS:Get_Community_Member(mi.name)
 					if (member ~= nil) then
 						-- update last seen
-						NS.CommunityFlare_History_Update_Last_Seen(member.name)
+						NS:Update_Last_Seen(member.name)
 					end
 				end
 			end
@@ -1054,15 +1048,15 @@ function NS.CommunityFlare_Process_Club_Members()
 	end
 
 	-- rebuild community leaders
-	NS.CommunityFlare_RebuildCommunityLeaders()
+	NS:Rebuild_Community_Leaders()
 
 	-- verify report channel added
-	NS.CommunityFlare_VerifyReportChannelAdded()
+	NS:Verify_Report_Channel_Added()
 	return true
 end
 
 -- process member guid
-function NS.CommunityFlare_Process_MemberGUID(guid, player)
+function NS:Process_MemberGUID(guid, player)
 	-- no guid?
 	if (not guid or (guid == "")) then
 		-- failed
@@ -1090,20 +1084,20 @@ function NS.CommunityFlare_Process_MemberGUID(guid, player)
 end
 
 -- refresh club members
-function NS.CommunityFlare_Refresh_Club_Members()
+function NS:Refresh_Club_Members()
 	-- update invisible status
-	NS.CommFlare.CF.Invisble = NS.CommunityFlare_IsInvisible()
+	NS.CommFlare.CF.Invisble = NS:IsInvisible()
 
 	-- process club members
-	local status = NS.CommunityFlare_Process_Club_Members()
+	local status = NS:Process_Club_Members()
 	if (status == false) then
 		-- finished
 		return
 	end
 
 	-- find player in database
-	local player = NS.CommunityFlare_GetPlayerName("full")
-	local member = NS.CommunityFlare_GetCommunityMember(player)
+	local player = NS:GetPlayerName("full")
+	local member = NS:Get_Community_Member(player)
 	if (not member or not member.clubs) then
 		-- finished
 		return
@@ -1128,10 +1122,10 @@ function NS.CommunityFlare_Refresh_Club_Members()
 		-- process all clubs
 		for k,v in pairs(member.clubs) do
 			-- remove all club members
-			NS.CommunityFlare_RemoveAllClubMembersByClubID(k)
+			NS:Remove_All_Club_Members_By_ClubID(k)
 
 			-- add all club members
-			NS.CommunityFlare_AddAllClubMembersByClubID(k)
+			NS:Add_All_Club_Members_By_ClubID(k)
 		end
 
 		-- save refresh date
@@ -1156,7 +1150,7 @@ function NS.CommunityFlare_Refresh_Club_Members()
 	end
 
 	-- clean up members
-	NS.CommunityFlare_CleanUpMembers()
+	NS:Cleanup_Members()
 
 	-- build member guids list / update if already created
 	local updated = 0
@@ -1178,11 +1172,11 @@ function NS.CommunityFlare_Refresh_Club_Members()
 	end
 
 	-- clean up history
-	NS.CommunityFlare_CleanUpHistory()
+	NS:Cleanup_History()
 end
 
 -- club member added
-function NS.CommunityFlare_ClubMemberAdded(clubId, memberId)
+function NS:Club_Member_Added(clubId, memberId)
 	-- get member info
 	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
 	if (NS.CommFlare.CF.MemberInfo ~= nil) then
@@ -1197,24 +1191,24 @@ function NS.CommunityFlare_ClubMemberAdded(clubId, memberId)
 				-- name not found?
 				if ((NS.CommFlare.CF.MemberInfo ~= nil) and (NS.CommFlare.CF.MemberInfo.name ~= nil)) then
 					-- display
-					print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommunityFlare_Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
+					print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommFlare.Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
 
 					-- add member
-					NS.CommunityFlare_AddMember(clubId, NS.CommFlare.CF.MemberInfo, true)
+					NS:Add_Member(clubId, NS.CommFlare.CF.MemberInfo, true)
 				end
 			end)
 		else
 			-- display
-			print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommunityFlare_Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
+			print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommFlare.Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
 
 			-- add member
-			NS.CommunityFlare_AddMember(clubId, NS.CommFlare.CF.MemberInfo, true)
+			NS:Add_Member(clubId, NS.CommFlare.CF.MemberInfo, true)
 		end
 	end
 end
 
 -- club member removed
-function NS.CommunityFlare_ClubMemberRemoved(clubId, memberId)
+function NS:Club_Member_Removed(clubId, memberId)
 	-- get member info
 	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
 	if (not NS.CommFlare.CF.MemberInfo) then
@@ -1267,13 +1261,13 @@ function NS.CommunityFlare_ClubMemberRemoved(clubId, memberId)
 		local info = ClubGetClubInfo(clubId)
 		if (NS.CommFlare.CF.MemberInfo.name ~= nil) then
 			-- display
-			print(strformat(L["%s: %s (%d, %d) removed from community %s."], NS.CommunityFlare_Title, player, clubId, memberId, info.name))
+			print(strformat(L["%s: %s (%d, %d) removed from community %s."], NS.CommFlare.Title, player, clubId, memberId, info.name))
 		end
 	end
 end
 
 -- club member updated
-function NS.CommunityFlare_ClubMemberUpdated(clubId, memberId)
+function NS:Club_Member_Updated(clubId, memberId)
 	-- get member info
 	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
 	if (NS.CommFlare.CF.MemberInfo and NS.CommFlare.CF.MemberInfo.name and (NS.CommFlare.CF.MemberInfo.name ~= "")) then
@@ -1311,7 +1305,7 @@ function NS.CommunityFlare_ClubMemberUpdated(clubId, memberId)
 				end
 
 				-- priority updated?
-				local priority = NS.CommunityFlare_GetMemberPriority(NS.CommFlare.CF.MemberInfo)
+				local priority = NS:Get_Member_Priority(NS.CommFlare.CF.MemberInfo)
 				if (not NS.globalDB.global.members[player].clubs[clubId].priority or (NS.globalDB.global.members[player].clubs[clubId].priority ~= priority)) then
 					-- update priority
 					NS.globalDB.global.members[player].clubs[clubId].priority = priority
@@ -1340,14 +1334,14 @@ function NS.CommunityFlare_ClubMemberUpdated(clubId, memberId)
 			-- rebuild leaders?
 			if (rebuild == true) then
 				-- rebuild community leaders
-				NS.CommunityFlare_RebuildCommunityLeaders()
+				NS:Rebuild_Community_Leaders()
 			end
 		end
 	end
 end
 
 -- find community members who left?
-function NS.CommunityFlare_FindExCommunityMembers(clubId)
+function NS:Find_ExCommunity_Members(clubId)
 	local count = 0
 	local current = {}
 	local members = ClubGetClubMembers(clubId)
@@ -1401,21 +1395,33 @@ function NS.CommunityFlare_FindExCommunityMembers(clubId)
 	print(strformat(L["Count: %d"], count))
 end
 
--- find inactive members
-function NS.CommunityFlare_FindCommunityMembers(type, clubId)
+-- find community members
+function NS:Find_Community_Members(type, clubId)
 	-- process all
 	local count = 0
 	for k,v in pairs(NS.globalDB.global.members) do
 		-- has club membership?
 		if (v.clubs and v.clubs[clubId]) then
-			-- inactive?
-			local history = NS.CommunityFlare_History_Get(k)
+			-- get player history?
+			local history = NS:Get_Player_History(k)
 			if (type == "inactive") then
-				-- get history
+				-- inactive?
 				if (not history or not history.last) then
 					-- display player name
 					print(strformat(L["Inactive: %s"], k))
 					count = count + 1
+				end
+			-- inactivity?
+			elseif (type == "inactivity") then
+				-- has last seen?
+				if (history and history.last) then
+					-- more than 60 days?
+					if ((time() - history.last) > (60 * 86400)) then
+						-- display player name / last seen
+						local lastseen = date("%Y-%m-%d %H:%M:%S", history.last)
+						print(strformat(L["Inactive: %s; Last Active: %s"], k, lastseen))
+						count = count + 1
+					end
 				end
 			-- nocompleted?
 			elseif (type == "nocompleted") then
@@ -1442,7 +1448,7 @@ function NS.CommunityFlare_FindCommunityMembers(type, clubId)
 end
 
 -- is community member?
-function NS.CommunityFlare_IsCommunityMember(name)
+function NS:Is_Community_Member(name)
 	-- invalid name?
 	local player = name
 	if (not player or (player == "")) then
@@ -1467,7 +1473,7 @@ function NS.CommunityFlare_IsCommunityMember(name)
 end
 
 -- has shared community?
-function NS.CommunityFlare_HasSharedCommunity(sender)
+function NS:Has_Shared_Community(sender)
 	-- not loaded?
 	if (not NS.CommFlare or not NS.globalDB) then
 		-- failed
@@ -1483,7 +1489,7 @@ function NS.CommunityFlare_HasSharedCommunity(sender)
 	-- number?
 	if (type(sender) == "number") then
 		-- get battle net friend name
-		sender = NS.CommunityFlare_GetBNetFriendName(sender)
+		sender = NS:GetBNetFriendName(sender)
 		if (not sender) then
 			-- failed
 			return false
@@ -1491,15 +1497,15 @@ function NS.CommunityFlare_HasSharedCommunity(sender)
 	end
 
 	-- find sender in database
-	local member2 = NS.CommunityFlare_GetCommunityMember(sender)
+	local member2 = NS:Get_Community_Member(sender)
 	if (not member2 or not member2.clubs) then
 		-- failed
 		return false
 	end
 
 	-- find player in database
-	local player = NS.CommunityFlare_GetPlayerName("full")
-	local member1 = NS.CommunityFlare_GetCommunityMember(player)
+	local player = NS:GetPlayerName("full")
+	local member1 = NS:Get_Community_Member(player)
 	if (not member1 or not member1.clubs) then
 		-- failed
 		return false
@@ -1519,12 +1525,12 @@ function NS.CommunityFlare_HasSharedCommunity(sender)
 end
 
 -- refresh database
-function NS.CommunityFlare_Refresh_Database()
+function NS:Refresh_Database()
 	-- get clubs list
-	local clubs = NS.CommunityFlare_GetClubsList()
+	local clubs = NS:Get_Clubs_List()
 	if (not clubs) then
 		-- none
-		print(strformat("%s: No subscribed clubs found.", NS.CommunityFlare_Title))
+		print(strformat("%s: No subscribed clubs found.", NS.CommFlare.Title))
 		return
 	end
 
@@ -1534,25 +1540,25 @@ function NS.CommunityFlare_Refresh_Database()
 		local info = ClubGetClubInfo(clubId)
 		if (info and (info.clubType == Enum.ClubType.Character)) then
 			-- add community
-			NS.CommunityFlare_AddCommunity(clubId, info)
+			NS:Add_Community(clubId, info)
 
 			-- remove all club members
-			NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
+			NS:Remove_All_Club_Members_By_ClubID(clubId)
 
 			-- add all club members
-			NS.CommunityFlare_AddAllClubMembersByClubID(clubId)
+			NS:Add_All_Club_Members_By_ClubID(clubId)
 		end
 	end
 
 	-- rebuild community leaders
-	NS.CommunityFlare_RebuildCommunityLeaders()
+	NS:Rebuild_Community_Leaders()
 
 	-- verify report channel added
-	NS.CommunityFlare_VerifyReportChannelAdded()
+	NS:Verify_Report_Channel_Added()
 end
 
 -- find member by guid
-function NS.CommunityFlare_FindCommunityMemberByGUID(guid)
+function NS:Find_Community_Member_By_GUID(guid)
 	-- sanity checks?
 	if (not NS.CommFlare or not NS.globalDB) then
 		-- failed

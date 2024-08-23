@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -24,13 +18,13 @@ local tinsert                                   = _G.table.insert
 local settings_that_require_reload = {}
 
 -- setup main community list
-function NS.CommunityFlare_Setup_Main_Community_List(info)
+local function Setup_Main_Community_List(info)
 	-- has info?
 	local list = {}
 	list[1] = L["None"]
 	if (info) then
 		-- verify default community setup
-		NS.CommunityFlare_VerifyDefaultCommunitySetup()
+		NS:Verify_Default_Community_Setup()
 
 		-- process all
 		NS.CommFlare.CF.ClubCount = 0
@@ -50,11 +44,11 @@ function NS.CommunityFlare_Setup_Main_Community_List(info)
 end
 
 -- set main community
-function NS.CommunityFlare_Set_Main_Community(info, value)
+local function Set_Main_Community(info, value)
 	-- has club id to add for?
 	if (value and (value > 1)) then
 		-- add all club members
-		NS.CommunityFlare_AddAllClubMembersByClubID(value)
+		NS:Add_All_Club_Members_By_ClubID(value)
 
 		-- set default report ID
 		NS.charDB.profile.communityReportID = value
@@ -67,7 +61,7 @@ function NS.CommunityFlare_Set_Main_Community(info, value)
 		end
 
 		-- readd community chat window
-		NS.CommunityFlare_ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
+		NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
 	else
 
 		-- find main community club
@@ -89,7 +83,7 @@ function NS.CommunityFlare_Set_Main_Community(info, value)
 		-- process clubs
 		for _,clubId in ipairs(clubs) do
 			-- remove all club members
-			NS.CommunityFlare_RemoveAllClubMembersByClubID(clubId)
+			NS:Remove_All_Club_Members_By_ClubID(clubId)
 
 			-- disable community lists
 			NS.charDB.profile.communityLogList[clubId] = nil
@@ -104,7 +98,7 @@ function NS.CommunityFlare_Set_Main_Community(info, value)
 	end
 
 	-- rebuild community leaders
-	NS.CommunityFlare_RebuildCommunityLeaders()
+	NS:Rebuild_Community_Leaders()
 
 	-- save main community
 	NS.charDB.profile.communityMain = value
@@ -114,7 +108,7 @@ function NS.CommunityFlare_Set_Main_Community(info, value)
 end
 
 -- setup other community list
-function NS.CommunityFlare_Setup_Other_Community_List(info)
+local function Setup_Other_Community_List(info)
 	-- process all
 	local list = {}
 	NS.CommFlare.CF.ClubCount = 0
@@ -152,7 +146,7 @@ function NS.CommunityFlare_Setup_Other_Community_List(info)
 end
 
 -- other community disabled?
-function NS.CommunityFlare_Other_Community_List_Disabled()
+local function Other_Community_List_Disabled()
 	-- main community set?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- process all
@@ -185,7 +179,7 @@ function NS.CommunityFlare_Other_Community_List_Disabled()
 end
 
 -- other community get item
-function NS.CommunityFlare_Other_Community_Get_Item(info, key)
+local function Other_Community_Get_Item(info, key)
 	-- community list?
 	if (info[#info] == "communityList") then
 		-- not initialized?
@@ -206,7 +200,7 @@ function NS.CommunityFlare_Other_Community_Get_Item(info, key)
 end
 
 -- other community set item
-function NS.CommunityFlare_Other_Community_Set_Item(info, key, value)
+local function Other_Community_Set_Item(info, key, value)
 	-- community list?
 	if (info[#info] == "communityList") then
 		-- not initialized?
@@ -221,22 +215,22 @@ function NS.CommunityFlare_Other_Community_Set_Item(info, key, value)
 			NS.charDB.profile.communityList[key] = value
 
 			-- update members
-			NS.CommunityFlare_UpdateMembers(key, true)
+			NS:Update_Club_Members(key, true)
 
 			-- readd community chat window
-			NS.CommunityFlare_ReaddCommunityChatWindow(key, 1)
+			NS:ReaddCommunityChatWindow(key, 1)
 		else
 			-- clear the value
 			NS.charDB.profile.communityList[key] = nil
 
 			-- update members
-			NS.CommunityFlare_UpdateMembers(key, false)
+			NS:Update_Club_Members(key, false)
 		end
 	end
 end
 
 -- setup community lists
-function NS.CommunityFlare_Setup_Community_List(info)
+local function Setup_Community_List(info)
 	-- process all
 	local list = {}
 	local count = 0
@@ -261,7 +255,7 @@ function NS.CommunityFlare_Setup_Community_List(info)
 end
 
 -- setup community leader list disabled?
-function NS.CommunityFlare_Community_Leader_List_Disabled()
+local function Community_Leader_List_Disabled()
 	-- has main community?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- enabled
@@ -273,7 +267,7 @@ function NS.CommunityFlare_Community_Leader_List_Disabled()
 end
 
 -- setup community log list disabled?
-function NS.CommunityFlare_Community_Log_List_Disabled()
+local function Community_Log_List_Disabled()
 	-- has main community?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- enabled
@@ -285,7 +279,7 @@ function NS.CommunityFlare_Community_Log_List_Disabled()
 end
 
 -- community list get item
-function NS.CommunityFlare_Community_List_Get_Item(info, key)
+local function Community_List_Get_Item(info, key)
 	-- community leader list?
 	if (info[#info] == "communityLeadersList") then
 		-- not initialized?
@@ -319,7 +313,7 @@ function NS.CommunityFlare_Community_List_Get_Item(info, key)
 end
 
 -- community list set item
-function NS.CommunityFlare_Community_List_Set_Item(info, key, value)
+local function Community_List_Set_Item(info, key, value)
 	-- community leader list?
 	if (info[#info] == "communityLeadersList") then
 		-- not initialized?
@@ -338,7 +332,7 @@ function NS.CommunityFlare_Community_List_Set_Item(info, key, value)
 		end
 
 		-- rebuild community leaders
-		NS.CommunityFlare_RebuildCommunityLeaders()
+		NS:Rebuild_Community_Leaders()
 
 		-- count community leaders
 		local count = 0
@@ -348,7 +342,7 @@ function NS.CommunityFlare_Community_List_Set_Item(info, key, value)
 		end
 
 		-- display results
-		print(strformat(L["%s: %d Community Leaders found."], NS.CommunityFlare_Title, count))
+		print(strformat(L["%s: %d Community Leaders found."], NS.CommFlare.Title, count))
 	-- community monitor list?
 	elseif (info[#info] == "communityLogList") then
 		-- not initialized?
@@ -369,7 +363,7 @@ function NS.CommunityFlare_Community_List_Set_Item(info, key, value)
 end
 
 -- is disabled?
-function NS.CommunityFlare_Check_ReportID_Disabled()
+local function Check_ReportID_Disabled()
 	-- main community set?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- enabled
@@ -382,19 +376,19 @@ function NS.CommunityFlare_Check_ReportID_Disabled()
 end
 
 -- set report id / setup channel
-function NS.CommunityFlare_Set_ReportID(info, value)
+local function Set_ReportID(info, value)
 	-- save new value
 	NS.charDB.profile.communityReportID = value
 
 	-- has report ID?
 	if (NS.charDB.profile.communityReportID > 1) then
 		-- readd community chat window
-		NS.CommunityFlare_ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
+		NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
 	end
 end
 
 -- is tank role available?
-function NS.CommunityFlare_Check_Tank_Available()
+local function Check_Tank_Available()
 	-- get available roles
 	local hasTank, hasHealer, hasDPS = UnitGetAvailableRoles("player")
 	if (hasTank == true) then
@@ -407,25 +401,25 @@ function NS.CommunityFlare_Check_Tank_Available()
 end
 
 -- get force tank item
-function NS.CommunityFlare_Get_Force_Tank_Item(info)
+local function Get_Force_Tank_Item(info)
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 
 	-- return value
 	return NS.charDB.profile.forceTank
 end
 
 -- set force tank item
-function NS.CommunityFlare_Set_Force_Tank_Item(info, value)
+local function Set_Force_Tank_Item(info, value)
 	-- set value
 	NS.charDB.profile.forceTank = value
 
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 end
 
 -- is tank role available?
-function NS.CommunityFlare_Check_Healer_Available()
+local function Set_Force_DPS_Item()
 	-- get available roles
 	local hasTank, hasHealer, hasDPS = UnitGetAvailableRoles("player")
 	if (hasHealer == true) then
@@ -438,43 +432,43 @@ function NS.CommunityFlare_Check_Healer_Available()
 end
 
 -- get force healer item
-function NS.CommunityFlare_Get_Force_Healer_Item(info)
+local function Get_Force_Healer_Item(info)
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 
 	-- return value
 	return NS.charDB.profile.forceHealer
 end
 
 -- set force healer item
-function NS.CommunityFlare_Set_Force_Healer_Item(info, value)
+local function Set_Force_Healer_Item(info, value)
 	-- set value
 	NS.charDB.profile.forceHealer = value
 
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 end
 
 -- get force dps item
-function NS.CommunityFlare_Get_Force_DPS_Item(info)
+local function Get_Force_DPS_Item(info)
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 
 	-- return value
 	return NS.charDB.profile.forceDPS
 end
 
 -- set force dps item
-function NS.CommunityFlare_Set_Force_DPS_Item(info, value)
+local function Set_Force_DPS_Item(info, value)
 	-- set value
 	NS.charDB.profile.forceDPS = value
 
 	-- enforce pvp roles
-	NS.CommunityFlare_Enforce_PVP_Roles()
+	NS:Enforce_PVP_Roles()
 end
 
 -- setup total database members
-function NS.CommunityFlare_Total_Database_Members(info)
+local function Total_Database_Members(info)
 	-- process all members
 	local count = 0
 	for k,v in pairs(NS.globalDB.global.members) do
@@ -487,23 +481,23 @@ function NS.CommunityFlare_Total_Database_Members(info)
 end
 
 -- refresh database members
-function NS.CommunityFlare_Refresh_Database_Members()
+local function Refresh_Database_Members()
 	-- refresh database
-	NS.CommunityFlare_Refresh_Database()
+	NS:Refresh_Database()
 end
 
 -- rebuild database members
-function NS.CommunityFlare_Rebuild_Database_Members()
+local function Rebuild_Database_Members()
 	-- clear lists
 	NS.globalDB.global.members = {}
 	NS.CommFlare.CF.CommunityLeaders = {}
 
 	-- process club members again
 	print(L["Rebuilding community database member list."])
-	local status = NS.CommunityFlare_Process_Club_Members()
+	local status = NS:Process_Club_Members()
 	if (status == true) then
 		-- display members found
-		print(NS.CommunityFlare_Total_Database_Members(nil))
+		print(NS:Total_Database_Members(nil))
 
 		-- display leaders count
 		local count = 0
@@ -514,18 +508,18 @@ function NS.CommunityFlare_Rebuild_Database_Members()
 		print(strformat(L["%d community leaders found."], count))
 	else
 		-- no subscribed clubs found
-		print(strformat(L["%s: No subscribed clubs found."], NS.CommunityFlare_Title))
+		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
 	end
 end
 
 -- rebuild database members confirmation
-function NS.CommunityFlare_Rebuild_Database_Members_Confirmation()
+local function Rebuild_Database_Members_Confirmation()
 	-- ask first
-	NS.CommunityFlare_PopupBox("CommunityFlare_Rebuild_Members_Dialog")
+	NS:PopupBox("CommunityFlare_Rebuild_Members_Dialog")
 end
 
 -- setup report community to list
-function NS.CommunityFlare_Setup_Report_Community_List(info)
+local function Setup_Report_Community_List(info)
 	-- process all
 	local list = {}
 	list[1] = L["None"]
@@ -567,18 +561,18 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 }
 
 -- set block game menu hot keys (reload when disabled)
-function NS.CommunityFlare_BlockGameMenuHotKeys_Set(info, value)
+local function BlockGameMenuHotKeys_Set(info, value)
 	-- enabled?
 	if (value == true) then
 		-- save value
 		NS.charDB.profile.blockGameMenuHotKeys = value
 
 		-- enable block game menu hooks
-		NS.CommunityFlare_Setup_BlockGameMenuHooks()
+		NS:Setup_BlockGameMenuHooks()
 	else
 		-- setting requires reload
 		settings_that_require_reload["blockGameMenuHotKeys"] = value
-		NS.CommunityFlare_PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
+		NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
 	end
 end
 
@@ -639,7 +633,7 @@ NS.defaults = {
 
 -- options
 NS.options = {
-	name = NS.CommunityFlare_Title_Full,
+	name = NS.CommFlare.Title_Full,
 	handler = NS.CommFlare,
 	type = "group",
 	args = {
@@ -654,48 +648,48 @@ NS.options = {
 					order = 1,
 					name = L["Main Community?"],
 					desc = L["Choose the main community from your subscribed list."],
-					values = NS.CommunityFlare_Setup_Main_Community_List,
+					values = Setup_Main_Community_List,
 					get = function(info) return NS.charDB.profile.communityMain end,
-					set = NS.CommunityFlare_Set_Main_Community,
+					set = Set_Main_Community,
 				},
 				communityList = {
 					type = "multiselect",
 					order = 2,
 					name = L["Other Communities?"],
 					desc = L["Choose the other communities from your subscribed list."],
-					values = NS.CommunityFlare_Setup_Other_Community_List,
-					disabled = NS.CommunityFlare_Other_Community_List_Disabled,
-					get = NS.CommunityFlare_Other_Community_Get_Item,
-					set = NS.CommunityFlare_Other_Community_Set_Item,
+					values = Setup_Other_Community_List,
+					disabled = Other_Community_List_Disabled,
+					get = Other_Community_Get_Item,
+					set = Other_Community_Set_Item,
 				},
 				communityLeadersList = {
 					type = "multiselect",
 					order = 3,
 					name = L["Community Leaders?"],
 					desc = L["Choose the communities that you want to build the leaders list from."],
-					values = NS.CommunityFlare_Setup_Community_List,
-					disabled = NS.CommunityFlare_Community_Leader_List_Disabled,
-					get = NS.CommunityFlare_Community_List_Get_Item,
-					set = NS.CommunityFlare_Community_List_Set_Item,
+					values = Setup_Community_List,
+					disabled = Community_Leader_List_Disabled,
+					get = Community_List_Get_Item,
+					set = Community_List_Set_Item,
 				},
 				membersCount = {
 					type = "description",
 					order = 4,
-					name = NS.CommunityFlare_Total_Database_Members,
+					name = Total_Database_Members,
 				},
 				refreshMembers = {
 					type = "execute",
 					order = 5,
 					name = L["Refresh Members?"],
 					desc = L["Use this to refresh the members database from currently selected communities."],
-					func = NS.CommunityFlare_Refresh_Database_Members,
+					func = Refresh_Database_Members,
 				},
 				rebuildMembers = {
 					type = "execute",
 					order = 6,
 					name = L["Rebuild Members?"],
 					desc = L["Use this to totally rebuild the members database from currently selected communities."],
-					func = NS.CommunityFlare_Rebuild_Database_Members_Confirmation,
+					func = Rebuild_Database_Members_Confirmation,
 				},
 				alwaysReaddChannels = {
 					type = "toggle",
@@ -808,10 +802,10 @@ NS.options = {
 					order = 7,
 					name = L["Community to report to?"],
 					desc = L["Choose the community that you want to report queues to."],
-					values = NS.CommunityFlare_Setup_Report_Community_List,
-					disabled = NS.CommunityFlare_Check_ReportID_Disabled,
+					values = Setup_Report_Community_List,
+					disabled = Check_ReportID_Disabled,
 					get = function(info) return NS.charDB.profile.communityReportID end,
-					set = NS.CommunityFlare_Set_ReportID,
+					set = Set_ReportID,
 				},
 				uninvitePlayersAFK = {
 					type = "select",
@@ -839,26 +833,26 @@ NS.options = {
 							order = 1,
 							name = "Tank",
 							desc = "This will always enable the Tank role for PVP Queues.",
-							disabled = NS.CommunityFlare_Check_Tank_Available,
-							get = NS.CommunityFlare_Get_Force_Tank_Item,
-							set = NS.CommunityFlare_Set_Force_Tank_Item,
+							disabled = Check_Tank_Available,
+							get = Get_Force_Tank_Item,
+							set = Set_Force_Tank_Item,
 						},
 						forceHealer = {
 							type = "toggle",
 							order = 2,
 							name = "Healer",
 							desc = "This will always enable the Healer role for PVP Queues.",
-							disabled = NS.CommunityFlare_Check_Healer_Available,
-							get = NS.CommunityFlare_Get_Force_Healer_Item,
-							set = NS.CommunityFlare_Set_Force_Healer_Item,
+							disabled = Set_Force_DPS_Item,
+							get = Get_Force_Healer_Item,
+							set = Set_Force_Healer_Item,
 						},
 						forceDPS = {
 							type = "toggle",
 							order = 3,
 							name = "DPS",
 							desc = "This will always enable the DPS role for PVP Queues.",
-							get = NS.CommunityFlare_Get_Force_DPS_Item,
-							set = NS.CommunityFlare_Set_Force_DPS_Item,
+							get = Get_Force_DPS_Item,
+							set = Set_Force_DPS_Item,
 						},
 					},
 				},
@@ -976,10 +970,10 @@ NS.options = {
 					order = 6,
 					name = L["Log roster list for matches from these communities?"],
 					desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
-					values = NS.CommunityFlare_Setup_Community_List,
-					disabled = NS.CommunityFlare_Community_Log_List_Disabled,
-					get = NS.CommunityFlare_Community_List_Get_Item,
-					set = NS.CommunityFlare_Community_List_Set_Item,
+					values = Setup_Community_List,
+					disabled = Community_Log_List_Disabled,
+					get = Community_List_Get_Item,
+					set = Community_List_Set_Item,
 				},
 				communityAutoPassLead = {
 					type = "toggle",
@@ -1015,7 +1009,7 @@ NS.options = {
 					desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
 					width = "full",
 					get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
-					set = NS.CommunityFlare_BlockGameMenuHotKeys_Set,
+					set = BlockGameMenuHotKeys_Set,
 				},
 			},
 		},
@@ -1049,7 +1043,7 @@ NS.options = {
 }
 
 -- reset default settings
-function NS.CommunityFlare_Reset_Default_Settings()
+function NS:Reset_Default_Settings()
 	-- process all defaults
 	local count = 0
 	for k,v in pairs(NS.defaults.profile) do

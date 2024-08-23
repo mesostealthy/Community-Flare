@@ -1,7 +1,7 @@
-## Interface: 110000
+## Interface: 110002
 ## Title: Community Flare
-## Version: v1.15.001
-## X-Build: 115001
+## Version: v1.16.001
+## X-Build: 116001
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB
@@ -10,6 +10,7 @@
 ## AddonCompartmentFunc: CommunityFlare_AddonCompartmentOnClick
 ## X-Website: https://www.curseforge.com/wow/addons/community-flare
 ## X-Curse-Project-ID: 941906
+## X-Wago-ID: j6jzxx6R
 
 Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
@@ -29,9 +30,10 @@ Libs\AceTab-3.0\AceTab-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibDeflate\lib.xml
 
-Bootstrap.lua
 Locales\enUS.lua
 Locales\frFR.lua
+
+Bootstrap.lua
 Config.lua
 Battlegrounds.lua
 Database.lua

@@ -1,5 +1,6 @@
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -17,13 +18,6 @@ local tonumber                                  = _G.tonumber
 local type                                      = _G.type
 local strformat                                 = _G.string.format
 
--- get current version
-NS.CommunityFlare_Name = ADDON_NAME
-NS.CommunityFlare_Build = GetAddOnMetadata(ADDON_NAME, "X-Build") or "unspecified"
-NS.CommunityFlare_Title = GetAddOnMetadata(ADDON_NAME, "Title") or "unspecified"
-NS.CommunityFlare_Version = GetAddOnMetadata(ADDON_NAME, "Version") or "unspecified"
-NS.CommunityFlare_Title_Full = strformat("%s %s (%s)", NS.CommunityFlare_Title, NS.CommunityFlare_Version, NS.CommunityFlare_Build)
-
 -- initialize libraries
 NS.Libs = {
 	AceAddon = LibStub("AceAddon-3.0"),
@@ -32,7 +26,6 @@ NS.Libs = {
 	AceConfigDialog = LibStub('AceConfigDialog-3.0'),
 	AceDB = LibStub("AceDB-3.0"),
 	AceDBOptions = LibStub("AceDBOptions-3.0"),
-	AceLocale = LibStub("AceLocale-3.0"),
 	AceSerializer = LibStub("AceSerializer-3.0"),
 	LibDeflate = LibStub("LibDeflate"),
 }
@@ -41,12 +34,12 @@ NS.Libs = {
 NS.CommFlare = NS.Libs.AceAddon:NewAddon(ADDON_NAME, "AceComm-3.0", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 NS.CommFlare.CF = {
 	-- strings
-	MapName = "N/A",
+	MapName = L["N/A"],
 	MatchEndDate = "",
 	MatchStartDate = "",
 	PlayerFaction = "",
 	PlayerServerName = "",
-	RaidLeader = "N/A",
+	RaidLeader = L["N/A"],
 	TurnSpeed = "",
 
 	-- booleans
@@ -65,6 +58,8 @@ NS.CommFlare.CF = {
 	PvpLoggingCombat = false,
 	QueuePopped = false,
 	Reloaded = false,
+	UpgradeDisplayed = false,
+	VersionSent = false,
 
 	-- numbers
 	ClubCount = 0,
@@ -162,17 +157,24 @@ NS.CommFlare.CF = {
 	WSG = {},
 }
 
+-- setup version stuff
+NS.CommFlare.Name = ADDON_NAME
+NS.CommFlare.Build = GetAddOnMetadata(ADDON_NAME, "X-Build") or "unspecified"
+NS.CommFlare.Title = GetAddOnMetadata(ADDON_NAME, "Title") or "unspecified"
+NS.CommFlare.Version = GetAddOnMetadata(ADDON_NAME, "Version") or "unspecified"
+NS.CommFlare.Title_Full = strformat("%s %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build)
+
 -- refresh config
 function NS.CommFlare:RefreshConfig()
 	-- setup community lists
-	NS.CommunityFlare_Setup_Main_Community_List(nil)
-	NS.CommunityFlare_Setup_Other_Community_List(nil)
+	NS:Setup_Main_Community_List(nil)
+	NS:Setup_Other_Community_List(nil)
 end
 
 -- handle pending invite confirmations
-function NS.CommFlare:HandlePendingInviteConfirmation(invite)
+local function hook_HandlePendingInviteConfirmation(invite)
 	-- mercenary queued?
-	if (NS.CommunityFlare_Battleground_IsMercenaryQueued() == true) then
+	if (NS:Battleground_IsMercenaryQueued() == true) then
 		-- get next pending invite
 		local invite = GetNextPendingInviteConfirmation()
 		if (invite) then
@@ -195,32 +197,32 @@ function NS.CommFlare:HandlePendingInviteConfirmation(invite)
 				local accountInfo = BattleNetGetAccountInfoByGUID(guid)
 				if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.playerGuid) then
 					-- send battle net message
-					NS.CommunityFlare_SendMessage(accountInfo.bnetAccountID, L["Sorry, can not accept invites while currently queued as a mercenary."])
+					NS:SendMessage(accountInfo.bnetAccountID, L["Sorry, can not accept invites while currently queued as a mercenary."])
 				end
 			else
 				-- send message
-				NS.CommunityFlare_SendMessage(sender, L["Sorry, can not accept invites while currently queued as a mercenary."])
+				NS:SendMessage(sender, L["Sorry, can not accept invites while currently queued as a mercenary."])
 			end
 		end
 	else
 		-- call original
-		NS.CommFlare.hooks.HandlePendingInviteConfirmation(invite)
+		NS.CommFlare.hooks["HandlePendingInviteConfirmation"](invite)
 	end
 end
 
 -- handle floating chat frame events
-function NS.CommFlare:FloatingChatFrameManager_OnEvent(self, event, ...)
+local function hook_FloatingChatFrameManager_OnEvent(self, event, ...)
 	-- internal command?
 	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
 	if (text:find("!CF@")) then
 		-- normal whisper?
 		if (event == "CHAT_MSG_WHISPER") then
 			-- handle commands
-			NS.CommunityFlare_Handle_Internal_Commands(event, sender, text, ...)
+			NS:Handle_Internal_Commands(event, sender, text, ...)
 		-- Battle.NET whisper?
 		elseif (event == "CHAT_MSG_BN_WHISPER") then
 			-- handle commands
-			NS.CommunityFlare_Handle_Internal_Commands(event, bnSenderID, text, ...)
+			NS:Handle_Internal_Commands(event, bnSenderID, text, ...)
 		end
 	-- afk?
 	elseif (event == "CHAT_MSG_AFK") then
@@ -254,12 +256,12 @@ function NS.CommFlare:OnInitialize()
 	NS.charDB.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
 	NS.charDB.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
 	NS.Libs.AceConfig:RegisterOptionsTable("CommFlare_Options", NS.options)
-	self.optionsFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Options", NS.CommunityFlare_Title)
+	self.optionsFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Options", NS.CommFlare.Title)
 	NS.profiles = NS.Libs.AceDBOptions:GetOptionsTable(NS.charDB)
 	NS.Libs.AceConfig:RegisterOptionsTable("CommFlare_Profiles", NS.profiles)
-	self.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Profiles", "Profiles", NS.CommunityFlare_Title)
-	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", true)
-	NS.CommFlare:RawHookScript(FloatingChatFrameManager, "OnEvent", "FloatingChatFrameManager_OnEvent")
+	self.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Profiles", "Profiles", NS.CommFlare.Title)
+	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
+	NS.CommFlare:RawHookScript(FloatingChatFrameManager, "OnEvent", hook_FloatingChatFrameManager_OnEvent, true)
 
 	-- check for old string values?
 	if (type(NS.charDB.profile.blockSharedQuests) == "string") then
@@ -276,7 +278,7 @@ function NS.CommFlare:OnInitialize()
 	end
 
 	-- build classes
-	NS.CommunityFlare_Build_Classes()
+	NS:Build_Classes()
 end
 
 -- addon compartment on click
@@ -287,7 +289,7 @@ function CommunityFlare_AddonCompartmentOnClick(addonName, buttonName)
 		SettingsPanel:Hide()
 	else
 		-- open options to Community Flare
-		Settings_OpenToCategory(NS.CommunityFlare_Title)
-		Settings_OpenToCategory(NS.CommunityFlare_Title) -- open options again (wow bug workaround)
+		Settings_OpenToCategory(NS.CommFlare.Title)
+		Settings_OpenToCategory(NS.CommFlare.Title) -- open options again (wow bug workaround)
 	end
 end

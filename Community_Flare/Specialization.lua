@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -23,7 +17,7 @@ NS.Classes = {}
 NS.SpecilizationIDs = {}
 
 -- build classes
-function NS.CommunityFlare_Build_Classes()
+function NS:Build_Classes()
 	-- process all classes
 	local count = 0
 	for classID=1, GetNumClasses() do
@@ -67,7 +61,7 @@ function NS.CommunityFlare_Build_Classes()
 end
 
 -- get specID from className & specName
-function NS.CommunityFlare_Get_SpecID(className, specName)
+function NS:Get_SpecID(className, specName)
 	-- spec name exists?
 	if (NS.Classes[className] and NS.Classes[className].specs and NS.Classes[className].specs[specName] and NS.Classes[className].specs[specName].specID) then
 		-- return specID

@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -17,14 +11,14 @@ local type                                      = _G.type
 local strformat                                 = _G.string.format
 
 -- show history
-function NS.CommunityFlare_Show_History(owner, rootDescription, contextData)
+function NS:Show_History(owner, rootDescription, contextData)
 	-- find member
 	local player = strformat("%s-%s", contextData.name, contextData.server)
-	local member = NS.CommunityFlare_GetCommunityMember(player)
+	local member = NS:Get_Community_Member(player)
 	if (member) then
-		-- find history
-		print(strformat("%s: %s", NS.CommunityFlare_Title, member.name))
-		local history = NS.CommunityFlare_History_Get(player)
+		-- get player history
+		print(strformat("%s: %s", NS.CommFlare.Title, member.name))
+		local history = NS:Get_Player_History(player)
 		if (history) then
 			-- has first seen?
 			if (history.first) then
@@ -94,7 +88,7 @@ function NS.CommunityFlare_Show_History(owner, rootDescription, contextData)
 end
 
 -- request party lead
-function NS.CommunityFlare_Request_Party_Leader(owner, rootDescription, contextData)
+function NS:Request_Party_Leader(owner, rootDescription, contextData)
 	-- send addon message to party
 	NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
 end
@@ -103,17 +97,17 @@ end
 Menu.ModifyMenu("MENU_UNIT_COMMUNITIES_WOW_MEMBER", function(owner, rootDescription, contextData)
 	-- display context menu
 	rootDescription:CreateDivider()
-	rootDescription:CreateTitle(NS.CommunityFlare_Title)
-	rootDescription:CreateButton(L["Last Seen Around?"], function() NS.CommunityFlare_Show_History(owner, rootDescription, contextData) end)
+	rootDescription:CreateTitle(NS.CommFlare.Title)
+	rootDescription:CreateButton(L["Last Seen Around?"], function() NS:Show_History(owner, rootDescription, contextData) end)
 end)
 
 -- add party context menu
 Menu.ModifyMenu("MENU_UNIT_PARTY", function(owner, rootDescription, contextData)
 	-- are you not group leader currently?
-	if (NS.CommunityFlare_IsGroupLeader() == false) then
+	if (NS:IsGroupLeader() == false) then
 		-- display context menu
 		rootDescription:CreateDivider()
-		rootDescription:CreateTitle(NS.CommunityFlare_Title)
-		rootDescription:CreateButton(L["Request Party Leader"], function() NS.CommunityFlare_Request_Party_Leader(owner, rootDescription, contextData) end)
+		rootDescription:CreateTitle(NS.CommFlare.Title)
+		rootDescription:CreateButton(L["Request Party Leader"], function() NS:Request_Party_Leader(owner, rootDescription, contextData) end)
 	end
 end)

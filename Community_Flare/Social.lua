@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -16,6 +10,7 @@ local GetMaxBattlefieldID                       = _G.GetMaxBattlefieldID
 local GetNumGroupMembers                        = _G.GetNumGroupMembers
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local InCombatLockdown                          = _G.InCombatLockdown
+local IsAddOnLoaded                             = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
 local IsInGroup                                 = _G.IsInGroup
 local IsInRaid                                  = _G.IsInRaid
 local PVEFrame_ShowFrame                        = _G.PVEFrame_ShowFrame
@@ -35,7 +30,7 @@ local strformat                                 = _G.string.format
 local tinsert                                   = _G.table.insert
 
 -- initialize group
-function NS.CommunityFlare_Initialize_Group(groupGUID)
+function NS:Initialize_Group(groupGUID)
 	-- initialize
 	NS.CommFlare.CF.SocialQueues[groupGUID] = {
 		guid = "",
@@ -50,7 +45,7 @@ function NS.CommunityFlare_Initialize_Group(groupGUID)
 end
 
 -- add group leader
-function NS.CommunityFlare_Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
+function NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
 	-- invalid realm?
 	if (not playerRealm or (playerRealm == "")) then
 		playerRealm = NS.CommFlare.CF.PlayerServerName
@@ -64,7 +59,7 @@ function NS.CommunityFlare_Add_Group_Leader(groupGUID, playerGUID, playerName, p
 end
 
 -- add group member
-function NS.CommunityFlare_Add_Group_Member(groupGUID, index, playerGUID, playerName, playerRealm)
+function NS:Add_Group_Member(groupGUID, index, playerGUID, playerName, playerRealm)
 	-- invalid realm?
 	if (not playerRealm or (playerRealm == "")) then
 		playerRealm = NS.CommFlare.CF.PlayerServerName
@@ -78,7 +73,7 @@ function NS.CommunityFlare_Add_Group_Member(groupGUID, index, playerGUID, player
 end
 
 -- has queue popped?
-function NS.CommunityFlare_HasQueuePopped(groupGUID)
+function NS:HasQueuePopped(groupGUID)
 	-- community queue exists?
 	if (NS.CommFlare.CF.SocialQueues[groupGUID]) then
 		-- popped?
@@ -93,13 +88,13 @@ function NS.CommunityFlare_HasQueuePopped(groupGUID)
 end
 
 -- clean up groups
-function NS.CommunityFlare_Cleanup_Groups()
+function NS:Cleanup_Groups()
 	-- process all
 	for k,v in pairs(NS.CommFlare.CF.SocialQueues) do
 		-- local?
 		if (k == "local") then
 			-- update local group
-			NS.CommunityFlare_Update_Group("local")
+			NS:Update_Group("local")
 		else
 			-- queue exists?
 			if (NS.CommFlare.CF.SocialQueues[k]) then
@@ -119,7 +114,7 @@ function NS.CommunityFlare_Cleanup_Groups()
 end
 
 -- count all members for social queues
-function NS.CommunityFlare_Social_Queues_Count_All_Members()
+function NS:Social_Queues_Count_All_Members()
 	-- process all
 	local count = 0
 	for k,v in pairs(NS.CommFlare.CF.SocialQueues) do
@@ -131,56 +126,8 @@ function NS.CommunityFlare_Social_Queues_Count_All_Members()
 	return count
 end
 
--- get popped
-function NS.CommunityFlare_Get_Popped()
-	-- process all
-	local list = {}
-	for k,v in pairs (NS.CommFlare.CF.SocialQueues) do
-		-- has all needed info?
-		if (v.leader and v.leader.name and v.leader.realm and v.leader.guid and v.members) then
-			-- popped?
-			if (NS.CommunityFlare_HasQueuePopped(k)) then
-				-- stale?
-				local timestamp = v.popped + 30
-				if (time() < timestamp) then
-					-- build party string
-					local count = strformat("%d/5", #v.members)
-					local mapName = NS.CommFlare.CF.SocialQueues[k].name
-					local text = strformat("%s,%s,%s,%s-%s,%s", mapName, k, v.leader.guid, v.leader.name, v.leader.realm, count)
-					tinsert(list, text)
-				else
-					-- update group
-					NS.CommunityFlare_Update_Group(k)
-				end
-			end
-		end
-	end
-
-	-- process all lists
-	local text = nil
-	for k,v in pairs(list) do
-		-- first?
-		if (not text) then
-			-- start queues
-			text = strformat("%s", v)
-		else
-			-- append queues
-			text = strformat("%s;%s", text, v)
-		end
-	end
-
-	-- no text?
-	if (not text) then
-		-- none
-		text = "None"
-	end
-
-	-- return text
-	return text
-end
-
 -- find queues by map name
-function NS.CommunityFlare_Find_Social_Queues_By_MapName(text)
+function NS:Find_Social_Queues_By_MapName(text)
 	-- process text
 	local mapName = "Random Epic Battleground"
 	if (text:find(",")) then
@@ -202,7 +149,7 @@ function NS.CommunityFlare_Find_Social_Queues_By_MapName(text)
 		if (v.leader and v.leader.name and v.leader.realm and v.leader.guid and v.members and v.queues) then
 			-- popped?
 			local status = ""
-			if (NS.CommunityFlare_HasQueuePopped(k)) then
+			if (NS:HasQueuePopped(k)) then
 				-- P for popped
 				status = "P"
 			else
@@ -219,15 +166,15 @@ function NS.CommunityFlare_Find_Social_Queues_By_MapName(text)
 					-- has queue data?
 					if (v2.queueData and v2.queueData.mapName) then
 						-- trackable?
-						local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS.CommunityFlare_IsTrackedPVP(v2.queueData.mapName)
+						local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(v2.queueData.mapName)
 						if (isTracked == true) then
 							-- first?
 							if (not prefix) then
 								-- set first prefix
-								prefix = tostring(NS.CommunityFlare_GetBGPrefix(v2.queueData.mapName))
+								prefix = tostring(NS:GetBGPrefix(v2.queueData.mapName))
 							else
 								-- append prefix
-								prefix = strformat("%s|%s", prefix, tostring(NS.CommunityFlare_GetBGPrefix(v2.queueData.mapName)))
+								prefix = strformat("%s|%s", prefix, tostring(NS:GetBGPrefix(v2.queueData.mapName)))
 							end
 
 							-- finished
@@ -245,10 +192,10 @@ function NS.CommunityFlare_Find_Social_Queues_By_MapName(text)
 							-- first?
 							if (not prefix) then
 								-- set first prefix
-								prefix = tostring(NS.CommunityFlare_GetBGPrefix(v2.queueData.mapName))
+								prefix = tostring(NS:GetBGPrefix(v2.queueData.mapName))
 							else
 								-- append prefix
-								prefix = strformat("%s|%s", prefix, tostring(NS.CommunityFlare_GetBGPrefix(v2.queueData.mapName)))
+								prefix = strformat("%s|%s", prefix, tostring(NS:GetBGPrefix(v2.queueData.mapName)))
 							end
 
 							-- finished
@@ -292,7 +239,7 @@ function NS.CommunityFlare_Find_Social_Queues_By_MapName(text)
 end
 
 -- count all members for social queues not popped
-function NS.CommunityFlare_Social_Queues_Count_All_Members_Not_Popped()
+function NS:Social_Queues_Count_All_Members_Not_Popped()
 	-- process all
 	local count = 0
 	for k,v in pairs(NS.CommFlare.CF.SocialQueues) do
@@ -308,7 +255,7 @@ function NS.CommunityFlare_Social_Queues_Count_All_Members_Not_Popped()
 end
 
 -- process popped
-function NS.CommunityFlare_Process_Popped(groupGUID)
+function NS:Process_Popped(groupGUID)
 	-- setup stuff
 	local popped = NS.CommFlare.CF.SocialQueues[groupGUID].popped
 	local members = NS.CommFlare.CF.SocialQueues[groupGUID].members
@@ -338,7 +285,7 @@ function NS.CommunityFlare_Process_Popped(groupGUID)
 				-- display popped groups?
 				if (NS.charDB.profile.displayPoppedGroups == true) then
 					-- print group / member totals
-					print(strformat(L["%s: Group%d = %d Members"], NS.CommunityFlare_Title, index, v))
+					print(strformat(L["%s: Group%d = %d Members"], NS.CommFlare.Title, index, v))
 				end
 
 				-- next
@@ -361,19 +308,25 @@ function NS.CommunityFlare_Process_Popped(groupGUID)
 			end
 
 			-- clean up groups
-			NS.CommunityFlare_Cleanup_Groups()
+			NS:Cleanup_Groups()
 		end)
 	end
 end
 
 -- update group
-function NS.CommunityFlare_Update_Group(groupGUID)
+function NS:Update_Group(groupGUID)
+	-- no group id?
+	if (not groupGUID) then
+		-- finished
+		return
+	end
+
 	-- local?
 	if (groupGUID == "local") then
 		-- no local group?
 		if (not NS.CommFlare.CF.SocialQueues[groupGUID]) then
 			-- initialize
-			NS.CommunityFlare_Initialize_Group(groupGUID)
+			NS:Initialize_Group(groupGUID)
 		end
 
 		-- check if currently in queue
@@ -383,7 +336,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 		for i=1, GetMaxBattlefieldID() do
 			-- trackable?
 			local status, mapName = GetBattlefieldStatus(i)
-			local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS.CommunityFlare_IsTrackedPVP(mapName)
+			local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 			if (isTracked == true) then
 				-- update queue
 				NS.CommFlare.CF.SocialQueues[groupGUID].queues[i] = {
@@ -406,7 +359,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 		-- no tracked queues?
 		if (numTrackedQueues == 0) then
 			-- initialize
-			NS.CommunityFlare_Initialize_Group(groupGUID)
+			NS:Initialize_Group(groupGUID)
 			return
 		end
 
@@ -434,8 +387,8 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 			local playerGUID = UnitGUID("player")
 			local playerName, playerRealm = UnitName("player")
 			NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = 1
-			NS.CommunityFlare_Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
-			NS.CommunityFlare_Add_Group_Member(groupGUID, 1, playerGUID, playerName, playerRealm)
+			NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
+			NS:Add_Group_Member(groupGUID, 1, playerGUID, playerName, playerRealm)
 		else
 			-- process all members
 			NS.CommFlare.CF.SocialQueues[groupGUID].members = {}
@@ -456,11 +409,11 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 				local playerName, playerRealm = UnitName(unit)
 				if (UnitIsGroupLeader(unit)) then
 					-- add leader
-					NS.CommunityFlare_Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
+					NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
 				end
 
 				-- add member
-				NS.CommunityFlare_Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+				NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
 			end
 		end
 	else
@@ -478,7 +431,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 			-- display results in 1.5 seconds
 			TimerAfter(1.5, function()
 				-- try again
-				NS.CommunityFlare_Update_Group(groupGUID)
+				NS:Update_Group(groupGUID)
 			end)
 
 			-- clear group
@@ -502,7 +455,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 			for i=1, #queues do
 				-- tracked map?
 				mapName = queues[i].queueData.mapName
-				local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS.CommunityFlare_IsTrackedPVP(mapName)
+				local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 				if (isTracked == true) then
 					-- increase
 					numTrackedQueues = numTrackedQueues + 1
@@ -522,7 +475,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 			-- any trackable queues?
 			if (numTrackedQueues > 0) then
 				-- create
-				NS.CommunityFlare_Initialize_Group(groupGUID)
+				NS:Initialize_Group(groupGUID)
 				NS.CommFlare.CF.SocialQueues[groupGUID].guid = groupGUID
 				NS.CommFlare.CF.SocialQueues[groupGUID].created = time()
 				NS.CommFlare.CF.SocialQueues[groupGUID].numQueues = numQueues
@@ -531,13 +484,13 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 				-- has leader info?
 				if (leaderGUID and leaderName and leaderRealm) then
 					-- add leader
-					NS.CommunityFlare_Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+					NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
 				end
 
 				-- are they community leader?
-				if (NS.CommunityFlare_IsCommunityLeader(leader) == true) then
+				if (NS:Is_Community_Leader(leader) == true) then
 					-- only process for group leaders
-					if (NS.CommunityFlare_IsGroupLeader() == true) then
+					if (NS:IsGroupLeader() == true) then
 						-- popup queue window enabled?
 						if (NS.charDB.profile.popupQueueWindow == true) then
 							-- not in combat?
@@ -568,7 +521,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 			-- popped?
 			if ((numQueues == 0) or (numTrackedQueues < NS.CommFlare.CF.SocialQueues[groupGUID].numTrackedQueues)) then
 				-- popped
-				NS.CommunityFlare_Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+				NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
 				NS.CommFlare.CF.SocialQueues[groupGUID].popped = time()
 
 				-- process all queues
@@ -589,10 +542,10 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 				end
 
 				-- process popped groups
-				NS.CommunityFlare_Process_Popped(groupGUID)
+				NS:Process_Popped(groupGUID)
 			end
 		-- popped?
-		elseif (NS.CommunityFlare_HasQueuePopped(groupGUID)) then
+		elseif (NS:HasQueuePopped(groupGUID)) then
 			-- no trackable queues?
 			if (numTrackedQueues == 0) then
 				-- clear group
@@ -611,12 +564,12 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 				-- has leader info?
 				if (leaderGUID and leaderName and leaderRealm) then
 					-- add leader
-					NS.CommunityFlare_Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+					NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
 				end
 			-- leader changed?
 			elseif (NS.CommFlare.CF.SocialQueues[groupGUID].leader.guid ~= leaderGUID) then
 				-- update leader
-				NS.CommunityFlare_Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+				NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
 			end
 
 			-- has group members?
@@ -634,7 +587,7 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 					end
 
 					-- add group member
-					NS.CommunityFlare_Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+					NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
 				end
 			else
 				-- group no longer exists
@@ -645,14 +598,14 @@ function NS.CommunityFlare_Update_Group(groupGUID)
 end
 
 -- refresh all social queues
-function NS.CommunityFlare_RefreshAllSocialQueues()
+function NS:RefreshAllSocialQueues()
 	-- process all groups
 	local groups = SocialQueueGetAllGroups(true, true)
 	for _,v in ipairs(groups) do
 		-- not loaded yet?
 		if (not NS.CommFlare.CF.SocialQueues[v]) then
 			-- update group
-			NS.CommunityFlare_Update_Group(v)
+			NS:Update_Group(v)
 		end
 	end
 end

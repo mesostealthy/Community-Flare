@@ -1,12 +1,6 @@
+local LibStub = LibStub
 local ADDON_NAME, NS = ...
-
--- get locale
-assert(NS.Libs)
-local L = NS.Libs.AceLocale:GetLocale(ADDON_NAME)
-if (not L) then
-	-- finished
-	return
-end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 
 -- localize stuff
 local _G                                        = _G
@@ -21,7 +15,7 @@ local strmatch                                  = _G.string.match
 local tinsert                                   = _G.table.insert
 
 -- clean up history
-function NS.CommunityFlare_CleanUpHistory()
+function NS:Cleanup_History()
 	-- process all
 	local MON = { Jan = 1, Feb = 2, Mar = 3, Apr = 4, May = 5, Jun = 6, Jul = 7, Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12 }
 	for k,v in pairs(NS.globalDB.global.history) do
@@ -85,8 +79,8 @@ function NS.CommunityFlare_CleanUpHistory()
 	end
 end
 
--- get history
-function NS.CommunityFlare_History_Get(player)
+-- get player history
+function NS:Get_Player_History(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -104,7 +98,7 @@ function NS.CommunityFlare_History_Get(player)
 end
 
 -- update first seen
-function NS.CommunityFlare_History_Update_First(player)
+function NS:Update_First_Seen(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -129,7 +123,7 @@ function NS.CommunityFlare_History_Update_First(player)
 end
 
 -- update completed matches
-function NS.CommunityFlare_History_Update_Completed_Matches(player)
+function NS:Update_Completed_Matches(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -156,7 +150,7 @@ function NS.CommunityFlare_History_Update_Completed_Matches(player)
 end
 
 -- update grouped matches
-function NS.CommunityFlare_History_Update_Grouped_Matches(player)
+function NS:Update_Grouped_Matches(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -183,7 +177,7 @@ function NS.CommunityFlare_History_Update_Grouped_Matches(player)
 end
 
 -- update last grouped
-function NS.CommunityFlare_History_Update_Last_Grouped(player)
+function NS:Update_Last_Grouped(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -204,7 +198,7 @@ function NS.CommunityFlare_History_Update_Last_Grouped(player)
 end
 
 -- update last seen
-function NS.CommunityFlare_History_Update_Last_Seen(player)
+function NS:Update_Last_Seen(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -225,7 +219,7 @@ function NS.CommunityFlare_History_Update_Last_Seen(player)
 end
 
 -- update chat message data
-function NS.CommunityFlare_History_Update_Chat_Message_Data(player)
+function NS:Update_Chat_Message_Data(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -254,8 +248,8 @@ function NS.CommunityFlare_History_Update_Chat_Message_Data(player)
 	return true
 end
 
--- get history
-function NS.CommunityFlare_Get_History_List(names)
+-- get history list text
+function NS:Get_History_List_Text(names)
 	local text = nil
 	local first, second = strsplit("@", names)
 	if (first == "GetHistory") then
@@ -275,8 +269,8 @@ function NS.CommunityFlare_Get_History_List(names)
 			-- process all
 			list = {}
 			for k,v in ipairs(members) do
-				-- get history
-				local history = NS.CommunityFlare_History_Get(v)
+				-- get player history
+				local history = NS:Get_Player_History(v)
 				if (history) then
 					-- insert
 					local firstseen = tonumber(history.first) or 0
