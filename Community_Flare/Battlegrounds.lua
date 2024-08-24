@@ -2099,6 +2099,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- mercenary queue?
+				local mercenary = ""
 				if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
 					-- set mercenary text
 					mercenary = strformat("%s ", L["Mercenary"])
