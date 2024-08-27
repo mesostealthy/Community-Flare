@@ -20,6 +20,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v1.16.002 features:
+-BUGFIX: Fixed some more LUA bugs found, this time relating to Brawls.
+
 v1.16.001 features:
 -New Version Check Feature: Shows a message if it detects someone with a newer version of Community Flare.
 -New /comf find inactivity to search Community Member database for members not active more than 60 days.

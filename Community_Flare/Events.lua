@@ -1248,7 +1248,7 @@ function NS.CommFlare:CHAT_MSG_SYSTEM(msg, ...)
 	-- notify system has been enabled?
 	elseif (text == PVP_REPORT_AFK_SYSTEM_ENABLED) then
 		-- restrict pings?
-		if (NS.charDB.profile.restrictPings) then
+		if (NS.charDB.profile.restrictPings and (NS.charDB.profile.restrictPings > 0)) then
 			-- does player have raid leadership or assistant?
 			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 			if (NS.CommFlare.CF.PlayerRank > 0) then
@@ -2580,6 +2580,17 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 								-- allowed
 								decline = false
 							end
+						else
+							-- list of allowed quests
+							local allowedQuests = {
+								[47148] = true, -- Something Different (Seasonal)
+							}
+
+							-- allowed quest?
+							if (allowedQuests[NS.CommFlare.CF.QuestID] and (allowedQuests[NS.CommFlare.CF.QuestID] == true)) then
+								-- allowed
+								decline = false
+							end
 						end
 					end
 				end
@@ -3382,9 +3393,6 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 	elseif (lower == "vignettes") then
 		-- list all Vignette's
 		NS:List_Vignettes()
-	elseif (lower == "test") then
-		local leaders = NS:Get_Leaders_Text()
-		DevTools_Dump(leaders)
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)

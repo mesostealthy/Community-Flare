@@ -2765,8 +2765,18 @@ function NS:Get_Current_Queues_Text()
 	-- process all
 	local text = nil
 	for k,v in pairs(NS.CommFlare.CF.LocalQueues) do
+		-- brawl?
+		local status, mapName = nil, nil
+		if (k == "Brawl") then
+			-- use settings
+			mapName = v.name
+			status = v.status
+		else
+			-- get current status / map name
+			status, mapName = GetBattlefieldStatus(k)
+		end
+
 		-- queued and tracked?
-		local status, mapName = GetBattlefieldStatus(k)
 		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 		if ((status == "queued") and (isTracked == true)) then
 			-- calculate time

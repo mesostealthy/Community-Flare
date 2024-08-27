@@ -483,12 +483,15 @@ end
 
 -- readd community chat window
 function NS:ReaddCommunityChatWindow(clubId, streamId)
-	-- remove channel
-	local channel, chatFrameID = Chat_GetCommunitiesChannel(clubId, streamId)
-	if (not channel and not chatFrameID) then
+	-- not given?
+	if (not clubId or not streamId) then
 		-- failed
 		return
-	elseif (not channel) then
+	end
+
+	-- remove channel
+	local channel, chatFrameID = Chat_GetCommunitiesChannel(clubId, streamId)
+	if (not channel) then
 		-- add channel
 		ChatFrame_AddNewCommunitiesChannel(1, clubId, streamId, nil)
 	elseif (not chatFrameID or (chatFrameID == 0)) then
