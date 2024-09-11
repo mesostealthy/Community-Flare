@@ -20,6 +20,13 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v1.17.001
+-FEATURE: Show Raid Warning if you try casting Notorious Thread's Hearthstone inside a Battleground.
+-FEATURE: Show Raid Warning if you try casting Teleport: Dornogal inside a Battleground.
+-New setting to treat your Guild Members as if they are Community Members.
+-Block game menu hotkeys inside PVP content will now block inside Brawls.
+-Community Counts displayed are now sorted alphabetically.
+
 v1.16.002 features:
 -BUGFIX: Fixed some more LUA bugs found, this time relating to Brawls.
 

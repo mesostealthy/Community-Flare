@@ -1,6 +1,8 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                        = _G
@@ -21,6 +23,7 @@ local GetNumGroupMembers                        = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                     = _G.GetNumSubgroupMembers
 local GetTime                                   = _G.GetTime
 local IsInGroup                                 = _G.IsInGroup
+local IsInGuild                                 = _G.IsInGuild
 local IsInRaid                                  = _G.IsInRaid
 local PromoteToLeader                           = _G.PromoteToLeader
 local SendChatMessage                           = _G.SendChatMessage
@@ -52,16 +55,19 @@ local SocialQueueGetGroupForPlayer              = _G.C_SocialQueue.GetGroupForPl
 local TimerAfter                                = _G.C_Timer.After
 local pairs                                     = _G.pairs
 local time                                      = _G.time
+local tonumber                                  = _G.tonumber
 local type                                      = _G.type
 local mfloor                                    = _G.math.floor
 local strformat                                 = _G.string.format
 local strgmatch                                 = _G.string.gmatch
+local strgsub                                   = _G.string.gsub
 local strmatch                                  = _G.string.match
+local strsplit                                  = _G.string.split
 local strsub                                    = _G.string.sub
 local tinsert                                   = _G.table.insert
 
 -- hearth stone spells
-NS.HearthStoneSpells = {
+NS.CommFlare.HearthStoneSpells = {
 	[8690] = "Hearthstone",
 	[39937] = "There's No Place Like Home",
 	[75136] = "Ethereal Portal",
@@ -88,13 +94,16 @@ NS.HearthStoneSpells = {
 	[367013] = "Broker Translocation Matrix",
 	[375357] = "Timewalker's Hearthstone",
 	[391042] = "Ohn'ir Windsage's Hearthstone",
+	[412555] = "Path of the Naaru",
 	[420418] = "Deepdweller's Earthen Hearthstone",
 	[422284] = "Hearthstone of the Flame",
 	[431644] = "Stone of the Hearth",
+	[438606] = "Draenic Hologem",
+	[463481] = "Notorious Thread's Hearthstone",
 }
 
 -- teleport spells
-NS.TeleportSpells = {
+NS.CommFlare.TeleportSpells = {
 	[556] = "Astral Recall",
 	[3561] = "Teleport: Stormwind",
 	[3562] = "Teleport: Ironforge",
@@ -152,6 +161,7 @@ NS.TeleportSpells = {
 	[344587] = "Teleport: Oribos",
 	[395277] = "Teleport: Valdrakken",
 	[406714] = "Scroll of Teleport: Zskera Vaults",
+	[446540] = "Teleport: Dornogal",
 }
 
 -- global function (check if dragon riding available)
@@ -182,6 +192,73 @@ function CommunityFlare_GetVar(name)
 
 	-- nothing
 	return nil
+end
+
+-- compare versions
+function NS:Compare_Version(version2)
+	-- get version parts
+	local major2, minor2, build2 = strsplit(".", version2)
+	local major1, minor1, build1 = strsplit(".", NS.CommFlare.Version)
+
+	-- remove all letters
+	major1 = strgsub(major1, "[a-zA-z]", "")
+	minor1 = strgsub(minor1, "[a-zA-z]", "")
+	build1 = strgsub(build1, "[a-zA-z]", "")
+	major2 = strgsub(major2, "[a-zA-z]", "")
+	minor2 = strgsub(minor2, "[a-zA-z]", "")
+	build2 = strgsub(build2, "[a-zA-z]", "")
+
+	-- major version updated?
+	local updated = nil
+	if (major1 ~= major2) then
+		-- newer version?
+		if (tonumber(major2) > tonumber(major1)) then
+			-- newer
+			updated = true
+		else
+			-- older
+			updated = false
+		end
+	end
+
+	-- needs further checking?
+	if (updated == nil) then
+		-- minor version updated?
+		if (minor1 ~= minor2) then
+			--- newer version?
+			if (tonumber(minor2) > tonumber(minor1)) then
+				-- newer
+				updated = true
+			else
+				-- older
+				updated = false
+			end
+		end
+	end
+
+	-- needs further checking?
+	if (updated == nil) then
+		-- build version updated?
+		if (build1 ~= build2) then
+			-- newer version?
+			if (tonumber(build2) > tonumber(build1)) then
+				-- newer
+				updated = true
+			else
+				-- older
+				updated = false
+			end
+		end
+	end
+
+	-- not updated?
+	if (not updated and (updated ~= true)) then
+		-- older
+		return false
+	else
+		-- newer
+		return true
+	end
 end
 
 -- format number (K/M/B with 2 decimals)
@@ -463,12 +540,28 @@ end
 function NS:SendMessage(sender, msg)
 	-- party?
 	if (not sender) then
-		-- send to party chat
+		-- send to party
 		SendChatMessage(msg, "PARTY")
 	-- string?
 	elseif (type(sender) == "string") then
+		-- guild?
+		if (sender == "GUILD") then
+			-- send to guild
+			SendChatMessage(msg, "GUILD")
+		-- instance?
+		elseif (sender == "INSTANCE") then
+			-- send to instance chat
+			SendChatMessage(msg, "INSTANCE_CHAT")
+		-- party?
+		elseif (sender == "PARTY") then
+			-- send to party
+			SendChatMessage(msg, "PARTY")
+		-- raid?
+		elseif (sender == "RAID") then
+			-- send to raid
+			SendChatMessage(msg, "RAID")
 		-- raid warning?
-		if (sender == "RAID_WARNING") then
+		elseif (sender == "RAID_WARNING") then
 			-- send to raid warning
 			SendChatMessage(msg, "RAID_WARNING")
 		else
@@ -476,7 +569,7 @@ function NS:SendMessage(sender, msg)
 			SendChatMessage(msg, "WHISPER", nil, sender)
 		end
 	elseif (type(sender) == "number") then
-		-- send to Battle.NET whisper
+		-- send to Battle.NET
 		BNSendWhisper(sender, msg)
 	end
 end
@@ -1136,6 +1229,15 @@ StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
 				if ((id > 0) and (name ~= nil)) then
 					-- send channel messsage (hardware click acquired)
 					SendChatMessage(message, "CHANNEL", nil, id)
+
+					-- treat guild as community?
+					if (NS.charDB.profile.addGuildMembers == true) then
+						-- are you in a guild?
+						if (IsInGuild() == true) then
+							-- send message
+							NS:SendMessage("GUILD", message)
+						end
+					end
 				end
 			end
 		end

@@ -1,7 +1,7 @@
 ## Interface: 110002
 ## Title: Community Flare
-## Version: v1.16.002
-## X-Build: 116002
+## Version: v1.17.001
+## X-Build: 117002
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB
@@ -34,6 +34,7 @@ Locales\enUS.lua
 Locales\frFR.lua
 
 Bootstrap.lua
+Constants.lua
 Config.lua
 Battlegrounds.lua
 Database.lua

@@ -1,6 +1,8 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
@@ -66,64 +68,10 @@ local strsplit                                  = _G.string.split
 local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
 
--- initialize epic battlegrounds
-NS.EpicBattlegrounds = {
-	["Random Epic Battleground"] = { id = 1, prefix = "EPIC" },
-	["Alterac Valley"] = { id = 2, prefix = "AV" },
-	["Isle of Conquest"] = { id = 3, prefix = "IOC" },
-	["Battle for Wintergrasp"] = { id = 4, prefix = "WG" },
-	["Wintergrasp"] = { id = 4, prefix = "WG" },
-	["Ashran"] = { id = 5, prefix = "ASH" },
-	["Korrak's Revenge"] = { id = 6, prefix = "KR" },
-}
-
--- initialize random battlegrounds
-NS.RandomBattlegrounds = {
-	["Random Battleground"] = { id = 1, prefix = "RBG" },
-	["Warsong Gulch"] = { id = 2, prefix = "WSG" },
-	["Arathi Basin"] = { id = 3, prefix = "AB" },
-	["Eye of the Storm"] = { id = 4, prefix = "EOTS" },
-	["The Battle for Gilneas"] = { id = 5, prefix = "BFG" },
-	["Twin Peaks"] = { id = 6, prefix = "TWP" },
-	["Silvershard Mines"] = { id = 7, prefix = "SSM" },
-	["Temple of Kotmogu"] = { id = 8, prefix = "TOK" },
-	["Seething Shore"] = { id = 9, prefix = "SSH" },
-	["Deepwind Gorge"] = { id = 10, prefix = "DWG" },
-}
-
--- initialize brawls
-NS.Brawls = {
-	["Brawl: Arathi Blizzard"] = { id = 1, prefix = "BLIZZ" },
-	["Arathi Basin Winter"] = { id = 1, prefix = "BLIZZ" },
-	["Brawl: Classic Ashran"] = { id = 2, prefix = "CLASH" },
-	["Classic Ashran"] = { id = 2, prefix = "CLASH" },
-	["Brawl: Comp Stomp"] = { id = 3, prefix = "COMP" },
-	["Comp Stomp"] = { id = 3, prefix = "COMP" },
-	["Brawl: Cooking: Impossible"] = { id = 4, prefix = "COOK" },
-	["Cooking: Impossible"] = { id = 4, prefix = "COOK" },
-	["Brawl: Deep Six"] = { id = 5, prefix = "DEEP" },
-	["Deep Six"] = { id = 5, prefix = "DEEP" },
-	["Brawl: Deepwind Dunk"] = { id = 6, prefix = "DUNK" },
-	["Deepwind Dunk"] = { id = 6, prefix = "DUNK" },
-	["Brawl: Gravity Lapse"] = { id = 7, prefix = "GRAV" },
-	["Gravity Lapse"] = { id = 7, prefix = "GRAV" },
-	["Brawl: Packed House"] = { id = 8, prefix = "PACK" },
-	["Packed House"] = { id = 8, prefix = "PACK" },
-	["All Arenas"] = { id = 8, prefix = "PACK" },
-	["Brawl: Shado-Pan Showdown"] = { id = 9, prefix = "SHAD" },
-	["Shado-Pan Showdown"] = { id = 9, prefix = "SHAD" },
-	["Brawl: Southshore vs. Tarren Mill"] = { id = 10, prefix = "SSvTM" },
-	["Southshore vs. Tarren Mill"] = { id = 10, prefix = "SSvTM" },
-	["Brawl: Temple of Hotmogu"] = { id = 11, prefix = "BRTOH" },
-	["Temple of Hotmogu"] = { id = 11, prefix = "BRTOH" },
-	["Brawl: Warsong Scramble"] = { id = 12, prefix = "BRWSG" },
-	["Warsong Scramble"] = { id = 12, prefix = "BRWSG" },
-}
-
 -- is epic battleground?
 function NS:IsEpicBG(name)
 	-- check from name
-	if (NS.EpicBattlegrounds[name] and (NS.EpicBattlegrounds[name].id > 0)) then
+	if (NS.CommFlare.EpicBattlegrounds[name] and (NS.CommFlare.EpicBattlegrounds[name].id > 0)) then
 		-- yup
 		return true
 	end
@@ -135,7 +83,7 @@ end
 -- is random battleground?
 function NS:IsRandomBG(name)
 	-- check from name
-	if (NS.RandomBattlegrounds[name] and (NS.RandomBattlegrounds[name].id > 0)) then
+	if (NS.CommFlare.RandomBattlegrounds[name] and (NS.CommFlare.RandomBattlegrounds[name].id > 0)) then
 		-- yup
 		return true
 	end
@@ -147,7 +95,7 @@ end
 -- is brawl?
 function NS:IsBrawl(name)
 	-- check from name
-	if (NS.Brawls[name] and (NS.Brawls[name].id > 0)) then
+	if (NS.CommFlare.Brawls[name] and (NS.CommFlare.Brawls[name].id > 0)) then
 		-- yup
 		return true
 	end
@@ -161,15 +109,15 @@ function NS:GetBGID(name)
 	-- epic battleground?
 	if (NS:IsEpicBG(name) == true) then
 		-- return id
-		return NS.EpicBattlegrounds[name].id
+		return NS.CommFlare.EpicBattlegrounds[name].id
 	-- random battleground?
 	elseif (NS:IsRandomBG(name) == true) then
 		-- return id
-		return NS.RandomBattlegrounds[name].id
+		return NS.CommFlare.RandomBattlegrounds[name].id
 	-- brawl?
 	elseif (NS:IsBrawl(name) == true) then
 		-- return id
-		return NS.Brawls[name].id
+		return NS.CommFlare.Brawls[name].id
 	else
 		-- invalid
 		return nil
@@ -198,15 +146,15 @@ function NS:GetBGPrefix(name)
 	-- epic battleground?
 	if (NS:IsEpicBG(name) == true) then
 		-- return prefix
-		return NS.EpicBattlegrounds[name].prefix
+		return NS.CommFlare.EpicBattlegrounds[name].prefix
 	-- random battleground?
 	elseif (NS:IsRandomBG(name) == true) then
 		-- return prefix
-		return NS.RandomBattlegrounds[name].prefix
+		return NS.CommFlare.RandomBattlegrounds[name].prefix
 	-- brawl?
 	elseif (NS:IsBrawl(name) == true) then
 		-- return prefix
-		return NS.Brawls[name].prefix
+		return NS.CommFlare.Brawls[name].prefix
 	end
 
 	-- invalid
@@ -266,8 +214,8 @@ end
 
 -- get player raid rank
 function NS:GetRaidRank(player)
-	-- inside battleground?
-	if (PvPIsBattleground() == true) then
+	-- inside battleground / brawl?
+	if ((PvPIsBattleground() == true) or (PvPIsInBrawl() == true)) then
 		-- process all raid members
 		for i=1, MAX_RAID_MEMBERS do
 			-- get name / rank
@@ -952,12 +900,14 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	-- initialize community stuff
 	NS.CommFlare.CF.CommCount = 0
 	NS.CommFlare.CF.CommCounts = {}
+	NS.CommFlare.CF.CommCountsList = {}
 	NS.CommFlare.CF.CommNames = {}
 	NS.CommFlare.CF.CommNamesList = {}
 
 	-- initialize mercenary stuff
 	NS.CommFlare.CF.MercCount = 0
 	NS.CommFlare.CF.MercCounts = {}
+	NS.CommFlare.CF.MercCountsList = {}
 	NS.CommFlare.CF.MercNames = {}
 	NS.CommFlare.CF.MercNamesList = {}
 
@@ -1289,15 +1239,38 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				-- found mercenary counts?
 				if (NS.CommFlare.CF.MercCounts and next(NS.CommFlare.CF.MercCounts)) then
 					-- build count list
-					local list = nil
 					for k,v in pairs(NS.CommFlare.CF.MercCounts) do
-						-- has community?
-						if (NS.globalDB.global.clubs[k] and NS.globalDB.global.clubs[k].name) then
+						-- verify club name
+						local club = NS.globalDB.global.clubs[k]
+						if (not club or not club.name) then
+							-- clear count
+							NS.CommFlare.CF.MercCounts[k] = nil
+						else
+							-- guild?
+							if (club.clubType == Enum.ClubType.Guild) then
+								-- guild
+								club.name = strformat("%s (Guild)", club.name)
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s:%d", club.name, tonumber(v)))
+						end
+					end
+
+					-- sort
+					tsort(NS.CommFlare.CF.MercCountsList)
+
+					-- build count list
+					local list = nil
+					for k,v in ipairs(NS.CommFlare.CF.MercCountsList) do
+						-- get name / count
+						local name, count = strsplit(":", v)
+						if (name and count) then
 							-- add to list
 							if (list == nil) then
-								list = strformat("%s = %d", NS.globalDB.global.clubs[k].name, tonumber(v))
+								list = strformat("%s = %d", name, tonumber(count))
 							else
-								list = strformat("%s, %s = %d", list, NS.globalDB.global.clubs[k].name, tonumber(v))
+								list = strformat("%s, %s = %d", list, name, tonumber(count))
 							end
 						end
 					end
@@ -1356,15 +1329,38 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				-- found community counts?
 				if (NS.CommFlare.CF.CommCounts and next(NS.CommFlare.CF.CommCounts)) then
 					-- build count list
-					local list = nil
 					for k,v in pairs(NS.CommFlare.CF.CommCounts) do
-						-- has community?
-						if (NS.globalDB.global.clubs[k] and NS.globalDB.global.clubs[k].name) then
+						-- verify club name
+						local club = NS.globalDB.global.clubs[k]
+						if (not club or not club.name) then
+							-- clear count
+							NS.CommFlare.CF.CommCounts[k] = nil
+						else
+							-- guild?
+							if (club.clubType == Enum.ClubType.Guild) then
+								-- guild
+								club.name = strformat("%s (Guild)", club.name)
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s:%d", club.name, tonumber(v)))
+						end
+					end
+
+					-- sort
+					tsort(NS.CommFlare.CF.CommCountsList)
+
+					-- build count list
+					local list = nil
+					for k,v in pairs(NS.CommFlare.CF.CommCountsList) do
+						-- get name / count
+						local name, count = strsplit(":", v)
+						if (name and count) then
 							-- add to list
 							if (list == nil) then
-								list = strformat("%s = %d", NS.globalDB.global.clubs[k].name, tonumber(v))
+								list = strformat("%s = %d", name, tonumber(count))
 							else
-								list = strformat("%s, %s = %d", list, NS.globalDB.global.clubs[k].name, tonumber(v))
+								list = strformat("%s, %s = %d", list, name, tonumber(count))
 							end
 						end
 					end
@@ -1438,16 +1434,19 @@ function NS:Match_Started_Log_Roster()
 	if (NS.CommFlare.CF.LogListCount > 0) then
 		-- already logged?
 		if (NS.CommFlare.CF.MatchStartLogged == true) then
-			-- has match start / end times?
-			if (NS.CommFlare.CF.MatchEndTime > 0) then
+			-- valid start / end times?
+			if ((NS.CommFlare.CF.MatchEndTime > 0) and (NS.CommFlare.CF.MatchEndTime > NS.CommFlare.CF.MatchStartTime))then
 				-- calculate time
 				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.MatchEndTime - NS.CommFlare.CF.MatchStartTime
 				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
 				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
 
-				-- save duration
+				-- valid list?
 				local index = #NS.globalDB.global.matchLogList
-				NS.globalDB.global.matchLogList[index].duration = strformat("%d minutes, %d seconds", NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
+				if (index and (index > 0)) then
+					-- save duration
+					NS.globalDB.global.matchLogList[index].duration = strformat("%d minutes, %d seconds", NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
+				end
 			end
 
 			-- finished
@@ -1939,14 +1938,22 @@ function NS:Report_Joined_With_Estimated_Time(index)
 	-- clear role chosen table
 	NS.CommFlare.CF.RoleChosen = {}
 
+	-- community reporter not enabled?
+	if (NS.charDB.profile.communityReporter ~= true) then
+		-- finished
+		return
+	end
+
 	-- brawl?
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	if (index == "Brawl") then
 		-- get brawl info
 		local brawlInfo
 		if (PvPIsInBrawl() == true) then
+			-- get active brawl info
 			brawlInfo = PvPGetActiveBrawlInfo()
 		else
+			-- get available brawl info
 			brawlInfo = PvPGetAvailableBrawlInfo()
 		end
 
@@ -1958,7 +1965,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(LE_LFG_CATEGORY_BATTLEFIELD)
 			if (hasData and averageWait) then
 				-- get estimated time
-				local shouldReport = false
 				NS.CommFlare.CF.Timer.MilliSeconds = averageWait * 1000
 
 				-- calculate minutes / seconds
@@ -2038,7 +2044,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		if (isTracked == true) then
 			-- get estimated time
 			local text = ""
-			local shouldReport = false
 			local count = NS:GetGroupCount()
 			NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldEstimatedWaitTime(index)
 			if (NS.CommFlare.CF.Timer.MilliSeconds > 0) then
@@ -2378,7 +2383,7 @@ function NS:Update_Battlefield_Status(index)
 								text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
 							end
 
-							-- popped
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
@@ -2438,9 +2443,9 @@ function NS:Update_Battlefield_Status(index)
 							-- finalize text
 							local count = NS:GetGroupCount()
 							local level = UnitLevel("player")
-							local text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Popped for"], mapName)
+							local text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Queue for"], mapName)
 
-							-- dropped
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
@@ -2481,16 +2486,19 @@ function NS:Update_Battlefield_Status(index)
 					local guids = strformat("%s,%s", leaderGUID, partyGUID)
 					NS:BNPushData(strformat("!CF@%s@%s@Queue@Missed@%s@%d@%s@%s", NS.CommFlare.Version, NS.CommFlare.Build, mapName, timestamp, count, guids))
 
-					-- are you in a party?
-					if (IsInGroup() and not IsInRaid()) then
-						-- send party message
-						NS:SendMessage(nil, text)
-					end
-
 					-- community reporter enabled?
 					if (NS.charDB.profile.communityReporter == true) then
-						-- send to community?
-						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
+						-- are you in a party?
+						if (IsInGroup() and not IsInRaid()) then
+							-- send party message
+							NS:SendMessage(nil, text)
+						end
+
+						-- community reporter enabled?
+						if (NS.charDB.profile.communityReporter == true) then
+							-- send to community
+							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
+						end
 					end
 				end
 
@@ -2606,7 +2614,7 @@ function NS:Update_Brawl_Status()
 									text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
 								end
 
-								-- popped
+								-- send to community
 								NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 							end
 						end
@@ -2644,7 +2652,9 @@ function NS:Update_Brawl_Status()
 							-- dropped
 							local count = NS:GetGroupCount()
 							local level = UnitLevel("player")
-							local text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Popped for"], mapName)
+							local text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
+
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
@@ -2669,16 +2679,30 @@ function NS:Update_Brawl_Status()
 							-- missed
 							local level = UnitLevel("player")
 							local text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
+
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
 				-- entered?
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "entered") then
 					-- are you in a party?
+					local text = strformat(L["Entered Queue For Popped %s!"], mapName)
 					if (IsInGroup() and not IsInRaid()) then
 						-- send party message
-						local text = strformat(L["Entered Queue For Popped %s!"], mapName)
 						NS:SendMessage(nil, text)
+					end
+
+					-- community reporter enabled?
+					if (NS.charDB.profile.communityReporter == true) then
+						-- treat guild as community?
+						if (NS.charDB.profile.addGuildMembers == true) then
+							-- are you in a guild?
+							if (IsInGuild() == true) then
+								-- send message
+								NS:SendMessage("GUILD", text)
+							end
+						end
 					end
 				-- rejected?
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
@@ -2700,14 +2724,14 @@ function NS:Update_Brawl_Status()
 
 					-- community reporter enabled?
 					if (NS.charDB.profile.communityReporter == true) then
-						-- send to community?
-						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-					end
+						-- are you in a party?
+						if (IsInGroup() and not IsInRaid()) then
+							-- send party message
+							NS:SendMessage(nil, text)
+						end
 
-					-- are you in a party?
-					if (IsInGroup() and not IsInRaid()) then
-						-- send party message
-						NS:SendMessage(nil, text)
+						-- send to community
+						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 					end
 
 					-- has social queue?

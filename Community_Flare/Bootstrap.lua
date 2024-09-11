@@ -1,6 +1,8 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L) then return end
 
 -- localize stuff
 local _G                                        = _G
@@ -32,6 +34,7 @@ NS.Libs = {
 
 -- initialize
 NS.CommFlare = NS.Libs.AceAddon:NewAddon(ADDON_NAME, "AceComm-3.0", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
+if (not NS.CommFlare) then return end
 NS.CommFlare.CF = {
 	-- strings
 	MapName = L["N/A"],
@@ -69,6 +72,7 @@ NS.CommFlare.CF = {
 	EnteredTime = 0,
 	EstimatedWaitTime = 0,
 	Expiration = 0,
+	GuildID = 0,
 	HideIndex = 0,
 	IsHealer = 0,
 	IsTank = 0,
@@ -106,12 +110,12 @@ NS.CommFlare.CF = {
 	ClubList = {},
 	ClubMembers = {},
 	CommCounts = {},
+	CommCountsList = {},
 	CommNames = {},
 	CommNamesList = {},
 	CommunityLeaders = {},
 	CurrentPopped = {},
 	FullRoster = {},
-	InternalCommands = {},
 	LocalData = {},
 	LocalQueues = {},
 	LogListNamesList = {},
@@ -119,6 +123,7 @@ NS.CommFlare.CF = {
 	MemberInfo = {},
 	MenuData = {},
 	MercCounts = {},
+	MercCountsList = {},
 	MercNames = {},
 	MercNamesList = {},
 	PartyVersions = {},
@@ -210,36 +215,12 @@ local function hook_HandlePendingInviteConfirmation(invite)
 	end
 end
 
--- handle floating chat frame events
-local function hook_FloatingChatFrameManager_OnEvent(self, event, ...)
-	-- internal command?
-	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
-	if (text:find("!CF@")) then
-		-- normal whisper?
-		if (event == "CHAT_MSG_WHISPER") then
-			-- handle commands
-			NS:Handle_Internal_Commands(event, sender, text, ...)
-		-- Battle.NET whisper?
-		elseif (event == "CHAT_MSG_BN_WHISPER") then
-			-- handle commands
-			NS:Handle_Internal_Commands(event, bnSenderID, text, ...)
-		end
-	-- afk?
-	elseif (event == "CHAT_MSG_AFK") then
-		-- nothing
-	else
-		-- call original
-		NS.CommFlare.hooks[FloatingChatFrameManager].OnEvent(self, event, ...)
-	end
-end
-
 -- global defaults
 NS.GlobalDefaults = {
 	-- global
 	global = {
 		-- tables
 		clubs = {},
-		commandsLog = {},
 		history = {},
 		matchLogList = {},
 		members = {},
@@ -261,7 +242,6 @@ function NS.CommFlare:OnInitialize()
 	NS.Libs.AceConfig:RegisterOptionsTable("CommFlare_Profiles", NS.profiles)
 	self.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Profiles", "Profiles", NS.CommFlare.Title)
 	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
-	NS.CommFlare:RawHookScript(FloatingChatFrameManager, "OnEvent", hook_FloatingChatFrameManager_OnEvent, true)
 
 	-- check for old string values?
 	if (type(NS.charDB.profile.blockSharedQuests) == "string") then

@@ -34,7 +34,7 @@ L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"] = true
 L["Deepwind Gorge"] = true
 L["Defense"] = true
 L["Destroyed"] = true
-L["Dropped Popped for"] = true
+L["Dropped Queue for"] = true
 L["East"] = true
 L["Entered Mercenary Queue For Popped %s!"] = true
 L["Entered Queue For Popped %s!"] = true
@@ -148,6 +148,7 @@ L["Display notification for popped groups?"] = true
 L["Enable debug mode to help debug issues?"] = true
 L["Enable some debug printing to general window to help debug issues?"] = true
 L["Fast (360)"] = true
+L["Guild Members?"] = true
 L["Invite Options"] = true
 L["Irrelevant"] = true
 L["Leaders Only"] = true
@@ -192,11 +193,13 @@ L["This will provide a quick popup message for you to send your queue status to 
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = true
 L["This will set the maximum party members you want in your group."] = true
 L["This will show a raid warning to you when you are given leadership of your party."] = true
+L["This will treat your Guild Members as Community Members."] = true
 L["Uninvite any players that are AFK?"] = true
 L["Use this to refresh the members database from currently selected communities."] = true
 L["Use this to totally rebuild the members database from currently selected communities."] = true
 L["Warn before hearth stoning or teleporting inside a battleground?"] = true
 L["Warn if/when queues become paused?"] = true
+L["You are not currently in a Guild."] = true
 
 -- Database.lua
 L["-%s = %d member/s"] = true
@@ -318,25 +321,3 @@ L["Request Party Leader"] = true
 -- Social.lua
 L["%s: Group%d = %d Members"] = true
 L["Community Leader %s has queued for %s. You should probably queue up now too!"] = true
-
--- Transmission.lua
-L["%s: %s does not have the Deserter debuff."] = true
-L["%s: %s has %s"] = true
-L["%s: %s has entered popped queue for %s with %s members."] = true
-L["%s: %s has left popped queue for %s with %s members."] = true
-L["%s: %s has Mercenary Contract enabled."] = true
-L["%s: %s has Mercenary Contract disabled."] = true
-L["%s: %s has no queues found."] = true
-L["%s: %s has queue for %s-%s for %s with %d/5 members."] = true
-L["%s: %s has queue pop for %s with %s members."] = true
-L["%s: %s has the Deserter debuff."] = true
-L["%s: %s has version %s (%s)"] = true
-L["%s: %s is not in queue."] = true
-L["%s: %s is in %s. (Map ID = %s)"] = true
-L["%s: %s is in %s for %d minutes, %d seconds. (Active Time: %d minutes, %d seconds.)"] = true
-L["%s: %s is in party with %d players."] = true
-L["%s: %s is in raid with %d players."] = true
-L["%s: %s is not in any party or raid."] = true
-L["%s: %s is popped for %s for %d minutes, %d seconds. (Count: %s.)"] = true
-L["%s: %s is queued for %s for %d minutes, %d seconds. (Estimated Wait: %d minutes, %d seconds.)"] = true
-L["%s: %s is still queued for %s with %s members."] = true

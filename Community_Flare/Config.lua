@@ -1,11 +1,14 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
+local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local ReloadUI                                  = _G.C_UI.Reload
 local ipairs                                    = _G.ipairs
@@ -16,6 +19,33 @@ local tinsert                                   = _G.table.insert
 
 -- local variables
 local settings_that_require_reload = {}
+
+-- add / remove guild
+local function Set_Add_Guild_Members(info, value)
+	-- has guild?
+	local clubId = ClubGetGuildClubId()
+	if (not clubId) then
+		-- not in guild
+		print(L["You are not currently in a Guild."])
+		return
+	end
+
+	-- save guild id
+	NS.CommFlare.CF.GuildID = clubId
+
+	-- save value
+	NS.charDB.profile.addGuildMembers = value
+
+	-- add members?
+	if (NS.charDB.profile.addGuildMembers == true) then
+		-- add all members
+		NS:Add_All_Club_Members_By_ClubID(clubId)
+	-- remove members?
+	else
+		-- remove all members
+		NS:Remove_All_Club_Members_By_ClubID(clubId)
+	end
+end
 
 -- setup main community list
 local function Setup_Main_Community_List(info)
@@ -418,8 +448,8 @@ local function Set_Force_Tank_Item(info, value)
 	NS:Enforce_PVP_Roles()
 end
 
--- is tank role available?
-local function Set_Force_DPS_Item()
+-- is healer role available?
+local function Check_Healer_Available()
 	-- get available roles
 	local hasTank, hasHealer, hasDPS = UnitGetAvailableRoles("player")
 	if (hasHealer == true) then
@@ -643,9 +673,18 @@ NS.options = {
 			name = L["Community Options"],
 			inline = true,
 			args = {
+				addGuildMembers = {
+					type = "toggle",
+					order = 1,
+					name = L["Guild Members?"],
+					desc = L["This will treat your Guild Members as Community Members."],
+					width = "full",
+					get = function(info) return NS.charDB.profile.addGuildMembers end,
+					set = Set_Add_Guild_Members,
+				},
 				communityMain = {
 					type = "select",
-					order = 1,
+					order = 2,
 					name = L["Main Community?"],
 					desc = L["Choose the main community from your subscribed list."],
 					values = Setup_Main_Community_List,
@@ -654,7 +693,7 @@ NS.options = {
 				},
 				communityList = {
 					type = "multiselect",
-					order = 2,
+					order = 3,
 					name = L["Other Communities?"],
 					desc = L["Choose the other communities from your subscribed list."],
 					values = Setup_Other_Community_List,
@@ -664,7 +703,7 @@ NS.options = {
 				},
 				communityLeadersList = {
 					type = "multiselect",
-					order = 3,
+					order = 4,
 					name = L["Community Leaders?"],
 					desc = L["Choose the communities that you want to build the leaders list from."],
 					values = Setup_Community_List,
@@ -674,26 +713,26 @@ NS.options = {
 				},
 				membersCount = {
 					type = "description",
-					order = 4,
+					order = 5,
 					name = Total_Database_Members,
 				},
 				refreshMembers = {
 					type = "execute",
-					order = 5,
+					order = 6,
 					name = L["Refresh Members?"],
 					desc = L["Use this to refresh the members database from currently selected communities."],
 					func = Refresh_Database_Members,
 				},
 				rebuildMembers = {
 					type = "execute",
-					order = 6,
+					order = 7,
 					name = L["Rebuild Members?"],
 					desc = L["Use this to totally rebuild the members database from currently selected communities."],
 					func = Rebuild_Database_Members_Confirmation,
 				},
 				alwaysReaddChannels = {
 					type = "toggle",
-					order = 7,
+					order = 8,
 					name = L["Always remove, then re-add community channels to general? *EXPERIMENTAL*"],
 					desc = L["This will automatically delete communities channels from general and re-add them upon login."],
 					width = "full",
@@ -842,7 +881,7 @@ NS.options = {
 							order = 2,
 							name = "Healer",
 							desc = "This will always enable the Healer role for PVP Queues.",
-							disabled = Set_Force_DPS_Item,
+							disabled = Check_Healer_Available,
 							get = Get_Force_Healer_Item,
 							set = Set_Force_Healer_Item,
 						},

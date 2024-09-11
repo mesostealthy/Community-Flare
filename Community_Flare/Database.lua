@@ -1,11 +1,14 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local UnitFactionGroup                          = _G.UnitFactionGroup
+local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
 local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
@@ -28,38 +31,6 @@ local strmatch                                  = _G.string.match
 local strsplit                                  = _G.string.split
 local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
-
--- get clubs
-function NS:Get_Clubs_Text()
-	-- count eligible communities
-	local text = nil
-	local player_faction = UnitFactionGroup("player")
-	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
-	for k,v in ipairs(NS.CommFlare.CF.Clubs) do
-		-- community?
-		if (v.clubType == Enum.ClubType.Character) then
-			-- not cross faction?
-			local faction = nil
-			if (v.crossFaction == false) then
-				-- assume same faction as player with club
-				faction = player_faction
-			end
-	
-			-- first?
-			local current = strformat("%s,%s,%s,%s,%s,%s", tostring(v.clubId), tostring(v.name), tostring(v.shortName), tostring(v.memberCount), tostring(v.crossFaction), tostring(faction))
-			if (not text) then
-				-- initialize
-				text = current
-			else
-				-- append
-				text = strformat("%s;%s", text, current)
-			end
-		end 
-	end
-
-	-- return text
-	return text
-end
 
 -- verify default community setup
 function NS:Verify_Default_Community_Setup()
@@ -174,6 +145,14 @@ function NS:Get_Clubs_List()
 			tinsert(clubs, k)
 			count = count + 1
 		end
+	end
+
+	-- treat guild as community?
+	if (NS.charDB.profile.addGuildMembers == true) then
+		-- add guild club id
+		local guildID = ClubGetGuildClubId()
+		tinsert(clubs, guildID)
+		count = count + 1
 	end
 
 	-- none found?
@@ -1019,28 +998,45 @@ function NS:Process_Club_Members()
 
 	-- process clubs
 	for _,clubId in ipairs(clubs) do
-		-- club type is a community?
+		-- found club?
 		local info = ClubGetClubInfo(clubId)
-		if (info and (info.clubType == Enum.ClubType.Character)) then
-			-- add community
-			NS:Add_Community(clubId, info)
-
-			-- process all members
-			local members = ClubGetClubMembers(clubId)
-			for k,v in ipairs(members) do
-				local mi = ClubGetMemberInfo(clubId, v)
-				if ((mi ~= nil) and (mi.name ~= nil)) then
-					-- add member
-					NS:Add_Member(clubId, mi, false)
+		if (info) then
+			-- guild?
+			local shouldProcess = false
+			if (info.clubType == Enum.ClubType.Guild) then
+				-- treat guild as community?
+				NS.CommFlare.CF.GuildID = clubId
+				if (NS.charDB.profile.addGuildMembers == true) then
+					-- process
+					shouldProcess = true
 				end
+			elseif (info.clubType == Enum.ClubType.Character) then
+				-- always process
+				shouldProcess = true
+			end
 
-				-- online?
-				if (mi.presence == Enum.ClubMemberPresence.Online) then
-					-- get community member
-					local member = NS:Get_Community_Member(mi.name)
-					if (member ~= nil) then
-						-- update last seen
-						NS:Update_Last_Seen(member.name)
+			-- should process?
+			if (shouldProcess == true) then
+				-- add community
+				NS:Add_Community(clubId, info)
+
+				-- process all members
+				local members = ClubGetClubMembers(clubId)
+				for k,v in ipairs(members) do
+					local mi = ClubGetMemberInfo(clubId, v)
+					if ((mi ~= nil) and (mi.name ~= nil)) then
+						-- add member
+						NS:Add_Member(clubId, mi, false)
+					end
+
+					-- online?
+					if (mi.presence == Enum.ClubMemberPresence.Online) then
+						-- get community member
+						local member = NS:Get_Community_Member(mi.name)
+						if (member ~= nil) then
+							-- update last seen
+							NS:Update_Last_Seen(member.name)
+						end
 					end
 				end
 			end

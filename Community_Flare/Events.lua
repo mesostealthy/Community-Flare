@@ -1,6 +1,8 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
@@ -69,6 +71,7 @@ local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
 local PvPIsArena                                = _G.C_PvP.IsArena
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
+local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local VignetteInfoGetVignettes                  = _G.C_VignetteInfo.GetVignettes
 local VignetteInfoGetVignetteInfo               = _G.C_VignetteInfo.GetVignetteInfo
 local Settings_OpenToCategory                   = _G.Settings.OpenToCategory
@@ -218,7 +221,7 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 					if (NS:IsGroupLeader() == true) then
 						-- community reporter enabled?
 						if (NS.charDB.profile.communityReporter == true) then
-							-- send to community?
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
@@ -298,8 +301,9 @@ local function hook_MainMenuMicroButton_OnMouseDown()
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
 		-- inside pvp content?
 		local isArena = PvPIsArena()
+		local isBrawl = PvPIsInBrawl()
 		local isBattleground = PvPIsBattleground()
-		if (isArena or isBattleground) then
+		if (isArena or isBattleground or isBrawl) then
 			-- enabled
 			NS.CommFlare.CF.AllowMainMenu = true
 		else
@@ -315,8 +319,9 @@ local function hook_GameMenuFrame_OnShow()
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
 		-- inside pvp content?
 		local isArena = PvPIsArena()
+		local isBrawl = PvPIsInBrawl()
 		local isBattleground = PvPIsBattleground()
-		if (isArena or isBattleground) then
+		if (isArena or isBattleground or isBrawl) then
 			-- blocked?
 			if (NS.CommFlare.CF.AllowMainMenu ~= true) then
 				-- not in combat?
@@ -388,8 +393,9 @@ local function hook_ToggleCharacter(tab, onlyShow)
 			if (NS.CommFlare.CF.AllowCharacterFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -442,8 +448,9 @@ local function hook_ToggleProfessionsBook(bookType)
 			if (NS.CommFlare.CF.AllowProfessionsBookFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -479,8 +486,8 @@ local function hook_PlayerSpellsMicroButton_OnClick(self, ...)
 	end
 end
 
--- process spell book toggle
-local function hook_PlayerSpellsUtil_ToggleSpellBookFrame()
+-- process player spells toggle
+local function hook_PlayerSpellsUtil_TogglePlayerSpellsFrame(suggestedTab, inspectUnit)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
 		-- not shown?
@@ -490,8 +497,9 @@ local function hook_PlayerSpellsUtil_ToggleSpellBookFrame()
 			if (NS.CommFlare.CF.AllowPlayerSpellsFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -505,7 +513,38 @@ local function hook_PlayerSpellsUtil_ToggleSpellBookFrame()
 	-- not in combat lockdown?
 	if (InCombatLockdown() ~= true) then
 		-- call original
-		NS.CommFlare.hooks[PlayerSpellsUtil].ToggleSpellBookFrame()
+		return NS.CommFlare.hooks[PlayerSpellsUtil].TogglePlayerSpellsFrame(suggestedTab, inspectUnit)
+	end
+end
+
+-- process spell book toggle
+local function hook_PlayerSpellsUtil_ToggleSpellBookFrame(spellBookCategory)
+	-- block game menu hot keys enabled?
+	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+		-- not shown?
+		local isShown = PlayerSpellsFrame:IsShown()
+		if (isShown == false) then
+			-- not allowed?
+			if (NS.CommFlare.CF.AllowPlayerSpellsFrame == false) then
+				-- inside pvp content?
+				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
+				local isBattleground = PvPIsBattleground()
+				if (isArena or isBattleground or isBrawl) then
+					-- finished
+					return
+				end
+			end
+		end	
+
+		-- disabled
+		NS.CommFlare.CF.AllowPlayerSpellsFrame = false
+	end
+
+	-- not in combat lockdown?
+	if (InCombatLockdown() ~= true) then
+		-- call original
+		NS.CommFlare.hooks[PlayerSpellsUtil].ToggleSpellBookFrame(spellBookCategory)
 	end
 end
 
@@ -520,8 +559,9 @@ local function hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame()
 			if (NS.CommFlare.CF.AllowPlayerSpellsFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -574,8 +614,9 @@ local function hook_ToggleAchievementFrame(stats)
 			if (NS.CommFlare.CF.AllowAchievementFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -628,8 +669,9 @@ local function hook_ToggleGuildFrame()
 			if (NS.CommFlare.CF.AllowGuildFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -676,8 +718,9 @@ local function hook_PVEFrame_ToggleFrame(sidePanelName, selection)
 			if (NS.CommFlare.CF.AllowGroupFinderFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -730,8 +773,9 @@ local function hook_ToggleEncounterJournal(tabIndex)
 			if (NS.CommFlare.CF.AllowAdvGuideFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -784,8 +828,9 @@ local function hook_ToggleCollectionsJournal(tabIndex)
 			if (NS.CommFlare.CF.AllowCollectionsFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -814,8 +859,9 @@ local function hook_ToggleFriendsFrame(tab)
 			if (NS.CommFlare.CF.AllowFriendsFrame == false) then
 				-- inside pvp content?
 				local isArena = PvPIsArena()
+				local isBrawl = PvPIsInBrawl()
 				local isBattleground = PvPIsBattleground()
-				if (isArena or isBattleground) then
+				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
 				end
@@ -853,6 +899,7 @@ function NS:Setup_BlockGameMenuHooks()
 
 	-- hooks to block talent frame inside pvp content
 	NS.CommFlare.CF.AllowPlayerSpellsFrame = false
+	NS.CommFlare:RawHook(PlayerSpellsUtil, "TogglePlayerSpellsFrame", hook_PlayerSpellsUtil_TogglePlayerSpellsFrame, true)
 	NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleSpellBookFrame", hook_PlayerSpellsUtil_ToggleSpellBookFrame, true)
 	NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleClassTalentOrSpecFrame", hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame, true)
 	NS.CommFlare:RawHookScript(PlayerSpellsMicroButton, "OnClick", hook_PlayerSpellsMicroButton_OnClick, true)
@@ -1089,32 +1136,44 @@ function NS:Event_Chat_Message_Party(...)
 	if (NS:GetPlayerName("full") ~= sender) then
 		-- version check?
 		local lower = strlower(text)
-		if (lower == "!cf") then
-			-- send community flare version number
-			NS:SendMessage(nil, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
+		if (lower:find("!cf")) then
+			-- strip (name2chat):
+			lower = strgsub(lower, "[\(](.+)[\)\:] ", "")
+
+			-- exact matches only
+			if (lower == "!cf") then
+				-- send community flare version number
+				NS:SendMessage(nil, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
+			end
 		-- status check?
-		elseif (lower == "!status") then
-			-- are you group leader?
-			if (NS:IsGroupLeader() == true) then
-				-- inside battleground?
-				local timer = 0.0
-				if (PvPIsBattleground() == true) then
-					-- battlefield score needs updating?
-					if (PVPMatchScoreboard.selectedTab ~= 1) then
-						-- request battlefield score
-						SetBattlefieldScoreFaction(-1)
-						RequestBattlefieldScoreData()
+		elseif (lower:find("!status")) then
+			-- strip (name2chat):
+			lower = strgsub(lower, "[\(](.+)[\)\:] ", "")
 
-						-- delay 0.5 seconds
-						timer = 0.5
+			-- exact matches only
+			if (lower == "!status") then
+				-- are you group leader?
+				if (NS:IsGroupLeader() == true) then
+					-- inside battleground?
+					local timer = 0.0
+					if (PvPIsBattleground() == true) then
+						-- battlefield score needs updating?
+						if (PVPMatchScoreboard.selectedTab ~= 1) then
+							-- request battlefield score
+							SetBattlefieldScoreFaction(-1)
+							RequestBattlefieldScoreData()
+
+							-- delay 0.5 seconds
+							timer = 0.5
+						end
 					end
-				end
 
-				-- start processing
-				TimerAfter(timer, function()
-					-- process status check
-					NS:Process_Status_Check(nil)
-				end)
+					-- start processing
+					TimerAfter(timer, function()
+						-- process status check
+						NS:Process_Status_Check(nil)
+					end)
+				end
 			end
 		end
 	end
@@ -1825,8 +1884,10 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 					if ((NS.CommFlare.CF.PreviousCount > 0) and (NS.CommFlare.CF.PreviousCount < maxCount) and (count == maxCount)) then
 						-- community reporter enabled?
 						if (NS.charDB.profile.communityReporter == true) then
-							-- send to community?
+							-- finalize text
 							text = strformat("%s %s!", text, L["Full Now"])
+
+							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
 					end
@@ -2573,6 +2634,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 								[72166] = true, -- Proving in Battle [A]
 								[72167] = true, -- Proving in War [H]
 								[72723] = true, -- A Call to Battle
+								[80186] = true, -- Preserving in War
 							}
 
 							-- allowed quest?
@@ -2771,7 +2833,7 @@ function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 							end
 						end
 
-						-- send to community?
+						-- send to community
 						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 					end
 				end
@@ -2898,14 +2960,14 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 			-- inside battleground?
 			if (PvPIsBattleground() == true) then
 				-- hearthstone?
-				if (NS.HearthStoneSpells[spellID]) then
+				if (NS.CommFlare.HearthStoneSpells[spellID]) then
 					-- raid warning?
 					if (NS.charDB.profile.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to hearthstone?"])
 					end
 				-- teleporting?
-				elseif (NS.TeleportSpells[spellID]) then
+				elseif (NS.CommFlare.TeleportSpells[spellID]) then
 					-- raid warning?
 					if (NS.charDB.profile.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
@@ -3175,16 +3237,9 @@ function NS.CommFlare:Community_Flare_OnCommReceived(prefix, message, distributi
 			elseif (args[3] == "VERSION_CHECK") then
 				-- not already displayed?
 				if (NS.CommFlare.CF.UpgradeDisplayed == false) then
-					-- get version parts
-					local major2, minor2, build2 = strsplit(".", args[2])
-					local major1, minor1, build1 = strsplit(".", NS.CommFlare.Version)
-
-					-- builds not valid?
-					if (not build2) then build2 = 1 end
-					if (not build1) then build1 = 1 end
-
-					-- compare versions
-					if ((major2 ~= major1) or (tonumber(minor2) > tonumber(minor1)) or (tonumber(build2) > tonumber(build1))) then
+					-- updated version?
+					local updated = NS:Compare_Version(args[2])
+					if (updated == true) then
 						-- updated version
 						print(strformat(L["%s version %s update available. Download the latest version from curseforge!"], NS.CommFlare.Title, args[2]))
 

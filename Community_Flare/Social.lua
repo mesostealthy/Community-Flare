@@ -1,6 +1,8 @@
+-- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
@@ -236,22 +238,6 @@ function NS:Find_Social_Queues_By_MapName(text)
 
 	-- return text
 	return text
-end
-
--- count all members for social queues not popped
-function NS:Social_Queues_Count_All_Members_Not_Popped()
-	-- process all
-	local count = 0
-	for k,v in pairs(NS.CommFlare.CF.SocialQueues) do
-		-- not popped?
-		if (v.popped == 0) then
-			-- increase
-			count = count + v.numMembers
-		end
-	end
-
-	-- return count
-	return count
 end
 
 -- process popped
