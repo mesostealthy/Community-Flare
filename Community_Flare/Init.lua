@@ -11,12 +11,12 @@ local BNGetFriendIndex                          = _G.BNGetFriendIndex
 local BNGetNumFriends                           = _G.BNGetNumFriends
 local BNSendGameData                            = _G.BNSendGameData
 local BNSendWhisper                             = _G.BNSendWhisper
-local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
 local Chat_GetCommunitiesChannelName            = _G.Chat_GetCommunitiesChannelName
-local ChatFrame_AddChannel                      = _G.ChatFrame_AddChannel
 local ChatFrame_AddNewCommunitiesChannel        = _G.ChatFrame_AddNewCommunitiesChannel
-local ChatFrame_RemoveChannel                   = _G.ChatFrame_RemoveChannel
+local ChatFrame_ContainsChannel                 = _G.ChatFrame_ContainsChannel
 local ChatFrame_RemoveCommunitiesChannel        = _G.ChatFrame_RemoveCommunitiesChannel
+local FCF_IsChatWindowIndexReserved             = _G.FCF_IsChatWindowIndexReserved
+local FCF_IterateActiveChatWindows              = _G.FCF_IterateActiveChatWindows
 local GetChannelName                            = _G.GetChannelName
 local GetLFGRoleUpdate                          = _G.GetLFGRoleUpdate
 local GetNumGroupMembers                        = _G.GetNumGroupMembers
@@ -47,6 +47,7 @@ local BattleNetGetFriendGameAccountInfo         = _G.C_BattleNet.GetFriendGameAc
 local BattleNetGetFriendNumGameAccounts         = _G.C_BattleNet.GetFriendNumGameAccounts
 local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
+local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
@@ -574,6 +575,93 @@ function NS:SendMessage(sender, msg)
 	end
 end
 
+-- add community chat window (also removes first if already added)
+function NS:AddCommunityChatWindow(clubId, streamId)
+	-- process active chat windows
+	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
+		-- only reserved channel allowed for communities is general
+		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
+			-- finished
+			return
+		end
+
+		-- get community / stream info
+		local streamInfo = ClubGetStreamInfo(clubId, streamId)
+		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
+
+		-- not guild stream and general window?
+		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
+			-- checked?
+			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
+			if (isChecked == true) then
+				-- remove communities channel from chat frame
+				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+			end
+
+			-- add communities chat to chat frame
+			ChatFrame_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId)
+		end
+	end)
+end
+
+-- remove community chat window
+function NS:RemoveCommunityChatWindow(clubId, streamId)
+	-- process active chat windows
+	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
+		-- only reserved channel allowed for communities is general
+		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
+			-- finished
+			return
+		end
+
+		-- get community / stream info
+		local streamInfo = ClubGetStreamInfo(clubId, streamId)
+		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
+
+		-- not guild stream and general window?
+		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
+			-- checked?
+			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
+			if (isChecked == true) then
+				-- remove communities channel from chat frame
+				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+			end
+		end
+	end)
+end
+
+-- toggle community chat window
+function NS:ToggleCommunityChatWindow(clubId, streamId)
+	-- process active chat windows
+	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
+		-- only reserved channel allowed for communities is general
+		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
+			-- finished
+			return
+		end
+
+		-- get community / stream info
+		local streamInfo = ClubGetStreamInfo(clubId, streamId)
+		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
+
+		-- not guild stream and general window?
+		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
+			-- checked?
+			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
+			if (isChecked == true) then
+				-- remove communities channel from chat frame
+				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+			else
+				-- add communities chat to chat frame
+				ChatFrame_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId)
+			end
+		end
+	end)
+end
+
 -- readd community chat window
 function NS:ReaddCommunityChatWindow(clubId, streamId)
 	-- not given?
@@ -582,26 +670,8 @@ function NS:ReaddCommunityChatWindow(clubId, streamId)
 		return
 	end
 
-	-- remove channel
-	local channel, chatFrameID = Chat_GetCommunitiesChannel(clubId, streamId)
-	if (not channel) then
-		-- add channel
-		ChatFrame_AddNewCommunitiesChannel(1, clubId, streamId, nil)
-	elseif (not chatFrameID or (chatFrameID == 0)) then
-		-- remove channel (twice)
-		ChatFrame_RemoveCommunitiesChannel(ChatFrame1, clubId, streamId, false)
-		ChatFrame_RemoveCommunitiesChannel(ChatFrame1, clubId, streamId, false)
-
-		-- add channel
-		ChatFrame_AddNewCommunitiesChannel(1, clubId, streamId, nil)
-	else
-		-- remove channel
-		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
-		ChatFrame_RemoveChannel(ChatFrame1, channelName)
-
-		-- add channel
-		ChatFrame_AddChannel(ChatFrame1, channelName)
-	end
+	-- add community chat  window
+	NS:AddCommunityChatWindow(clubId, streamId)
 end
 
 -- re-add community channels on initial load

@@ -62,6 +62,7 @@ local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local MapCanSetUserWaypointOnMap                = _G.C_Map.CanSetUserWaypointOnMap
 local PartyInfoGetInviteReferralInfo            = _G.C_PartyInfo.GetInviteReferralInfo
+local PartyInfoIsDelveInProgress                = _G.C_PartyInfo.IsDelveInProgress
 local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
 local PartyInfoLeaveParty                       = _G.C_PartyInfo.LeaveParty
 local PartyInfoSetRestrictPings                 = _G.C_PartyInfo.SetRestrictPings
@@ -281,6 +282,25 @@ local function hook_AcceptProposal()
 				NS:SendMessage(nil, strformat(L["Accepted Queue For Popped %s!"], mapName))
 			end
 		end
+	end
+end
+
+-- securely hook leave battlefield
+local function hook_LeaveBattlefield()
+	-- are you in a party?
+	if (IsInGroup() and not IsInRaid()) then
+		-- match completed?
+		local text = ""
+		if (GetBattlefieldWinner()) then
+			-- finalize text
+			text = L["Exited the current match after it concluded."]
+		else
+			-- finalize text
+			text = L["Exited the current match before it concluded."]
+		end
+
+		-- send party message
+		NS:SendMessage(nil, text)
 	end
 end
 
@@ -945,6 +965,7 @@ end
 function NS:SetupHooks()
 	-- hook stuff
 	hooksecurefunc("AcceptBattlefieldPort", hook_AcceptBattlefieldPort)
+	hooksecurefunc("LeaveBattlefield", hook_LeaveBattlefield)
 	hooksecurefunc("AcceptProposal", hook_AcceptProposal)
 	hooksecurefunc("RejectProposal", hook_RejectProposal)
 
@@ -1854,8 +1875,8 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				end
 			end
 		end
-	-- not battleground
-	else
+	-- delve not in progress?
+	elseif (PartyInfoIsDelveInProgress() ~= true) then
 		-- are you in a party?
 		if (IsInGroup() and not IsInRaid()) then
 			-- are you group leader?
@@ -2328,9 +2349,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- update local group
 			NS:Update_Group("local")
 
-			-- refresh club members
-			TimerAfter(10, function() NS:Refresh_Club_Members() end)
-
 			-- inside battleground?
 			NS.CommFlare.CF.MatchStatus = 0
 			if (PvPIsBattleground() == true) then
@@ -2344,6 +2362,15 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 					end
 				end
 			end
+
+			-- should readd community channels?
+			if (NS.charDB.profile.alwaysReaddChannels == true) then
+				-- readd community channels
+				NS:ReaddChannelsInitialLoad()
+			end
+
+			-- refresh club members
+			TimerAfter(10, function() NS:Refresh_Club_Members() end)
 		end
 	end
 
@@ -2672,12 +2699,12 @@ end
 function NS.CommFlare:READY_CHECK(msg, ...)
 	local sender, timeleft = ...
 
-	-- initialize partyX to false if you are leader
+	-- are you in a party?
 	NS.CommFlare.CF.ReadyCheck = {}
 	NS.CommFlare.CF.PartyVersions = {}
-	if (NS:IsGroupLeader() == true) then
-		-- are you in a party?
-		if (IsInGroup() and not IsInRaid()) then
+	if (IsInGroup() and not IsInRaid()) then
+		-- are you group leader?
+		if (NS:IsGroupLeader() == true) then
 			-- send ready check message
 			NS.CommFlare:SendCommMessage(ADDON_NAME, "READY_CHECK", "PARTY")
 		end
@@ -2693,10 +2720,12 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 	-- capable of auto queuing?
 	NS.CommFlare.CF.AutoQueueable = false
 	if (not IsInRaid()) then
+		-- auto queue
 		NS.CommFlare.CF.AutoQueueable = true
 	else
 		-- larger than rated battleground count?
 		if (GetNumGroupMembers() > 10) then
+			-- auto queue
 			NS.CommFlare.CF.AutoQueueable = true
 		end
 	end
@@ -3448,6 +3477,9 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 	elseif (lower == "vignettes") then
 		-- list all Vignette's
 		NS:List_Vignettes()
+	elseif (lower == "test") then
+		-- add community chat window
+		NS:AddCommunityChatWindow(NS.charDB.profile.communityMain, 1)
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)
