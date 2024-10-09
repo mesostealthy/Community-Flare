@@ -6,8 +6,10 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
+local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
+local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local ReloadUI                                  = _G.C_UI.Reload
@@ -410,10 +412,11 @@ local function Set_ReportID(info, value)
 	-- save new value
 	NS.charDB.profile.communityReportID = value
 
-	-- has report ID?
-	if (NS.charDB.profile.communityReportID > 1) then
+	-- verify channel is added for proper reporting
+	local channel, chatFrameID = Chat_GetCommunitiesChannel(value, 1)
+	if (not channel or not chatFrameID) then
 		-- readd community chat window
-		NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
+		NS:ReaddCommunityChatWindow(value, 1)
 	end
 end
 
@@ -510,12 +513,6 @@ local function Total_Database_Members(info)
 	return strformat(L["Database members found: %s"], count)
 end
 
--- refresh database members
-local function Refresh_Database_Members()
-	-- refresh database
-	NS:Refresh_Database()
-end
-
 -- rebuild database members
 local function Rebuild_Database_Members()
 	-- clear lists
@@ -539,6 +536,35 @@ local function Rebuild_Database_Members()
 	else
 		-- no subscribed clubs found
 		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
+	end
+end
+
+-- refrehs database
+local function Refresh_Database_Members()
+	-- get clubs list
+	local clubs = NS:Get_Clubs_List(false)
+	if (not clubs) then
+		-- none
+		print(strformat("%s: No subscribed clubs found.", NS.CommFlare.Title))
+	else
+		-- process clubs
+		for _,clubId in ipairs(clubs) do
+			-- club type is a community?
+			local info = ClubGetClubInfo(clubId)
+			if (info and (info.clubType == Enum.ClubType.Character)) then
+				-- add community
+				NS:Add_Community(clubId, info)
+
+				-- remove all club members
+				NS:Remove_All_Club_Members_By_ClubID(clubId)
+
+				-- add all club members
+				NS:Add_All_Club_Members_By_ClubID(clubId)
+			end
+		end
+
+		-- rebuild community leaders
+		NS:Rebuild_Community_Leaders()
 	end
 end
 
@@ -733,7 +759,7 @@ NS.options = {
 				alwaysReaddChannels = {
 					type = "toggle",
 					order = 8,
-					name = L["Always remove, then re-add community channels to general? *EXPERIMENTAL*"],
+					name = L["Always remove, then re-add community channels to general?"],
 					desc = L["This will automatically delete communities channels from general and re-add them upon login."],
 					width = "full",
 					get = function(info) return NS.charDB.profile.alwaysReaddChannels end,

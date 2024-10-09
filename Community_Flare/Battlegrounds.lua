@@ -47,7 +47,6 @@ local PvPGetActiveMatchDuration                 = _G.C_PvP.GetActiveMatchDuratio
 local PvPGetAvailableBrawlInfo                  = _G.C_PvP.GetAvailableBrawlInfo
 local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
-local PvPIsBattleground                         = _G.C_PvP.IsBattleground
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local TimerAfter                                = _G.C_Timer.After
 local GetDoubleStatusBarWidgetVisualizationInfo = _G.C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
@@ -214,8 +213,8 @@ end
 
 -- get player raid rank
 function NS:GetRaidRank(player)
-	-- inside battleground / brawl?
-	if ((PvPIsBattleground() == true) or (PvPIsInBrawl() == true)) then
+	-- in battleground / brawl?
+	if ((NS:IsInBattleground() == true) or (PvPIsInBrawl() == true)) then
 		-- process all raid members
 		for i=1, MAX_RAID_MEMBERS do
 			-- get name / rank
@@ -260,9 +259,9 @@ end
 
 -- get current roster list
 function NS:Battlefield_Get_Current_Roster(type)
-	-- inside battleground?
+	-- in battleground?
 	local roster = {}
-	if (PvPIsBattleground() == true) then
+	if (NS:IsInBattleground() == true) then
 		-- horde only?
 		if (type:find("Horde")) then
 			-- get horde roster
@@ -720,6 +719,26 @@ function NS:Get_Current_Battleground_Status()
 				-- set proper scores
 				NS.CommFlare.CF.BFG.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
 				NS.CommFlare.CF.BFG.HordeScore = NS.CommFlare.CF.WidgetInfo.rightBarValue
+			end
+		end
+
+		-- success
+		return true
+	-- deephaul ravine?
+	elseif (NS.CommFlare.CF.MapID == 2345) then
+		-- initialize
+		NS.CommFlare.CF.DHR = {}
+		NS.CommFlare.CF.DHR.HordeScore = L["N/A"]
+		NS.CommFlare.CF.DHR.AllianceScore = L["N/A"]
+
+		-- match started?
+		if (NS.CommFlare.CF.MatchStatus ~= 1) then
+			-- 1671 = widgetID for Scores
+			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(5153)
+			if (NS.CommFlare.CF.WidgetInfo) then
+				-- set proper scores
+				NS.CommFlare.CF.DHR.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
+				NS.CommFlare.CF.DHR.HordeScore = NS.CommFlare.CF.WidgetInfo.rightBarValue
 			end
 		end
 
@@ -1498,16 +1517,59 @@ function NS:Process_Pass_Leadership(sender)
 		sender = sender .. "-" .. NS.CommFlare.CF.PlayerServerName
 	end
 
-	-- inside battleground?
-	if (PvPIsBattleground() == true) then
-		-- player is not community leader?
-		if (NS:Is_Community_Leader(player) == false) then
-			-- does player have raid leadership?
-			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-			if (NS.CommFlare.CF.PlayerRank == 2) then
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- does player have raid leadership?
+		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+		if (NS.CommFlare.CF.PlayerRank == 2) then
+			-- player is community leader?
+			local shouldPromote = false
+			if (NS:Is_Community_Leader(player) == true) then
+				-- find community members
+				local member1 = NS:Get_Community_Member(player)
+				local member2 = NS:Get_Community_Member(sender)
+
+				-- player not found?
+				if (not member1) then
+					-- force max priority
+					member1 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
+				-- no priority?
+				elseif (not member1.priority) then
+					-- force max priority
+					member1.priority = NS.CommFlare.CF.MaxPriority
+				end
+
+				-- sender not found?
+				if (not member2) then
+					-- force max priority
+					member2 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
+				-- no priority?
+				elseif (not member2.priority) then
+					-- force max priority
+					member2.priority = NS.CommFlare.CF.MaxPriority
+				end
+
+				-- priority in check?
+				if (member1 and member1.priority and member2 and member2.priority) then
+					-- sender has equal or better priority?
+					if (member1.priority >= member2.priority) then
+						-- should promote
+						shouldPromote = true
+					end
+				end
+			else
 				-- sender is community leader?
 				if (NS:Is_Community_Leader(sender) == true) then
-					-- promote
+					-- should promote
+					shouldPromote = true
+				end
+			end
+
+			-- should promote?
+			if (shouldPromote == true) then
+				-- has shared community?
+				if (NS:Has_Shared_Community(sender) == true) then
+					-- process pass leadership
 					NS:PromoteToRaidLeader(sender)
 				end
 			end
@@ -1564,8 +1626,8 @@ function NS:Process_Auto_Invite(sender)
 	if (type(sender) == "number") then
 		-- battle net auto invite enabled?
 		if (NS.charDB.profile.bnetAutoInvite == true) then
-			-- inside battleground?
-			if (PvPIsBattleground() == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
 				-- can not invite while in a battleground
 				NS:SendMessage(sender, L["Sorry, currently in a battleground now."])
 			-- inside brawl?
@@ -1619,8 +1681,8 @@ function NS:Process_Auto_Invite(sender)
 	else
 		-- community auto invite enabled?
 		if (NS.charDB.profile.communityAutoInvite == true) then
-			-- inside battleground?
-			if (PvPIsBattleground() == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
 				-- can not invite while in a battleground
 				NS:SendMessage(sender, L["Sorry, currently in a battleground now."])
 			-- inside brawl?
@@ -1661,7 +1723,7 @@ end
 -- get battleground status
 function NS:Get_Battleground_Status()
 	-- currently in battleground?
-	if (PvPIsBattleground() == true) then
+	if (NS:IsInBattleground() == true) then
 		-- get current battleground status
 		local text = nil
 		local status = NS:Get_Current_Battleground_Status()
@@ -1892,7 +1954,7 @@ function NS:Process_Status_Check(sender)
 		end
 	end
 
-	-- inside battleground?
+	-- get battleground status?
 	local text = NS:Get_Battleground_Status()
 	if (type(text) == "string") then
 		-- has sender?

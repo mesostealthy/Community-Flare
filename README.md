@@ -20,6 +20,10 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v1.18.001
+-FEATURE: Reports to your party when you exit a Battleground. (If you're in a party.)
+-BUGFIX: You are no longer spammed with "You aren't in a party" after Delve has been completed!
+
 v1.17.002
 -FEATURE: Show Raid Warning if you try casting Notorious Thread's Hearthstone inside a Battleground.
 -FEATURE: Show Raid Warning if you try casting Teleport: Dornogal inside a Battleground.

@@ -33,6 +33,7 @@ local GetRealmName                              = _G.GetRealmName
 local HideUIPanel                               = _G.HideUIPanel
 local InCombatLockdown                          = _G.InCombatLockdown
 local IsInGroup                                 = _G.IsInGroup
+local IsInInstance                              = _G.IsInInstance
 local IsInRaid                                  = _G.IsInRaid
 local LoggingCombat                             = _G.LoggingCombat
 local PlayerSpellsFrame_LoadUI                  = _G.PlayerSpellsFrame_LoadUI
@@ -58,11 +59,11 @@ local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local GetCVar                                   = _G.C_CVar.GetCVar
 local GetCVarDefault                            = _G.C_CVar.GetCVarDefault
 local SetCVar                                   = _G.C_CVar.SetCVar
+local DelvesUIHasActiveDelve                    = _G.C_DelvesUI.HasActiveDelve
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local MapCanSetUserWaypointOnMap                = _G.C_Map.CanSetUserWaypointOnMap
 local PartyInfoGetInviteReferralInfo            = _G.C_PartyInfo.GetInviteReferralInfo
-local PartyInfoIsDelveInProgress                = _G.C_PartyInfo.IsDelveInProgress
 local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
 local PartyInfoLeaveParty                       = _G.C_PartyInfo.LeaveParty
 local PartyInfoSetRestrictPings                 = _G.C_PartyInfo.SetRestrictPings
@@ -71,7 +72,6 @@ local PvPGetActiveMatchDuration                 = _G.C_PvP.GetActiveMatchDuratio
 local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
 local PvPIsArena                                = _G.C_PvP.IsArena
-local PvPIsBattleground                         = _G.C_PvP.IsBattleground
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local VignetteInfoGetVignettes                  = _G.C_VignetteInfo.GetVignettes
 local VignetteInfoGetVignetteInfo               = _G.C_VignetteInfo.GetVignetteInfo
@@ -95,6 +95,7 @@ local strgsub                                   = _G.string.gsub
 local strlower                                  = _G.string.lower
 local strmatch                                  = _G.string.match
 local strsplit                                  = _G.string.split
+local tinsert                                   = _G.table.insert
 
 -- list current POI's
 function NS:List_POIs()
@@ -287,20 +288,26 @@ end
 
 -- securely hook leave battlefield
 local function hook_LeaveBattlefield()
-	-- are you in a party?
-	if (IsInGroup() and not IsInRaid()) then
-		-- match completed?
-		local text = ""
-		if (GetBattlefieldWinner()) then
-			-- finalize text
-			text = L["Exited the current match after it concluded."]
-		else
-			-- finalize text
-			text = L["Exited the current match before it concluded."]
-		end
+	-- inside pvp content?
+	local isArena = PvPIsArena()
+	local isBrawl = PvPIsInBrawl()
+	local isBattleground = NS:IsInBattleground()
+	if (isArena or isBattleground or isBrawl) then
+		-- in home party?
+		if (IsInGroup(LE_PARTY_CATEGORY_HOME) == true) then
+			-- match completed?
+			local text = ""
+			if (GetBattlefieldWinner()) then
+				-- finalize text
+				text = L["Exited the current match after it concluded."]
+			else
+				-- finalize text
+				text = L["Exited the current match before it concluded."]
+			end
 
-		-- send party message
-		NS:SendMessage(nil, text)
+			-- send party message
+			NS:SendMessage(nil, text)
+		end
 	end
 end
 
@@ -322,7 +329,7 @@ local function hook_MainMenuMicroButton_OnMouseDown()
 		-- inside pvp content?
 		local isArena = PvPIsArena()
 		local isBrawl = PvPIsInBrawl()
-		local isBattleground = PvPIsBattleground()
+		local isBattleground = NS:IsInBattleground()
 		if (isArena or isBattleground or isBrawl) then
 			-- enabled
 			NS.CommFlare.CF.AllowMainMenu = true
@@ -340,7 +347,7 @@ local function hook_GameMenuFrame_OnShow()
 		-- inside pvp content?
 		local isArena = PvPIsArena()
 		local isBrawl = PvPIsInBrawl()
-		local isBattleground = PvPIsBattleground()
+		local isBattleground = NS:IsInBattleground()
 		if (isArena or isBattleground or isBrawl) then
 			-- blocked?
 			if (NS.CommFlare.CF.AllowMainMenu ~= true) then
@@ -414,7 +421,7 @@ local function hook_ToggleCharacter(tab, onlyShow)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -469,7 +476,7 @@ local function hook_ToggleProfessionsBook(bookType)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -518,7 +525,7 @@ local function hook_PlayerSpellsUtil_TogglePlayerSpellsFrame(suggestedTab, inspe
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -549,7 +556,7 @@ local function hook_PlayerSpellsUtil_ToggleSpellBookFrame(spellBookCategory)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -580,7 +587,7 @@ local function hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame()
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -635,7 +642,7 @@ local function hook_ToggleAchievementFrame(stats)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -690,7 +697,7 @@ local function hook_ToggleGuildFrame()
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -739,7 +746,7 @@ local function hook_PVEFrame_ToggleFrame(sidePanelName, selection)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -794,7 +801,7 @@ local function hook_ToggleEncounterJournal(tabIndex)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -849,7 +856,7 @@ local function hook_ToggleCollectionsJournal(tabIndex)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -880,7 +887,7 @@ local function hook_ToggleFriendsFrame(tab)
 				-- inside pvp content?
 				local isArena = PvPIsArena()
 				local isBrawl = PvPIsInBrawl()
-				local isBattleground = PvPIsBattleground()
+				local isBattleground = NS:IsInBattleground()
 				if (isArena or isBattleground or isBrawl) then
 					-- finished
 					return
@@ -1017,49 +1024,76 @@ end
 function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	local prefix, text, channel, sender, target, zoneChannelID, localID, name, instanceID = ...
 
-	-- does not need addon data
-	if (NS.CommFlare.CF.NeedAddonData ~= true) then
+	-- sanity checks
+	if (not prefix or not text or not sender) then
 		-- finished
 		return
 	end
 
-	-- capping?
-	if (prefix == "Capping") then
-		-- isle of conquest?
-		if (NS.CommFlare.CF.MapID == 169) then
-			-- skip these messages
-			if ((text == "gr") or (text == "rb") or (text == "rbh")) then
-				-- finished
-				return
-			end
-
-			-- sanity check?
-			local h1, h1hp, h2, h2hp, h3, h3hp, a1, a1hp, a2, a2hp, a3, a3hp = strsplit(":", text)
-			local hGate1, hGate2, hGate3, aGate1, aGate2, aGate3 = tonumber(h1hp), tonumber(h2hp), tonumber(h3hp), tonumber(a1hp), tonumber(a2hp), tonumber(a3hp)
-			if (hGate1 and hGate2 and hGate3 and aGate1 and aGate2 and aGate3) then
-				-- find lowest gates
-				local allyLowest = math.min(aGate1, aGate2, aGate3) / 2400000 * 100
-				local hordeLowest = math.min(hGate1, hGate2, hGate3) / 2400000 * 100
-
-				-- report to anyone?
-				local text = strformat(L["%s: Alliance Gate = %.1f, Horde Gate = %.1f"], L["Isle of Conquest"], allyLowest, hordeLowest)
-				if (NS.CommFlare.CF.StatusCheck and next(NS.CommFlare.CF.StatusCheck)) then
-					-- process all
-					local timer = 0.0
-					for k,v in pairs(NS.CommFlare.CF.StatusCheck) do
-						-- send replies staggered
-						TimerAfter(timer, function()
-							-- send message
-							NS:SendMessage(k, text)
-						end)
-
-						-- next
-						timer = timer + 0.2
+	-- community flare?
+	if (prefix == ADDON_NAME) then
+		-- requesting raid leader?
+		text = tostring(text)
+		if (text:find("REQUEST_RAID_LEADER")) then
+			-- are you raid leader?
+			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+			if (NS.CommFlare.CF.PlayerRank == 2) then
+				-- has shared community?
+				sender = NS:GetFullName(tostring(sender))
+				if (NS:Has_Shared_Community(sender) == true) then
+					-- is sender community leader?
+					if (NS:Is_Community_Leader(sender) == true) then
+						-- promote
+						NS:PromoteToRaidLeader(sender)
 					end
 				end
+			end
+		end
+	else
+		-- does not need addon data
+		if (NS.CommFlare.CF.NeedAddonData ~= true) then
+			-- finished
+			return
+		end
 
-				-- finished
-				NS.CommFlare.CF.NeedAddonData = false
+		-- capping?
+		if (prefix == "Capping") then
+			-- isle of conquest?
+			if (NS.CommFlare.CF.MapID == 169) then
+				-- skip these messages
+				if ((text == "gr") or (text == "rb") or (text == "rbh")) then
+					-- finished
+					return
+				end
+
+				-- sanity check?
+				local h1, h1hp, h2, h2hp, h3, h3hp, a1, a1hp, a2, a2hp, a3, a3hp = strsplit(":", text)
+				local hGate1, hGate2, hGate3, aGate1, aGate2, aGate3 = tonumber(h1hp), tonumber(h2hp), tonumber(h3hp), tonumber(a1hp), tonumber(a2hp), tonumber(a3hp)
+				if (hGate1 and hGate2 and hGate3 and aGate1 and aGate2 and aGate3) then
+					-- find lowest gates
+					local allyLowest = math.min(aGate1, aGate2, aGate3) / 2400000 * 100
+					local hordeLowest = math.min(hGate1, hGate2, hGate3) / 2400000 * 100
+
+					-- report to anyone?
+					local text = strformat(L["%s: Alliance Gate = %.1f, Horde Gate = %.1f"], L["Isle of Conquest"], allyLowest, hordeLowest)
+					if (NS.CommFlare.CF.StatusCheck and next(NS.CommFlare.CF.StatusCheck)) then
+						-- process all
+						local timer = 0.0
+						for k,v in pairs(NS.CommFlare.CF.StatusCheck) do
+							-- send replies staggered
+							TimerAfter(timer, function()
+								-- send message
+								NS:SendMessage(k, text)
+							end)
+
+							-- next
+							timer = timer + 0.2
+						end
+					end
+
+					-- finished
+					NS.CommFlare.CF.NeedAddonData = false
+				end
 			end
 		end
 	end
@@ -1096,9 +1130,9 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 		NS:Process_Pass_Leadership(bnSenderID)
 	-- status check?
 	elseif (lower == "!status") then
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -1175,9 +1209,9 @@ function NS:Event_Chat_Message_Party(...)
 			if (lower == "!status") then
 				-- are you group leader?
 				if (NS:IsGroupLeader() == true) then
-					-- inside battleground?
+					-- in battleground?
 					local timer = 0.0
-					if (PvPIsBattleground() == true) then
+					if (NS:IsInBattleground() == true) then
 						-- battlefield score needs updating?
 						if (PVPMatchScoreboard.selectedTab ~= 1) then
 							-- request battlefield score
@@ -1345,9 +1379,9 @@ function NS.CommFlare:CHAT_MSG_SYSTEM(msg, ...)
 		NS.CommFlare.CF.MatchStartTime = time()
 		NS.CommFlare.CF.MatchStartLogged = false
 
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -1384,9 +1418,9 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 		NS:Process_Pass_Leadership(sender)
 	-- status check?
 	elseif (lower == "!status") then
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -1507,6 +1541,18 @@ function NS.CommFlare:CLUB_MEMBER_UPDATED(msg, ...)
 
 	-- update club member
 	NS:Club_Member_Updated(clubId, memberId)
+end
+
+-- process club streams loaded
+function NS.CommFlare:CLUB_STREAMS_LOADED(msg, ...)
+	local clubId = ...
+
+	-- get club info
+	local info = ClubGetClubInfo(clubId)
+	if (info) then
+		-- stream loaded
+		NS.CommFlare.CF.StreamsLoaded[clubId] = true
+	end
 end
 
 -- process combat log event unfiltered
@@ -1800,9 +1846,15 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 		return
 	end
 
-	-- is battleground?
-	local isBattleground = PvPIsBattleground()
-	if (isBattleground == true) then
+	-- skip for delves
+	local isDelve = DelvesUIHasActiveDelve()
+	if (isDelve == true) then
+		-- finished
+		return
+	end
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
 		-- prematch gate open
 		if (NS.CommFlare.CF.MatchStatus == 1) then
 			-- do you have lead?
@@ -1875,24 +1927,28 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				end
 			end
 		end
-	-- delve not in progress?
-	elseif (PartyInfoIsDelveInProgress() ~= true) then
-		-- are you in a party?
-		if (IsInGroup() and not IsInRaid()) then
+	-- are you in local party?
+	elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
+		-- not in a raid?
+		if (not IsInRaid()) then
 			-- are you group leader?
 			if (NS:IsGroupLeader() == true) then
-				-- community member?
-				local message = "GROUP_ROSTER_UPDATE"
-				if (NS.charDB.profile.communityMain > 1) then
-					-- append YES
-					message = message .. ":YES"
-				else
-					-- append NO
-					message = message .. ":NO"
-				end
+				-- not in instance?
+				local inInstance, instanceType = IsInInstance()
+				if (inInstance ~= true) then
+					-- community member?
+					local message = "GROUP_ROSTER_UPDATE"
+					if (NS.charDB.profile.communityMain > 1) then
+						-- append YES
+						message = message .. ":YES"
+					else
+						-- append NO
+						message = message .. ":NO"
+					end
 
-				-- send party that leader has community flare
-				NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+					-- send party that leader has community flare
+					NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+				end
 
 				-- check current players in home party
 				local count = 1
@@ -1920,15 +1976,12 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				-- clear previous count
 				NS.CommFlare.CF.PreviousCount = 0
 			end
+
+			-- update local group
+			NS:Update_Group("local")
 		else
 			-- clear previous count
 			NS.CommFlare.CF.PreviousCount = 0
-		end
-
-		-- not in raid?
-		if (not IsInRaid()) then
-			-- update local group
-			NS:Update_Group("local")
 		end
 	end
 end
@@ -1937,14 +1990,8 @@ end
 function NS.CommFlare:INITIAL_CLUBS_LOADED(msg)
 	-- initial login?
 	if (NS.CommFlare.CF.InitialLogin == false) then
-		-- should readd community channels?
-		if (NS.charDB.profile.alwaysReaddChannels == true) then
-			-- readd community channels
-			TimerAfter(10, function() NS:ReaddChannelsInitialLoad() end)
-		end
-
 		-- refresh club members
-		TimerAfter(10, function() NS:Refresh_Club_Members() end)
+		NS:Refresh_Club_Members()
 
 		-- initialized
 		NS.CommFlare.CF.InitialLogin = true
@@ -2349,9 +2396,9 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- update local group
 			NS:Update_Group("local")
 
-			-- inside battleground?
+			-- in battleground?
 			NS.CommFlare.CF.MatchStatus = 0
-			if (PvPIsBattleground() == true) then
+			if (NS:IsInBattleground() == true) then
 				-- match state is active?
 				if (PvPGetActiveMatchState() == Enum.PvPMatchState.Active) then
 					-- match is active state?
@@ -2363,19 +2410,21 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 			end
 
-			-- should readd community channels?
-			if (NS.charDB.profile.alwaysReaddChannels == true) then
-				-- readd community channels
-				NS:ReaddChannelsInitialLoad()
-			end
-
 			-- refresh club members
-			TimerAfter(10, function() NS:Refresh_Club_Members() end)
+			NS:Refresh_Club_Members()
 		end
 	end
 
 	-- sanity checks
 	NS:Sanity_Checks()
+
+	-- initial login or reloading?
+	if ((isInitialLogin == true) or (isReloadingUi == true)) then
+		-- verify club streams
+		NS.CommFlare.CF.StreamsRetryCount = 0
+		local clubs = NS:Get_Enabled_Clubs()
+		NS:Verify_Club_Streams(clubs)
+	end
 end
 
 -- process player login
@@ -2455,9 +2504,9 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	-- update battleground status
 	local status = NS:Get_Current_Battleground_Status()
 	if (status == true) then
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -2571,8 +2620,8 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 
 		-- unit in raid?
 		if (UnitInRaid(player) ~= nil) then
-			-- inside battleground?
-			if (PvPIsBattleground() == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
 				-- block all shared quests?
 				local decline = false
 				if (NS.charDB.profile.blockSharedQuests == 3) then
@@ -2906,8 +2955,8 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 
 	-- check for player
 	if (unitTarget == "player") then
-		-- inside battleground?
-		if (PvPIsBattleground() == true) then
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
 			-- any added auras?
 			if (updateInfo.addedAuras) then
 				-- process all added auras
@@ -2940,8 +2989,8 @@ function NS.CommFlare:UNIT_ENTERED_VEHICLE(msg, ...)
 
 	-- check for player
 	if (unitTarget == "player") then
-		-- inside battleground?
-		if (PvPIsBattleground() == true) then
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
 			-- sanity check
 			if ((NS.charDB.profile.adjustVehicleTurnSpeed < 1) or (NS.charDB.profile.adjustVehicleTurnSpeed > 3)) then
 				-- force default
@@ -2964,8 +3013,8 @@ function NS.CommFlare:UNIT_EXITED_VEHICLE(msg, ...)
 
 	-- check for player
 	if (unitTarget == "player") then
-		-- inside battleground?
-		if (PvPIsBattleground() == true) then
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
 			-- default?
 			if (NS.charDB.profile.adjustVehicleTurnSpeed == 1) then
 				-- reset default speed?
@@ -2986,8 +3035,8 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 	if (unitTarget == "player") then
 		-- has warning setting enabled?
 		if (NS.charDB.profile.warningLeavingBG > 1) then
-			-- inside battleground?
-			if (PvPIsBattleground() == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
 				-- hearthstone?
 				if (NS.CommFlare.HearthStoneSpells[spellID]) then
 					-- raid warning?
@@ -3113,6 +3162,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CLUB_MEMBER_REMOVED")
 	self:RegisterEvent("CLUB_MEMBER_ROLE_UPDATED")
 	self:RegisterEvent("CLUB_MEMBER_UPDATED")
+	self:RegisterEvent("CLUB_STREAMS_LOADED")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:RegisterEvent("GROUP_FORMED")
 	self:RegisterEvent("GROUP_INVITE_CONFIRMATION")
@@ -3169,6 +3219,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CLUB_MEMBER_REMOVED")
 	self:UnregisterEvent("CLUB_MEMBER_ROLE_UPDATED")
 	self:UnregisterEvent("CLUB_MEMBER_UPDATED")
+	self:UnregisterEvent("CLUB_STREAMS_LOADED")
 	self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:UnregisterEvent("GROUP_FORMED")
 	self:UnregisterEvent("GROUP_INVITE_CONFIRMATION")
@@ -3388,9 +3439,9 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 		-- check for inactive players
 		print(strformat(L["%s: Checking for inactive players."], NS.CommFlare.Title))
 
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -3477,9 +3528,6 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 	elseif (lower == "vignettes") then
 		-- list all Vignette's
 		NS:List_Vignettes()
-	elseif (lower == "test") then
-		-- add community chat window
-		NS:AddCommunityChatWindow(NS.charDB.profile.communityMain, 1)
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)
@@ -3524,9 +3572,9 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 				NS:Find_Community_Members(second, clubId)
 			end
 		else
-			-- inside battleground?
+			-- in battleground?
 			local timer = 0.0
-			if (PvPIsBattleground() == true) then
+			if (NS:IsInBattleground() == true) then
 				-- battlefield score needs updating?
 				if (PVPMatchScoreboard.selectedTab ~= 1) then
 					-- update battlefield score

@@ -52,6 +52,8 @@ local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
+local PvPIsRatedBattleground                    = _G.C_PvP.IsRatedBattleground
+local PvPIsRatedSoloRBG                         = _G.C_PvP.IsRatedSoloRBG
 local SocialQueueGetGroupForPlayer              = _G.C_SocialQueue.GetGroupForPlayer
 local TimerAfter                                = _G.C_Timer.After
 local pairs                                     = _G.pairs
@@ -374,6 +376,26 @@ function NS:ParseCommand(text)
 	return table
 end
 
+-- is in battleground?
+function NS:IsInBattleground()
+	-- in battleground?
+	if (PvPIsBattleground() == true) then
+		-- yup
+		return true
+	-- rated battleground?
+	elseif (PvPIsRatedBattleground() == true) then
+		-- yup
+		return true
+	-- solo rated battleground?
+	elseif (PvPIsRatedSoloRBG() == true) then
+		-- yup
+		return true
+	end
+
+	-- nope
+	return false
+end
+
 -- is player appearing offline?
 function NS:IsInvisible()
 	-- check Battle.NET account - has focus?
@@ -382,11 +404,11 @@ function NS:IsInvisible()
 		-- has focus?
 		if (accountInfo.gameAccountInfo.hasFocus == true) then
 			-- visible
-			NS.CommFlare.CF.Invisble = false
+			NS.CommFlare.CF.Invisible = false
 			return false
 		else
 			-- invisible
-			NS.CommFlare.CF.Invisble = true
+			NS.CommFlare.CF.Invisible = true
 			return true
 		end
 	end
@@ -408,11 +430,11 @@ function NS:IsInvisible()
 						-- offline?
 						if (mi.presence == Enum.ClubMemberPresence.Offline) then
 							-- invisible
-							NS.CommFlare.CF.Invisble = true
+							NS.CommFlare.CF.Invisible = true
 							return true
 						else
 							-- visible
-							NS.CommFlare.CF.Invisble = false
+							NS.CommFlare.CF.Invisible = false
 							return false
 						end
 					end
@@ -493,8 +515,8 @@ function NS:SaveSession()
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
 
-	-- currently in battleground?
-	if (PvPIsBattleground() == true) then
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
 		-- save any settings
 		NS.charDB.profile.AB = NS.CommFlare.CF.AB or {}
 		NS.charDB.profile.ASH = NS.CommFlare.CF.ASH or {}
@@ -577,89 +599,73 @@ end
 
 -- add community chat window (also removes first if already added)
 function NS:AddCommunityChatWindow(clubId, streamId)
-	-- process active chat windows
-	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
-		-- only reserved channel allowed for communities is general
-		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
-			-- finished
-			return
-		end
+	-- no stream info?
+	local streamInfo = ClubGetStreamInfo(clubId, streamId)
+	if (not streamInfo) then
+		-- finished
+		return
+	end
 
-		-- get community / stream info
-		local streamInfo = ClubGetStreamInfo(clubId, streamId)
-		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
-		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
-
-		-- not guild stream and general window?
-		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
-			-- checked?
-			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
-			if (isChecked == true) then
-				-- remove communities channel from chat frame
-				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+	-- get channel chat name
+	local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+	if (channelName and (channelName ~= "")) then
+		-- process active chat windows
+		FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
+			-- only reserved channel allowed for communities is general
+			if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
+				-- finished
+				return
 			end
 
-			-- add communities chat to chat frame
-			ChatFrame_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId)
-		end
-	end)
+			-- not guild stream and general window?
+			local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
+			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
+				-- checked?
+				local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
+				if (isChecked == true) then
+					-- remove communities channel from chat frame
+					ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+				end
+
+				-- add communities chat to chat frame
+				ChatFrame_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId, true)
+			end
+		end)
+	end
 end
 
 -- remove community chat window
 function NS:RemoveCommunityChatWindow(clubId, streamId)
-	-- process active chat windows
-	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
-		-- only reserved channel allowed for communities is general
-		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
-			-- finished
-			return
-		end
+	-- no stream info?
+	local streamInfo = ClubGetStreamInfo(clubId, streamId)
+	if (not streamInfo) then
+		-- finished
+		return
+	end
 
-		-- get community / stream info
-		local streamInfo = ClubGetStreamInfo(clubId, streamId)
-		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
-		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
-
-		-- not guild stream and general window?
-		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
-			-- checked?
-			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
-			if (isChecked == true) then
-				-- remove communities channel from chat frame
-				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+	-- get channel chat name
+	local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+	if (channelName and (channelName ~= "")) then
+		-- process active chat windows
+		FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
+			-- only reserved channel allowed for communities is general
+			if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
+				-- finished
+				return
 			end
-		end
-	end)
-end
 
--- toggle community chat window
-function NS:ToggleCommunityChatWindow(clubId, streamId)
-	-- process active chat windows
-	FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
-		-- only reserved channel allowed for communities is general
-		if (FCF_IsChatWindowIndexReserved(chatWindowIndex) and (chatWindowIndex ~= 1)) then
-			-- finished
-			return
-		end
-
-		-- get community / stream info
-		local streamInfo = ClubGetStreamInfo(clubId, streamId)
-		local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
-		local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
-
-		-- not guild stream and general window?
-		if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
-			-- checked?
-			local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
-			if (isChecked == true) then
-				-- remove communities channel from chat frame
-				ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
-			else
-				-- add communities chat to chat frame
-				ChatFrame_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId)
+			-- not guild stream and general window?
+			local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
+			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
+				-- checked?
+				local isChecked = ChatFrame_ContainsChannel(chatWindow, channelName)
+				if (isChecked == true) then
+					-- remove communities channel from chat frame
+					ChatFrame_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+				end
 			end
-		end
-	end)
+		end)
+	end
 end
 
 -- readd community chat window
@@ -670,7 +676,7 @@ function NS:ReaddCommunityChatWindow(clubId, streamId)
 		return
 	end
 
-	-- add community chat  window
+	-- add community chat window
 	NS:AddCommunityChatWindow(clubId, streamId)
 end
 
@@ -685,18 +691,11 @@ function NS:ReaddChannelsInitialLoad()
 	-- has other communities?
 	if (next(NS.charDB.profile.communityList)) then
 		-- process all
-		local timer = 0.2
 		for k,v in pairs(NS.charDB.profile.communityList) do
 			-- only process true
 			if (v == true) then
-				-- stagger readding
-				TimerAfter(timer, function ()
-					-- readd community chat window
-					NS:ReaddCommunityChatWindow(k, 1)
-				end)
-
-				-- next
-				timer = timer + 0.2
+				-- readd community chat window
+				NS:ReaddCommunityChatWindow(k, 1)
 			end
 		end
 	end

@@ -91,6 +91,7 @@ NS.CommFlare.CF = {
 	Position = 0,
 	PreviousCount = 0,
 	QuestID = 0,
+	StreamsRetryCount = 0,
 	SavedTime = 0,
 
 	-- misc
@@ -136,6 +137,7 @@ NS.CommFlare.CF = {
 	RosterList = {},
 	SocialQueues = {},
 	StatusCheck = {},
+	StreamsLoaded = {},
 	TeamUnits = {},
 	WidgetCache = {},
 	WidgetInfo = {},
@@ -150,6 +152,7 @@ NS.CommFlare.CF = {
 	ASH = {},
 	AV = {},
 	BFG = {},
+	DHR = {},
 	DWG = {},
 	EOTS = {},
 	IOC = {},

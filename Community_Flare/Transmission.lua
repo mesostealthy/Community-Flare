@@ -20,6 +20,8 @@ local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
+local PvPIsRatedBattleground                    = _G.C_PvP.IsRatedBattleground
+local PvPIsRatedSoloRBG                         = _G.C_PvP.IsRatedSoloRBG
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
@@ -92,12 +94,21 @@ end
 
 -- get leaders text
 function NS:Get_Leaders_Text()
-	-- select proper type
+	-- is battleground?
 	local type = nil
 	local leaders = {}
 	if (PvPIsBattleground() == true) then
 		-- battleground
 		type = "Battleground"
+	-- is rated battleground?
+	elseif (PvPIsRatedBattleground() == true) then
+		-- rated battleground
+		type = "Rated Battleground"
+	-- is rated solo battleground?
+	elseif (PvPIsRatedSoloRBG() == true) then
+		-- rated solo battleground
+		type = "Rated Solo Battleground"
+	-- is brawl?
 	elseif (PvPIsInBrawl() == true) then
 		-- brawl
 		type = "Brawl"
@@ -124,7 +135,7 @@ function NS:Get_Leaders_Text()
 				end
 
 				-- leader or assistant?
-				if (rank and (rank > 0)) then
+				if (rank > 0) then
 					-- add rank
 					player = strformat("%s:%d", player, tonumber(rank))
 
@@ -346,7 +357,7 @@ function NS:Get_Party_Text()
 
 	-- process all group members
 	local players = {}
-	for i=1, GetNumGroupMembers() do
+	for i=1, GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) do
 		-- unit exists?
 		local unit = "party" .. i
 		if (not UnitExists(unit)) then
@@ -559,9 +570,9 @@ function NS:Process_BattleNET_Commands(senderID, text)
 		end
 	-- get roster?
 	elseif (text:find("GetRoster")) then
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
@@ -584,9 +595,9 @@ function NS:Process_BattleNET_Commands(senderID, text)
 		end)
 	-- get status?
 	elseif (text:find("GetStatus")) then
-		-- inside battleground?
+		-- in battleground?
 		local timer = 0.0
-		if (PvPIsBattleground() == true) then
+		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score

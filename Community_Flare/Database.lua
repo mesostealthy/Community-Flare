@@ -6,13 +6,20 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
+local AddChatWindowChannel                      = _G.AddChatWindowChannel
+local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
+local GetChannelName                            = _G.GetChannelName
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local UnitFactionGroup                          = _G.UnitFactionGroup
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
 local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
+local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
+local ClubGetStreams                            = _G.C_Club.GetStreams
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
+local PvPIsArena                                = _G.C_PvP.IsArena
+local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
 local ipairs                                    = _G.ipairs
@@ -94,21 +101,8 @@ function NS:Verify_Default_Community_Setup()
 	return count
 end
 
--- verify report channel added
-function NS:Verify_Report_Channel_Added()
-	-- has report ID?
-	if (NS.charDB.profile.communityReportID > 1) then
-		-- verify channel is added for proper reporting
-		local channel, chatFrameID = Chat_GetCommunitiesChannel(NS.charDB.profile.communityReportID, 1)
-		if (not channel or not chatFrameID) then
-			-- readd community chat window
-			NS:ReaddCommunityChatWindow(NS.charDB.profile.communityReportID, 1)
-		end
-	end
-end
-
 -- get club list
-function NS:Get_Clubs_List()
+function NS:Get_Clubs_List(bIgnoreGuild)
 	-- find main community club
 	local count = 0
 	local clubs = {}
@@ -132,6 +126,7 @@ function NS:Get_Clubs_List()
 			end
 
 			-- add club id
+			NS.CommFlare.CF.ClubList[clubId] = true
 			tinsert(clubs, clubId)
 			count = count + 1
 		end
@@ -142,17 +137,22 @@ function NS:Get_Clubs_List()
 		-- process all lists
 		for k,_ in pairs(NS.charDB.profile.communityList) do
 			-- add club id
+			NS.CommFlare.CF.ClubList[k] = true
 			tinsert(clubs, k)
 			count = count + 1
 		end
 	end
 
-	-- treat guild as community?
-	if (NS.charDB.profile.addGuildMembers == true) then
-		-- add guild club id
-		local guildID = ClubGetGuildClubId()
-		tinsert(clubs, guildID)
-		count = count + 1
+	-- not ignoring guild?
+	if (bIgnoreGuild ~= true) then
+		-- treat guild as community?
+		if (NS.charDB.profile.addGuildMembers == true) then
+			-- add guild club id
+			clubId = ClubGetGuildClubId()
+			NS.CommFlare.CF.ClubList[clubId] = true
+			tinsert(clubs, clubId)
+			count = count + 1
+		end
 	end
 
 	-- none found?
@@ -163,6 +163,156 @@ function NS:Get_Clubs_List()
 
 	-- return found clubs
 	return clubs
+end
+
+-- get enabled clubs
+function NS:Get_Enabled_Clubs()
+	-- find main community club
+	local count = 0
+	local clubs = {}
+	local clubId = NS.charDB.profile.communityMain
+	if (clubId > 1) then
+		-- enabled
+		clubs[clubId] = true
+		count = count + 1
+	end
+
+	-- has community list?
+	if (NS.charDB.profile.communityList and (next(NS.charDB.profile.communityList) ~= nil)) then
+		-- process all lists
+		for k,_ in pairs(NS.charDB.profile.communityList) do
+			-- enabled
+			clubs[k] = true
+			count = count + 1
+		end
+	end
+
+	-- none found?
+	if (count == 0) then
+		-- none
+		return nil
+	end
+
+	-- return enabled clubs
+	return clubs
+end
+
+-- verify club streams
+function NS:Verify_Club_Streams(clubs)
+	-- inside pvp content?
+	local isArena = PvPIsArena()
+	local isBrawl = PvPIsInBrawl()
+	local isBattleground = NS:IsInBattleground()
+	if (isArena or isBattleground or isBrawl) then
+		-- finished
+		return
+	end
+
+	-- no clubs?
+	if (not clubs) then
+		-- finished
+		return
+	end
+
+	-- count clubs
+	local count = 0
+	for k,v in pairs(clubs) do
+		-- increase
+		count = count + 1
+	end
+
+	-- no count?
+	if (count == 0) then
+		-- finished
+		return
+	end
+
+	-- display
+	local verify = false
+	for i=1, MAX_WOW_CHAT_CHANNELS do
+		-- found channel name?
+		local channelID, channelName = GetChannelName(i)
+		if ((channelID > 0) and channelName) then
+			-- non community?
+			if (not strmatch(channelName, "Community")) then
+				-- verify
+				verify = true
+			end
+		end
+	end
+
+	-- increase
+	NS.CommFlare.CF.StreamsRetryCount = NS.CommFlare.CF.StreamsRetryCount + 1
+	if (NS.CommFlare.CF.StreamsRetryCount > 30) then
+		-- finished
+		print("TODO: Exhausted retry count!")
+		return
+	end
+
+	-- can not verify yet?
+	if (verify == false) then
+		-- try again, 1 second later
+		TimerAfter(1, function()
+			-- call recursively
+			NS:Verify_Club_Streams(clubs)
+		end)
+		return
+	end
+
+	-- process all clubs
+	local loaded = true
+	for clubId,_ in pairs(clubs) do
+		-- not loaded?
+		local streams = ClubGetStreams(clubId)
+		if (not streams or (#streams < 1)) then
+			-- failed
+			loaded = false
+		end
+	end
+
+	-- still not loaded?
+	if (loaded == false) then
+		-- try again, 1 second later
+		TimerAfter(1, function()
+			-- call recursively
+			NS:Verify_Club_Streams(clubs)
+		end)
+		return
+	end
+
+	-- process all clubs
+	for clubId,_ in pairs(clubs) do
+		-- has streams?
+		local streams = ClubGetStreams(clubId)
+		if (streams) then
+			-- process all
+			for _,v in ipairs(streams) do
+				-- has stream info?
+				local streamInfo = ClubGetStreamInfo(clubId, v.streamId)
+				if (streamInfo and streamInfo.streamType) then
+					-- general?
+					if (streamInfo.streamType == Enum.ClubStreamType.General) then
+						-- verify channel is added for proper reporting
+						local channel = Chat_GetCommunitiesChannel(clubId, v.streamId)
+						if (not channel or (NS.charDB.profile.alwaysReaddChannels == true)) then
+							-- readd community chat window
+							NS:ReaddCommunityChatWindow(clubId, v.streamId)
+						end
+
+						-- AddChatWindowChannel available?
+						if (AddChatWindowChannel) then
+							-- add chat window to general
+							local channelName = Chat_GetCommunitiesChannelName(clubId, v.streamId)
+							AddChatWindowChannel(1, channelName)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- reset
+	NS.CommFlare.CF.StreamsRetryCount = 0
 end
 
 -- is community leader?
@@ -329,7 +479,7 @@ end
 -- check for deployed members
 function NS:Check_For_Deployed_Members()
 	-- get clubs
-	local clubs = NS:Get_Clubs_List()
+	local clubs = NS:Get_Clubs_List(false)
 	if (clubs) then
 		-- process all clubs
 		local deployed_count = 0
@@ -990,7 +1140,7 @@ end
 -- process club members
 function NS:Process_Club_Members()
 	-- get clubs list
-	local clubs = NS:Get_Clubs_List()
+	local clubs = NS:Get_Clubs_List(false)
 	if (not clubs) then
 		-- no subscribed clubs found
 		return false
@@ -1045,9 +1195,6 @@ function NS:Process_Club_Members()
 
 	-- rebuild community leaders
 	NS:Rebuild_Community_Leaders()
-
-	-- verify report channel added
-	NS:Verify_Report_Channel_Added()
 	return true
 end
 
@@ -1082,7 +1229,7 @@ end
 -- refresh club members
 function NS:Refresh_Club_Members()
 	-- update invisible status
-	NS.CommFlare.CF.Invisble = NS:IsInvisible()
+	NS.CommFlare.CF.Invisible = NS:IsInvisible()
 
 	-- process club members
 	local status = NS:Process_Club_Members()
@@ -1518,39 +1665,6 @@ function NS:Has_Shared_Community(sender)
 
 	-- failed
 	return false
-end
-
--- refresh database
-function NS:Refresh_Database()
-	-- get clubs list
-	local clubs = NS:Get_Clubs_List()
-	if (not clubs) then
-		-- none
-		print(strformat("%s: No subscribed clubs found.", NS.CommFlare.Title))
-		return
-	end
-
-	-- process clubs
-	for _,clubId in ipairs(clubs) do
-		-- club type is a community?
-		local info = ClubGetClubInfo(clubId)
-		if (info and (info.clubType == Enum.ClubType.Character)) then
-			-- add community
-			NS:Add_Community(clubId, info)
-
-			-- remove all club members
-			NS:Remove_All_Club_Members_By_ClubID(clubId)
-
-			-- add all club members
-			NS:Add_All_Club_Members_By_ClubID(clubId)
-		end
-	end
-
-	-- rebuild community leaders
-	NS:Rebuild_Community_Leaders()
-
-	-- verify report channel added
-	NS:Verify_Report_Channel_Added()
 end
 
 -- find member by guid
