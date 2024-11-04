@@ -269,7 +269,7 @@ function NS:Process_Popped(groupGUID)
 			local index = 1
 			for k,v in pairs(NS.CommFlare.CF.PoppedGroups) do
 				-- display popped groups?
-				if (NS.charDB.profile.displayPoppedGroups == true) then
+				if (NS.db.global.displayPoppedGroups == true) then
 					-- print group / member totals
 					print(strformat(L["%s: Group%d = %d Members"], NS.CommFlare.Title, index, v))
 				end
@@ -478,7 +478,7 @@ function NS:Update_Group(groupGUID)
 					-- only process for group leaders
 					if (NS:IsGroupLeader() == true) then
 						-- popup queue window enabled?
-						if (NS.charDB.profile.popupQueueWindow == true) then
+						if (NS.db.global.popupQueueWindow == true) then
 							-- not in combat?
 							if (InCombatLockdown() ~= true) then
 								-- Blizzard_PVPUI loaded?
@@ -521,7 +521,7 @@ function NS:Update_Group(groupGUID)
 				end
 
 				-- display popped groups?
-				if (NS.charDB.profile.displayPoppedGroups == true) then
+				if (NS.db.global.displayPoppedGroups == true) then
 					-- print popped group
 					local mapName = NS.CommFlare.CF.SocialQueues[groupGUID].name or "N/A"
 					print(strformat("%s: %s-%s (%d/5) [%s]", L["POPPED"], NS.CommFlare.CF.SocialQueues[groupGUID].leader.name, NS.CommFlare.CF.SocialQueues[groupGUID].leader.realm, #NS.CommFlare.CF.SocialQueues[groupGUID].members, mapName))

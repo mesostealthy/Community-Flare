@@ -20,7 +20,7 @@ local tinsert                                   = _G.table.insert
 function NS:Cleanup_History()
 	-- process all
 	local MON = { Jan = 1, Feb = 2, Mar = 3, Apr = 4, May = 5, Jun = 6, Jul = 7, Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12 }
-	for k,v in pairs(NS.globalDB.global.history) do
+	for k,v in pairs(NS.db.global.history) do
 		-- last seen = old string format?
 		if (v.lastseen and (type(v.lastseen) == "string")) then
 			-- calculate timestamp
@@ -31,7 +31,7 @@ function NS:Cleanup_History()
 			local timestamp = time({day=day,month=month,year=year,hour=hour,min=min,sec=sec})
 
 			-- update
-			NS.globalDB.global.history[k].lastseen = timestamp
+			NS.db.global.history[k].lastseen = timestamp
 		end
 
 		-- last grouped = old string format?
@@ -44,39 +44,39 @@ function NS:Cleanup_History()
 			local timestamp = time({day=day,month=month,year=year,hour=hour,min=min,sec=sec})
 
 			-- update
-			NS.globalDB.global.history[k].lastgrouped = timestamp
+			NS.db.global.history[k].lastgrouped = timestamp
 		end
 
 		-- last seen needs converted?
-		if (NS.globalDB.global.history[k].lastseen) then
+		if (NS.db.global.history[k].lastseen) then
 			-- move variable: Completed Matches Count (cmc)
-			NS.globalDB.global.history[k].last = NS.globalDB.global.history[k].lastseen
-			NS.globalDB.global.history[k].lastseen = nil
+			NS.db.global.history[k].last = NS.db.global.history[k].lastseen
+			NS.db.global.history[k].lastseen = nil
 		end
 
 		-- completed matches needs converted?
 		if (v.completedmatches) then
 			-- move variable: Completed Matches Count (cmc)
-			NS.globalDB.global.history[k].cmc = NS.globalDB.global.history[k].completedmatches
-			NS.globalDB.global.history[k].completedmatches = nil
+			NS.db.global.history[k].cmc = NS.db.global.history[k].completedmatches
+			NS.db.global.history[k].completedmatches = nil
 		end
 
 		-- grouped matches needs converted?
 		if (v.groupedmatches) then
 			-- move variable: Grouped Matches Count (gmc)
-			NS.globalDB.global.history[k].gmc = NS.globalDB.global.history[k].groupedmatches
-			NS.globalDB.global.history[k].groupedmatches = nil
+			NS.db.global.history[k].gmc = NS.db.global.history[k].groupedmatches
+			NS.db.global.history[k].groupedmatches = nil
 		end
 
 		-- no first seen?
 		local updatefirst = false
-		if (not NS.globalDB.global.history[k].first) then
+		if (not NS.db.global.history[k].first) then
 			-- update first seen
-			NS.globalDB.global.history[k].first = time()
+			NS.db.global.history[k].first = time()
 		-- first seen after last seen?
-		elseif (NS.globalDB.global.history[k].first and NS.globalDB.global.history[k].last and (NS.globalDB.global.history[k].first > NS.globalDB.global.history[k].last)) then
+		elseif (NS.db.global.history[k].first and NS.db.global.history[k].last and (NS.db.global.history[k].first > NS.db.global.history[k].last)) then
 			-- update first seen
-			NS.globalDB.global.history[k].first = NS.globalDB.global.history[k].last
+			NS.db.global.history[k].first = NS.db.global.history[k].last
 		end
 	end
 end
@@ -90,13 +90,13 @@ function NS:Get_Player_History(player)
 	end
 
 	-- player not found?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- failed
 		return nil
 	end
 
 	-- return history
-	return NS.globalDB.global.history[player]
+	return NS.db.global.history[player]
 end
 
 -- update first seen
@@ -108,15 +108,15 @@ function NS:Update_First_Seen(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- no first seen?
-	if (not NS.globalDB.global.history[player].first) then
+	if (not NS.db.global.history[player].first) then
 		-- update first seen
-		NS.globalDB.global.history[player].first = time()
+		NS.db.global.history[player].first = time()
 		return true
 	end
 
@@ -133,18 +133,18 @@ function NS:Update_Completed_Matches(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- first completed match?
-	if (not NS.globalDB.global.history[player].cmc) then
+	if (not NS.db.global.history[player].cmc) then
 		-- initialize
-		NS.globalDB.global.history[player].cmc = 1
+		NS.db.global.history[player].cmc = 1
 	else
 		-- increase
-		NS.globalDB.global.history[player].cmc = NS.globalDB.global.history[player].cmc + 1
+		NS.db.global.history[player].cmc = NS.db.global.history[player].cmc + 1
 	end
 
 	-- success
@@ -160,18 +160,18 @@ function NS:Update_Grouped_Matches(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- first grouped match?
-	if (not NS.globalDB.global.history[player].gmc) then
+	if (not NS.db.global.history[player].gmc) then
 		-- initialize
-		NS.globalDB.global.history[player].gmc = 1
+		NS.db.global.history[player].gmc = 1
 	else
 		-- increase
-		NS.globalDB.global.history[player].gmc = NS.globalDB.global.history[player].gmc + 1
+		NS.db.global.history[player].gmc = NS.db.global.history[player].gmc + 1
 	end
 
 	-- success
@@ -187,13 +187,13 @@ function NS:Update_Last_Grouped(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- save last grouped
-	NS.globalDB.global.history[player].lastgrouped = time()
+	NS.db.global.history[player].lastgrouped = time()
 
 	-- success
 	return true
@@ -208,13 +208,13 @@ function NS:Update_Last_Seen(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- update last seen
-	NS.globalDB.global.history[player].last = time()
+	NS.db.global.history[player].last = time()
 
 	-- success
 	return true
@@ -229,22 +229,22 @@ function NS:Update_Chat_Message_Data(player)
 	end
 
 	-- player not initialized?
-	if (not NS.globalDB.global.history[player]) then
+	if (not NS.db.global.history[player]) then
 		-- initialize
-		NS.globalDB.global.history[player] = {}
+		NS.db.global.history[player] = {}
 	end
 
 	-- first chat message?
-	if (not NS.globalDB.global.history[player].ncm) then
+	if (not NS.db.global.history[player].ncm) then
 		-- initialize
-		NS.globalDB.global.history[player].ncm = 1
+		NS.db.global.history[player].ncm = 1
 	else
 		-- increase
-		NS.globalDB.global.history[player].ncm = NS.globalDB.global.history[player].ncm + 1
+		NS.db.global.history[player].ncm = NS.db.global.history[player].ncm + 1
 	end
 
 	-- update last message time
-	NS.globalDB.global.history[player].lcmt = time()
+	NS.db.global.history[player].lcmt = time()
 
 	-- success
 	return true

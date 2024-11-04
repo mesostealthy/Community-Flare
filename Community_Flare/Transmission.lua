@@ -192,7 +192,7 @@ function NS:Get_Members_Text(senderID, input)
 
 		-- process all
 		local lower = strlower(input)
-		for k,v in pairs(NS.globalDB.global.clubs) do
+		for k,v in pairs(NS.db.global.clubs) do
 			-- matches short name?
 			local shortName = strlower(v.shortName)
 			if ((v.shortName == input) or (shortName == lower)) then

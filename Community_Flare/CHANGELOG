@@ -1,3 +1,14 @@
+v1.19.001
+-NEW Party Setting: Notify you upon party member zone changes? (Only visible for Group Leaders.)
+-NEW World Options Category: Notify you when a War Supply Crate is inbound. (Also adds starting TomTom map pin.)
+-NEW Ashran Settings: Notify when Mage is under attack & set Frequency for repeat warnings.
+-NEW Ashran Settings: Notify when Ancient Inferno spawns at the Ring of Conquest.
+-Korrak's Revenge: Relevant Quests are now shareable with Irrelevant setting in Korrak's Revenge.
+-Reporting Queues/Pops/Joins/Missed/Left will now only show Level X for less than 80.
+-BUGFIX: Invited to a party already in queue will now auto select role and accept properly.
+-REWORK: Addon Settings GUI redone a la more weizPVP style! A lot of the settings are global now.
+-Bumped TOC to v11.0.5
+
 v1.18.001
 -FEATURE: Reports to your party when you exit a Battleground. (If you're in a party.)
 -BUGFIX: You are no longer spammed with "You aren't in a party" after Delve has been completed!
@@ -5,7 +16,7 @@ v1.18.001
 v1.17.002
 -FEATURE: Show Raid Warning if you try casting Notorious Thread's Hearthstone inside a Battleground.
 -FEATURE: Show Raid Warning if you try casting Teleport: Dornogal inside a Battleground.
--New setting to treat your Guild Members as if they are Community Members.
+-NEW setting to treat your Guild Members as if they are Community Members.
 -Block game menu hotkeys inside PVP content will now block inside Brawls.
 -Community Counts displayed are now sorted alphabetically.
 -BUGFIX: You are no longer spammed with "You aren't in a party" while performing Delves in a solo group!
@@ -20,7 +31,7 @@ v1.16.001 features:
 -Bumped TOC to v11.0.2
 
 v1.15.001 features:
--New Option: Always pass Raid Leadership to Community Leaders? (Passes Raid Leadership to Community Leaders by priority if enabled.)
+-New Setting: Always pass Raid Leadership to Community Leaders? (Passes Raid Leadership to Community Leaders by priority if enabled.)
 -New Debug Command: /comf pois to view all points of interest in your current location.
 -New Debug Command: /comf popped to view all currently popped groups, if there are any.
 -New Debug Command: /comf vignettes to view all vignettes in your current location.
@@ -53,7 +64,7 @@ v1.14 features:
 
 v1.13 features:
 -New Command: /comf debug added to better help with debugging issues for Mesostealthy & others to report. (Must have Debug Mode enabled to utilize.)
--New Option: Always save Combat Log inside PVP content, will always save combat logs for PVP matches.
+-New Setting: Always save Combat Log inside PVP content, will always save combat logs for PVP matches.
 -When joining tracked PVP Queues, it will now report your current faction when reporting.
 -BUGFIX: If /reload used during Battleground, match data/roster was not saved into the match log list.
 -Bumped TOC to v10.2.7
@@ -88,11 +99,11 @@ v1.08 features:
 
 v1.07 features:
 -New /comf deployed command to check if you still have people in community deployed in PVP.
--New setting to allow Community Leaders list to only build from selected Communities.
+-NEW setting to allow Community Leaders list to only build from selected Communities.
 -Block game menu hotkeys inside PVP content reworked a bit with raw hooks.
 
 v1.06 features:
--New setting to force Tank/Healer/DPS specialization for PVP in Queue Options.
+-NEW setting to force Tank/Healer/DPS specialization for PVP in Queue Options.
 --This setting forces a role if you are invited to a party that is already in queue!
 
 v1.05 features:
@@ -123,9 +134,9 @@ v1.01 features:
 v1.00 features:
 -Localization added for this release, only enUS and esMX added so far, if someone wants to make the others and send to me?
 --Find Mesostealthy-Dentarg in-game and let me know what languages you would like to help with.
--New setting to stop players from using the /ping system if they do not have Raid Assist or Raid Lead! (Raid Leaders & Assistants only.)
--New setting to warn you if your queue becomes paused. Group Leader gets a Raid Warning message, others get normal message.
--New setting to adjust vehicle turn speed while inside a Battleground. Allows for faster vehicle turning!
+-NEW setting to stop players from using the /ping system if they do not have Raid Assist or Raid Lead! (Raid Leaders & Assistants only.)
+-NEW setting to warn you if your queue becomes paused. Group Leader gets a Raid Warning message, others get normal message.
+-NEW setting to adjust vehicle turn speed while inside a Battleground. Allows for faster vehicle turning!
 -Auto Raid Warning when Captain Balinda Stonehearth is engaged in combat, Alliance. (Raid Leader issues /RW, otherwise local warning only!)
 -Auto Raid Warning when Captain Galvangar is engaged in combatm, Horde. (Raid Leader issues /RW, otherwise local warning only!)
 -Refresh Database added for options to just refresh the members in communites without rebuilding entirely.

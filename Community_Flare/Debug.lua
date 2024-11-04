@@ -22,7 +22,7 @@ local strlower                                  = _G.string.lower
 -- process debug args
 function NS:Process_Debug_Command(sender, args)
 	-- not debug mode?
-	if (NS.charDB.profile.debugMode ~= true) then
+	if (NS.db.global.debugMode ~= true) then
 		-- not enabled
 		return
 	end

@@ -79,6 +79,48 @@ function NS:IsEpicBG(name)
 	return false
 end
 
+-- is in epic battleground?
+function NS:IsInEpicBG()
+	-- get best map for player
+	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	if (not NS.CommFlare.CF.MapID) then
+		-- failed
+		return false
+	end
+
+	--get map info
+	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	if (not NS.CommFlare.CF.MapInfo) then
+		-- failed
+		return false
+	end
+
+	-- alterac valley or korrak's revenge?
+	if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
+		-- yup
+		return true
+	-- ashran?
+	elseif (NS.CommFlare.CF.MapID == 1478) then
+		-- yup
+		return true
+	-- battle for wintergrasp?
+	elseif (NS.CommFlare.CF.MapID == 1334) then
+		-- yup
+		return true
+	-- isle of conquest?
+	elseif (NS.CommFlare.CF.MapID == 169) then
+		-- yup
+		return true
+	-- southshore vs tarren mill?
+	elseif (NS.CommFlare.CF.MapID == 623) then
+		-- yup
+		return true
+	end
+
+	-- nope
+	return false
+end
+
 -- is random battleground?
 function NS:IsRandomBG(name)
 	-- check from name
@@ -173,6 +215,22 @@ function NS:Battleground_IsMercenaryQueued()
 
 	-- no
 	return false
+end
+
+-- has local battleground poppeod?
+function NS:Has_Battleground_Popped()
+	-- check for popped battleground
+	for i=1, GetMaxBattlefieldID() do
+		-- popped?
+		local status, mapName = GetBattlefieldStatus(i)
+		if (status == "confirm") then
+			-- yes
+			return true, mapName
+		end
+	end
+
+	-- no
+	return nil, nil
 end
 
 -- initialize battleground status
@@ -428,7 +486,7 @@ function NS:Get_Current_Battleground_Status()
 		return false
 	end
 
-	--get map info
+	-- get map info
 	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- failed
@@ -1099,6 +1157,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 					end
 
 					-- update stuff
+					NS.CommFlare.CF.PlayerMercenary = true
 					tinsert(NS.CommFlare.CF.MercNamesList, member.name)
 					NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
 				else
@@ -1124,6 +1183,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 					end
 
 					-- update stuff
+					NS.CommFlare.CF.PlayerMercenary = false
 					tinsert(NS.CommFlare.CF.CommNamesList, member.name)
 					NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 				end
@@ -1260,19 +1320,19 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 					-- build count list
 					for k,v in pairs(NS.CommFlare.CF.MercCounts) do
 						-- verify club name
-						local club = NS.globalDB.global.clubs[k]
+						local club = NS.db.global.clubs[k]
 						if (not club or not club.name) then
 							-- clear count
 							NS.CommFlare.CF.MercCounts[k] = nil
 						else
 							-- guild?
 							if (club.clubType == Enum.ClubType.Guild) then
-								-- guild
-								club.name = strformat("%s (Guild)", club.name)
+								-- insert
+								tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
+							else
+								-- insert
+								tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s:%d", club.name, tonumber(v)))
 							end
-
-							-- insert
-							tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s:%d", club.name, tonumber(v)))
 						end
 					end
 
@@ -1350,19 +1410,19 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 					-- build count list
 					for k,v in pairs(NS.CommFlare.CF.CommCounts) do
 						-- verify club name
-						local club = NS.globalDB.global.clubs[k]
+						local club = NS.db.global.clubs[k]
 						if (not club or not club.name) then
 							-- clear count
 							NS.CommFlare.CF.CommCounts[k] = nil
 						else
 							-- guild?
 							if (club.clubType == Enum.ClubType.Guild) then
-								-- guild
-								club.name = strformat("%s (Guild)", club.name)
+								-- insert
+								tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
+							else
+								-- insert
+								tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s:%d", club.name, tonumber(v)))
 							end
-
-							-- insert
-							tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s:%d", club.name, tonumber(v)))
 						end
 					end
 
@@ -1414,17 +1474,17 @@ end
 function NS:Log_Match_List(list)
 	-- purge older
 	local timestamp = time()
-	for k,v in pairs(NS.globalDB.global.matchLogList) do
+	for k,v in pairs(NS.db.global.matchLogList) do
 		-- older found?
 		if (not v.timestamp or (k > 1000000)) then
 			-- delete
-			NS.globalDB.global.matchLogList[k] = nil
+			NS.db.global.matchLogList[k] = nil
 		else
 			-- older than 7 days?
 			local older = v.timestamp + (7 * 86400)
 			if (timestamp > older) then
 				-- delete
-				NS.globalDB.global.matchLogList[k] = nil
+				NS.db.global.matchLogList[k] = nil
 			end
 		end
 	end
@@ -1444,7 +1504,7 @@ function NS:Log_Match_List(list)
 	}
 
 	-- insert
-	tinsert(NS.globalDB.global.matchLogList, entry)
+	tinsert(NS.db.global.matchLogList, entry)
 end
 
 -- match started, log roster
@@ -1461,10 +1521,10 @@ function NS:Match_Started_Log_Roster()
 				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
 
 				-- valid list?
-				local index = #NS.globalDB.global.matchLogList
+				local index = #NS.db.global.matchLogList
 				if (index and (index > 0)) then
 					-- save duration
-					NS.globalDB.global.matchLogList[index].duration = strformat("%d minutes, %d seconds", NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
+					NS.db.global.matchLogList[index].duration = strformat("%d minutes, %d seconds", NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
 				end
 			end
 
@@ -1525,37 +1585,11 @@ function NS:Process_Pass_Leadership(sender)
 			-- player is community leader?
 			local shouldPromote = false
 			if (NS:Is_Community_Leader(player) == true) then
-				-- find community members
-				local member1 = NS:Get_Community_Member(player)
-				local member2 = NS:Get_Community_Member(sender)
-
-				-- player not found?
-				if (not member1) then
-					-- force max priority
-					member1 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-				-- no priority?
-				elseif (not member1.priority) then
-					-- force max priority
-					member1.priority = NS.CommFlare.CF.MaxPriority
-				end
-
-				-- sender not found?
-				if (not member2) then
-					-- force max priority
-					member2 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-				-- no priority?
-				elseif (not member2.priority) then
-					-- force max priority
-					member2.priority = NS.CommFlare.CF.MaxPriority
-				end
-
-				-- priority in check?
-				if (member1 and member1.priority and member2 and member2.priority) then
-					-- sender has equal or better priority?
-					if (member1.priority >= member2.priority) then
-						-- should promote
-						shouldPromote = true
-					end
+				-- higher or equal priority for sender?
+				local compare = NS:Compare_Community_Priority(player, sender)
+				if (compare <= 0) then
+					-- should promote
+					shouldPromote = true
 				end
 			else
 				-- sender is community leader?
@@ -1576,39 +1610,15 @@ function NS:Process_Pass_Leadership(sender)
 		end
 	else
 		-- not sending to yourself?
-		local shouldPromote = false
 		if (player ~= sender) then
-			-- get player / member
-			player = NS:Get_Community_Member(player)
-			local member = NS:Get_Community_Member(sender)
-			if (member) then
-				-- player not member?
-				if (not player) then
-					-- should promote
-					shouldPromote = true
-				else
-					-- no member priority?
-					if (not member.priority or (member.priority == 0)) then
-						member.priority = 999
-					end
-
-					-- no player priority?
-					if (not player.priority or (player.priority == 0)) then
-						player.priority = 999
-					end
-
-					-- higher priority?
-					if (member.priority <= player.priority) then
-						-- should promote
-						shouldPromote = true
-					end
+			-- are you group leader?
+			if (NS:IsGroupLeader() == true) then
+				-- higher or equal priority for sender?
+				local compare = NS:Compare_Community_Priority(player, sender)
+				if (compare <= 0) then
+					-- promote to party leader
+					NS:PromoteToPartyLeader(sender)
 				end
-			end
-
-			-- should promote?
-			if (shouldPromote == true) then
-				-- promote to party leader
-				NS:PromoteToPartyLeader(sender)
 			end
 		end
 	end
@@ -1625,7 +1635,7 @@ function NS:Process_Auto_Invite(sender)
 	-- number?
 	if (type(sender) == "number") then
 		-- battle net auto invite enabled?
-		if (NS.charDB.profile.bnetAutoInvite == true) then
+		if (NS.db.global.bnetAutoInvite == true) then
 			-- in battleground?
 			if (NS:IsInBattleground() == true) then
 				-- can not invite while in a battleground
@@ -1738,6 +1748,16 @@ function NS:Get_Battleground_Status()
 				NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
 			end
 
+			-- use proper count
+			local count = 0
+			if (NS.CommFlare.CF.PlayerMercenary == true) then
+				-- mercenary count
+				count = NS.CommFlare.CF.MercCount
+			else
+				-- community count
+				count = NS.CommFlare.CF.CommCount
+			end
+
 			-- has match started yet?
 			NS.CommFlare.CF.NeedAddonData = false
 			local duration = PvPGetActiveMatchDuration()
@@ -1759,7 +1779,7 @@ function NS:Get_Battleground_Status()
 						L["Horde"], NS.CommFlare.CF.AV.Scores.Horde,
 						L["Bunkers Left"], NS.CommFlare.CF.AV.Counts.Bunkers,
 						L["Towers Left"], NS.CommFlare.CF.AV.Counts.Towers,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- ashran?
 				elseif (NS.CommFlare.CF.MapID == 1478) then
 					-- set text to ashran status
@@ -1771,7 +1791,7 @@ function NS:Get_Battleground_Status()
 						L["Horde"], NS.CommFlare.CF.ASH.Scores.Horde,
 						L["Jeron"], NS.CommFlare.CF.ASH.Jeron,
 						L["Rylai"], NS.CommFlare.CF.ASH.Rylai,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- battle for wintergrasp?
 				elseif (NS.CommFlare.CF.MapID == 1334) then
 					-- set text to wintergrasp status
@@ -1783,7 +1803,7 @@ function NS:Get_Battleground_Status()
 						L["Alliance"], NS.CommFlare.CF.WG.Vehicles.Alliance,
 						L["Horde"], NS.CommFlare.CF.WG.Vehicles.Horde,
 						L["Towers Destroyed"], NS.CommFlare.CF.WG.Counts.Towers,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- isle of conquest?
 				elseif (NS.CommFlare.CF.MapID == 169) then
 					-- issue capping gate request command
@@ -1799,7 +1819,7 @@ function NS:Get_Battleground_Status()
 						L["Gates Destroyed"], NS.CommFlare.CF.IOC.Counts.Alliance,
 						L["Horde"], NS.CommFlare.CF.IOC.Scores.Horde,
 						L["Gates Destroyed"], NS.CommFlare.CF.IOC.Counts.Horde,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- southshore vs tarren mill?
 				elseif (NS.CommFlare.CF.MapID == 623) then
 					-- set text to southshore vs tarren mill status
@@ -1807,7 +1827,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.SSvTM.TimeRemaining,
 						L["Alliance"], NS.CommFlare.CF.SSvTM.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.SSvTM.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- arathi basin?
 				elseif (NS.CommFlare.CF.MapID == 1366) then
 					-- set text to arathi basin status
@@ -1817,7 +1837,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.AB.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.AB.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- battle for gilneas?
 				elseif (NS.CommFlare.CF.MapID == 275) then
 					-- set text to battle for gilneas status
@@ -1827,7 +1847,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.BFG.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.BFG.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- deepwind gorge?
 				elseif (NS.CommFlare.CF.MapID == 1576) then
 					-- set text to deepwind gorge status
@@ -1837,7 +1857,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.DWG.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.DWG.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- eye of the storm?
 				elseif (NS.CommFlare.CF.MapID == 112) then
 					-- set text to eye of the storm status
@@ -1847,7 +1867,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.EOTS.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.EOTS.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- seething shore?
 				elseif (NS.CommFlare.CF.MapID == 907) then
 					-- set text to seething shore status
@@ -1855,7 +1875,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.SSH.TimeRemaining,
 						L["Alliance"], NS.CommFlare.CF.SSH.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.SSH.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- silvershard mines?
 				elseif (NS.CommFlare.CF.MapID == 423) then
 					-- set text to silvershard mines status
@@ -1865,7 +1885,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.SSM.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.SSM.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- temple of kotmogu?
 				elseif (NS.CommFlare.CF.MapID == 417) then
 					-- set text to temple of kotmogu status
@@ -1875,7 +1895,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.TOK.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.TOK.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- twin peaks?
 				elseif (NS.CommFlare.CF.MapID == 206) then
 					-- set text to twin peaks status
@@ -1883,7 +1903,7 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.TWP.TimeRemaining,
 						L["Alliance"], NS.CommFlare.CF.TWP.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.TWP.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				-- warsong gulch?
 				elseif (NS.CommFlare.CF.MapID == 1339) then
 					-- set text to warsong gulch status
@@ -1891,13 +1911,13 @@ function NS:Get_Battleground_Status()
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.WSG.TimeRemaining,
 						L["Alliance"], NS.CommFlare.CF.WSG.AllianceScore,
 						L["Horde"], NS.CommFlare.CF.WSG.HordeScore,
-						NS.CommFlare.CF.CommCount, L["Community Members"])
+						count, L["Community Members"])
 				end
 			else
 				-- set text to gates not opened yet
 				text = strformat("%s: %s (%d %s)",
 					NS.CommFlare.CF.MapInfo.name, L["Just entered match. Gates not opened yet!"],
-					NS.CommFlare.CF.CommCount, L["Community Members"])
+					count, L["Community Members"])
 			end
 
 			-- has raid leader?
@@ -2047,9 +2067,16 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- finalize text
+				local text = nil
 				local count = NS:GetGroupCount()
 				local level = UnitLevel("player")
-				local text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], mapName)
+				if (level < 80) then
+					-- add with level
+					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], mapName)
+				else
+					-- add without level
+					text = strformat("%s %s %s %s!", count, faction, L["Joined Queue for"], mapName)
+				end
 
 				-- add time waited
 				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
@@ -2135,7 +2162,13 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- finalize text
 				local level = UnitLevel("player")
-				text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
+				if (level < 80) then
+					-- add with level
+					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
+				else
+					-- add without level
+					text = strformat("%s %s %s%s %s!", count, faction, mercenary, L["Joined Queue for"], mapName)
+				end
 
 				-- add time waited
 				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
@@ -2174,7 +2207,13 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- finalize text
 				local level = UnitLevel("player")
-				text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
+				if (level < 80) then
+					-- add with level
+					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
+				else
+					-- add without level
+					text = strformat("%s %s %s%s %s!", count, faction, mercenary, L["Joined Queue for"], mapName)
+				end
 
 				-- add time waited
 				text = strformat("%s %s: %s!", text, L["Estimated Wait"], L["N/A"])
@@ -2308,7 +2347,7 @@ function NS:Update_Battlefield_Status(index)
 					-- queue popped window not open?
 					if (popped ~= true) then
 						-- queue paused warning enabled?
-						if (NS.charDB.profile.warningQueuePaused == true) then
+						if (NS.db.global.warningQueuePaused == true) then
 							-- are you group leader?
 							local text = strformat(L["Queue for %s has paused!"], mapName)
 							if (NS:IsGroupLeader() == true) then
@@ -2334,7 +2373,7 @@ function NS:Update_Battlefield_Status(index)
 					-- queue popped window not open?
 					if (NS.CommFlare.CF.QueuePopped ~= true) then
 						-- queue paused warning enabled?
-						if (NS.charDB.profile.warningQueuePaused == true) then
+						if (NS.db.global.warningQueuePaused == true) then
 							-- are you group leader?
 							local text = strformat(L["Queue for %s has resumed!"], mapName)
 							if (NS:IsGroupLeader() == true) then
@@ -2362,7 +2401,7 @@ function NS:Update_Battlefield_Status(index)
 				NS.CommFlare.CF.SocialQueues["local"].queues[index].popped = NS.CommFlare.CF.SocialQueues["local"].popped
 
 				-- display popped groups?
-				if (NS.charDB.profile.displayPoppedGroups == true) then
+				if (NS.db.global.displayPoppedGroups == true) then
 					-- print popped group
 					local maxCount = NS:GetMaxPartyCount()
 					print(strformat("%s: %s-%s (%d/%d) [%s]", L["POPPED"], NS.CommFlare.CF.SocialQueues["local"].leader.name, NS.CommFlare.CF.SocialQueues["local"].leader.realm, #NS.CommFlare.CF.SocialQueues["local"].members, maxCount, mapName))
@@ -2411,9 +2450,16 @@ function NS:Update_Battlefield_Status(index)
 							end
 
 							-- finalize text
+							local text = nil
 							local count = NS:GetGroupCount()
 							local level = UnitLevel("player")
-							text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Queue Popped for"], mapName)
+							if (level < 80) then
+								-- add with level
+								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Queue Popped for"], mapName)
+							else
+								-- add without level
+								text = strformat("%s %s %s%s %s!", count, faction, mercenary, L["Queue Popped for"], mapName)
+							end
 
 							-- no specializations found? (probably solo Q)
 							if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
@@ -2503,9 +2549,16 @@ function NS:Update_Battlefield_Status(index)
 							end
 
 							-- finalize text
+							local text = nil
 							local count = NS:GetGroupCount()
 							local level = UnitLevel("player")
-							local text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Queue for"], mapName)
+							if (level < 80) then
+								-- add with level
+								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Queue for"], mapName)
+							else
+								-- add without level
+								text = strformat("%s %s %s%s %s!", count, faction, mercenary, L["Dropped Queue for"], mapName)
+							end
 
 							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
@@ -2533,8 +2586,15 @@ function NS:Update_Battlefield_Status(index)
 					end
 
 					-- finalize text
+					local text = nil
 					local level = UnitLevel("player")
-					local text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
+					if (level < 80) then
+						-- add with level
+						text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
+					else
+						-- add without level
+						text = strformat("%s %s%s %s!", faction, mercenary, L["Missed Queue for Popped"], mapName)
+					end
 
 					-- get count
 					local count = NS:GetGroupCount()
@@ -2642,9 +2702,16 @@ function NS:Update_Brawl_Status()
 							-- are you group leader?
 							if (NS:IsGroupLeader() == true) then
 								-- finalize text
-								local text = NS:GetGroupCount()
+								local text = nil
+								local count = NS:GetGroupCount()
 								local level = UnitLevel("player")
-								text = strformat("[%s %d] %s %s %s!", L["Level"], level, text, L["Queue Popped for"], mapName)
+								if (level < 80) then
+									-- add with level
+									text = strformat("[%s %d] %s %s %s!", L["Level"], level, count, L["Queue Popped for"], mapName)
+								else
+									-- add without level
+									text = strformat("%s %s %s!", count, L["Queue Popped for"], mapName)
+								end
 
 								-- no specializations found? (probably solo Q)
 								if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
@@ -2712,9 +2779,16 @@ function NS:Update_Brawl_Status()
 							end
 
 							-- dropped
+							local text = nil
 							local count = NS:GetGroupCount()
 							local level = UnitLevel("player")
-							local text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
+							if (level < 80) then
+								-- add with level
+								text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
+							else
+								-- add without level
+								text = strformat("%s %s %s %s!", count, faction, L["Dropped Queue for"], mapName)
+							end
 
 							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
@@ -2739,8 +2813,15 @@ function NS:Update_Brawl_Status()
 							end
 
 							-- missed
+							local text = nil
 							local level = UnitLevel("player")
-							local text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
+							if (level < 80) then
+								-- add with level
+								text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
+							else
+								-- add without level
+								text = strformat("%s %s %s!", faction, L["Missed Queue for Popped"], mapName)
+							end
 
 							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
@@ -2781,8 +2862,15 @@ function NS:Update_Brawl_Status()
 					end
 
 					-- left queue
+					local text = nil
 					local level = UnitLevel("player")
-					local text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Left Queue for Popped"], mapName)
+					if (level < 80) then
+						-- add with level
+						text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Left Queue for Popped"], mapName)
+					else
+						-- add without level
+						text = strformat("%s %s %s!", faction, L["Left Queue for Popped"], mapName)
+					end
 
 					-- community reporter enabled?
 					if (NS.charDB.profile.communityReporter == true) then
@@ -2834,8 +2922,8 @@ function NS:Initialize_Queue_Session()
 	if (isTracked == true) then
 		-- uninvite players that are afk?
 		local uninviteTimer = 0
-		if (NS.charDB.profile.uninvitePlayersAFK > 0) then
-			uninviteTimer = NS.charDB.profile.uninvitePlayersAFK
+		if (NS.db.global.uninvitePlayersAFK > 0) then
+			uninviteTimer = NS.db.global.uninvitePlayersAFK
 		end
 
 		-- uninvite enabled?
@@ -2850,6 +2938,7 @@ end
 function NS:Get_Current_Queues_Text()
 	-- process all
 	local text = nil
+	local mercenary = ""
 	for k,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- brawl?
 		local status, mapName = nil, nil
@@ -2869,6 +2958,12 @@ function NS:Get_Current_Queues_Text()
 			NS.CommFlare.CF.Timer.Seconds = time() - v.created
 			NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
 			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
+
+			-- mercenary queue?
+			if (v.mercenary == true) then
+				-- set mercenary text
+				mercenary = strformat("%s ", L["Mercenary"])
+			end
 
 			-- first?
 			if (not text) then
@@ -2902,7 +2997,13 @@ function NS:Get_Current_Queues_Text()
 		-- finalize text
 		local count = NS:GetGroupCount()
 		local level = UnitLevel("player")
-		text = strformat("[%s %d] %s %s %s %s", L["Level"], level, count, faction, L["Currently Queued for"], text)
+		if (level < 80) then
+			-- add with level
+			text = strformat("[%s %d] %s %s %s%s %s", L["Level"], level, count, faction, mercenary, L["Currently Queued for"], text)
+		else
+			-- add without level
+			text = strformat("%s %s %s%s %s", count, faction, mercenary, L["Currently Queued for"], text)
+		end
 
 		-- check if group has room for more
 		local maxCount = NS:GetMaxPartyCount()

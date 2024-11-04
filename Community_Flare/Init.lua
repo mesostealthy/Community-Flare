@@ -49,16 +49,22 @@ local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
+local DelvesUIHasActiveDelve                    = _G.C_DelvesUI.HasActiveDelve
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
+local PartyInfoIsDelveComplete                  = _G.C_PartyInfo.IsDelveComplete
+local PartyInfoIsDelveInProgress                = _G.C_PartyInfo.IsDelveInProgress
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                    = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                         = _G.C_PvP.IsRatedSoloRBG
 local SocialQueueGetGroupForPlayer              = _G.C_SocialQueue.GetGroupForPlayer
 local TimerAfter                                = _G.C_Timer.After
 local pairs                                     = _G.pairs
+local print                                     = _G.print
+local securecallfunction                        = _G.securecallfunction
 local time                                      = _G.time
 local tonumber                                  = _G.tonumber
+local tostring                                  = _G.tostring
 local type                                      = _G.type
 local mfloor                                    = _G.math.floor
 local strformat                                 = _G.string.format
@@ -182,7 +188,7 @@ end
 -- global function (send variables to other addons)
 function CommunityFlare_GetVar(name)
 	-- not loaded?
-	if (not NS.CommFlare or not NS.globalDB) then
+	if (not NS.CommFlare or not NS.db) then
 		-- failed
 		return nil
 	end
@@ -396,6 +402,39 @@ function NS:IsInBattleground()
 	return false
 end
 
+-- is in delve?
+function NS:IsInDelve()
+	-- in active delve?
+	if (NS.CommFlare.CF.InActiveDelve == true) then
+		-- yup
+		return true
+	end
+
+	-- delve in progress?
+	local active = PartyInfoIsDelveInProgress()
+	if (active == true) then
+		-- yup
+		return true
+	end
+
+	-- delve completed?
+	local complete = PartyInfoIsDelveComplete()
+	if (complete == true) then
+		-- yup
+		return true
+	end
+
+	-- has active delve?
+	local active = DelvesUIHasActiveDelve()
+	if (active == true) then
+		-- yup
+		return true
+	end
+
+	-- nope
+	return false
+end
+
 -- is player appearing offline?
 function NS:IsInvisible()
 	-- check Battle.NET account - has focus?
@@ -472,12 +511,13 @@ end
 -- load session variables
 function NS:LoadSession()
 	-- load global stuff
-	NS.CommFlare.CF.SocialQueues = NS.globalDB.global.SocialQueues or {}
+	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
 
 	-- load profile stuff
 	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID
 	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
+	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 
 	-- load match log stuff
 	NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount
@@ -491,9 +531,16 @@ function NS:LoadSession()
 	NS.CommFlare.CF.ASH = NS.charDB.profile.ASH or {}
 	NS.CommFlare.CF.AV = NS.charDB.profile.AV or {}
 	NS.CommFlare.CF.BFG = NS.charDB.profile.BFG or {}
+	NS.CommFlare.CF.DHR = NS.charDB.profile.DHR or {}
+	NS.CommFlare.CF.DWG = NS.charDB.profile.DWG or {}
+	NS.CommFlare.CF.EOTS = NS.charDB.profile.EOTS or {}
 	NS.CommFlare.CF.IOC = NS.charDB.profile.IOC or {}
+	NS.CommFlare.CF.SSH = NS.charDB.profile.SSH or {}
+	NS.CommFlare.CF.SSM = NS.charDB.profile.SSM or {}
 	NS.CommFlare.CF.SSvTM = NS.charDB.profile.SSvTM or {}
 	NS.CommFlare.CF.WG = NS.charDB.profile.WG or {}
+	NS.CommFlare.CF.TOK = NS.charDB.profile.TOK or {}
+	NS.CommFlare.CF.TWP = NS.charDB.profile.TWP or {}
 	NS.CommFlare.CF.WSG = NS.charDB.profile.WSG or {}
 
 	-- get MapID
@@ -507,13 +554,14 @@ end
 -- save session variables
 function NS:SaveSession()
 	-- save global stuff
-	NS.globalDB.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
+	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 
 	-- save profile stuff
 	NS.charDB.profile.SavedTime = time()
 	NS.charDB.profile.PartyGUID = NS.CommFlare.CF.PartyGUID
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
+	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
 
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
@@ -522,8 +570,15 @@ function NS:SaveSession()
 		NS.charDB.profile.ASH = NS.CommFlare.CF.ASH or {}
 		NS.charDB.profile.AV = NS.CommFlare.CF.AV or {}
 		NS.charDB.profile.BFG = NS.CommFlare.CF.BFG or {}
+		NS.charDB.profile.DHR = NS.CommFlare.CF.DHR or {}
+		NS.charDB.profile.DWG = NS.CommFlare.CF.DWG or {}
+		NS.charDB.profile.EOTS = NS.CommFlare.CF.EOTS or {}
 		NS.charDB.profile.IOC = NS.CommFlare.CF.IOC or {}
+		NS.charDB.profile.SSH = NS.CommFlare.CF.SSH or {}
+		NS.charDB.profile.SSM = NS.CommFlare.CF.SSM or {}
 		NS.charDB.profile.SSvTM = NS.CommFlare.CF.SSvTM or {}
+		NS.charDB.profile.TOK = NS.CommFlare.CF.TOK or {}
+		NS.charDB.profile.TWP = NS.CommFlare.CF.TWP or {}
 		NS.charDB.profile.WG = NS.CommFlare.CF.WG or {}
 		NS.charDB.profile.WSG = NS.CommFlare.CF.WSG or {}
 
@@ -553,7 +608,7 @@ function NS:SaveSession()
 	end
 
 	-- debug mode?
-	if (NS.charDB.profile.debugMode == true) then
+	if (NS.db.global.debugMode == true) then
 		-- save CF
 		NS.charDB.profile.CF = NS.CommFlare.CF
 	end
@@ -563,34 +618,50 @@ end
 function NS:SendMessage(sender, msg)
 	-- party?
 	if (not sender) then
-		-- send to party
-		SendChatMessage(msg, "PARTY")
+		-- are you in local party?
+		if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+			-- send to party
+			SendChatMessage(msg, "PARTY")
+		end
 	-- string?
 	elseif (type(sender) == "string") then
 		-- guild?
 		if (sender == "GUILD") then
-			-- send to guild
-			SendChatMessage(msg, "GUILD")
+			-- are you in a guild?
+			if (IsInGuild()) then
+				-- send to guild
+				SendChatMessage(msg, "GUILD")
+			end
 		-- instance?
 		elseif (sender == "INSTANCE") then
 			-- send to instance chat
 			SendChatMessage(msg, "INSTANCE_CHAT")
 		-- party?
 		elseif (sender == "PARTY") then
-			-- send to party
-			SendChatMessage(msg, "PARTY")
+			-- are you in local party?
+			if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+				-- send to party
+				SendChatMessage(msg, "PARTY")
+			end
 		-- raid?
 		elseif (sender == "RAID") then
-			-- send to raid
-			SendChatMessage(msg, "RAID")
+			-- are you in raid?
+			if (IsInRaid() == true) then
+				-- send to raid
+				SendChatMessage(msg, "RAID")
+			end
 		-- raid warning?
 		elseif (sender == "RAID_WARNING") then
-			-- send to raid warning
-			SendChatMessage(msg, "RAID_WARNING")
+			-- are you in raid?
+			if (IsInRaid() == true) then
+				-- send to raid warning
+				SendChatMessage(msg, "RAID_WARNING")
+			end
 		else
 			-- send to target whisper
 			SendChatMessage(msg, "WHISPER", nil, sender)
 		end
+	-- number?
 	elseif (type(sender) == "number") then
 		-- send to Battle.NET
 		BNSendWhisper(sender, msg)
@@ -1076,7 +1147,7 @@ end
 function NS:GetMemberCount()
 	-- process all
 	local count = 0
-	for k,v in pairs(NS.globalDB.global.members) do
+	for k,v in pairs(NS.db.global.members) do
 		-- increase
 		count = count + 1
 	end
@@ -1302,7 +1373,7 @@ StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
 					-- treat guild as community?
 					if (NS.charDB.profile.addGuildMembers == true) then
 						-- are you in a guild?
-						if (IsInGuild() == true) then
+						if (IsInGuild()) then
 							-- send message
 							NS:SendMessage("GUILD", message)
 						end
@@ -1340,6 +1411,33 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 	whileDead = true,
 	hideOnEscape = true,
 }
+
+-- rebuild database members
+function NS:Rebuild_Database_Members()
+	-- clear lists
+	NS.db.global.members = {}
+	NS.CommFlare.CF.CommunityLeaders = {}
+
+	-- process club members again
+	print(L["Rebuilding community database member list."])
+	local status = NS:Process_Club_Members()
+	if (status == true) then
+		-- display members found
+		print(NS:Total_Database_Members(nil))
+
+		-- display leaders count
+		local count = 0
+		for _,v in ipairs(NS.CommFlare.CF.CommunityLeaders) do
+			-- next
+			count = count + 1
+		end
+		print(strformat(L["%d community leaders found."], count))
+	else
+		-- no subscribed clubs found
+		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
+	end
+end
+
 
 -- rebuild members dialog box
 StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
@@ -1438,5 +1536,34 @@ function NS:Queue_Check_Role_Chosen()
 				end
 			end
 		end
+	end
+end
+
+-- add tom tom way point
+function NS:TomTomAddWaypoint(title, x, y)
+	-- sanity checks
+	if (not title or not x or not y) then
+		-- finished
+		return
+	end
+
+	-- has tom tom?
+	local TT = TomTom
+	if (TT and TT.AddWaypoint) then
+		-- setup options
+		local options =
+		{
+			desc = tostring(title),
+			title = tostring(title),
+			persistent = true,
+			minimap = true,
+			world = true,
+			callbacks = nil,
+			silent = true,
+			from = "CommFlare",
+		}
+
+		-- add way point
+		securecallfunction(TT.AddWaypoint, TT, NS.CommFlare.CF.MapID, tonumber(x), tonumber(y), options)
 	end
 end

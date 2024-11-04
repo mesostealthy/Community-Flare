@@ -20,6 +20,17 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v1.19.001
+-NEW Party Setting: Notify you upon party member zone changes? (Only visible for Group Leaders.)
+-NEW World Options Category: Notify you when a War Supply Crate is inbound. (Also adds starting TomTom map pin.)
+-NEW Ashran Settings: Notify when Mage is under attack & set Frequency for repeat warnings.
+-NEW Ashran Settings: Notify when Ancient Inferno spawns at the Ring of Conquest.
+-Korrak's Revenge: Relevant Quests are now shareable with Irrelevant setting in Korrak's Revenge.
+-Reporting Queues/Pops/Joins/Missed/Left will now only show Level X for less than 80.
+-BUGFIX: Invited to a party already in queue will now auto select role and accept properly.
+-REWORK: Addon Settings GUI redone a la more weizPVP style! A lot of the settings are global now.
+-Bumped TOC to v11.0.5
+
 v1.18.001
 -FEATURE: Reports to your party when you exit a Battleground. (If you're in a party.)
 -BUGFIX: You are no longer spammed with "You aren't in a party" after Delve has been completed!

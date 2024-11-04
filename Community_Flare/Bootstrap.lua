@@ -52,11 +52,14 @@ NS.CommFlare.CF = {
 	AutoQueueable = false,
 	DefaultVerified = false,
 	Disabled = false,
+	InActiveDelve = false,
 	InitialLogin = false,
 	Invisible = false,
 	HasAura = false,
 	MatchStartLogged = false,
 	NeedAddonData = false,
+	NewZoneWarning = false,
+	PlayerMercenary = false,
 	Popped = false,
 	PvpLoggingCombat = false,
 	QueuePopped = false,
@@ -65,6 +68,7 @@ NS.CommFlare.CF = {
 	VersionSent = false,
 
 	-- numbers
+	AncientInferno = 0,
 	ClubCount = 0,
 	Count = 0,
 	CountDown = 0,
@@ -78,6 +82,7 @@ NS.CommFlare.CF = {
 	IsTank = 0,
 	LastBossRW = 0,
 	LastMageRW = 0,
+	LastRaidWarning = 0,
 	LeftTime = 0,
 	LogListCount = 0,
 	MapID = 0,
@@ -172,13 +177,6 @@ NS.CommFlare.Title = GetAddOnMetadata(ADDON_NAME, "Title") or "unspecified"
 NS.CommFlare.Version = GetAddOnMetadata(ADDON_NAME, "Version") or "unspecified"
 NS.CommFlare.Title_Full = strformat("%s %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build)
 
--- refresh config
-function NS.CommFlare:RefreshConfig()
-	-- setup community lists
-	NS:Setup_Main_Community_List(nil)
-	NS:Setup_Other_Community_List(nil)
-end
-
 -- handle pending invite confirmations
 local function hook_HandlePendingInviteConfirmation(invite)
 	-- mercenary queued?
@@ -218,50 +216,16 @@ local function hook_HandlePendingInviteConfirmation(invite)
 	end
 end
 
--- global defaults
-NS.GlobalDefaults = {
-	-- global
-	global = {
-		-- tables
-		clubs = {},
-		history = {},
-		matchLogList = {},
-		members = {},
-		SocialQueues = {},
-	},
-}
-
 -- on initialize
 function NS.CommFlare:OnInitialize()
-	-- setup stuff
-	NS.globalDB = NS.Libs.AceDB:New("CommunityFlareDB", NS.GlobalDefaults)
-	NS.charDB = NS.Libs.AceDB:New("CommFlareCharDB", NS.defaults)
-	NS.charDB.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-	NS.charDB.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
-	NS.charDB.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
-	NS.Libs.AceConfig:RegisterOptionsTable("CommFlare_Options", NS.options)
-	self.optionsFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Options", NS.CommFlare.Title)
-	NS.profiles = NS.Libs.AceDBOptions:GetOptionsTable(NS.charDB)
-	NS.Libs.AceConfig:RegisterOptionsTable("CommFlare_Profiles", NS.profiles)
-	self.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("CommFlare_Profiles", "Profiles", NS.CommFlare.Title)
-	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
-
-	-- check for old string values?
-	if (type(NS.charDB.profile.blockSharedQuests) == "string") then
-		-- convert to number
-		NS.charDB.profile.blockSharedQuests = tonumber(NS.charDB.profile.blockSharedQuests)
-	end
-	if (type(NS.charDB.profile.communityAutoAssist) == "string") then
-		-- convert to number
-		NS.charDB.profile.communityAutoAssist = tonumber(NS.charDB.profile.communityAutoAssist)
-	end
-	if (type(NS.charDB.profile.uninvitePlayersAFK) == "string") then
-		-- convert to number
-		NS.charDB.profile.uninvitePlayersAFK = tonumber(NS.charDB.profile.uninvitePlayersAFK)
-	end
+	-- create config options
+	NS:CreateConfigOptions()
 
 	-- build classes
 	NS:Build_Classes()
+
+	-- setup hooks
+	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
 end
 
 -- addon compartment on click

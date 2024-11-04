@@ -8,7 +8,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                        = _G
 local GetClassInfo                              = _G.GetClassInfo
 local GetNumClasses                             = _G.GetNumClasses
-local GetNumSpecializationsForClassID           = _G.GetNumSpecializationsForClassID
+local GetNumSpecializationsForClassID           = _G.C_SpecializationInfo and _G.C_SpecializationInfo.GetNumSpecializationsForClassID or _G.GetNumSpecializationsForClassID
 local GetSpecializationInfoForClassID           = _G.GetSpecializationInfoForClassID
 local tonumber                                  = _G.tonumber
 local tostring                                  = _G.tostring

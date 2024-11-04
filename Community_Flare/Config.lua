@@ -9,18 +9,14 @@ local _G                                        = _G
 local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
-local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
-local ReloadUI                                  = _G.C_UI.Reload
 local ipairs                                    = _G.ipairs
 local next                                      = _G.next
+local pairs                                     = _G.pairs
 local print                                     = _G.print
 local strformat                                 = _G.string.format
 local tinsert                                   = _G.table.insert
-
--- local variables
-local settings_that_require_reload = {}
 
 -- add / remove guild
 local function Set_Add_Guild_Members(info, value)
@@ -394,6 +390,124 @@ local function Community_List_Set_Item(info, key, value)
 	end
 end
 
+-- setup total database members
+local function Total_Database_Members(info)
+	-- process all members
+	local count = 0
+	for k,v in pairs(NS.db.global.members) do
+		-- increase
+		count = count + 1
+	end
+
+	-- return count
+	return strformat(L["Database members found: %s"], count)
+end
+
+-- refrehs database
+local function Refresh_Database_Members()
+	-- get clubs list
+	local clubs = NS:Get_Clubs_List(false)
+	if (not clubs) then
+		-- none
+		print(strformat("%s: No subscribed clubs found.", NS.CommFlare.Title))
+	else
+		-- process clubs
+		for _,clubId in ipairs(clubs) do
+			-- club type is a community?
+			local info = ClubGetClubInfo(clubId)
+			if (info and (info.clubType == Enum.ClubType.Character)) then
+				-- add community
+				NS:Add_Community(clubId, info)
+
+				-- remove all club members
+				NS:Remove_All_Club_Members_By_ClubID(clubId)
+
+				-- add all club members
+				NS:Add_All_Club_Members_By_ClubID(clubId)
+			end
+		end
+
+		-- rebuild community leaders
+		NS:Rebuild_Community_Leaders()
+	end
+end
+
+-- rebuild database members confirmation
+local function Rebuild_Database_Members_Confirmation()
+	-- ask first
+	NS:PopupBox("CommunityFlare_Rebuild_Members_Dialog")
+end
+
+-- rebuild members dialog box
+StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
+	text = L["One or more of the changes you have made require a ReloadUI."],
+	button1 = L["Yes"],
+	button2 = L["No"],
+	OnAccept = function(self, player)
+		-- save settings
+		for k,v in pairs(settings_that_require_reload) do
+			-- block hotkeys?
+			if (k == "blockGameMenuHotKeys") then
+				-- save value
+				NS.charDB.profile.blockGameMenuHotKeys = v
+			end
+		end
+
+		-- reload UI
+		ReloadUI()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- set block game menu hot keys (reload when disabled)
+local function Block_Game_Menu_Hot_Keys_Set(info, value)
+	-- enabled?
+	if (value == true) then
+		-- save value
+		NS.charDB.profile.blockGameMenuHotKeys = value
+
+		-- enable block game menu hooks
+		NS:Setup_BlockGameMenuHooks()
+	else
+		-- setting requires reload
+		settings_that_require_reload["blockGameMenuHotKeys"] = value
+		NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
+	end
+end
+
+-- is disabled?
+local function Ashran_Mage_Warning_Frequency_Disabled()
+	-- disabled?
+	if (NS.db.global.ashranMageWarnAttacked == 1) then
+		-- disabled
+		return true
+	else
+		-- enabled
+		return false
+	end
+end
+
+-- setup report community to list
+local function Setup_Report_Community_List(info)
+	-- process all
+	local list = {}
+	list[1] = L["None"]
+	NS.CommFlare.CF.ClubCount = 0
+	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
+	for _,v in ipairs(NS.CommFlare.CF.Clubs) do
+		-- only communities
+		if (v.clubType == Enum.ClubType.Character) then
+			-- add club
+			list[v.clubId] = v.name
+		end
+	end
+
+	-- return list
+	return list
+end
+
 -- is disabled?
 local function Check_ReportID_Disabled()
 	-- main community set?
@@ -500,174 +614,614 @@ local function Set_Force_DPS_Item(info, value)
 	NS:Enforce_PVP_Roles()
 end
 
--- setup total database members
-local function Total_Database_Members(info)
-	-- process all members
-	local count = 0
-	for k,v in pairs(NS.globalDB.global.members) do
-		-- increase
-		count = count + 1
-	end
-
-	-- return count
-	return strformat(L["Database members found: %s"], count)
-end
-
--- rebuild database members
-local function Rebuild_Database_Members()
-	-- clear lists
-	NS.globalDB.global.members = {}
-	NS.CommFlare.CF.CommunityLeaders = {}
-
-	-- process club members again
-	print(L["Rebuilding community database member list."])
-	local status = NS:Process_Club_Members()
-	if (status == true) then
-		-- display members found
-		print(NS:Total_Database_Members(nil))
-
-		-- display leaders count
-		local count = 0
-		for _,v in ipairs(NS.CommFlare.CF.CommunityLeaders) do
-			-- next
-			count = count + 1
-		end
-		print(strformat(L["%d community leaders found."], count))
-	else
-		-- no subscribed clubs found
-		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
-	end
-end
-
--- refrehs database
-local function Refresh_Database_Members()
-	-- get clubs list
-	local clubs = NS:Get_Clubs_List(false)
-	if (not clubs) then
-		-- none
-		print(strformat("%s: No subscribed clubs found.", NS.CommFlare.Title))
-	else
-		-- process clubs
-		for _,clubId in ipairs(clubs) do
-			-- club type is a community?
-			local info = ClubGetClubInfo(clubId)
-			if (info and (info.clubType == Enum.ClubType.Character)) then
-				-- add community
-				NS:Add_Community(clubId, info)
-
-				-- remove all club members
-				NS:Remove_All_Club_Members_By_ClubID(clubId)
-
-				-- add all club members
-				NS:Add_All_Club_Members_By_ClubID(clubId)
-			end
-		end
-
-		-- rebuild community leaders
-		NS:Rebuild_Community_Leaders()
-	end
-end
-
--- rebuild database members confirmation
-local function Rebuild_Database_Members_Confirmation()
-	-- ask first
-	NS:PopupBox("CommunityFlare_Rebuild_Members_Dialog")
-end
-
--- setup report community to list
-local function Setup_Report_Community_List(info)
-	-- process all
-	local list = {}
-	list[1] = L["None"]
-	NS.CommFlare.CF.ClubCount = 0
-	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
-	for _,v in ipairs(NS.CommFlare.CF.Clubs) do
-		-- only communities
-		if (v.clubType == Enum.ClubType.Character) then
-			-- add club
-			list[v.clubId] = v.name
-		end
-	end
-
-	-- return list
-	return list
-end
-
--- rebuild members dialog box
-StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
-	text = L["One or more of the changes you have made require a ReloadUI."],
-	button1 = L["Yes"],
-	button2 = L["No"],
-	OnAccept = function(self, player)
-		-- save settings
-		for k,v in pairs(settings_that_require_reload) do
-			-- block hotkeys?
-			if (k == "blockGameMenuHotKeys") then
-				-- save value
-				NS.charDB.profile.blockGameMenuHotKeys = v
-			end
-		end
-
-		-- reload UI
-		ReloadUI()
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
+-- battleground group
+local BattlegroundGroup = {
+	name = L["Battleground Options"],
+	type = "group",
+	order = 2,
+	args = {
+		battlegroundTitle = {
+			name = L["Battleground Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		communityAutoAssist = {
+			type = "select",
+			order = 2,
+			name = L["Auto assist community members?"],
+			desc = L["Automatically promotes community members to raid assist in matches."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Leaders Only"],
+				[3] = L["All Community Members"],
+			},
+			get = function(info) return NS.charDB.profile.communityAutoAssist end,
+			set = function(info, value) NS.charDB.profile.communityAutoAssist = value end,
+		},
+		blockSharedQuests = {
+			type = "select",
+			order = 3,
+			name = L["Block shared quests?"],
+			desc = L["Automatically blocks shared quests during a battleground."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Irrelevant"],
+				[3] = L["All"],
+			},
+			get = function(info) return NS.db.global.blockSharedQuests end,
+			set = function(info, value) NS.db.global.blockSharedQuests = value end,
+		},
+		adjustVehicleTurnSpeed = {
+			type = "select",
+			order = 4,
+			name = L["Adjust vehicle turn speed?"],
+			desc = L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."],
+			values = {
+				[0] = L["Disabled"],
+				[1] = L["Default (180)"],
+				[2] = L["Fast (360)"],
+				[3] = L["Max (540)"],
+			},
+			get = function(info) return NS.db.global.adjustVehicleTurnSpeed end,
+			set = function(info, value) NS.db.global.adjustVehicleTurnSpeed = value end,
+		},
+		restrictPings = {
+			type = "select",
+			order = 5,
+			name = L["Restrict /ping system to?"],
+			desc = L["This will block players from using the /ping system if they do not have raid assist or raid lead."],
+			values = {
+				[0] = L["None"],
+				[1] = L["Leaders Only"],
+				[2] = L["Assistants Only"],
+				[3] = L["Tanks & Healers Only"],
+			},
+			get = function(info) return NS.db.global.restrictPings end,
+			set = function(info, value) NS.db.global.restrictPings = value end,
+		},
+		warningLeavingBG = {
+			type = "select",
+			order = 6,
+			name = L["Warn before hearth stoning or teleporting inside a battleground?"],
+			desc = L["Performs an action if you are about to hearth stone or teleport out of an active battleground."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.warningLeavingBG end,
+			set = function(info, value) NS.db.global.warningLeavingBG = value end,
+		},
+		communityAutoPassLead = {
+			type = "toggle",
+			order = 7,
+			name = L["Always pass Raid Leadership to Community Leaders?"],
+			desc = L["This will automatically pass Raid Leadership inside Battlegrounds to Community Leaders by priority levels."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.communityAutoPassLead end,
+			set = function(info, value) NS.charDB.profile.communityAutoPassLead = value end,
+		},
+		communityDisplayNames = {
+			type = "toggle",
+			order = 8,
+			name = L["Display community member names when running /comf command?"],
+			desc = L["This will automatically display all community members found in the battleground when the /comf command is run."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.communityDisplayNames end,
+			set = function(info, value) NS.charDB.profile.communityDisplayNames = value end,
+		},
+		pvpCombatLogging = {
+			type = "toggle",
+			order = 9,
+			name = L["Always save Combat Log inside PVP content?"],
+			desc = L["This will automatically enable the combat logging to WowCombatLog while inside an arena or battleground."],
+			width = "full",
+			get = function(info) return NS.db.global.pvpCombatLogging end,
+			set = function(info, value) NS.db.global.pvpCombatLogging = value end,
+		},
+		blockGameMenuHotKeys = {
+			type = "toggle",
+			order = 10,
+			name = L["Block game menu hotkeys inside PVP content?"],
+			desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
+			width = "full",
+			get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
+			set = Block_Game_Menu_Hot_Keys_Set,
+		},
+		communityLogList = {
+			type = "multiselect",
+			order = 11,
+			name = L["Log roster list for matches from these communities?"],
+			desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
+			values = Setup_Community_List,
+			disabled = Community_Log_List_Disabled,
+			get = Community_List_Get_Item,
+			set = Community_List_Set_Item,
+		},
+		purgeLogTime = {
+			type = "select",
+			order = 12,
+			name = L["Purge logged roster matches timeframe?"],
+			desc = L["This is the amount of time before it starts purging logged roster list for matches."],
+			values = {
+				[1] = L["7 Days"],
+				[2] = L["14 Days"],
+				[3] = L["30 Days"],
+			},
+			get = function(info) return NS.db.global.purgeLogTime end,
+			set = function(info, value) NS.db.global.purgeLogTime = value end,
+		},
+		ashranTitle = {
+			name = L["Ashran Options"],
+			type = "header",
+			order = 13,
+			width = "full",
+		},
+		ashranMageWarnAttacked = {
+			type = "select",
+			order = 14,
+			width = 1.20,
+			name = L["Notify you when your Mage is under attack?"],
+			desc = L["This will show a raid warning to you when your Mage is under attack in Ashran."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Raid Warning"],
+				[3] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.ashranMageWarnAttacked end,
+			set = function(info, value) NS.db.global.ashranMageWarnAttacked = value end,
+		},
+		ashranMageWarnFreq = {
+			type = "select",
+			order = 15,
+			name = L["Frequency?"],
+			desc = L["This is the amount of time delayed between Mage attacks in Ashran."],
+			values = {
+				[1] = L["15 Seconds"],
+				[2] = L["30 Seconds"],
+				[3] = L["60 Seconds"],
+			},
+			disabled = Ashran_Mage_Warning_Frequency_Disabled,
+			get = function(info) return NS.db.global.ashranMageWarnFreq end,
+			set = function(info, value) NS.db.global.ashranMageWarnFreq = value end,
+		},
+		ashranAncientInfernoSpawned = {
+			type = "select",
+			order = 16,
+			name = L["Notify you when the Ancient Inferno has spawned?"],
+			desc = L["This will show a raid warning to you when the Ancient Inferno has spawned in Ashran."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Raid Warning"],
+				[3] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.ashranAncientInfernoSpawned end,
+			set = function(info, value) NS.db.global.ashranAncientInfernoSpawned = value end,
+		},
+	}
 }
 
--- set block game menu hot keys (reload when disabled)
-local function BlockGameMenuHotKeys_Set(info, value)
-	-- enabled?
-	if (value == true) then
-		-- save value
-		NS.charDB.profile.blockGameMenuHotKeys = value
+-- community group
+local CommunityGroup = {
+	name = L["Community Options"],
+	type = "group",
+	order = 1,
+	args = {
+		generalTitle = {
+			name = L["Community Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		addGuildMembers = {
+			type = "toggle",
+			order = 2,
+			name = L["Guild Members?"],
+			desc = L["This will treat your Guild Members as Community Members."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.addGuildMembers end,
+			set = Set_Add_Guild_Members,
+		},
+		communityMain = {
+			type = "select",
+			order = 3,
+			name = L["Main Community?"],
+			desc = L["Choose the main community from your subscribed list."],
+			values = Setup_Main_Community_List,
+			get = function(info) return NS.charDB.profile.communityMain end,
+			set = Set_Main_Community,
+		},
+		communityList = {
+			type = "multiselect",
+			order = 4,
+			name = L["Other Communities?"],
+			desc = L["Choose the other communities from your subscribed list."],
+			values = Setup_Other_Community_List,
+			disabled = Other_Community_List_Disabled,
+			get = Other_Community_Get_Item,
+			set = Other_Community_Set_Item,
+		},
+		communityLeadersList = {
+			type = "multiselect",
+			order = 5,
+			name = L["Community Leaders?"],
+			desc = L["Choose the communities that you want to build the leaders list from."],
+			values = Setup_Community_List,
+			disabled = Community_Leader_List_Disabled,
+			get = Community_List_Get_Item,
+			set = Community_List_Set_Item,
+		},
+		membersCount = {
+			type = "description",
+			order = 6,
+			name = Total_Database_Members,
+		},
+		refreshMembers = {
+			type = "execute",
+			order = 7,
+			name = L["Refresh Members?"],
+			desc = L["Use this to refresh the members database from currently selected communities."],
+			func = Refresh_Database_Members,
+		},
+		rebuildMembers = {
+			type = "execute",
+			order = 8,
+			name = L["Rebuild Members?"],
+			desc = L["Use this to totally rebuild the members database from currently selected communities."],
+			func = Rebuild_Database_Members_Confirmation,
+		},
+		alwaysReaddChannels = {
+			type = "toggle",
+			order = 9,
+			name = L["Always remove, then re-add community channels to general?"],
+			desc = L["This will automatically delete communities channels from general and re-add them upon login."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.alwaysReaddChannels end,
+			set = function(info, value) NS.charDB.profile.alwaysReaddChannels = value end,
+		},
+	}
+}
 
-		-- enable block game menu hooks
-		NS:Setup_BlockGameMenuHooks()
-	else
-		-- setting requires reload
-		settings_that_require_reload["blockGameMenuHotKeys"] = value
-		NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
-	end
-end
+-- debug group
+local DebugGroup = {
+	name = L["Debug Options"],
+	type = "group",
+	order = 7,
+	args = {
+		debugTitle = {
+			name = L["Debug Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		debugMode = {
+			type = "toggle",
+			order = 2,
+			name = L["Enable debug mode to help debug issues?"],
+			desc = L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."],
+			width = "full",
+			get = function(info) return NS.db.global.debugMode end,
+			set = function(info, value) NS.db.global.debugMode = value end,
+		},
+		printDebugInfo = {
+			type = "toggle",
+			order = 3,
+			name = L["Enable some debug printing to general window to help debug issues?"],
+			desc = L["This will print some extra data to your general window that will help MESO debug anything to help fix bugs."],
+			width = "full",
+			get = function(info) return NS.db.global.printDebugInfo end,
+			set = function(info, value) NS.db.global.printDebugInfo = value end,
+		},
+	}
+}
 
--- defaults
-NS.defaults = {
+-- invite group
+local InviteGroup = {
+	name = L["Invite Options"],
+	type = "group",
+	order = 4,
+	args = {
+		inviteTitle = {
+			name = L["Invite Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		bnetAutoInvite = {
+			type = "toggle",
+			order = 2,
+			name = L["Automatically accept invites from Battle.NET friends?"],
+			desc = L["This will automatically accept group/party invites from Battle.NET friends."],
+			width = "full",
+			get = function(info) return NS.db.global.bnetAutoInvite end,
+			set = function(info, value) NS.db.global.bnetAutoInvite = value end,
+		},
+		communityAutoInvite = {
+			type = "toggle",
+			order = 3,
+			name = L["Automatically accept invites from community members?"],
+			desc = L["This will automatically accept group/party invites from community members."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.communityAutoInvite end,
+			set = function(info, value) NS.charDB.profile.communityAutoInvite = value end,
+		},
+	}
+}
+
+-- party group
+local PartyGroup = {
+	name = L["Party Options"],
+	type = "group",
+	order = 5,
+	args = {
+		partyTitle = {
+			name = L["Party Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		maxPartySize = {
+			type = "select",
+			order = 2,
+			name = L["Max Party Size?"],
+			desc = L["This will set the maximum party members you want in your group."],
+			values = {
+				[1] = L["1 Member"],
+				[2] = L["2 Members"],
+				[3] = L["3 Members"],
+				[4] = L["4 Members"],
+				[5] = L["5 Members"],
+			},
+			get = function(info) return NS.charDB.profile.maxPartySize end,
+			set = function(info, value) NS.charDB.profile.maxPartySize = value end,
+		},
+		partyLeaderNotify = {
+			type = "select",
+			order = 3,
+			name = L["Notify you upon given party leadership?"],
+			desc = L["This will show a raid warning to you when you are given leadership of your party."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.partyLeaderNotify end,
+			set = function(info, value) NS.db.global.partyLeaderNotify = value end,
+		},
+		notifyPartyZoneChanges = {
+			type = "toggle",
+			order = 4,
+			name = L["Notify you upon party member zone changes?"],
+			desc = L["This will show you a message when a party member changes zones."],
+			width = "full",
+			get = function(info) return NS.db.global.notifyPartyZoneChanges end,
+			set = function(info, value) NS.db.global.notifyPartyZoneChanges = value end,
+		},
+	}
+}
+
+-- queue group
+local QueueGroup = {
+	name = L["Queue Options"],
+	type = "group",
+	order = 3,
+	args = {
+		queueTitle = {
+			name = L["Queue Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		alwaysAutoQueue = {
+			type = "toggle",
+			order = 2,
+			name = L["Always automatically queue?"],
+			desc = L["This will always automatically accept all queues for you."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.alwaysAutoQueue end,
+			set = function(info, value) NS.charDB.profile.alwaysAutoQueue = value end,
+		},
+		bnetAutoQueue = {
+			type = "toggle",
+			order = 3,
+			name = L["Automatically queue if your group leader is your Battle.Net friend?"],
+			desc = L["This will automatically queue if your group leader is your Battle.Net friend."],
+			width = "full",
+			get = function(info) return NS.db.global.bnetAutoQueue end,
+			set = function(info, value) NS.db.global.bnetAutoQueue = value end,
+		},
+		communityAutoQueue = {
+			type = "toggle",
+			order = 4,
+			name = L["Automatically queue if your group leader is in community?"],
+			desc = L["This will automatically queue if your group leader is in community."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.communityAutoQueue end,
+			set = function(info, value) NS.charDB.profile.communityAutoQueue = value end,
+		},
+		displayPoppedGroups = {
+			type = "toggle",
+			order = 5,
+			name = L["Display notification for popped groups?"],
+			desc = L["This will display a notification in your General chat window when groups pop."],
+			width = "full",
+			get = function(info) return NS.db.global.displayPoppedGroups end,
+			set = function(info, value) NS.db.global.displayPoppedGroups = value end,
+		},
+		popupQueueWindow = {
+			type = "toggle",
+			order = 6,
+			name = L["Popup PVP queue window upon leaders queing up? (Only for group leaders.)"],
+			desc = L["This will open up the PVP queue window if a leader is queing up for PVP so you can queue up too."],
+			width = "full",
+			get = function(info) return NS.db.global.popupQueueWindow end,
+			set = function(info, value) NS.db.global.popupQueueWindow = value end,
+		},
+		warningQueuePaused = {
+			type = "toggle",
+			order = 7,
+			name = L["Warn if/when queues become paused?"],
+			desc = L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."],
+			width = "full",
+			get = function(info) return NS.db.global.warningQueuePaused end,
+			set = function(info, value) NS.db.global.warningQueuePaused = value end,
+		},
+		communityReporter = {
+			type = "toggle",
+			order = 8,
+			name = L["Report queues to main community? (Requires community channel to have /# assigned.)"],
+			desc = L["This will provide a quick popup message for you to send your queue status to the Community chat."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.communityReporter end,
+			set = function(info, value) NS.charDB.profile.communityReporter = value end,
+		},
+		communityReportID = {
+			type = "select",
+			order = 9,
+			name = L["Community to report to?"],
+			desc = L["Choose the community that you want to report queues to."],
+			values = Setup_Report_Community_List,
+			disabled = Check_ReportID_Disabled,
+			get = function(info) return NS.charDB.profile.communityReportID end,
+			set = Set_ReportID,
+		},
+		uninvitePlayersAFK = {
+			type = "select",
+			order = 10,
+			name = L["Uninvite any players that are AFK?"],
+			desc = L["Pops up a box to uninvite any users that are AFK at the time of queuing."],
+			values = {
+				[0] = L["Disabled"],
+				[3] = L["3 Seconds"],
+				[4] = L["4 Seconds"],
+				[5] = L["5 Seconds"],
+				[6] = L["6 Seconds"],
+			},
+			get = function(info) return NS.db.global.uninvitePlayersAFK end,
+			set = function(info, value) NS.db.global.uninvitePlayersAFK = value end,
+		},
+		forcedRoles = {
+			type = "group",
+			order = 11,
+			name = "Force PVP Role?",
+			inline = true,
+			args = {
+				forceTank = {
+					name = "Tank",
+					type = "toggle",
+					order = 1,
+					width = 0.5,
+					desc = "This will always5enable the Tank role for PVP Queues.",
+					disabled = Check_Tank_Available,
+					get = Get_Force_Tank_Item,
+					set = Set_Force_Tank_Item,
+				},
+				forceHealer = {
+					name = "Healer",
+					type = "toggle",
+					order = 2,
+					width = 0.5,
+					desc = "This will always enable the Healer role for PVP Queues.",
+					disabled = Check_Healer_Available,
+					get = Get_Force_Healer_Item,
+					set = Set_Force_Healer_Item,
+				},
+				forceDPS = {
+					name = "DPS",
+					type = "toggle",
+					order = 3,
+					width = 0.5,
+					desc = "This will always enable the DPS role for PVP Queues.",
+					get = Get_Force_DPS_Item,
+					set = Set_Force_DPS_Item,
+				},
+			},
+		},
+	}
+}
+
+-- world group
+local WorldGroup = {
+	name = L["World Options"],
+	type = "group",
+	order = 6,
+	args = {
+		worldTitle = {
+			name = L["World Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		notifyWarCrateInbound = {
+			type = "toggle",
+			order = 2,
+			name = L["Notify you when a War Supply Crate is inbound?"],
+			desc = L["This will show a raid warning to you when a War Supply Crate is coming in."],
+			width = "full",
+			get = function(info) return NS.db.global.notifyWarCrateInbound end,
+			set = function(info, value) NS.db.global.notifyWarCrateInbound = value end,
+		},
+	}
+}
+
+-- global defaults
+local GlobalDefaults = {
+	-- global
+	global = {
+		-- tables
+		clubs = {},
+		history = {},
+		matchLogList = {},
+		members = {},
+		SocialQueues = {},
+
+		-- booleans
+		bnetAutoInvite = true,
+		bnetAutoQueue = true,
+		debugMode = false,
+		displayPoppedGroups = false,
+		notifyPartyZoneChanges = false,
+		notifyWarCrateInbound = false,
+		popupQueueWindow = false,
+		printDebugInfo = false,
+		pvpCombatLogging = false,
+		warningQueuePaused = true,
+
+		-- numbers
+		adjustVehicleTurnSpeed = 0,
+		ashranAncientInfernoSpawned = 1,
+		ashranMageWarnAttacked = 1,
+		ashranMageWarnFreq = 2,
+		blockSharedQuests = 2,
+		partyLeaderNotify = 2,
+		purgeLogTime = 2,
+		restrictPings = 0,
+		uninvitePlayersAFK = 0,
+		warningLeavingBG = 2,
+	},
+}
+
+-- character defaults
+local CharDefaults = {
 	profile = {
 		-- variables
 		MatchStatus = 0,
 		SavedTime = 0,
 
 		-- profile only options
-		adjustVehicleTurnSpeed = 0,
 		alwaysAutoQueue = false,
 		alwaysReaddChannels = false,
 		blockGameMenuHotKeys = false,
-		blockSharedQuests = 2,
-		bnetAutoInvite = true,
-		bnetAutoQueue = true,
-		communityAutoAssist = 2,
+		communityAutoAssist = 3,
 		communityAutoInvite = true,
 		communityAutoPassLead = true,
 		communityAutoQueue = true,
 		communityDisplayNames = true,
 		communityPartyLeader = false,
 		communityReporter = true,
-		debugMode = false,
-		displayPoppedGroups = false,
 		forceDPS = false,
 		forceHealer = false,
 		forceTank = false,
-		maxPartySize  = 5,
-		partyLeaderNotify = 2,
-		popupQueueWindow = false,
-		printDebugInfo = false,
-		pvpCombatLogging = false,
-		restrictPings = 0,
-		uninvitePlayersAFK = 0,
-		warningLeavingBG = 2,
-		warningQueuePaused = true,
+		maxPartySize = 5,
 
 		-- community stuff
 		communityMain = 0,
@@ -677,451 +1231,84 @@ NS.defaults = {
 		membersCount = "",
 
 		-- tables
-		ASH = {},
-		AV = {},
-		IOC = {},
-		WG = {},
 		communityLeadersList = {},
 		communityLogList = {},
 		Queues = {},
 	},
 }
 
--- options
-NS.options = {
-	name = NS.CommFlare.Title_Full,
-	handler = NS.CommFlare,
-	type = "group",
-	args = {
-		community = {
-			type = "group",
-			order = 1,
-			name = L["Community Options"],
-			inline = true,
-			args = {
-				addGuildMembers = {
-					type = "toggle",
-					order = 1,
-					name = L["Guild Members?"],
-					desc = L["This will treat your Guild Members as Community Members."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.addGuildMembers end,
-					set = Set_Add_Guild_Members,
-				},
-				communityMain = {
-					type = "select",
-					order = 2,
-					name = L["Main Community?"],
-					desc = L["Choose the main community from your subscribed list."],
-					values = Setup_Main_Community_List,
-					get = function(info) return NS.charDB.profile.communityMain end,
-					set = Set_Main_Community,
-				},
-				communityList = {
-					type = "multiselect",
-					order = 3,
-					name = L["Other Communities?"],
-					desc = L["Choose the other communities from your subscribed list."],
-					values = Setup_Other_Community_List,
-					disabled = Other_Community_List_Disabled,
-					get = Other_Community_Get_Item,
-					set = Other_Community_Set_Item,
-				},
-				communityLeadersList = {
-					type = "multiselect",
-					order = 4,
-					name = L["Community Leaders?"],
-					desc = L["Choose the communities that you want to build the leaders list from."],
-					values = Setup_Community_List,
-					disabled = Community_Leader_List_Disabled,
-					get = Community_List_Get_Item,
-					set = Community_List_Set_Item,
-				},
-				membersCount = {
-					type = "description",
-					order = 5,
-					name = Total_Database_Members,
-				},
-				refreshMembers = {
-					type = "execute",
-					order = 6,
-					name = L["Refresh Members?"],
-					desc = L["Use this to refresh the members database from currently selected communities."],
-					func = Refresh_Database_Members,
-				},
-				rebuildMembers = {
-					type = "execute",
-					order = 7,
-					name = L["Rebuild Members?"],
-					desc = L["Use this to totally rebuild the members database from currently selected communities."],
-					func = Rebuild_Database_Members_Confirmation,
-				},
-				alwaysReaddChannels = {
-					type = "toggle",
-					order = 8,
-					name = L["Always remove, then re-add community channels to general?"],
-					desc = L["This will automatically delete communities channels from general and re-add them upon login."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.alwaysReaddChannels end,
-					set = function(info, value) NS.charDB.profile.alwaysReaddChannels = value end,
-				},
-			},
-		},
-		invite = {
-			type = "group",
-			order = 2,
-			name = L["Invite Options"],
-			inline = true,
-			args = {
-				bnetAutoInvite = {
-					type = "toggle",
-					order = 1,
-					name = L["Automatically accept invites from Battle.NET friends?"],
-					desc = L["This will automatically accept group/party invites from Battle.NET friends."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.bnetAutoInvite end,
-					set = function(info, value) NS.charDB.profile.bnetAutoInvite = value end,
-				},
-				communityAutoInvite = {
-					type = "toggle",
-					order = 2,
-					name = L["Automatically accept invites from community members?"],
-					desc = L["This will automatically accept group/party invites from community members."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.communityAutoInvite end,
-					set = function(info, value) NS.charDB.profile.communityAutoInvite = value end,
-				},
-			},
-		},
-		queue = {
-			type = "group",
-			order = 3,
-			name = L["Queue Options"],
-			inline = true,
-			args = {
-				alwaysAutoQueue = {
-					type = "toggle",
-					order = 1,
-					name = L["Always automatically queue?"],
-					desc = L["This will always automatically accept all queues for you."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.alwaysAutoQueue end,
-					set = function(info, value) NS.charDB.profile.alwaysAutoQueue = value end,
-				},
-				bnetAutoQueue = {
-					type = "toggle",
-					order = 2,
-					name = L["Automatically queue if your group leader is your Battle.Net friend?"],
-					desc = L["This will automatically queue if your group leader is your Battle.Net friend."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.bnetAutoQueue end,
-					set = function(info, value) NS.charDB.profile.bnetAutoQueue = value end,
-				},
-				communityAutoQueue = {
-					type = "toggle",
-					order = 3,
-					name = L["Automatically queue if your group leader is in community?"],
-					desc = L["This will automatically queue if your group leader is in community."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.communityAutoQueue end,
-					set = function(info, value) NS.charDB.profile.communityAutoQueue = value end,
-				},
-				displayPoppedGroups = {
-					type = "toggle",
-					order = 3,
-					name = L["Display notification for popped groups?"],
-					desc = L["This will display a notification in your General chat window when groups pop."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.displayPoppedGroups end,
-					set = function(info, value) NS.charDB.profile.displayPoppedGroups = value end,
-				},
-				popupQueueWindow = {
-					type = "toggle",
-					order = 4,
-					name = L["Popup PVP queue window upon leaders queing up? (Only for group leaders.)"],
-					desc = L["This will open up the PVP queue window if a leader is queing up for PVP so you can queue up too."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.popupQueueWindow end,
-					set = function(info, value) NS.charDB.profile.popupQueueWindow = value end,
-				},
-				warningQueuePaused = {
-					type = "toggle",
-					order = 5,
-					name = L["Warn if/when queues become paused?"],
-					desc = L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.warningQueuePaused end,
-					set = function(info, value) NS.charDB.profile.warningQueuePaused = value end,
-				},
-				communityReporter = {
-					type = "toggle",
-					order = 6,
-					name = L["Report queues to main community? (Requires community channel to have /# assigned.)"],
-					desc = L["This will provide a quick popup message for you to send your queue status to the Community chat."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.communityReporter end,
-					set = function(info, value) NS.charDB.profile.communityReporter = value end,
-				},
-				communityReportID = {
-					type = "select",
-					order = 7,
-					name = L["Community to report to?"],
-					desc = L["Choose the community that you want to report queues to."],
-					values = Setup_Report_Community_List,
-					disabled = Check_ReportID_Disabled,
-					get = function(info) return NS.charDB.profile.communityReportID end,
-					set = Set_ReportID,
-				},
-				uninvitePlayersAFK = {
-					type = "select",
-					order = 8,
-					name = L["Uninvite any players that are AFK?"],
-					desc = L["Pops up a box to uninvite any users that are AFK at the time of queuing."],
-					values = {
-						[0] = L["Disabled"],
-						[3] = L["3 Seconds"],
-						[4] = L["4 Seconds"],
-						[5] = L["5 Seconds"],
-						[6] = L["6 Seconds"],
-					},
-					get = function(info) return NS.charDB.profile.uninvitePlayersAFK end,
-					set = function(info, value) NS.charDB.profile.uninvitePlayersAFK = value end,
-				},
-				forcedRoles = {
-					type = "group",
-					order = 9,
-					name = "Force PVP Role?",
-					inline = true,
-					args = {
-						forceTank = {
-							type = "toggle",
-							order = 1,
-							name = "Tank",
-							desc = "This will always enable the Tank role for PVP Queues.",
-							disabled = Check_Tank_Available,
-							get = Get_Force_Tank_Item,
-							set = Set_Force_Tank_Item,
-						},
-						forceHealer = {
-							type = "toggle",
-							order = 2,
-							name = "Healer",
-							desc = "This will always enable the Healer role for PVP Queues.",
-							disabled = Check_Healer_Available,
-							get = Get_Force_Healer_Item,
-							set = Set_Force_Healer_Item,
-						},
-						forceDPS = {
-							type = "toggle",
-							order = 3,
-							name = "DPS",
-							desc = "This will always enable the DPS role for PVP Queues.",
-							get = Get_Force_DPS_Item,
-							set = Set_Force_DPS_Item,
-						},
-					},
-				},
-			},
-		},
-		party = {
-			type = "group",
-			order = 4,
-			name = L["Party Options"],
-			inline = true,
-			args = {
-				maxPartySize = {
-					type = "select",
-					order = 1,
-					name = L["Max Party Size?"],
-					desc = L["This will set the maximum party members you want in your group."],
-					values = {
-						[1] = L["1 Member"],
-						[2] = L["2 Members"],
-						[3] = L["3 Members"],
-						[4] = L["4 Members"],
-						[5] = L["5 Members"],
-					},
-					get = function(info) return NS.charDB.profile.maxPartySize end,
-					set = function(info, value) NS.charDB.profile.maxPartySize = value end,
-				},
-				partyLeaderNotify = {
-					type = "select",
-					order = 1,
-					name = L["Notify you upon given party leadership?"],
-					desc = L["This will show a raid warning to you when you are given leadership of your party."],
-					values = {
-						[1] = L["None"],
-						[2] = L["Raid Warning"],
-					},
-					get = function(info) return NS.charDB.profile.partyLeaderNotify end,
-					set = function(info, value) NS.charDB.profile.partyLeaderNotify = value end,
-				},
-			},
-		},
-		battleground = {
-			type = "group",
-			order = 5,
-			name = L["Battleground Options"],
-			inline = true,
-			args = {
-				communityAutoAssist = {
-					type = "select",
-					order = 1,
-					name = L["Auto assist community members?"],
-					desc = L["Automatically promotes community members to raid assist in matches."],
-					values = {
-						[1] = L["None"],
-						[2] = L["Leaders Only"],
-						[3] = L["All Community Members"],
-					},
-					get = function(info) return NS.charDB.profile.communityAutoAssist end,
-					set = function(info, value) NS.charDB.profile.communityAutoAssist = value end,
-				},
-				blockSharedQuests = {
-					type = "select",
-					order = 2,
-					name = L["Block shared quests?"],
-					desc = L["Automatically blocks shared quests during a battleground."],
-					values = {
-						[1] = L["None"],
-						[2] = L["Irrelevant"],
-						[3] = L["All"],
-					},
-					get = function(info) return NS.charDB.profile.blockSharedQuests end,
-					set = function(info, value) NS.charDB.profile.blockSharedQuests = value end,
-				},
-				adjustVehicleTurnSpeed = {
-					type = "select",
-					order = 3,
-					name = L["Adjust vehicle turn speed?"],
-					desc = L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."],
-					values = {
-						[0] = L["Disabled"],
-						[1] = L["Default (180)"],
-						[2] = L["Fast (360)"],
-						[3] = L["Max (540)"],
-					},
-					get = function(info) return NS.charDB.profile.adjustVehicleTurnSpeed end,
-					set = function(info, value) NS.charDB.profile.adjustVehicleTurnSpeed = value end,
-				},
-				restrictPings = {
-					type = "select",
-					order = 4,
-					name = L["Restrict /ping system to?"],
-					desc = L["This will block players from using the /ping system if they do not have raid assist or raid lead."],
-					values = {
-						[0] = L["None"],
-						[1] = L["Leaders Only"],
-						[2] = L["Assistants Only"],
-						[3] = L["Tanks & Healers Only"],
-					},
-					get = function(info) return NS.charDB.profile.restrictPings end,
-					set = function(info, value) NS.charDB.profile.restrictPings = value end,
-				},
-				warningLeavingBG = {
-					type = "select",
-					order = 5,
-					name = L["Warn before hearth stoning or teleporting inside a battleground?"],
-					desc = L["Performs an action if you are about to hearth stone or teleport out of an active battleground."],
-					values = {
-						[1] = L["None"],
-						[2] = L["Raid Warning"],
-					},
-					get = function(info) return NS.charDB.profile.warningLeavingBG end,
-					set = function(info, value) NS.charDB.profile.warningLeavingBG = value end,
-				},
-				communityLogList = {
-					type = "multiselect",
-					order = 6,
-					name = L["Log roster list for matches from these communities?"],
-					desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
-					values = Setup_Community_List,
-					disabled = Community_Log_List_Disabled,
-					get = Community_List_Get_Item,
-					set = Community_List_Set_Item,
-				},
-				communityAutoPassLead = {
-					type = "toggle",
-					order = 7,
-					name = L["Always pass Raid Leadership to Community Leaders?"],
-					desc = L["This will automatically pass Raid Leadership inside Battlegrounds to Community Leaders by priority levels."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.communityAutoPassLead end,
-					set = function(info, value) NS.charDB.profile.communityAutoPassLead = value end,
-				},
-				communityDisplayNames = {
-					type = "toggle",
-					order = 8,
-					name = L["Display community member names when running /comf command?"],
-					desc = L["This will automatically display all community members found in the battleground when the /comf command is run."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.communityDisplayNames end,
-					set = function(info, value) NS.charDB.profile.communityDisplayNames = value end,
-				},
-				pvpCombatLogging = {
-					type = "toggle",
-					order = 9,
-					name = L["Always save Combat Log inside PVP content?"],
-					desc = L["This will automatically enable the combat logging to WowCombatLog while inside an arena or battleground."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.pvpCombatLogging end,
-					set = function(info, value) NS.charDB.profile.pvpCombatLogging = value end,
-				},
-				blockGameMenuHotKeys = {
-					type = "toggle",
-					order = 10,
-					name = L["Block game menu hotkeys inside PVP content?"],
-					desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
-					width = "full",
-					get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
-					set = BlockGameMenuHotKeys_Set,
-				},
-			},
-		},
-		debug = {
-			type = "group",
-			order = 6,
-			name = L["Debug Options"],
-			inline = true,
-			args = {
-				debugMode = {
-					type = "toggle",
-					order = 1,
-					name = L["Enable debug mode to help debug issues?"],
-					desc = L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.debugMode end,
-					set = function(info, value) NS.charDB.profile.debugMode = value end,
-				},
-				printDebugInfo = {
-					type = "toggle",
-					order = 2,
-					name = L["Enable some debug printing to general window to help debug issues?"],
-					desc = L["This will print some extra data to your general window that will help MESO debug anything to help fix bugs."],
-					width = "full",
-					get = function(info) return NS.charDB.profile.printDebugInfo end,
-					set = function(info, value) NS.charDB.profile.printDebugInfo = value end,
-				},
-			},
-		},
-	},
-}
+-- refresh config
+local function RefreshConfig()
+	-- setup community lists
+	NS:Setup_Main_Community_List(nil)
+	NS:Setup_Other_Community_List(nil)
+end
 
--- reset default settings
-function NS:Reset_Default_Settings()
-	-- process all defaults
-	local count = 0
-	for k,v in pairs(NS.defaults.profile) do
-		-- not default?
-		if (NS.charDB.profile[k] ~= v) then
-			-- set default
-			NS.charDB.profile[k] = v
+-- migrate settings
+function NS:MigrateSettings()
+	-- migrate any old settings
+	if (NS.charDB and NS.charDB.profile) then
+		-- process all old settings
+		local updated = false
+		for k,v in pairs(NS.charDB.profile) do
+			-- setting moved?
+			if (NS.db.global[k]) then
+				-- copy setting
+				NS.db.global[k] = v
 
-			-- increase
-			count = count + 1
+				-- delete old setting
+				NS.charDB.profile[k] = nil
+
+				-- updated
+				updated = true
+			end
+		end
+
+		-- updated?
+		if (updated == true) then
+			-- update database
+			NS.charDB.profile.LastMigrate = time()
+		end
+
+		-- check for old string values?
+		if (type(NS.charDB.profile.communityAutoAssist) == "string") then
+			-- convert to number
+			NS.charDB.profile.communityAutoAssist = tonumber(NS.charDB.profile.communityAutoAssist)
 		end
 	end
+end
 
-	-- return count
-	return count
+-- create config options
+function NS:CreateConfigOptions()
+	-- create options table
+	local OptionsTable = {
+		name = NS.CommFlare.Title_Full,
+		type = "group",
+		args = {
+			BattlegroundGroup = BattlegroundGroup,
+			CommunityGroup = CommunityGroup,
+			DebugGroup = DebugGroup,
+			InviteGroup = InviteGroup,
+			PartyGroup = PartyGroup,
+			QueueGroup = QueueGroup,
+			WorldGroup = WorldGroup,
+		}
+	}
+
+	-- initialize global / profile settings
+	NS.db = NS.Libs.AceDB:New("CommunityFlareDB", GlobalDefaults)
+	NS.charDB = NS.Libs.AceDB:New("CommFlareCharDB", CharDefaults)
+	NS.charDB.RegisterCallback(self, "OnProfileChanged", RefreshConfig)
+	NS.charDB.RegisterCallback(self, "OnProfileCopied", RefreshConfig)
+	NS.charDB.RegisterCallback(self, "OnProfileReset", RefreshConfig)
+	NS:MigrateSettings()
+
+	-- register options table
+	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare", OptionsTable)
+	NS.optionsFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare", NS.CommFlare.Title)
+
+	-- register profiles table
+	NS.profiles = NS.Libs.AceDBOptions:GetOptionsTable(NS.charDB)
+	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare_Profiles", NS.profiles)
+	NS.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare_Profiles", "Profiles", NS.CommFlare.Title)
 end

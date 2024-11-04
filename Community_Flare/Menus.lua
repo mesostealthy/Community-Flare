@@ -6,6 +6,8 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
+local IsInGroup                                 = _G.IsInGroup
+local IsInRaid                                  = _G.IsInRaid
 local date                                      = _G.date
 local print                                     = _G.print
 local tostring                                  = _G.tostring
@@ -91,8 +93,11 @@ end
 
 -- request party lead
 function NS:Request_Party_Leader(owner, rootDescription, contextData)
-	-- send addon message to party
-	NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+	-- are you in local party?
+	if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+		-- send addon message to party
+		NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+	end
 end
 
 -- add community context menu

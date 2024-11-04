@@ -73,8 +73,10 @@ local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
 local PvPIsArena                                = _G.C_PvP.IsArena
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
+local PvPIsWarModeFeatureEnabled                = _G.C_PvP.IsWarModeFeatureEnabled
 local VignetteInfoGetVignettes                  = _G.C_VignetteInfo.GetVignettes
 local VignetteInfoGetVignetteInfo               = _G.C_VignetteInfo.GetVignetteInfo
+local VignetteInfoGetVignettePosition           = _G.C_VignetteInfo.GetVignettePosition
 local Settings_OpenToCategory                   = _G.Settings.OpenToCategory
 local SocialQueueGetGroupInfo                   = _G.C_SocialQueue.GetGroupInfo
 local TimerAfter                                = _G.C_Timer.After
@@ -141,17 +143,98 @@ function NS:List_POIs()
 	end
 end
 
+-- get current vignettes
+function NS:Get_Current_Vignettes()
+	-- get map id
+	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	if (not NS.CommFlare.CF.MapID) then
+		-- not found
+		print(L["Map ID: Not Found"])
+		return nil
+	end
+
+	-- process any vignettes
+	local guids = VignetteInfoGetVignettes()
+	if (guids and (#guids > 0)) then
+		-- display infos
+		local vignettes = {}
+		for _,v in ipairs(guids) do
+			-- get vignette info
+			local info = VignetteInfoGetVignetteInfo(v)
+			if (info and info.vignetteID) then
+				-- get position
+				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
+				if (pos) then
+					-- get x/y
+					local x, y = pos:GetXY()
+					if (x and y) then
+						-- save position
+						info.x = x
+						info.y = y
+					end
+				end
+
+				-- add to table
+				local id = info.vignetteID
+				vignettes[id] = info
+			end
+		end
+
+		-- return table
+		return vignettes
+	end
+
+	-- none
+	return nil
+end
+
 -- list current vignettes
 function NS:List_Vignettes()
-	-- process any vignettes
+	-- get map id
 	print(L["Dumping Vignettes:"])
-	local vignetteGUIDs = VignetteInfoGetVignettes()
-	if (vignetteGUIDs and (#vignetteGUIDs > 0)) then
+	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	if (not NS.CommFlare.CF.MapID) then
+		-- not found
+		print(L["Map ID: Not Found"])
+		return
+	end
+
+	-- process any vignettes
+	local guids = VignetteInfoGetVignettes()
+	if (guids and (#guids > 0)) then
 		-- display infos
-		print(strformat(L["Count: %d"], #vignetteGUIDs))
-		for _,v in ipairs(vignetteGUIDs) do
-			local vignetteInfo = VignetteInfoGetVignetteInfo(v)
-			print(strformat("%s: ID = %d, GUID = %s", vignetteInfo.name, vignetteInfo.vignetteID, vignetteInfo.vignetteGUID))
+		print(strformat(L["Count: %d"], #guids))
+		for _,v in ipairs(guids) do
+			-- get vignette info
+			local info = VignetteInfoGetVignetteInfo(v)
+			if (info and info.vignetteID) then
+				-- get position
+				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
+				if (pos) then
+					-- get x/y
+					local x, y = pos:GetXY()
+					if (x and y) then
+						-- has name?
+						if (info.name) then
+							-- add tom tom way point
+							NS:TomTomAddWaypoint(info.name, x, y)
+						end
+
+						-- add position
+						info.x = strformat("%0.02f", x * 100.0)
+						info.y = strformat("%0.02f", y * 100.0)
+					end
+				end
+
+				-- has x/y?
+				if (info.x and info.y) then
+					-- display
+					print(strformat("%s: ID = %d; GUID = %s; Position = %s, %s", info.name, info.vignetteID, info.vignetteGUID, info.x, info.y))
+				else
+					-- display
+					print(strformat("%s: ID = %d; GUID = %s", info.name, info.vignetteID, info.vignetteGUID))
+				end
+			end			
 		end
 	else
 		-- none found
@@ -995,6 +1078,12 @@ local function hook_Chat_Whisper_Filter(self, event, text, sender, ...)
 	return false
 end
 
+-- process active delve data update
+function NS.CommFlare:ACTIVE_DELVE_DATA_UPDATE(msg)
+	-- in active delve
+	NS.CommFlare.CF.InActiveDelve = true
+end
+
 -- process addon loaded
 function NS.CommFlare:ADDON_LOADED(msg, ...)
 	local addOnName = ...
@@ -1006,6 +1095,60 @@ function NS.CommFlare:ADDON_LOADED(msg, ...)
 
 		-- hook queue button mouse over
 		HonorFrameQueueButton:HookScript("OnEnter", hook_HonorFrameQueueButton_OnEnter)
+	end
+end
+
+-- process area pois updated
+function NS.CommFlare:AREA_POIS_UPDATED(msg)
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- get best map for player
+		local mapID = MapGetBestMapForUnit("player")
+		if (mapID and (mapID > 0)) then
+			-- ashran?
+			if (mapID == 1478) then
+				-- check for ancient inferno
+				local info = AreaPoiInfoGetAreaPOIInfo(mapID, 6493)
+				if (info) then
+					-- not previously up?
+					local issue_warning = false
+					if (NS.CommFlare.CF.AncientInferno == 0) then
+						-- should warn
+						NS.CommFlare.CF.AncientInferno = time()
+						issue_warning = true
+					else
+						-- has been 30 minutes?
+						local diff = time() - NS.CommFlare.CF.AncientInferno
+						if (diff >= 1795) then
+							-- should warn
+							NS.CommFlare.CF.AncientInferno = time()
+							issue_warning = true
+						end
+					end
+
+					-- should issue warning?
+					if (issue_warning == true) then
+						-- raid warning?
+						if (NS.db.global.ashranAncientInfernoSpawned == 2) then
+							-- do you have lead?
+							local player = NS:GetPlayerName("full")
+							NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+							if (NS.CommFlare.CF.PlayerRank == 2) then
+								-- issue global raid warning
+								NS:SendMessage("RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
+							else
+								-- issue local raid warning (with raid warning audio sound)
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
+							end
+						-- local warning only?
+						elseif (NS.db.global.ashranAncientInfernoSpawned == 3) then
+							-- issue local raid warning (with raid warning audio sound)
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
+						end
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -1234,6 +1377,79 @@ function NS:Event_Chat_Message_Party(...)
 	end
 end
 
+-- process chat monster say message
+function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
+	local text, sender = ...
+
+	-- ruffious?
+	if (sender == "Ruffious") then
+		-- notify when war crate is inbound?
+		if (NS.db.global.notifyWarCrateInbound == true) then
+			-- war mode enabled?
+			if (PvPIsWarModeFeatureEnabled() == true) then
+				-- crate incoming message?
+				local incoming = false
+				if (text:find("cache of resources nearby")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("that means treasure hunters")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("valuable resources in the area")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("valuables waiting to be won")) then
+					-- incoming
+					incoming = true
+				end
+
+				-- incoming?
+				if (incoming == true) then
+					-- needs to issue raid warning?
+					if (NS.CommFlare.CF.LastRaidWarning == 0) then
+						-- update last raid warning
+						NS.CommFlare.CF.LastRaidWarning = time()
+						TimerAfter(150, function()
+							-- clear last raid warning
+							NS.CommFlare.CF.LastRaidWarning = 0
+						end)
+
+						-- issue local raid warning (with raid warning audio sound)
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
+					end
+				end
+
+				-- process after 2 seconds
+				TimerAfter(2, function()
+					-- get current vignettes
+					local list = NS:Get_Current_Vignettes()
+					if (list and list[3689]) then
+						-- has coordinates?
+						local info = list[3689]
+						if (info and info.x and info.y) then
+							-- add tom tom way point
+							NS:TomTomAddWaypoint("War Supply Crate", info.x, info.y)
+						end
+
+						-- needs to issue raid warning?
+						if (NS.CommFlare.CF.LastRaidWarning == 0) then
+							-- update last raid warning
+							NS.CommFlare.CF.LastRaidWarning = time()
+							TimerAfter(148, function()
+								-- clear last raid warning
+								NS.CommFlare.CF.LastRaidWarning = 0
+							end)
+
+							-- issue local raid warning (with raid warning audio sound)
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
+						end
+					end
+				end)
+			end
+		end
+	end
+end
+
 -- process chat monster yell message
 function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 	local text, sender = ...
@@ -1241,6 +1457,12 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 	-- no text?
 	if (not text or (text == "")) then
 		-- failed
+		return
+	end
+
+	-- is not in epic battleground?
+	if (NS:IsInEpicBG() ~= true) then
+		-- finished
 		return
 	end
 
@@ -1299,10 +1521,10 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 					NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 					if (NS.CommFlare.CF.PlayerRank == 2) then
 						-- issue global raid warning
-						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], L["Captain Balinda Stonehearth"]))
+						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], sender))
 					else
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], L["Captain Balinda Stonehearth"]))
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
 					end
 				end
 			end
@@ -1327,10 +1549,10 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 					NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 					if (NS.CommFlare.CF.PlayerRank == 2) then
 						-- issue global raid warning
-						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], L["Captain Galvangar"]))
+						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], sender))
 					else
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], L["Captain Galvangar"]))
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
 					end
 				end
 			end
@@ -1362,12 +1584,12 @@ function NS.CommFlare:CHAT_MSG_SYSTEM(msg, ...)
 	-- notify system has been enabled?
 	elseif (text == PVP_REPORT_AFK_SYSTEM_ENABLED) then
 		-- restrict pings?
-		if (NS.charDB.profile.restrictPings and (NS.charDB.profile.restrictPings > 0)) then
+		if (NS.db.global.restrictPings and (NS.db.global.restrictPings > 0)) then
 			-- does player have raid leadership or assistant?
 			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 			if (NS.CommFlare.CF.PlayerRank > 0) then
 				-- set restrict pings
-				PartyInfoSetRestrictPings(NS.charDB.profile.restrictPings)
+				PartyInfoSetRestrictPings(NS.db.global.restrictPings)
 			end
 		end
 
@@ -1568,40 +1790,61 @@ function NS.CommFlare:COMBAT_LOG_EVENT_UNFILTERED(msg)
 				local timer = 15
 				local npc_name = nil
 				local npc_type = "boss"
-				local should_warn = false
+				local warning_type = 0
 				sourceFlags = tonumber(sourceFlags)
-				if (sourceName == "High Warlord Volrath") then
-					-- setup npc name
-					npc_name = L["High Warlord Volrath"]
-
-					-- always warn
-					should_warn = true
+				if (sourceName == L["High Warlord Volrath"]) then
+					-- needs to issue raid warning?
+					if (NS.CommFlare.CF.LastBossRW == 0) then
+						-- always warn
+						warning_type = 1 -- raid warning (if possible)
+						npc_name = L["High Warlord Volrath"]
+					end
 				-- action performed on boss?
-				elseif (destName == "High Warlord Volrath") then
-					-- setup npc name
-					npc_name = L["High Warlord Volrath"]
-
-					-- is source hostile?
-					if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
-						-- should warn
-						should_warn = true
+				elseif (destName == L["High Warlord Volrath"]) then
+					-- needs to issue raid warning?
+					if (NS.CommFlare.CF.LastBossRW == 0) then
+						-- is source hostile?
+						if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
+							-- should warn
+							warning_type = 1 -- raid warning (if possible)
+							npc_name = L["High Warlord Volrath"]
+						end
 					end
 				-- action performed on mage?
-				elseif (destName == "Jeron Emberfall") then
-					-- setup npc name
-					npc_name = L["Jeron Emberfall"]
+				elseif (destName == L["Jeron Emberfall"]) then
+					-- warn when mage is under attack?
+					if (NS.db.global.ashranMageWarnAttacked > 1) then
+						-- needs to issue raid warning?
+						if (NS.CommFlare.CF.LastMageRW == 0) then
+							-- is source hostile?
+							if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
+								-- should warn
+								npc_name = L["Jeron Emberfall"]
+								npc_type = "mage"
+								timer = 30
 
-					-- is source hostile?
-					if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
-						-- should warn
-						should_warn = true
-						npc_type = "mage"
-						timer = 30
+								-- local warning only?
+								warning_type = 1 -- raid warning (if possible)
+								if (NS.db.global.ashranMageWarnAttacked == 3) then
+									-- set local warning type
+									warning_type = 2 -- local warning only
+								end
+
+								-- different frequency set?
+								if (NS.db.global.ashranMageWarnFreq == 1) then
+									-- 15 seconds
+									timer = 15
+								elseif (NS.db.global.ashranMageWarnFreq == 3) then
+									-- 60 seconds
+									timer = 60
+								end
+							end
+						end
 					end
 				end
 
-				-- should warn?
-				if ((should_warn == true) and npc_name) then
+				-- warning type and npc found?
+				if ((warning_type > 0) and npc_name) then
 					-- boss?
 					local issue_warning = false
 					if (npc_type == "boss") then
@@ -1642,15 +1885,21 @@ function NS.CommFlare:COMBAT_LOG_EVENT_UNFILTERED(msg)
 
 					-- should issue warning?
 					if (issue_warning == true) then
-						-- do you have lead?
-						local player = NS:GetPlayerName("full")
-						NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-						if (NS.CommFlare.CF.PlayerRank == 2) then
-							-- issue global raid warning
-							NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-						else
+						-- local warning only?
+						if (warning_type == 2) then
 							-- issue local raid warning (with raid warning audio sound)
 							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
+						else
+							-- do you have lead?
+							local player = NS:GetPlayerName("full")
+							NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+							if (NS.CommFlare.CF.PlayerRank == 2) then
+								-- issue global raid warning
+								NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
+							else
+								-- issue local raid warning (with raid warning audio sound)
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
+							end
 						end
 					end
 				end
@@ -1762,7 +2011,7 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 						NS.CommFlare.CF.AutoInvite = false
 						if (selfRelationship == "bnfriend") then
 							-- battle net auto invite enabled?
-							if (NS.charDB.profile.bnetAutoInvite == true) then
+							if (NS.db.global.bnetAutoInvite == true) then
 								-- auto invite enabled
 								NS.CommFlare.CF.AutoInvite = true
 							end
@@ -1839,16 +2088,14 @@ end
 
 -- process group roster update
 function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
-	-- skip for arena
-	local isArena = PvPIsArena()
-	if (isArena == true) then
+	-- in arena?
+	if (PvPIsArena() == true) then
 		-- finished
 		return
 	end
 
-	-- skip for delves
-	local isDelve = DelvesUIHasActiveDelve()
-	if (isDelve == true) then
+	-- in delve?
+	if (NS:IsInDelve() == true) then
 		-- finished
 		return
 	end
@@ -1927,62 +2174,64 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				end
 			end
 		end
+
+		-- finished
+		return
+	end
+
 	-- are you in local party?
-	elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
-		-- not in a raid?
-		if (not IsInRaid()) then
-			-- are you group leader?
-			if (NS:IsGroupLeader() == true) then
-				-- not in instance?
-				local inInstance, instanceType = IsInInstance()
-				if (inInstance ~= true) then
-					-- community member?
-					local message = "GROUP_ROSTER_UPDATE"
-					if (NS.charDB.profile.communityMain > 1) then
-						-- append YES
-						message = message .. ":YES"
-					else
-						-- append NO
-						message = message .. ":NO"
-					end
-
-					-- send party that leader has community flare
-					NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+	if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+		-- are you group leader?
+		if (NS:IsGroupLeader() == true) then
+			-- not in instance?
+			local inInstance, instanceType = IsInInstance()
+			if (inInstance ~= true) then
+				-- community member?
+				local message = "GROUP_ROSTER_UPDATE"
+				if (NS.charDB.profile.communityMain > 1) then
+					-- append YES
+					message = message .. ":YES"
+				else
+					-- append NO
+					message = message .. ":NO"
 				end
 
-				-- check current players in home party
-				local count = 1
-				local players = GetHomePartyInfo()
-				if (players ~= nil) then
-					-- has group size changed?
-					local text = NS:GetGroupCount()
-					count = #players + count
-					local maxCount = NS:GetMaxPartyCount()
-					if ((NS.CommFlare.CF.PreviousCount > 0) and (NS.CommFlare.CF.PreviousCount < maxCount) and (count == maxCount)) then
-						-- community reporter enabled?
-						if (NS.charDB.profile.communityReporter == true) then
-							-- finalize text
-							text = strformat("%s %s!", text, L["Full Now"])
-
-							-- send to community
-							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-						end
-					end
-				end
-
-				-- save previous count
-				NS.CommFlare.CF.PreviousCount = count
-			else
-				-- clear previous count
-				NS.CommFlare.CF.PreviousCount = 0
+				-- send party that leader has community flare
+				NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
 			end
 
-			-- update local group
-			NS:Update_Group("local")
+			-- check current players in home party
+			local count = 1
+			local players = GetHomePartyInfo()
+			if (players ~= nil) then
+				-- has group size changed?
+				count = #players + count
+				local text = NS:GetGroupCount()
+				local maxCount = NS:GetMaxPartyCount()
+				if ((NS.CommFlare.CF.PreviousCount > 0) and (NS.CommFlare.CF.PreviousCount < maxCount) and (count == maxCount)) then
+					-- community reporter enabled?
+					if (NS.charDB.profile.communityReporter == true) then
+						-- finalize text
+						text = strformat("%s %s!", text, L["Full Now"])
+
+						-- send to community
+						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
+					end
+				end
+			end
+
+			-- save previous count
+			NS.CommFlare.CF.PreviousCount = count
 		else
 			-- clear previous count
 			NS.CommFlare.CF.PreviousCount = 0
 		end
+
+		-- update local group
+		NS:Update_Group("local")
+	else
+		-- clear previous count
+		NS.CommFlare.CF.PreviousCount = 0
 	end
 end
 
@@ -2149,7 +2398,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_SHOW(msg, ...)
 				end
 
 				-- battle net auto queue enabled?
-				if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.bnetAutoQueue == true)) then
+				if ((NS.CommFlare.CF.AutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
 					local guid = NS:GetPartyLeaderGUID()
 					local info = BattleNetGetAccountInfoByGUID(guid)
 					if (info and (info.isFriend == true)) then
@@ -2212,7 +2461,7 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 	if (NS.CommFlare.CF.HasAura == false) then
 		-- battle net auto invite enabled?
 		NS.CommFlare.CF.AutoInvite = false
-		if (NS.charDB.profile.bnetAutoInvite == true) then
+		if (NS.db.global.bnetAutoInvite == true) then
 			local info = BattleNetGetAccountInfoByGUID(guid)
 			if (info and (info.isFriend == true)) then
 				-- auto invite enabled
@@ -2267,7 +2516,7 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 					LFGInvitePopupAcceptButton:Click()
 				else
 					-- wait some
-					timer = 0.5
+					timer = timer + 0.2
 					TimerAfter(timer, function()
 						-- click accept button
 						LFGInvitePopupAcceptButton:Click()
@@ -2297,10 +2546,10 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 	-- update leader GUID
 	NS.CommFlare.CF.LeaderGUID = NS:GetPartyLeaderGUID()
 
-	-- notify enabled?
-	if (NS.charDB.profile.partyLeaderNotify > 1) then
-		-- are you in a party?
-		if (IsInGroup() and not IsInRaid()) then
+	-- are you in a party?
+	if (IsInGroup() and not IsInRaid()) then
+		-- notify enabled?
+		if (NS.db.global.partyLeaderNotify > 1) then
 			-- has more than 1 member?
 			if (GetNumSubgroupMembers() > 0) then
 				-- are you group leader?
@@ -2310,15 +2559,9 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 				end
 			end
 		end
-	end
 
-	-- in a group?
-	if (IsInGroup()) then
-		-- not in a raid?
-		if (not IsInRaid()) then
-			-- update local group
-			NS:Update_Group("local")
-		end
+		-- update local group
+		NS:Update_Group("local")
 	end
 end
 
@@ -2327,12 +2570,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	local isInitialLogin, isReloadingUi = ...
 
 	-- has old settings?
-	if (NS.globalDB.profile) then
+	if (NS.db.profile) then
 		-- process all values
-		for k,v in pairs(NS.globalDB.profile) do
+		for k,v in pairs(NS.db.profile) do
 			-- save per character
-			NS.charDB.profile[k] = NS.globalDB.profile[k]
-			NS.globalDB.profile[k] = nil
+			NS.charDB.profile[k] = NS.db.profile[k]
+			NS.db.profile[k] = nil
 		end
 	end
 
@@ -2445,6 +2688,17 @@ function NS.CommFlare:PLAYER_LOGOUT(msg)
 	NS:SaveSession()
 end
 
+-- process player map changed
+function NS.CommFlare:PLAYER_MAP_CHANGED(msg, ...)
+	local oldMapID, newMapID = ...
+
+	-- in active delve?
+	if (NS.CommFlare.CF.InActiveDelve == true) then
+		-- exited
+		NS.CommFlare.CF.InActiveDelve = false
+	end
+end
+
 -- process pvp match active
 function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	-- initialize
@@ -2452,7 +2706,8 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	NS.CommFlare.CF.RosterList = {}
 	NS:Initialize_Battleground_Status()
 
-	-- always reset ashran mages
+	-- always reset ashran stuff
+	NS.CommFlare.CF.AncientInferno = 0
 	NS.CommFlare.CF.ASH.Jeron = L["Up"]
 	NS.CommFlare.CF.ASH.Rylai = L["Up"]
 
@@ -2466,7 +2721,7 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	NS:Process_Club_Members()
 
 	-- should log pvp combat?
-	if (NS.charDB.profile.pvpCombatLogging == true) then
+	if (NS.db.global.pvpCombatLogging == true) then
 		-- save old value
 		NS.CommFlare.CF.PvpLoggingCombat = LoggingCombat()
 
@@ -2483,7 +2738,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	local winner, duration = ...
 
 	-- enabled vehicle turn speed?
-	if (NS.charDB.profile.adjustVehicleTurnSpeed > 0) then
+	if (NS.db.global.adjustVehicleTurnSpeed > 0) then
 		-- reset default speed
 		NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
 		SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
@@ -2527,6 +2782,15 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 		end)
 	end
 
+	-- use proper count
+	local count = 0
+	if (NS.CommFlare.CF.PlayerMercenary == true) then
+		-- mercenary count
+		count = NS.CommFlare.CF.MercCount
+	else
+		-- community count
+		count = NS.CommFlare.CF.CommCount
+	end
 
 	-- get MapID
 	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
@@ -2558,7 +2822,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 				local timestamp = time()
 				local partyGUID = NS:GetPartyGUID()
 				local guids = strformat("%s,%s", leaderGUID, partyGUID)
-				NS:BNPushData(strformat("!CF@%s@%s@Queue@Finished@%s,%s@%d@%d@%s", NS.CommFlare.Version, NS.CommFlare.Build, mapName, status, timestamp, NS.CommFlare.CF.CommCount, guids))
+				NS:BNPushData(strformat("!CF@%s@%s@Queue@Finished@%s,%s@%d@%d@%s", NS.CommFlare.Version, NS.CommFlare.Build, mapName, status, timestamp, count, guids))
 			end
 		end
 	end
@@ -2580,7 +2844,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 				end
 
 				-- send message
-				NS:SendMessage(k, strformat("%s (%d %s)", text, NS.CommFlare.CF.CommCount, L["Community Members"]))
+				NS:SendMessage(k, strformat("%s (%d %s)", text, count, L["Community Members"]))
 			end)
 
 			-- next
@@ -2592,7 +2856,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	NS.CommFlare.CF.StatusCheck = {}
 
 	-- should log pvp combat?
-	if (NS.charDB.profile.pvpCombatLogging == true) then
+	if (NS.db.global.pvpCombatLogging == true) then
 		-- reset combat logging
 		LoggingCombat(NS.CommFlare.CF.PvpLoggingCombat)
 	end
@@ -2624,11 +2888,11 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 			if (NS:IsInBattleground() == true) then
 				-- block all shared quests?
 				local decline = false
-				if (NS.charDB.profile.blockSharedQuests == 3) then
+				if (NS.db.global.blockSharedQuests == 3) then
 					-- always decline
 					decline = true
 				-- block irrelevant quests?
-				elseif (NS.charDB.profile.blockSharedQuests == 2) then
+				elseif (NS.db.global.blockSharedQuests == 2) then
 					-- get MapID
 					NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
 					if (NS.CommFlare.CF.MapID and (NS.CommFlare.CF.MapID > 0)) then
@@ -2645,6 +2909,17 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 								[56257] = true, -- The Battle for Alterac [H] (Seasonal)
 								[56258] = true, -- Ivus the Forest Lord [A] (Seasonal)
 								[56259] = true, -- Lokholar the Ice Lord [H] (Seasonal)
+								[57300] = true, -- Soldier of Time [A+H] (Anniversary)
+								[57302] = true, -- The Graveyards of Alterac [A] (Anniversary)
+								[57303] = true, -- The Quartermaster [A] (Anniversary)
+								[57304] = true, -- Capture a mine [A] (Anniversary)
+								[57305] = true, -- Armor Scraps [A] (Anniversary)
+								[57307] = true, -- Towers and Bunkers [A] (Anniversary)
+								[57312] = true, -- The Graveyards of Alterac [H] (Anniversary)
+								[57313] = true, -- Speak with our Quartermaster [H] (Anniversary)
+								[57314] = true, -- Capture a mine [H] (Anniversary)
+								[57315] = true, -- Towers and Bunkers [H] (Anniversary)
+								[57317] = true, -- Enemy Booty [H] (Anniversary)
 							}
 
 							-- allowed quest?
@@ -2748,14 +3023,21 @@ end
 function NS.CommFlare:READY_CHECK(msg, ...)
 	local sender, timeleft = ...
 
-	-- are you in a party?
+	-- are you in local party?
 	NS.CommFlare.CF.ReadyCheck = {}
 	NS.CommFlare.CF.PartyVersions = {}
-	if (IsInGroup() and not IsInRaid()) then
+	if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
 		-- are you group leader?
 		if (NS:IsGroupLeader() == true) then
 			-- send ready check message
 			NS.CommFlare:SendCommMessage(ADDON_NAME, "READY_CHECK", "PARTY")
+		end
+
+		-- still has popped battleground?
+		local popped, mapName = NS:Has_Battleground_Popped()
+		if ((popped == true) and mapName) then
+			-- send party message
+			NS:SendMessage(nil, strformat(L["I have not left the previously popped queue for %s."], mapName))
 		end
 	end
 
@@ -2795,7 +3077,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 		end
 
 		-- battle net auto queue enabled?
-		if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.bnetAutoQueue == true)) then
+		if ((NS.CommFlare.CF.AutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
 			local guid = NS:GetPartyLeaderGUID()
 			local info = BattleNetGetAccountInfoByGUID(guid)
 			if (info and (info.isFriend == true)) then
@@ -2992,16 +3274,16 @@ function NS.CommFlare:UNIT_ENTERED_VEHICLE(msg, ...)
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
 			-- sanity check
-			if ((NS.charDB.profile.adjustVehicleTurnSpeed < 1) or (NS.charDB.profile.adjustVehicleTurnSpeed > 3)) then
+			if ((NS.db.global.adjustVehicleTurnSpeed < 1) or (NS.db.global.adjustVehicleTurnSpeed > 3)) then
 				-- force default
-				NS.charDB.profile.adjustVehicleTurnSpeed = 1
+				NS.db.global.adjustVehicleTurnSpeed = 1
 			end
 
 			-- save old speed
 			NS.CommFlare.CF.TurnSpeed = GetCVar("TurnSpeed")
 
 			-- set new speed
-			local speed = NS.charDB.profile.adjustVehicleTurnSpeed * 180
+			local speed = NS.db.global.adjustVehicleTurnSpeed * 180
 			SetCVar("TurnSpeed", speed)
 		end
 	end
@@ -3016,7 +3298,7 @@ function NS.CommFlare:UNIT_EXITED_VEHICLE(msg, ...)
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
 			-- default?
-			if (NS.charDB.profile.adjustVehicleTurnSpeed == 1) then
+			if (NS.db.global.adjustVehicleTurnSpeed == 1) then
 				-- reset default speed?
 				NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
 			end
@@ -3034,20 +3316,20 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 	-- only check player
 	if (unitTarget == "player") then
 		-- has warning setting enabled?
-		if (NS.charDB.profile.warningLeavingBG > 1) then
+		if (NS.db.global.warningLeavingBG > 1) then
 			-- in battleground?
 			if (NS:IsInBattleground() == true) then
 				-- hearthstone?
 				if (NS.CommFlare.HearthStoneSpells[spellID]) then
 					-- raid warning?
-					if (NS.charDB.profile.warningLeavingBG == 2) then
+					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to hearthstone?"])
 					end
 				-- teleporting?
 				elseif (NS.CommFlare.TeleportSpells[spellID]) then
 					-- raid warning?
-					if (NS.charDB.profile.warningLeavingBG == 2) then
+					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to teleport?"])
 					end
@@ -3094,13 +3376,6 @@ end
 
 -- process zone changed new area
 function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
-	-- version already sent?
-	if (NS.CommFlare.CF.VersionSent == true) then
-		-- clear version sent
-		NS.CommFlare.CF.VersionSent = false
-		return
-	end
-
 	-- get map id
 	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
@@ -3109,16 +3384,30 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 	end
 
 	-- get map info
+	local mapID = NS.CommFlare.CF.MapID
 	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
 		return
 	end
 
-	-- is tracked pvp?
+	-- print debug info?
 	local mapName = NS.CommFlare.CF.MapInfo.name
+	if (NS.db.global.printDebugInfo == true) then
+		-- display current map info
+		print(strformat("%s: Zone Changed New Area = %s (%d)", NS.CommFlare.Title, tostring(mapName), tonumber(mapID)))
+	end
+
+	-- is tracked pvp?
 	local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 	if (isTracked == true) then
+		-- version already sent?
+		if (NS.CommFlare.CF.VersionSent == true) then
+			-- clear version sent
+			NS.CommFlare.CF.VersionSent = false
+			return
+		end
+
 		-- has main community?
 		local mainID = 1
 		if (NS.charDB.profile.communityMain and (NS.charDB.profile.communityMain > 1)) then
@@ -3131,7 +3420,7 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 		NS.CommFlare:SendCommMessage(ADDON_NAME, message, "INSTANCE_CHAT")
 
 		-- in a guild?
-		if (IsInGuild() == true) then
+		if (IsInGuild()) then
 			-- send addon message to guild
 			NS.CommFlare:SendCommMessage(ADDON_NAME, message, "GUILD")
 		end
@@ -3139,15 +3428,37 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 		-- set version sent
 		NS.CommFlare.CF.VersionSent = true
 	else
-		-- clear version sent
+		-- are you in local party?
+		if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+			-- new zone warning not recently sent?
+			if (NS.CommFlare.CF.NewZoneWarning == false) then
+				-- new zone warning sent
+				NS.CommFlare.CF.NewZoneWarning = true
+
+				-- clear new zone warning after 5 seconds
+				TimerAfter(5, function()
+					-- clear new zone warning
+					NS.CommFlare.CF.NewZoneWarning = false
+				end)
+
+				-- send addon message to instance chat
+				local message = strformat("!CommFlare@%s@ZONE_CHANGED_NEW_AREA@%s:%s", NS.CommFlare.Version, tostring(mapID), tostring(mapName))
+				NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+			end
+		end
+
+		-- reset stuff
 		NS.CommFlare.CF.VersionSent = false
+		NS.CommFlare.CF.LastRaidWarning = 0
 	end
 end
 
 -- enabled
 function NS.CommFlare:OnEnable()
 	-- register events
+	self:RegisterEvent("ACTIVE_DELVE_DATA_UPDATE")
 	self:RegisterEvent("ADDON_LOADED")
+	self:RegisterEvent("AREA_POIS_UPDATED")
 	self:RegisterEvent("BN_CHAT_MSG_ADDON")
 	self:RegisterEvent("CHAT_MSG_ADDON")
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
@@ -3156,6 +3467,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 	self:RegisterEvent("CHAT_MSG_SYSTEM")
 	self:RegisterEvent("CHAT_MSG_WHISPER")
+	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
 	self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 	self:RegisterEvent("CLUB_MEMBER_ADDED")
 	self:RegisterEvent("CLUB_MEMBER_PRESENCE_UPDATED")
@@ -3183,6 +3495,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PARTY_LEADER_CHANGED")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
+	self:RegisterEvent("PLAYER_MAP_CHANGED")
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
 	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("PVP_MATCH_INACTIVE")
@@ -3204,7 +3517,9 @@ end
 -- disabled
 function NS.CommFlare:OnDisable()
 	-- unregister events
+	self:UnregisterEvent("ACTIVE_DELVE_DATA_UPDATE")
 	self:UnregisterEvent("ADDON_LOADED")
+	self:UnregisterEvent("AREA_POIS_UPDATED")
 	self:UnregisterEvent("BN_CHAT_MSG_ADDON")
 	self:UnregisterEvent("CHAT_MSG_ADDON")
 	self:UnregisterEvent("CHAT_MSG_BN_WHISPER")
@@ -3213,6 +3528,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CHAT_MSG_PARTY_LEADER")
 	self:UnregisterEvent("CHAT_MSG_SYSTEM")
 	self:UnregisterEvent("CHAT_MSG_WHISPER")
+	self:UnregisterEvent("CHAT_MSG_MONSTER_SAY")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
 	self:UnregisterEvent("CLUB_MEMBER_ADDED")
 	self:UnregisterEvent("CLUB_MEMBER_PRESENCE_UPDATED")
@@ -3240,6 +3556,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
+	self:UnregisterEvent("PLAYER_MAP_CHANGED")
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")
 	self:UnregisterEvent("PVP_MATCH_COMPLETE")
 	self:UnregisterEvent("PVP_MATCH_INACTIVE")
@@ -3292,12 +3609,11 @@ function NS.CommFlare:Community_Flare_OnCommReceived(prefix, message, distributi
 
 			-- boss attacked & has npc name?
 			if (args[3] == "BOSS_ATTACKED") then
-				-- has npc name?
-				if (args[4] and (args[4] ~= "")) then
-					-- do you have lead?
-					player = NS:GetPlayerName("full")
-					NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-					if (NS.CommFlare.CF.PlayerRank and (NS.CommFlare.CF.PlayerRank ~= 2)) then
+				-- instance chat message?
+				if (distribution == "INSTANCE_CHAT") then
+					-- has npc name?
+					local npc_name = args[4]
+					if (npc_name and (npc_name ~= "")) then
 						-- needs to issue raid warning?
 						if (NS.CommFlare.CF.LastBossRW == 0) then
 							-- update last raid warning
@@ -3308,101 +3624,120 @@ function NS.CommFlare:Community_Flare_OnCommReceived(prefix, message, distributi
 								NS.CommFlare.CF.LastBossRW = 0
 							end)
 
-							-- issue local raid warning (with raid warning audio sound)
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], args[4]))
+							-- do you have lead?
+							local player = NS:GetPlayerName("full")
+							NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+							if (NS.CommFlare.CF.PlayerRank == 2) then
+								-- issue global raid warning
+								NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
+							else
+								-- issue local raid warning (with raid warning audio sound)
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
+							end
+
 						end
 					end
 				end
 			-- version checked?
 			elseif (args[3] == "VERSION_CHECK") then
-				-- not already displayed?
-				if (NS.CommFlare.CF.UpgradeDisplayed == false) then
-					-- updated version?
-					local updated = NS:Compare_Version(args[2])
-					if (updated == true) then
-						-- updated version
-						print(strformat(L["%s version %s update available. Download the latest version from curseforge!"], NS.CommFlare.Title, args[2]))
+				-- guild or instance chat message?
+				if ((distribution == "GUILD") or (distribution == "INSTANCE_CHAT")) then
+					-- not already displayed?
+					if (NS.CommFlare.CF.UpgradeDisplayed == false) then
+						-- updated version?
+						local updated = NS:Compare_Version(args[2])
+						if (updated == true) then
+							-- updated version
+							print(strformat(L["%s version %s update available. Download the latest version from curseforge!"], NS.CommFlare.Title, args[2]))
 
-						-- displayed
-						NS.CommFlare.CF.UpgradeDisplayed = true
+							-- displayed
+							NS.CommFlare.CF.UpgradeDisplayed = true
+						end
+					end
+				end
+			-- zone changed new area?
+			elseif (args[3] == "ZONE_CHANGED_NEW_AREA") then
+				-- party message?
+				if (distribution == "PARTY") then
+					-- notified when party member changes zones?
+					if (NS.db.global.notifyPartyZoneChanges == true) then
+						-- are you in local party?
+						if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+							-- are you group leader?
+							if (NS:IsGroupLeader() == true) then
+								-- has map name?
+								local mapID, mapName = strsplit(":", message)
+								if (not mapName) then
+									-- get map info by id
+									local info = MapGetMapInfo(tonumber(message))
+									if (info and info.name) then
+										-- set map name
+										mapName = info.name
+									else
+										-- use full message (fall back)
+										mapName = message
+									end
+								end
+
+								-- display zone change message
+								print(strformat(L["%s has changed zones to %s."], sender, mapName))
+							end
+						end
 					end
 				end
 			end
 		else
 			-- group joined?
 			if (message:find("GROUP_ROSTER_UPDATE")) then
-				-- are you not group leader?
-				if (NS:IsGroupLeader() ~= true) then
-					-- community member?
-					if (message:find("YES")) then
-						-- enable community party leader
-						NS.charDB.profile.communityPartyLeader = true
+				-- party message?
+				if (distribution == "PARTY") then
+					-- are you not group leader?
+					if (NS:IsGroupLeader() ~= true) then
+						-- community member?
+						if (message:find("YES")) then
+							-- enable community party leader
+							NS.charDB.profile.communityPartyLeader = true
+						end
 					end
 				end
 			-- ready check?
 			elseif (message:find("READY_CHECK")) then
-				-- reply?
-				if (message:find("READY_CHECK:")) then
-					-- get unit for sender
-					local unit = NS:GetPartyUnit(sender)
-					player = NS:GetFullName(sender)
-					if (unit and player) then
-						-- split message
-						local title, version, build = strsplit(":", message)
-						if (not build) then
-							-- not available
-							build = L["N/A"]
+				-- party message?
+				if (distribution == "PARTY") then
+					-- reply?
+					if (message:find("READY_CHECK:")) then
+						-- get unit for sender
+						local unit = NS:GetPartyUnit(sender)
+						player = NS:GetFullName(sender)
+						if (unit and player) then
+							-- split message
+							local title, version, build = strsplit(":", message)
+							if (not build) then
+								-- not available
+								build = L["N/A"]
+							end
+
+							-- save version number
+							NS.CommFlare.CF.PartyVersions[unit] = version
+
+							-- display player's community flare version / build
+							print(strformat(L["%s has %s %s (%s)"], player, NS.CommFlare.Title, version, build))
 						end
-
-						-- save version number
-						NS.CommFlare.CF.PartyVersions[unit] = version
-
-						-- display player's community flare version / build
-						print(strformat(L["%s has %s %s (%s)"], player, NS.CommFlare.Title, version, build))
+					else
+						-- are you in local party?
+						if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+							-- send back community flare version
+							local message = strformat("READY_CHECK:%s:%s", NS.CommFlare.Version, NS.CommFlare.Build)
+							NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+						end
 					end
-				else
-					-- send back community flare version
-					local message = strformat("READY_CHECK:%s:%s", NS.CommFlare.Version, NS.CommFlare.Build)
-					NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
 				end
 			-- request party lead?
 			elseif (message:find("REQUEST_PARTY_LEAD")) then
-				-- are you group leader?
-				if (NS:IsGroupLeader() == true) then
-					-- always use full names
-					player = NS:GetFullName(player)
-					sender = NS:GetFullName(sender)
-					local member1 = NS:Get_Community_Member(player)
-					local member2 = NS:Get_Community_Member(sender)
-
-					-- player not found?
-					if (not member1) then
-						-- force max priority
-						member1 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-					-- no priority?
-					elseif (not member1.priority) then
-						-- force max priority
-						member1.priority = NS.CommFlare.CF.MaxPriority
-					end
-
-					-- sender not found?
-					if (not member2) then
-						-- force max priority
-						member2 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-					-- no priority?
-					elseif (not member2.priority) then
-						-- force max priority
-						member2.priority = NS.CommFlare.CF.MaxPriority
-					end
-
-					-- priority in check?
-					if (member1 and member1.priority and member2 and member2.priority) then
-						-- sender has equal or better priority?
-						if (member1.priority >= member2.priority) then
-							-- process pass leadership
-							NS:Process_Pass_Leadership(sender)
-						end
-					end
+				-- instance chat or party message?
+				if ((distribution == "INSTANCE_CHAT") or (distribution == "PARTY")) then
+					-- process pass leadership
+					NS:Process_Pass_Leadership(sender)
 				end
 			end
 		end
@@ -3418,7 +3753,7 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 	local lower = strlower(input)
 	if (lower == "debug") then
 		-- debug mode enabled?
-		if (NS.charDB.profile.debugMode == true) then
+		if (NS.db.global.debugMode == true) then
 			-- expose local tables for debug purposes
 			CommFlare_CF = NS.CommFlare.CF
 			CommFlare_LocalQueues = NS.CommFlare.CF.LocalQueues
@@ -3519,7 +3854,7 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 		end
 	elseif (lower == "reset") then
 		-- reset members database
-		NS.globalDB.global.members = {}
+		NS.db.global.members = {}
 		print(L["Cleared members database!"])
 	elseif (lower == "usage") then
 		-- display usages
@@ -3538,7 +3873,7 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			if (third and (third ~= "")) then
 				-- process all
 				third = strlower(third)
-				for k,v in pairs(NS.globalDB.global.clubs) do
+				for k,v in pairs(NS.db.global.clubs) do
 					-- matches short name?
 					local shortName = strlower(v.shortName)
 					if (shortName == third) then
