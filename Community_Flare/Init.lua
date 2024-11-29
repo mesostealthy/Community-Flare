@@ -1262,6 +1262,7 @@ function NS:BNSendData(player, data)
 	-- no player given?
 	if (not player) then
 		-- finished
+		print(data)
 		return
 	end
 

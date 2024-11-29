@@ -48,22 +48,31 @@ function NS:Get_Clubs_Text()
 	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
 	for k,v in ipairs(NS.CommFlare.CF.Clubs) do
 		-- community?
-		if (v.clubType == Enum.ClubType.Character) then
-			-- not cross faction?
-			local faction = nil
-			if (v.crossFaction == false) then
-				-- assume same faction as player with club
-				faction = player_faction
+		if (v.clubType and (v.clubType == Enum.ClubType.Character)) then
+			-- no cross faction?
+			if (v.crossFaction == nil) then
+				-- assume not
+				v.crossFaction = false
 			end
-	
-			-- first?
-			local current = strformat("%s,%s,%s,%s,%s,%s", tostring(v.clubId), tostring(v.name), tostring(v.shortName), tostring(v.memberCount), tostring(v.crossFaction), tostring(faction))
-			if (not text) then
-				-- initialize
-				text = current
-			else
-				-- append
-				text = strformat("%s;%s", text, current)
+
+			-- has everything?
+			if (v.clubId and v.name and v.shortName and v.memberCount) then
+				-- not cross faction?
+				local faction = nil
+				if (v.crossFaction == false) then
+					-- assume same faction as player with club
+					faction = player_faction
+				end
+
+				-- first?
+				local current = strformat("%s,%s,%s,%s,%s,%s", tostring(v.clubId), tostring(v.name), tostring(v.shortName), tostring(v.memberCount), tostring(v.crossFaction), tostring(faction))
+				if (not text) then
+					-- initialize
+					text = current
+				else
+					-- append
+					text = strformat("%s;%s", text, current)
+				end
 			end
 		end 
 	end
@@ -179,6 +188,7 @@ function NS:Get_Members_Text(senderID, input)
 	if (type(input) == "number") then
 		-- set clubId
 		clubId = tonumber(input)
+	-- string?
 	elseif (type(input) == "string") then
 		-- command?
 		if (input:find("!CommFlare@")) then
@@ -219,7 +229,7 @@ function NS:Get_Members_Text(senderID, input)
 			if (v.name and (v.name ~= "")) then
 				-- matches full name?
 				local fullName = strlower(v.name)
-				if (fullName == lower) then
+				if ((v.name == input) or (fullName == lower)) then
 					-- found
 					clubId = k
 					break
@@ -258,7 +268,7 @@ function NS:Get_Members_Text(senderID, input)
 				if (v.name and (v.name ~= "")) then
 					-- matches full name?
 					local fullName = strlower(v.name)
-					if (fullName == lower) then
+					if ((v.name == input) or (fullName == lower)) then
 						-- found
 						clubId = v.clubId
 						break
@@ -295,53 +305,103 @@ function NS:Get_Members_Text(senderID, input)
 		return
 	end
 
-	-- process all members
+	-- none found?
 	local count = 0
+	local text = nil
 	local lines = {}
-	local text = strformat("ClubID:%d@", tonumber(clubId))
-	for _,v in ipairs(members) do
-		-- get member info
-		local mi = ClubGetMemberInfo(clubId, v)
-		if (mi.name and mi.guid) then
-			-- no server?
-			local name, realm = nil, nil
-			if (strmatch(mi.name, "-")) then
-				-- split
-				name, realm = strsplit("-", mi.name)
-			else
-				-- use player server
-				name = mi.name
-				realm = NS.CommFlare.CF.PlayerServerName
+	print("count: ", #members)
+	if (#members == 0) then
+		-- try local database
+		if (NS.db.global.members) then
+			-- process local
+			text = strformat("ClubID:%d@", tonumber(clubId))
+			for k,v in pairs(NS.db.global.members) do
+				-- has clubs and is member?
+				if (v.clubs and v.clubs[clubId]) then
+					-- no server?
+					local name, realm = nil, nil
+					if (strmatch(v.name, "-")) then
+						-- split
+						name, realm = strsplit("-", v.name)
+					else
+						-- use player server
+						name = v.name
+						realm = NS.CommFlare.CF.PlayerServerName
+					end
+
+					-- found both?
+					if (name and realm and v.guid) then
+						-- build new player
+						local player = strformat("%s-%s:%s", name, realm, v.guid)
+						local playerlength = strlen(player)
+						local textlength = strlen(text)
+						if ((textlength + playerlength + 1) > 4032) then
+							-- insert
+							tinsert(lines, text)
+
+							-- restart text
+							text = strformat("ClubID:%d@%s;", tonumber(clubId), player)
+						else
+							-- append player
+							text = strformat("%s%s;", text, player)
+						end
+
+						-- increase
+						count = count + 1
+					end
+				end
 			end
-
-			-- found both?
-			if (name and realm) then
-				-- build new player
-				local player = strformat("%s-%s:%s", name, realm, mi.guid)
-				local playerlength = strlen(player)
-				local textlength = strlen(text)
-				if ((textlength + playerlength + 1) > 4032) then
-					-- insert
-					tinsert(lines, text)
-
-					-- restart text
-					text = strformat("ClubID:%d@%s;", tonumber(clubId), player)
+		end
+	else
+		-- process all members
+		text = strformat("ClubID:%d@", tonumber(clubId))
+		for _,v in ipairs(members) do
+			-- get member info
+			local mi = ClubGetMemberInfo(clubId, v)
+			if (mi.name and mi.guid) then
+				-- no server?
+				local name, realm = nil, nil
+				if (strmatch(mi.name, "-")) then
+					-- split
+					name, realm = strsplit("-", mi.name)
 				else
-					-- append player
-					text = strformat("%s%s;", text, player)
+					-- use player server
+					name = mi.name
+					realm = NS.CommFlare.CF.PlayerServerName
 				end
 
-				-- increase
-				count = count + 1
+				-- found both?
+				if (name and realm) then
+					-- build new player
+					local player = strformat("%s-%s:%s", name, realm, mi.guid)
+					local playerlength = strlen(player)
+					local textlength = strlen(text)
+					if ((textlength + playerlength + 1) > 4032) then
+						-- insert
+						tinsert(lines, text)
+
+						-- restart text
+						text = strformat("ClubID:%d@%s;", tonumber(clubId), player)
+					else
+						-- append player
+						text = strformat("%s%s;", text, player)
+					end
+
+					-- increase
+					count = count + 1
+				end
 			end
 		end
 	end
 
-	-- still more?
-	local textlength = strlen(text)
-	if (textlength > 0) then
-		-- insert
-		tinsert(lines, text)
+	-- has text?
+	if (text) then
+		-- still more?
+		local textlength = strlen(text)
+		if (textlength > 0) then
+			-- insert
+			tinsert(lines, text)
+		end
 	end
 
 	-- none found?
@@ -353,11 +413,10 @@ function NS:Get_Members_Text(senderID, input)
 		local timer = 0.0
 		for k,v in ipairs(lines) do
 			-- send data
-			--TimerAfter(timer, function()
-			--	-- send localized data
-			--	NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
-			--end)
-			print("line: ", v)
+			TimerAfter(timer, function()
+				-- send localized data
+				NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
+			end)
 
 			-- next
 			timer = timer + 0.5
