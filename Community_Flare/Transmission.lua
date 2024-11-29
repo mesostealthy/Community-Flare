@@ -309,7 +309,6 @@ function NS:Get_Members_Text(senderID, input)
 	local count = 0
 	local text = nil
 	local lines = {}
-	print("count: ", #members)
 	if (#members == 0) then
 		-- try local database
 		if (NS.db.global.members) then

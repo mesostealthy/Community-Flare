@@ -20,9 +20,10 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.20.002
+v1.20.003
 -Auto Invite feature now working when in a Raid, for example for Korrak's Revenge.
 -NEW Queue Setting: Warn when Honor capped or close to it upon queuing?
+-Removed some more debug code.
 
 v1.19.001
 -NEW Party Setting: Notify you upon party member zone changes? (Only visible for Group Leaders.)
