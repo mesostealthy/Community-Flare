@@ -173,18 +173,6 @@ NS.CommFlare.TeleportSpells = {
 	[446540] = "Teleport: Dornogal",
 }
 
--- global function (check if dragon riding available)
-function IsDragonFlyable()
-	local m = MapGetBestMapForUnit("player")
-	if ((m >= 2022) and (m <= 2025) or (m == 2085) or (m == 2112)) then
-		-- dragon flyable
-		return true
-	else
-		-- not available
-		return false
-	end
-end
-
 -- global function (send variables to other addons)
 function CommunityFlare_GetVar(name)
 	-- not loaded?
@@ -857,6 +845,27 @@ function NS:GetPlayerName(type)
 	return name
 end
 
+-- get map info
+function NS:GetCurrentMapInfo()
+	-- get map id
+	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	if (not NS.CommFlare.CF.MapID) then
+		-- not found
+		return false
+	end
+
+	-- get map info
+	local mapID = NS.CommFlare.CF.MapID
+	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	if (not NS.CommFlare.CF.MapInfo) then
+		-- not found
+		return false
+	end
+
+	-- success
+	return true
+end
+
 -- is currently group leader?
 function NS:IsGroupLeader()
 	-- has sub group members?
@@ -1078,11 +1087,34 @@ function NS:GetPartyCount()
 	return NS.CommFlare.CF.Count
 end
 
--- get total group count
-function NS:GetGroupCount()
+-- get max group count
+function NS:GetMaxGroupCount()
+	local maxCount = 5
+	if (IsInRaid()) then
+		-- set to 40
+		maxCount = 40
+	elseif (IsInGroup()) then
+		-- get max count
+		maxCount = NS.charDB.profile.maxPartySize
+		if (not maxCount or (type(maxCount) ~= "number")) then
+			-- force 5
+			maxCount = 5
+		elseif ((maxCount < 1) or (maxCount > 5)) then
+			-- reset max party size
+			NS.charDB.profile.maxPartySize = 5
+			maxCount = NS.charDB.profile.maxPartySize
+		end
+	end
+
+	-- return max count
+	return maxCount
+end
+
+-- get group count text
+function NS:GetGroupCountText()
 	-- in group and not in raid?
 	NS.CommFlare.CF.Count = 1
-	if (IsInGroup() and not IsInRaid()) then
+	if (IsInGroup()) then
 		-- get num group members
 		NS.CommFlare.CF.Count = GetNumGroupMembers()
 	end
@@ -1093,8 +1125,14 @@ function NS:GetGroupCount()
 		NS.CommFlare.CF.Count = 1
 	end
 
-	-- return x/y count
+	-- get max count
 	local maxCount = NS:GetMaxPartyCount()
+	if (IsInGroup() and IsInRaid()) then
+		-- use max raid size
+		maxCount = 40
+	end
+
+	-- return x/y count
 	return strformat("%d/%d", NS.CommFlare.CF.Count, maxCount)
 end
 

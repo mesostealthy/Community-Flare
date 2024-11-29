@@ -188,31 +188,59 @@ function NS:Get_Members_Text(senderID, input)
 				-- update input
 				input = args[2]
 			end
+		else
+			-- send data
+			NS:BNSendData(senderID, strformat("!CommFlare@Members@Invalid Command"))
+			return
+		end
+
+		-- no input?
+		if (not input or (strlen(input) == 0)) then
+			-- send data
+			NS:BNSendData(senderID, strformat("!CommFlare@Members@Invalid Input"))
+			return
 		end
 
 		-- process all
 		local lower = strlower(input)
 		for k,v in pairs(NS.db.global.clubs) do
-			-- matches short name?
-			local shortName = strlower(v.shortName)
-			if ((v.shortName == input) or (shortName == lower)) then
-				-- found
-				clubId = k
-				break
+			-- has short name?
+			if (v.shortName and (v.shortName ~= "")) then
+				-- matches short name?
+				local shortName = strlower(v.shortName)
+				if ((v.shortName == input) or (shortName == lower)) then
+					-- found
+					clubId = k
+					break
+				end
 			end
 
-			-- matches full name?
-			local fullName = strlower(v.name)
-			if (fullName == lower) then
-				-- found
-				clubId = k
-				break
+			-- has full name?
+			if (v.name and (v.name ~= "")) then
+				-- matches full name?
+				local fullName = strlower(v.name)
+				if (fullName == lower) then
+					-- found
+					clubId = k
+					break
+				end
+			end
+
+			-- has club id?
+			if (v.clubId and (v.clubId > 1)) then
+				-- matches clubId?
+				local strClubID = tostring(v.clubId)
+				if (strClubID == lower) then
+					-- found
+					clubId = k
+					break
+				end
 			end
 		end
 
 		-- no club id found?
 		if (not clubId) then
-			-- count eligible communities
+			-- process subscribed clubs
 			NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
 			for k,v in ipairs(NS.CommFlare.CF.Clubs) do
 				-- has short name?
@@ -236,6 +264,17 @@ function NS:Get_Members_Text(senderID, input)
 						break
 					end
 				end
+
+				-- has club id?
+				if (v.clubId and (v.clubId > 1)) then
+					-- matches clubId?
+					local strClubID = tostring(v.clubId)
+					if (strClubID == lower) then
+						-- found
+						clubId = k
+						break
+					end
+				end
 			end
 		end
 	end
@@ -243,7 +282,7 @@ function NS:Get_Members_Text(senderID, input)
 	-- no clubId?
 	if (not clubId) then
 		-- send data
-		NS:BNSendData(senderID, strformat("!CommFlare@Members@%Invalid Club ID"))
+		NS:BNSendData(senderID, strformat("!CommFlare@Members@Invalid Club ID"))
 		return
 	end
 
@@ -252,7 +291,7 @@ function NS:Get_Members_Text(senderID, input)
 	local members = ClubGetClubMembers(clubId)
 	if (not members) then
 		-- send data
-		NS:BNSendData(senderID, strformat("!CommFlare@Members@%Invalid Club Members"))
+		NS:BNSendData(senderID, strformat("!CommFlare@Members@Invalid Club Members"))
 		return
 	end
 
@@ -308,16 +347,17 @@ function NS:Get_Members_Text(senderID, input)
 	-- none found?
 	if (count == 0) then
 		-- send data
-		NS:BNSendData(senderID, strformat("!CommFlare@Members@%No Club Members Found"))
+		NS:BNSendData(senderID, strformat("!CommFlare@Members@No Club Members Found"))
 	else
 		-- process all
 		local timer = 0.0
 		for k,v in ipairs(lines) do
 			-- send data
-			TimerAfter(timer, function()
-				-- send localized data
-				NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
-			end)
+			--TimerAfter(timer, function()
+			--	-- send localized data
+			--	NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
+			--end)
+			print("line: ", v)
 
 			-- next
 			timer = timer + 0.5
@@ -348,7 +388,7 @@ end
 -- get party text
 function NS:Get_Party_Text()
 	-- build party info
-	local text = NS:GetGroupCount()
+	local text = NS:GetGroupCountText()
 	local isRaid = IsInRaid() and "true" or "false"
 	local isGroup = IsInGroup() and "true" or "false"
 	local numGroupMembers = GetNumGroupMembers()

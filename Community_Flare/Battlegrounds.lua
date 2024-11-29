@@ -38,6 +38,7 @@ local UnitName                                  = _G.UnitName
 local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetFriendGameAccountInfo         = _G.C_BattleNet.GetFriendGameAccountInfo
 local BattleNetGetFriendNumGameAccounts         = _G.C_BattleNet.GetFriendNumGameAccounts
+local CurrencyInfoGetCurrencyInfo               = _G.C_CurrencyInfo.GetCurrencyInfo
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
@@ -215,6 +216,33 @@ function NS:Battleground_IsMercenaryQueued()
 
 	-- no
 	return false
+end
+
+-- verify roles count
+function NS:Verify_Role_Counts()
+	-- no specializations found? (probably solo Q)
+	if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
+		-- get pvp roles
+		local isTank, isHealer, isDamage = GetPVPRoles()
+
+		-- tank?
+		if (isTank == true) then
+			-- tank spec
+			NS.CommFlare.CF.LocalData.NumTanks = 1
+		end
+	
+		-- tank?
+		if (isHealer == true) then
+			-- header spec
+			NS.CommFlare.CF.LocalData.NumHealers = 1
+		end
+
+		-- dps?
+		if (isDamage == true) then
+			-- header spec
+			NS.CommFlare.CF.LocalData.NumDPS = 1
+		end
+	end
 end
 
 -- has local battleground poppeod?
@@ -1654,8 +1682,14 @@ function NS:Process_Auto_Invite(sender)
 						-- check if account has player guid online
 						local accountInfo = BattleNetGetFriendGameAccountInfo(index, i)
 						if (accountInfo.playerGuid) then
-							-- party is full?
+							-- are you in a raid?
 							local maxCount = NS:GetMaxPartyCount()
+							if (IsInRaid()) then
+								-- assume 40 max
+								maxCount = 40
+							end
+
+							-- party is full?
 							if ((GetNumGroupMembers() > (maxCount - 1)) or PartyInfoIsPartyFull()) then
 								-- force to max
 								NS.CommFlare.CF.Count = maxCount
@@ -1703,8 +1737,14 @@ function NS:Process_Auto_Invite(sender)
 				-- is sender a community member?
 				NS.CommFlare.CF.AutoInvite = NS:Is_Community_Member(sender)
 				if (NS.CommFlare.CF.AutoInvite == true) then
-					-- group is full?
+					-- are you in a raid?
 					local maxCount = NS:GetMaxPartyCount()
+					if (IsInRaid()) then
+						-- assume 40 max
+						maxCount = 40
+					end
+
+					-- group is full?
 					if ((GetNumGroupMembers() > (maxCount - 1)) or PartyInfoIsPartyFull()) then
 						-- force to max
 						NS.CommFlare.CF.Count = maxCount
@@ -2068,7 +2108,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- finalize text
 				local text = nil
-				local count = NS:GetGroupCount()
+				local count = NS:GetGroupCountText()
 				local level = UnitLevel("player")
 				if (level < 80) then
 					-- add with level
@@ -2082,38 +2122,15 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
 				text = strformat("%s %s: %s!", text, L["Estimated Wait"], time_waited)
 
-				-- no specializations found? (probably solo Q)
-				if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
-					-- get pvp roles
-					local isTank, isHealer, isDamage = GetPVPRoles()
-
-					-- tank?
-					if (isTank == true) then
-						-- tank spec
-						NS.CommFlare.CF.LocalData.NumTanks = 1
-					end
-	
-					-- tank?
-					if (isHealer == true) then
-						-- header spec
-						NS.CommFlare.CF.LocalData.NumHealers = 1
-					end
-
-					-- dps?
-					if (isDamage == true) then
-						-- header spec
-						NS.CommFlare.CF.LocalData.NumDPS = 1
-					end
-				end
-
 				-- add tanks / heals / dps counts
+				NS:Verify_Role_Counts()
 				if ((NS.CommFlare.CF.LocalData.NumTanks > 0) or (NS.CommFlare.CF.LocalData.NumHealers > 0) or (NS.CommFlare.CF.LocalData.NumDPS > 0)) then
 					-- add counts
 					text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
 				end
 
 				-- check if group has room for more
-				local maxCount = NS:GetMaxPartyCount()
+				local maxCount = NS:GetMaxGroupCount()
 				if (NS.CommFlare.CF.Count < maxCount) then
 					-- community auto invite enabled?
 					if (NS.charDB.profile.communityAutoInvite == true) then
@@ -2133,7 +2150,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		if (isTracked == true) then
 			-- get estimated time
 			local text = ""
-			local count = NS:GetGroupCount()
+			local count = NS:GetGroupCountText()
 			NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldEstimatedWaitTime(index)
 			if (NS.CommFlare.CF.Timer.MilliSeconds > 0) then
 				-- calculate minutes / seconds
@@ -2219,31 +2236,8 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				text = strformat("%s %s: %s!", text, L["Estimated Wait"], L["N/A"])
 			end
 
-			-- no specializations found? (probably solo Q)
-			if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
-				-- get pvp roles
-				local isTank, isHealer, isDamage = GetPVPRoles()
-
-				-- tank?
-				if (isTank == true) then
-					-- tank spec
-					NS.CommFlare.CF.LocalData.NumTanks = 1
-				end
-	
-				-- tank?
-				if (isHealer == true) then
-					-- header spec
-					NS.CommFlare.CF.LocalData.NumHealers = 1
-				end
-
-				-- dps?
-				if (isDamage == true) then
-					-- header spec
-					NS.CommFlare.CF.LocalData.NumDPS = 1
-				end
-			end
-
 			-- add tanks / heals / dps counts
+			NS:Verify_Role_Counts()
 			if ((NS.CommFlare.CF.LocalData.NumTanks > 0) or (NS.CommFlare.CF.LocalData.NumHealers > 0) or (NS.CommFlare.CF.LocalData.NumDPS > 0)) then
 				-- add counts
 				text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
@@ -2285,10 +2279,32 @@ function NS:Update_Battlefield_Status(index)
 		end
 
 		-- queued?
+		NS:Verify_Role_Counts()
 		local partyGUID = NS:GetPartyGUID()
 		if (status == "queued") then
 			-- just entering queue?
 			if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
+				-- warn when honor capped?
+				if (NS.db.global.warningHonorCapped == true) then
+					-- get honor info
+					local info = CurrencyInfoGetCurrencyInfo(1792)
+					if (info and info.quantity and info.maxQuantity) then
+						-- close to capping?
+						local diff = info.maxQuantity - info.quantity
+						if (diff) then
+							-- capped?
+							if (diff == 0) then
+								-- issue local raid warning (with raid warning audio sound)
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Honor capped! Please spend some!"])
+							-- close to capping?
+							elseif (diff < 2500) then
+								-- issue local raid warning (with raid warning audio sound)
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
+							end
+						end
+					end
+				end
+
 				-- does the player have the mercenary buff?
 				local mercenary = false
 				NS:CheckForAura("player", "HELPFUL", L["Mercenary Contract"])
@@ -2298,9 +2314,10 @@ function NS:Update_Battlefield_Status(index)
 				end
 
 				-- add to queues
+				local timestamp = time()
 				NS.CommFlare.CF.LocalQueues[index] = {
 					["name"] = mapName,
-					["created"] = time(),
+					["created"] = timestamp,
 					["entered"] = false,
 					["joined"] = true,
 					["mercenary"] = mercenary,
@@ -2319,8 +2336,7 @@ function NS:Update_Battlefield_Status(index)
 				NS.CommFlare.CF.CurrentPopped = {}
 
 				-- push data
-				local timestamp = time()
-				local count = NS:GetGroupCount()
+				local count = NS:GetGroupCountText()
 				NS.CommFlare.CF.LeaderGUID = NS:GetPartyLeaderGUID()
 				local guids = strformat("%s,%s", NS.CommFlare.CF.LeaderGUID, partyGUID)
 				NS:BNPushData(strformat("!CF@%s@%s@Queue@Queued@%s@%d@%s@%s", NS.CommFlare.Version, NS.CommFlare.Build, mapName, timestamp, count, guids))
@@ -2411,8 +2427,8 @@ function NS:Update_Battlefield_Status(index)
 				NS:Update_Group("local")
 				NS:Process_Popped("local")
 
-				-- get count
-				local count = NS:GetGroupCount()
+				-- finalize count text
+				local count = NS:GetGroupCountText()
 				if (NS.CommFlare.CF.CurrentPopped["count"]) then
 					-- use popped count
 					count = strformat("%s,%d", count, NS.CommFlare.CF.CurrentPopped["count"])
@@ -2451,7 +2467,7 @@ function NS:Update_Battlefield_Status(index)
 
 							-- finalize text
 							local text = nil
-							local count = NS:GetGroupCount()
+							local count = NS:GetGroupCountText()
 							local level = UnitLevel("player")
 							if (level < 80) then
 								-- add with level
@@ -2459,30 +2475,6 @@ function NS:Update_Battlefield_Status(index)
 							else
 								-- add without level
 								text = strformat("%s %s %s%s %s!", count, faction, mercenary, L["Queue Popped for"], mapName)
-							end
-
-							-- no specializations found? (probably solo Q)
-							if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
-								-- get pvp roles
-								local isTank, isHealer, isDamage = GetPVPRoles()
-
-								-- tank?
-								if (isTank == true) then
-									-- tank spec
-									NS.CommFlare.CF.LocalData.NumTanks = 1
-								end
-	
-								-- tank?
-								if (isHealer == true) then
-									-- header spec
-									NS.CommFlare.CF.LocalData.NumHealers = 1
-								end
-
-								-- dps?
-								if (isDamage == true) then
-									-- header spec
-									NS.CommFlare.CF.LocalData.NumDPS = 1
-								end
 							end
 
 							-- add tanks / heals / dps counts
@@ -2513,8 +2505,8 @@ function NS:Update_Battlefield_Status(index)
 					NS.CommFlare.CF.LocalData.NumHealers = 0
 					NS.CommFlare.CF.LocalData.NumTanks = 0
 
-					-- get count
-					local count = NS:GetGroupCount()
+					-- finalize count text
+					local count = NS:GetGroupCountText()
 					if (NS.CommFlare.CF.CurrentPopped["count"]) then
 						-- use popped count
 						count = strformat("%s,%d", count, NS.CommFlare.CF.CurrentPopped["count"])
@@ -2550,7 +2542,7 @@ function NS:Update_Battlefield_Status(index)
 
 							-- finalize text
 							local text = nil
-							local count = NS:GetGroupCount()
+							local count = NS:GetGroupCountText()
 							local level = UnitLevel("player")
 							if (level < 80) then
 								-- add with level
@@ -2596,8 +2588,8 @@ function NS:Update_Battlefield_Status(index)
 						text = strformat("%s %s%s %s!", faction, mercenary, L["Missed Queue for Popped"], mapName)
 					end
 
-					-- get count
-					local count = NS:GetGroupCount()
+					-- finalize count text
+					local count = NS:GetGroupCountText()
 					if (NS.CommFlare.CF.CurrentPopped["count"]) then
 						-- use popped count
 						count = strformat("%s,%d", count, NS.CommFlare.CF.CurrentPopped["count"])
@@ -2641,8 +2633,9 @@ end
 
 -- update brawl status
 function NS:Update_Brawl_Status()
-	-- brawl queued?
+	-- brawl queueud?
 	local index = "Brawl"
+	NS:Verify_Role_Counts()
 	local inParty, joined, queued, _, _, _, slotCount, category, leader, tank, healer, dps = GetLFGInfoServer(LE_LFG_CATEGORY_BATTLEFIELD)
 	if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
 		-- get brawl info
@@ -2663,9 +2656,10 @@ function NS:Update_Brawl_Status()
 					-- just entering queue?
 					if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
 						-- add to queues
+						local timestamp = time()
 						NS.CommFlare.CF.LocalQueues[index] = {
 							["name"] = mapName,
-							["created"] = time(),
+							["created"] = timestamp,
 							["entered"] = false,
 							["joined"] = true,
 							["popped"] = 0,
@@ -2676,6 +2670,27 @@ function NS:Update_Brawl_Status()
 
 						-- update local group
 						NS:Update_Group("local")
+
+						-- warn when honor capped?
+						if (NS.db.global.warningHonorCapped == true) then
+							-- get honor info
+							local info = CurrencyInfoGetCurrencyInfo(1792)
+							if (info and info.quantity and info.maxQuantity) then
+								-- close to capping?
+								local diff = info.maxQuantity - info.quantity
+								if (diff) then
+									-- capped?
+									if (diff == 0) then
+										-- issue local raid warning (with raid warning audio sound)
+										RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Honor capped! Please spend some!"])
+									-- close to capping?
+									elseif (diff < 2500) then
+										-- issue local raid warning (with raid warning audio sound)
+										RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
+									end
+								end
+							end
+						end
 
 						-- delay some
 						TimerAfter(0.5, function()
@@ -2703,7 +2718,7 @@ function NS:Update_Brawl_Status()
 							if (NS:IsGroupLeader() == true) then
 								-- finalize text
 								local text = nil
-								local count = NS:GetGroupCount()
+								local count = NS:GetGroupCountText()
 								local level = UnitLevel("player")
 								if (level < 80) then
 									-- add with level
@@ -2711,30 +2726,6 @@ function NS:Update_Brawl_Status()
 								else
 									-- add without level
 									text = strformat("%s %s %s!", count, L["Queue Popped for"], mapName)
-								end
-
-								-- no specializations found? (probably solo Q)
-								if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
-									-- get pvp roles
-									local isTank, isHealer, isDamage = GetPVPRoles()
-
-									-- tank?
-									if (isTank == true) then
-										-- tank spec
-										NS.CommFlare.CF.LocalData.NumTanks = 1
-									end
-	
-									-- tank?
-									if (isHealer == true) then
-										-- header spec
-										NS.CommFlare.CF.LocalData.NumHealers = 1
-									end
-
-									-- dps?
-									if (isDamage == true) then
-										-- header spec
-										NS.CommFlare.CF.LocalData.NumDPS = 1
-									end
 								end
 
 								-- add tanks / heals / dps counts
@@ -2780,7 +2771,7 @@ function NS:Update_Brawl_Status()
 
 							-- dropped
 							local text = nil
-							local count = NS:GetGroupCount()
+							local count = NS:GetGroupCountText()
 							local level = UnitLevel("player")
 							if (level < 80) then
 								-- add with level
@@ -2995,7 +2986,7 @@ function NS:Get_Current_Queues_Text()
 		end
 
 		-- finalize text
-		local count = NS:GetGroupCount()
+		local count = NS:GetGroupCountText()
 		local level = UnitLevel("player")
 		if (level < 80) then
 			-- add with level

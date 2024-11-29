@@ -1065,9 +1065,18 @@ local QueueGroup = {
 			get = function(info) return NS.db.global.warningQueuePaused end,
 			set = function(info, value) NS.db.global.warningQueuePaused = value end,
 		},
-		communityReporter = {
+		warningHonorCapped = {
 			type = "toggle",
 			order = 8,
+			name = L["Warn when Honor capped or close to it?"],
+			desc = L["This will provide a warning message when you are honor capped, or close to it when queuing."],
+			width = "full",
+			get = function(info) return NS.db.global.warningHonorCapped end,
+			set = function(info, value) NS.db.global.warningHonorCapped = value end,
+		},
+		communityReporter = {
+			type = "toggle",
+			order = 9,
 			name = L["Report queues to main community? (Requires community channel to have /# assigned.)"],
 			desc = L["This will provide a quick popup message for you to send your queue status to the Community chat."],
 			width = "full",
@@ -1076,7 +1085,7 @@ local QueueGroup = {
 		},
 		communityReportID = {
 			type = "select",
-			order = 9,
+			order = 10,
 			name = L["Community to report to?"],
 			desc = L["Choose the community that you want to report queues to."],
 			values = Setup_Report_Community_List,
@@ -1086,7 +1095,7 @@ local QueueGroup = {
 		},
 		uninvitePlayersAFK = {
 			type = "select",
-			order = 10,
+			order = 11,
 			name = L["Uninvite any players that are AFK?"],
 			desc = L["Pops up a box to uninvite any users that are AFK at the time of queuing."],
 			values = {
@@ -1101,7 +1110,7 @@ local QueueGroup = {
 		},
 		forcedRoles = {
 			type = "group",
-			order = 11,
+			order = 12,
 			name = "Force PVP Role?",
 			inline = true,
 			args = {
@@ -1184,6 +1193,7 @@ local GlobalDefaults = {
 		popupQueueWindow = false,
 		printDebugInfo = false,
 		pvpCombatLogging = false,
+		warningHonorCapped = true,
 		warningQueuePaused = true,
 
 		-- numbers

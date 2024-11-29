@@ -8,6 +8,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                        = _G
 local AddChatWindowChannel                      = _G.AddChatWindowChannel
 local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
+local Chat_GetCommunitiesChannelName            = _G.Chat_GetCommunitiesChannelName
 local GetChannelName                            = _G.GetChannelName
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local UnitFactionGroup                          = _G.UnitFactionGroup
@@ -256,7 +257,7 @@ function NS:Verify_Club_Streams(clubs)
 
 	-- increase
 	NS.CommFlare.CF.StreamsRetryCount = NS.CommFlare.CF.StreamsRetryCount + 1
-	if (NS.CommFlare.CF.StreamsRetryCount > 30) then
+	if (NS.CommFlare.CF.StreamsRetryCount > 60) then
 		-- finished
 		print("TODO: Exhausted retry count!")
 		return

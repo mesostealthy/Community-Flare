@@ -207,6 +207,7 @@ L["This will open up the PVP queue window if a leader is queing up for PVP so yo
 L["This will print some extra data to your general window that will help MESO debug anything to help fix bugs."] = true
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = true
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = true
+L["This will provide a warning message when you are honor capped, or close to it when queuing."] = true
 L["This will set the maximum party members you want in your group."] = true
 L["This will show a raid warning to you when a War Supply Crate is coming in."] = true
 L["This will show a raid warning to you when you are given leadership of your party."] = true
@@ -219,6 +220,9 @@ L["Use this to refresh the members database from currently selected communities.
 L["Use this to totally rebuild the members database from currently selected communities."] = true
 L["Warn before hearth stoning or teleporting inside a battleground?"] = true
 L["Warn if/when queues become paused?"] = true
+L["Warn when Honor capped or close to it?"] = true
+L["WARNING: Close to Honor capped! Please spend some!"] = true
+L["WARNING: Honor capped! Please spend some!"] = true
 L["World Options"] = true
 L["You are not currently in a Guild."] = true
 

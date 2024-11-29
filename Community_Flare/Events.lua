@@ -258,8 +258,8 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 		if (status == "confirm") then
 			-- has queue popped?
 			if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped > 0)) then
-				-- get count
-				local count = NS:GetGroupCount()
+				-- finalize count text
+				local count = NS:GetGroupCountText()
 				if (NS.CommFlare.CF.CurrentPopped["count"]) then
 					-- use popped count
 					count = strformat("%s,%d", count, NS.CommFlare.CF.CurrentPopped["count"])
@@ -1581,47 +1581,6 @@ function NS.CommFlare:CHAT_MSG_SYSTEM(msg, ...)
 	if (lower:find(L["joined the queue for"])) then
 		-- update local group
 		NS:Update_Group("local")
-	-- notify system has been enabled?
-	elseif (text == PVP_REPORT_AFK_SYSTEM_ENABLED) then
-		-- restrict pings?
-		if (NS.db.global.restrictPings and (NS.db.global.restrictPings > 0)) then
-			-- does player have raid leadership or assistant?
-			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-			if (NS.CommFlare.CF.PlayerRank > 0) then
-				-- set restrict pings
-				PartyInfoSetRestrictPings(NS.db.global.restrictPings)
-			end
-		end
-
-		-- display battleground setup
-		NS.CommFlare.CF.MatchStatus = 2
-		NS.CommFlare.CF.MatchEndTime = 0
-		NS.CommFlare.CF.MatchEndDate = ""
-		NS.CommFlare.CF.MatchStartDate = date()
-		NS.CommFlare.CF.MatchStartTime = time()
-		NS.CommFlare.CF.MatchStartLogged = false
-
-		-- in battleground?
-		local timer = 0.0
-		if (NS:IsInBattleground() == true) then
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				SetBattlefieldScoreFaction(-1)
-				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
-			end
-		end
-
-		-- start processing
-		TimerAfter(timer, function()
-			-- update battleground / member / roster stuff
-			NS:Update_Battleground_Stuff(true, true)
-			NS:Update_Member_Statistics("started")
-			NS:Match_Started_Log_Roster()
-		end)
 	end
 end
 
@@ -2206,7 +2165,7 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 			if (players ~= nil) then
 				-- has group size changed?
 				count = #players + count
-				local text = NS:GetGroupCount()
+				local text = NS:GetGroupCountText()
 				local maxCount = NS:GetMaxPartyCount()
 				if ((NS.CommFlare.CF.PreviousCount > 0) and (NS.CommFlare.CF.PreviousCount < maxCount) and (count == maxCount)) then
 					-- community reporter enabled?
@@ -2239,6 +2198,9 @@ end
 function NS.CommFlare:INITIAL_CLUBS_LOADED(msg)
 	-- initial login?
 	if (NS.CommFlare.CF.InitialLogin == false) then
+		-- verify default community setup
+		NS:Verify_Default_Community_Setup()
+
 		-- refresh club members
 		NS:Refresh_Club_Members()
 
@@ -2653,8 +2615,8 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 			end
 
-			-- refresh club members
-			NS:Refresh_Club_Members()
+			-- initial clubs loaded
+			self:INITIAL_CLUBS_LOADED()
 		end
 	end
 
@@ -2672,9 +2634,6 @@ end
 
 -- process player login
 function NS.CommFlare:PLAYER_LOGIN(msg)
-	-- verify default community setup
-	NS:Verify_Default_Community_Setup()
-
 	-- load previous session
 	NS:LoadSession()
 end
@@ -2867,6 +2826,66 @@ function NS.CommFlare:PVP_MATCH_INACTIVE(msg)
 	-- reset battleground status
 	NS.CommFlare.CF.MatchStatus = 0
 	NS:Reset_Battleground_Status()
+end
+
+-- process pvp match state changed
+function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- match just started?
+		local status = PvPGetActiveMatchState()
+		if (status == Enum.PvPMatchState.Engaged) then
+			-- restrict pings?
+			if (NS.db.global.restrictPings and (NS.db.global.restrictPings >= 0)) then
+				-- do you have lead?
+				local player = NS:GetPlayerName("full")
+				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+				if (NS.CommFlare.CF.PlayerRank ~= 0) then
+					-- none?
+					if (NS.db.global.restrictPings == 0) then
+						-- none
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.None)
+					elseif (NS.db.global.restrictPings == 1) then
+						-- leader
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Lead)
+					elseif (NS.db.global.restrictPings == 2) then
+						-- assist
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+					elseif (NS.db.global.restrictPings == 3) then
+						-- tank/healer
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.TankHealer)
+					end
+				end
+			end
+
+			-- display battleground setup
+			NS.CommFlare.CF.MatchStatus = 2
+			NS.CommFlare.CF.MatchEndTime = 0
+			NS.CommFlare.CF.MatchEndDate = ""
+			NS.CommFlare.CF.MatchStartDate = date()
+			NS.CommFlare.CF.MatchStartTime = time()
+			NS.CommFlare.CF.MatchStartLogged = false
+
+			-- battlefield score needs updating?
+			local timer = 0.0
+			if (PVPMatchScoreboard.selectedTab ~= 1) then
+				-- request battlefield score
+				SetBattlefieldScoreFaction(-1)
+				RequestBattlefieldScoreData()
+
+				-- delay 0.5 seconds
+				timer = 0.5
+			end
+
+			-- start processing
+			TimerAfter(timer, function()
+				-- update battleground / member / roster stuff
+				NS:Update_Battleground_Stuff(true, true)
+				NS:Update_Member_Statistics("started")
+				NS:Match_Started_Log_Roster()
+			end)
+		end
+	end
 end
 
 -- process quest detail
@@ -3163,17 +3182,18 @@ function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 					if (NS:IsGroupLeader() == true) then
 						-- alliance faction?
 						local text = ""
+						local count = NS:GetGroupCountText()
 						local faction = UnitFactionGroup("player")
 						if (faction == L["Alliance"]) then
 							-- alliance ready
-							text = strformat(L["%s Alliance Ready!"], NS:GetGroupCount())
+							text = strformat(L["%s Alliance Ready!"], count)
 						-- horde faction?
 						elseif (faction == L["Horde"]) then
 							-- horde ready
-							text = strformat(L["%s Horde Ready!"], NS:GetGroupCount())
+							text = strformat(L["%s Horde Ready!"], count)
 						else
 							-- unknown faction?
-							text = strformat("%s %s!", NS:GetGroupCount(), L["Ready"])
+							text = strformat("%s %s!", count, L["Ready"])
 						end
 
 						-- does the player have the mercenary buff?
@@ -3499,6 +3519,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
 	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("PVP_MATCH_INACTIVE")
+	self:RegisterEvent("PVP_MATCH_STATE_CHANGED")
 	self:RegisterEvent("QUEST_DETAIL")
 	self:RegisterEvent("READY_CHECK")
 	self:RegisterEvent("READY_CHECK_CONFIRM")
@@ -3560,6 +3581,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")
 	self:UnregisterEvent("PVP_MATCH_COMPLETE")
 	self:UnregisterEvent("PVP_MATCH_INACTIVE")
+	self:UnregisterEvent("PVP_MATCH_STATE_CHANGED")
 	self:UnregisterEvent("QUEST_DETAIL")
 	self:UnregisterEvent("READY_CHECK")
 	self:UnregisterEvent("READY_CHECK_CONFIRM")
@@ -3735,7 +3757,7 @@ function NS.CommFlare:Community_Flare_OnCommReceived(prefix, message, distributi
 			-- request party lead?
 			elseif (message:find("REQUEST_PARTY_LEAD")) then
 				-- instance chat or party message?
-				if ((distribution == "INSTANCE_CHAT") or (distribution == "PARTY")) then
+				if ((distribution == "INSTANCE_CHAT") or (distribution == "PARTY") or (distribution == "RAID")) then
 					-- process pass leadership
 					NS:Process_Pass_Leadership(sender)
 				end
@@ -3755,6 +3777,7 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then
 			-- expose local tables for debug purposes
+			CommFlare_DB = NS.db
 			CommFlare_CF = NS.CommFlare.CF
 			CommFlare_LocalQueues = NS.CommFlare.CF.LocalQueues
 			CommFlare_SocialQueues = NS.CommFlare.CF.SocialQueues

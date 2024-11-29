@@ -208,6 +208,7 @@ L["This will open up the PVP queue window if a leader is queing up for PVP so yo
 L["This will print some extra data to your general window that will help MESO debug anything to help fix bugs."] = "Ceci affichera des données supplémentaires dans votre fenêtre générale pour aider MESO à déboguer tout problème et à corriger les bogues."
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = "Ceci fournira un message contextuel rapide pour envoyer votre statut de file d'attente dans le chat de la Communauté."
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = "Ceci fournira un message d'avertissement ou une fenêtre contextuelle pour les chefs de groupe lorsque leur file d'attente est mise en pause."
+L["This will provide a warning message when you are honor capped, or close to it when queuing."] = "Cela fournira un message d'avertissement lorsque vous êtes en limite d'honneur, ou presque lorsque vous faites la queue."
 L["This will set the maximum party members you want in your group."] = "Cela définira le nombre maximum de membres du groupe que vous souhaitez dans votre groupe."
 L["This will show a raid warning to you when a War Supply Crate is coming in."] = "Cela vous affichera un avertissement de raid lorsqu'une caisse de ravitaillement de guerre arrive."
 L["This will show a raid warning to you when you are given leadership of your party."] = "Ceci affichera un avertissement de raid lorsque vous obtenez le leadership de votre groupe."
@@ -220,6 +221,9 @@ L["Use this to refresh the members database from currently selected communities.
 L["Use this to totally rebuild the members database from currently selected communities."] = "Utilisez ceci pour reconstruire entièrement la base de données des membres des communautés actuellement sélectionnées."
 L["Warn before hearth stoning or teleporting inside a battleground?"] = "Prévenir avant d'utiliser la pierre de foyer ou de se téléporter à l'intérieur d'un champ de bataille ?"
 L["Warn if/when queues become paused?"] = "Prévenir si/quand les files d'attente sont mises en pause ?"
+L["Warn when Honor capped or close to it?"] = "Avertir lorsque Honor est plafonné ou proche ?"
+L["WARNING: Close to Honor capped! Please spend some!"] = "ATTENTION : Près de l'honneur plafonné ! Veuillez en dépenser !"
+L["WARNING: Honor capped! Please spend some!"] = "ATTENTION : Honneur plafonné ! Merci d'en dépenser !"
 L["World Options"] = "Options mondiales"
 L["You are not currently in a Guild."] = "Vous n'êtes pas actuellement dans une guilde."
 
