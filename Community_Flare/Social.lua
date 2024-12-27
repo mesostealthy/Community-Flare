@@ -25,10 +25,13 @@ local SocialQueueGetGroupInfo                   = _G.C_SocialQueue.GetGroupInfo
 local SocialQueueGetGroupMembers                = _G.C_SocialQueue.GetGroupMembers
 local SocialQueueGetGroupQueues                 = _G.C_SocialQueue.GetGroupQueues
 local TimerAfter                                = _G.C_Timer.After
+local ipairs                                    = _G.ipairs
+local pairs                                     = _G.pairs
 local print                                     = _G.print
 local select                                    = _G.select
 local time                                      = _G.time
 local strformat                                 = _G.string.format
+local strlen                                    = _G.string.len
 local tinsert                                   = _G.table.insert
 
 -- initialize group
@@ -129,23 +132,28 @@ function NS:Social_Queues_Count_All_Members()
 end
 
 -- find queues by map name
-function NS:Find_Social_Queues_By_MapName(text)
-	-- process text
+function NS:Find_Social_Queues_By_MapName(senderID, input)
+	-- refresh all social queues
+	NS:RefreshAllSocialQueues()
+
+	-- process input
 	local mapName = "Random Epic Battleground"
-	if (text:find(",")) then
+	if (input:find(",")) then
 		-- split arguments
-		local args = {strsplit(",", text)}
+		local args = {strsplit(",", input)}
 		if (args[2]) then
 			-- save map name
 			mapName = args[2]
 		end
 	else
 		-- get all
-		text = "all"
+		input = "all"
 	end
 
 	-- process all
-	local list = {}
+	local count = 0
+	local text = ""
+	local lines = {}
 	for k,v in pairs (NS.CommFlare.CF.SocialQueues) do
 		-- has all needed info?
 		if (v.leader and v.leader.name and v.leader.realm and v.leader.guid and v.members and v.queues) then
@@ -162,7 +170,7 @@ function NS:Find_Social_Queues_By_MapName(text)
 			-- all?
 			local prefix = nil
 			local hasTracked = false
-			if (text == "all") then
+			if (input == "all") then
 				-- process queues
 				for k2,v2 in pairs(v.queues) do
 					-- has queue data?
@@ -209,10 +217,79 @@ function NS:Find_Social_Queues_By_MapName(text)
 
 			-- has tracked?
 			if (hasTracked == true) then
-				-- build party string
-				local count = strformat("%d/5", #v.members)
-				local text = strformat("%s,%s,%s,%s-%s,%s,%s", k, status, v.leader.guid, v.leader.name, v.leader.realm, count, prefix)
-				tinsert(list, text)
+				-- build new queue
+				local numMembers = strformat("%d/5", #v.members)
+				local queue = strformat("%s,%s,%s,%s-%s,%s,%s,%s", k, status, v.leader.guid, v.leader.name, v.leader.realm, numMembers, prefix, tostring(v.created))
+				local queuelength = strlen(queue)
+				local textlength = strlen(text)
+				if ((textlength + queuelength + 1) > 4032) then
+					-- insert
+					tinsert(lines, text)
+
+					-- restart text
+					text = strformat("%s;", player)
+				else
+					-- append queue
+					text = strformat("%s%s;", text, queue)
+				end
+
+				-- increase
+				count = count + 1
+			end
+		end
+	end
+
+	-- has text?
+	if (text) then
+		-- still more?
+		local textlength = strlen(text)
+		if (textlength > 0) then
+			-- insert
+			tinsert(lines, text)
+		end
+	end
+
+	-- none found?
+	if (count == 0) then
+		-- none
+		tinsert(lines, "None")
+	end
+
+	-- process all
+	local timer = 0.0
+	for k,v in ipairs(lines) do
+		-- send data
+		TimerAfter(timer, function()
+			-- send localized data
+			NS:BNSendData(senderID, strformat("!CommFlare@Queues@%s", tostring(v)))
+		end)
+
+		-- next
+		timer = timer + 0.5
+	end
+end
+
+-- get current popped text
+function NS:Get_Current_Popped_Text()
+	-- process all
+	local list = {}
+	for k,v in pairs (NS.CommFlare.CF.SocialQueues) do
+		-- has all needed info?
+		if (v.leader and v.leader.name and v.leader.realm and v.leader.guid and v.members) then
+			-- popped?
+			if (NS:HasQueuePopped(k)) then
+				-- stale?
+				local timestamp = v.popped + 30
+				if (time() < timestamp) then
+					-- build party string
+					local count = strformat("%d/5", #v.members)
+					local mapName = NS.CommFlare.CF.SocialQueues[k].name
+					local text = strformat("%s,%s,%s,%s-%s,%s", mapName, k, v.leader.guid, v.leader.name, v.leader.realm, count)
+					tinsert(list, text)
+				else
+					-- update group
+					NS:Update_Group(k)
+				end
 			end
 		end
 	end
@@ -522,9 +599,16 @@ function NS:Update_Group(groupGUID)
 
 				-- display popped groups?
 				if (NS.db.global.displayPoppedGroups == true) then
-					-- print popped group
-					local mapName = NS.CommFlare.CF.SocialQueues[groupGUID].name or "N/A"
-					print(strformat("%s: %s-%s (%d/5) [%s]", L["POPPED"], NS.CommFlare.CF.SocialQueues[groupGUID].leader.name, NS.CommFlare.CF.SocialQueues[groupGUID].leader.realm, #NS.CommFlare.CF.SocialQueues[groupGUID].members, mapName))
+					-- has leader?
+					if (NS.CommFlare.CF.SocialQueues[groupGUID].leader.name and NS.CommFlare.CF.SocialQueues[groupGUID].leader.realm) then
+						-- has shared community?
+						local leader = strformat("%s-%s", NS.CommFlare.CF.SocialQueues[groupGUID].leader.name, NS.CommFlare.CF.SocialQueues[groupGUID].leader.realm)
+						if (NS:Has_Shared_Community(leader)) then
+							-- print popped group
+							local mapName = NS.CommFlare.CF.SocialQueues[groupGUID].name or "N/A"
+							print(strformat("%s: %s (%d/5) [%s]", L["POPPED"], leader, #NS.CommFlare.CF.SocialQueues[groupGUID].members, mapName))
+						end
+					end
 				end
 
 				-- process popped groups

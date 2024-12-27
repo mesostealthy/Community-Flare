@@ -18,6 +18,9 @@ local print                                     = _G.print
 local strformat                                 = _G.string.format
 local tinsert                                   = _G.table.insert
 
+-- local variables
+local settings_that_require_reload = {}
+
 -- add / remove guild
 local function Set_Add_Guild_Members(info, value)
 	-- has guild?
@@ -403,7 +406,7 @@ local function Total_Database_Members(info)
 	return strformat(L["Database members found: %s"], count)
 end
 
--- refrehs database
+-- refresh database
 local function Refresh_Database_Members()
 	-- get clubs list
 	local clubs = NS:Get_Clubs_List(false)
@@ -429,6 +432,18 @@ local function Refresh_Database_Members()
 
 		-- rebuild community leaders
 		NS:Rebuild_Community_Leaders()
+	end
+end
+
+-- player list manager database
+local function Toggle_Player_List_Manager()
+	-- shown?
+	if (CF_PlayerListFrame:IsShown()) then
+		-- hide
+		CF_PlayerListFrame:Hide()
+	else
+		-- show
+		CF_PlayerListFrame:Show()
 	end
 end
 
@@ -882,11 +897,33 @@ local CommunityGroup = {
 	}
 }
 
+-- database group
+local DatabaseGroup = {
+	name = L["Database Options"],
+	type = "group",
+	order = 3,
+	args = {
+		generalTitle = {
+			name = L["Database Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		playerListManager = {
+			type = "execute",
+			order = 2,
+			name = L["Player List Manager?"],
+			desc = L["Use this to manage the Players and KOS in the Member GUIDs list."],
+			func = Toggle_Player_List_Manager,
+		},
+	}
+}
+
 -- debug group
 local DebugGroup = {
 	name = L["Debug Options"],
 	type = "group",
-	order = 7,
+	order = 8,
 	args = {
 		debugTitle = {
 			name = L["Debug Options"],
@@ -919,7 +956,7 @@ local DebugGroup = {
 local InviteGroup = {
 	name = L["Invite Options"],
 	type = "group",
-	order = 4,
+	order = 5,
 	args = {
 		inviteTitle = {
 			name = L["Invite Options"],
@@ -952,7 +989,7 @@ local InviteGroup = {
 local PartyGroup = {
 	name = L["Party Options"],
 	type = "group",
-	order = 5,
+	order = 6,
 	args = {
 		partyTitle = {
 			name = L["Party Options"],
@@ -987,9 +1024,18 @@ local PartyGroup = {
 			get = function(info) return NS.db.global.partyLeaderNotify end,
 			set = function(info, value) NS.db.global.partyLeaderNotify = value end,
 		},
-		notifyPartyZoneChanges = {
+		alwaysRequestPartyLead = {
 			type = "toggle",
 			order = 4,
+			name = L["Always request party leadership?"],
+			desc = L["This will always attempt to request party leadership upon joining a new party."],
+			width = "full",
+			get = function(info) return NS.db.global.alwaysRequestPartyLead end,
+			set = function(info, value) NS.db.global.alwaysRequestPartyLead = value end,
+		},
+		notifyPartyZoneChanges = {
+			type = "toggle",
+			order = 5,
 			name = L["Notify you upon party member zone changes?"],
 			desc = L["This will show you a message when a party member changes zones."],
 			width = "full",
@@ -1003,7 +1049,7 @@ local PartyGroup = {
 local QueueGroup = {
 	name = L["Queue Options"],
 	type = "group",
-	order = 3,
+	order = 4,
 	args = {
 		queueTitle = {
 			name = L["Queue Options"],
@@ -1152,7 +1198,7 @@ local QueueGroup = {
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 6,
+	order = 7,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1179,11 +1225,15 @@ local GlobalDefaults = {
 		-- tables
 		clubs = {},
 		history = {},
+		KosList = {},
 		matchLogList = {},
+		MemberGUIDs = {},
+		MemberNotes = {},
 		members = {},
 		SocialQueues = {},
 
 		-- booleans
+		alwaysRequestPartyLead = false,
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
 		debugMode = false,
@@ -1297,6 +1347,7 @@ function NS:CreateConfigOptions()
 		args = {
 			BattlegroundGroup = BattlegroundGroup,
 			CommunityGroup = CommunityGroup,
+			DatabaseGroup = DatabaseGroup,
 			DebugGroup = DebugGroup,
 			InviteGroup = InviteGroup,
 			PartyGroup = PartyGroup,
@@ -1321,4 +1372,7 @@ function NS:CreateConfigOptions()
 	NS.profiles = NS.Libs.AceDBOptions:GetOptionsTable(NS.charDB)
 	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare_Profiles", NS.profiles)
 	NS.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare_Profiles", "Profiles", NS.CommFlare.Title)
+
+	-- load previous session
+	NS:LoadSession()
 end

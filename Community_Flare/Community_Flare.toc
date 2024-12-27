@@ -1,7 +1,7 @@
-## Interface: 110005
+## Interface: 110007
 ## Title: Community Flare
-## Version: v1.20.003
-## X-Build: 120003
+## Version: v1.21.001
+## X-Build: 121001
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB
@@ -28,6 +28,7 @@ Libs\AceConfig-3.0\AceConfig-3.0.xml
 Libs\AceComm-3.0\AceComm-3.0.xml
 Libs\AceTab-3.0\AceTab-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
+Libs\LibCompress\lib.xml
 Libs\LibDeflate\lib.xml
 
 Locales\enUS.lua
@@ -46,3 +47,5 @@ Menus.lua
 Social.lua
 Specialization.lua
 Transmission.lua
+
+UI\PlayerListFrame.xml

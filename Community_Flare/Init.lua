@@ -26,6 +26,7 @@ local IsInGroup                                 = _G.IsInGroup
 local IsInGuild                                 = _G.IsInGuild
 local IsInRaid                                  = _G.IsInRaid
 local PromoteToLeader                           = _G.PromoteToLeader
+local RaidWarningFrame_OnEvent                  = _G.RaidWarningFrame_OnEvent
 local SendChatMessage                           = _G.SendChatMessage
 local SetPVPRoles                               = _G.SetPVPRoles
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
@@ -41,6 +42,7 @@ local UnitIsGroupLeader                         = _G.UnitIsGroupLeader
 local UnitName                                  = _G.UnitName
 local UnitRealmRelationship                     = _G.UnitRealmRelationship
 local AuraUtilForEachAura                       = _G.AuraUtil.ForEachAura
+local AddOnProfilerGetAddOnMetric               = _G.C_AddOnProfiler.GetAddOnMetric
 local BattleNetGetAccountInfoByGUID             = _G.C_BattleNet.GetAccountInfoByGUID
 local BattleNetGetFriendAccountInfo             = _G.C_BattleNet.GetFriendAccountInfo
 local BattleNetGetFriendGameAccountInfo         = _G.C_BattleNet.GetFriendGameAccountInfo
@@ -50,15 +52,23 @@ local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local DelvesUIHasActiveDelve                    = _G.C_DelvesUI.HasActiveDelve
+local MapCanSetUserWaypointOnMap                = _G.C_Map.CanSetUserWaypointOnMap
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
+local MapGetUserWaypointHyperlink               = _G.C_Map.GetUserWaypointHyperlink
+local MapSetUserWaypoint                        = _G.C_Map.SetUserWaypoint
+local PartyInfoGetRestrictPings                 = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                  = _G.C_PartyInfo.IsDelveComplete
 local PartyInfoIsDelveInProgress                = _G.C_PartyInfo.IsDelveInProgress
+local PartyInfoSetRestrictPings                 = _G.C_PartyInfo.SetRestrictPings
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                    = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                         = _G.C_PvP.IsRatedSoloRBG
+local PvPIsWarModeFeatureEnabled                = _G.C_PvP.IsWarModeFeatureEnabled
 local SocialQueueGetGroupForPlayer              = _G.C_SocialQueue.GetGroupForPlayer
+local SuperTrackSetSuperTrackedUserWaypoint     = _G.C_SuperTrack.SetSuperTrackedUserWaypoint
 local TimerAfter                                = _G.C_Timer.After
+local ipairs                                    = _G.ipairs
 local pairs                                     = _G.pairs
 local print                                     = _G.print
 local securecallfunction                        = _G.securecallfunction
@@ -324,16 +334,31 @@ function NS:Sanity_Checks()
 end
 
 -- convert table to string
-function NS:TableToString(table)
+function NS:TableToString(method, table)
 	-- all loaded?
-	if (NS.Libs.AceSerializer and NS.Libs.LibDeflate) then
-		-- serialize and compress
-		local one = NS.Libs.AceSerializer:Serialize(table)
-		local two = NS.Libs.LibDeflate:CompressDeflate(one, {level = 9})
-		local final = NS.Libs.LibDeflate:EncodeForPrint(two)
+	if (method and NS.Libs.AceSerializer) then
+		-- LibDeflate
+		if (method == "LibDeflate") then
+			-- has lib deflate?
+			if (NS.Libs.LibDeflate) then
+				-- serialize and compress
+				local one = NS.Libs.AceSerializer:Serialize(table)
+				local two = NS.Libs.LibDeflate:CompressDeflate(one, {level = 9})
+				local final = NS.Libs.LibDeflate:EncodeForPrint(two)
 
-		-- return final
-		return final
+				-- return final
+				return final
+			end
+		-- LibCompressHuffman?
+		elseif (method == "LibCompressHuffman") then
+			-- serialize and compress
+			local one = NS.Libs.AceSerializer:Serialize(table)
+			local two = NS.Libs.LibCompress:CompressHuffman(one)
+			local final = NS.Libs.LibCompress.Encoder:Encode(two)
+
+			-- return final
+			return final
+		end
 	end
 
 	-- failed
@@ -341,18 +366,36 @@ function NS:TableToString(table)
 end
 
 -- convert string to table
-function NS:StringToTable(string)
+function NS:StringToTable(method, string)
 	-- all loaded?
-	if (NS.Libs.AceSerializer and NS.Libs.LibDeflate) then
-		-- decode, decompress, deserialize
-		local one = NS.Libs.LibDeflate:DecodeForPrint(string)
-		local two = NS.Libs.LibDeflate:DecompressDeflate(one)
-		local status, final = NS.Libs.AceSerializer:Deserialize(two)
+	if (method and NS.Libs.AceSerializer) then
+		-- LibDeflate
+		if (method == "LibDeflate") then
+			-- has lib deflate?
+			if (NS.Libs.LibDeflate) then
+				-- decode, decompress, deserialize
+				local one = NS.Libs.LibDeflate:DecodeForPrint(string)
+				local two = NS.Libs.LibDeflate:DecompressDeflate(one)
+				local status, final = NS.Libs.AceSerializer:Deserialize(two)
 
-		-- success?
-		if (status == true) then
-			-- return final
-			return final
+				-- success?
+				if (status == true) then
+					-- return final
+					return final
+				end
+			end
+		-- LibCompressHuffman?
+		elseif (method == "LibCompressHuffman") then
+			-- decode, decompress, deserialize
+			local one = NS.Libs.LibCompress.Encoder:Decode(string)
+			local two = NS.Libs.LibCompress:Decompress(one)
+			local status, final = NS.Libs.AceSerializer:Deserialize(two)
+
+			-- success?
+			if (status == true) then
+				-- return final
+				return final
+			end
 		end
 	end
 
@@ -499,6 +542,7 @@ end
 -- load session variables
 function NS:LoadSession()
 	-- load global stuff
+	NS.CommFlare.CF.KosList = NS.db.global.KosList or {}
 	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
 
 	-- load profile stuff
@@ -542,6 +586,7 @@ end
 -- save session variables
 function NS:SaveSession()
 	-- save global stuff
+	NS.db.global.KosList = NS.CommFlare.CF.KosList or {}
 	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 
 	-- save profile stuff
@@ -1262,7 +1307,6 @@ function NS:BNSendData(player, data)
 	-- no player given?
 	if (not player) then
 		-- finished
-		print(data)
 		return
 	end
 
@@ -1391,41 +1435,6 @@ function NS:Process_Version_Check(sender)
 	NS:SendMessage(sender, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 end
 
--- send community dialog box
-StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
-	text = L["Send: %s?"],
-	button1 = L["Send"],
-	button2 = L["No"],
-	OnAccept = function(self, message)
-		-- report ID set?
-		if (NS.charDB.profile.communityReportID and (NS.charDB.profile.communityReportID > 1)) then
-			-- club id found?
-			local clubId = NS.charDB.profile.communityReportID
-			if (clubId > 0) then
-				local streamId = 1
-				local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
-				local id, name = GetChannelName(channelName)
-				if ((id > 0) and (name ~= nil)) then
-					-- send channel messsage (hardware click acquired)
-					SendChatMessage(message, "CHANNEL", nil, id)
-
-					-- treat guild as community?
-					if (NS.charDB.profile.addGuildMembers == true) then
-						-- are you in a guild?
-						if (IsInGuild()) then
-							-- send message
-							NS:SendMessage("GUILD", message)
-						end
-					end
-				end
-			end
-		end
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
 -- kick dialog box
 StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 	text = L["Kick: %s?"],
@@ -1450,6 +1459,90 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 	whileDead = true,
 	hideOnEscape = true,
 }
+
+-- send community dialog box
+StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
+	text = L["Send: %s?"],
+	button1 = L["Send"],
+	button2 = L["No"],
+	OnAccept = function(self, message)
+		-- report ID set?
+		if (NS.charDB.profile.communityReportID and (NS.charDB.profile.communityReportID > 1)) then
+			-- club id found?
+			local clubId = NS.charDB.profile.communityReportID
+			if (clubId > 0) then
+				-- verify channel setup
+				local streamId = 1
+				local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+				local id, name = GetChannelName(channelName)
+				if ((id > 0) and (name ~= nil)) then
+					-- send channel messsage (hardware click acquired)
+					SendChatMessage(message, "CHANNEL", nil, id)
+
+					-- treat guild as community?
+					if (NS.charDB.profile.addGuildMembers == true) then
+						-- are you in a guild?
+						if (IsInGuild()) then
+							-- send message
+							NS:SendMessage("GUILD", message)
+						end
+					end
+				end
+			end
+		end
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- set player note dialog box 
+StaticPopupDialogs["CommunityFlare_Set_Player_Note_Dialog"] = {
+	text = L["Set Player Note for %s:"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 31,
+	editBoxWidth = 260,
+	OnAccept = function(self, data)
+		-- member notes created?
+		local text = self.editBox:GetText()
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
+			-- update member note
+			NS.db.global.MemberNotes[data.guid] = text
+		end
+	end,
+	OnShow = function(self, data)
+		-- has member note?
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[data.guid]) then
+			-- set current note
+			self.editBox:SetText(NS.db.global.MemberNotes[data.guid])
+			self.editBox:SetFocus()
+		end
+	end,
+	OnHide = function(self)
+		-- hide dialog
+		ChatEdit_FocusActiveWindow();
+		self.editBox:SetText("");
+	end,
+	EditBoxOnEnterPressed = function(self, data)
+		-- member notes created?
+		local text = self:GetText()
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
+			-- update member note
+			NS.db.global.MemberNotes[data.guid] = text
+		end
+
+		-- hide dialog
+		local parent = self:GetParent();
+		parent:Hide();
+	end,
+	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
+	timeout = 0,
+	exclusive = 1,
+	whileDead = 1,
+	hideOnEscape = 1
+};
 
 -- rebuild database members
 function NS:Rebuild_Database_Members()
@@ -1578,12 +1671,37 @@ function NS:Queue_Check_Role_Chosen()
 	end
 end
 
+-- remove tom tom way points
+function NS:TomTomRemoveWaypoints(title)
+	-- sanity check
+	if (not title) then
+		-- finished
+		return
+	end
+
+	-- has tom tom?
+	local TT = TomTom
+	if (TT and TT.RemoveWaypoint and TT.waypoints) then
+		-- process all waypoints
+		for mapID, entries in pairs(TT.waypoints) do
+			-- process zone waypoints
+			for _, waypoint in pairs(entries) do
+				-- title matches?
+				if (waypoint.title and (waypoint.title == title)) then
+					-- remove waypoint
+					securecallfunction(TT.RemoveWaypoint, TT, waypoint)
+				end
+			end
+		end
+	end
+end
+
 -- add tom tom way point
 function NS:TomTomAddWaypoint(title, x, y)
 	-- sanity checks
 	if (not title or not x or not y) then
 		-- finished
-		return
+		return nil
 	end
 
 	-- has tom tom?
@@ -1603,6 +1721,177 @@ function NS:TomTomAddWaypoint(title, x, y)
 		}
 
 		-- add way point
-		securecallfunction(TT.AddWaypoint, TT, NS.CommFlare.CF.MapID, tonumber(x), tonumber(y), options)
+		return securecallfunction(TT.AddWaypoint, TT, NS.CommFlare.CF.MapID, tonumber(x), tonumber(y), options)
 	end
+
+	-- not enabled
+	return nil
+end
+
+-- verify ping status
+function NS:VerifyPingStatus()
+	-- restrict pings?
+	if (NS.db.global.restrictPings and (NS.db.global.restrictPings >= 0)) then
+		-- check current ping status
+		local status = PartyInfoGetRestrictPings()
+		if (status ~= NS.db.global.restrictPings) then
+			-- do you have lead?
+			local player = NS:GetPlayerName("full")
+			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+			if (NS.CommFlare.CF.PlayerRank ~= 0) then
+				-- none?
+				if (NS.db.global.restrictPings == 0) then
+					-- none
+					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.None)
+				elseif (NS.db.global.restrictPings == 1) then
+					-- leader
+					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Lead)
+				elseif (NS.db.global.restrictPings == 2) then
+					-- assist
+					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+				elseif (NS.db.global.restrictPings == 3) then
+					-- tank/healer
+					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.TankHealer)
+				end
+			end
+		end
+	end
+end
+
+-- vignette check for alerts
+function NS:VignetteCheckForAlerts(list)
+	-- flying in?
+	local timer = 300
+	local message = nil
+	local createPin = false
+	local vignetteID = nil
+	if (list[2967]) then
+		-- war supply create is dropping in nows
+		createPin = true
+		vignetteID = 2967
+		message = L["War Supply Crate is dropping in now!"]
+	-- war supply crate flying in?
+	elseif (list[3689]) then
+		-- war supply crate is flying in now
+		vignetteID = 3689
+		message = L["War Supply Crate is flying in now!"]
+	-- war chest has fully dropped?
+	elseif (list[6066]) then
+		-- war supply crate has fully dropped to the ground
+		timer = 600
+		createPin = true
+		vignetteID = 6066
+		message = L["War Supply Crate has fully dropped to the ground!"]
+	-- war chest looted for the horde
+	elseif (list[6067]) then
+		-- war supply looted has been looted for the alliance
+		createPin = true
+		vignetteID = 6067
+		message = L["War Supply Crate has been looted for the Alliance!"]
+	-- war chest looted for the horde
+	elseif (list[6068]) then
+		-- war supply looted has been looted for the horde
+		createPin = true
+		vignetteID = 6068
+		message = L["War Supply Crate has been looted for the Horde!"]
+	end
+
+	-- found vignette?
+	if (vignetteID and message) then
+		-- has coordinates?
+		local info = list[vignetteID]
+		if (info and info.vignetteGUID) then
+			-- needs to issue raid warning?
+			local guid = info.vignetteGUID
+			if (not NS.CommFlare.CF.VignetteWarnings[guid]) then
+				-- has coordinates?
+				if (info.x and info.y) then
+					-- issue raid warning
+					NS.CommFlare.CF.VignetteWarnings[guid] = time()
+					TimerAfter(timer, function()
+						-- clear last raid warning
+						NS.CommFlare.CF.VignetteWarnings[guid] = nil
+
+						-- remove all war supply crate waypoints
+						NS:TomTomRemoveWaypoints("War Supply Crate")
+					end)
+
+					-- add tom tom way point
+					local uid = NS:TomTomAddWaypoint(info.name, info.x, info.y)
+
+					-- create pin?
+					local hyperLink = nil
+					if (createPin == true) then
+						-- get MapID
+						local mapID = MapGetBestMapForUnit("player")
+						if (mapID) then
+							-- can set user waypoint?
+							if (MapCanSetUserWaypointOnMap(mapID)) then
+								-- create position from x/y
+								local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
+								MapSetUserWaypoint(point)
+								hyperLink = MapGetUserWaypointHyperlink()
+
+								-- not already tracked?
+								if (not uid) then
+									-- set super tracked
+									SuperTrackSetSuperTrackedUserWaypoint(true)
+								end
+							end
+						end
+					end
+
+					-- issue local raid warning (with raid warning audio sound)
+					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+
+					-- has hyper link?
+					if (hyperLink) then
+						-- add to message
+						message = strformat("%s %s", message, hyperLink)
+					end
+
+					-- in raid?
+					if (IsInRaid()) then
+						-- display raid message
+						NS:SendMessage("RAID", message)
+					-- in party?
+					elseif (IsInGroup()) then
+						-- display party message
+						NS:SendMessage("PARTY", message)
+					end
+				else
+					-- try again
+					TimerAfter(2, function()
+						-- call recursively
+						NS:VignetteCheckForAlerts(list)
+					end)
+				end
+			end
+		end
+	end
+end
+
+-- run performance tests
+function NS:Run_Performance_Tests()
+	-- process all tests
+	for k,v in pairs(Enum.AddOnProfilerMetric) do
+		-- get addon metric
+		local metric = AddOnProfilerGetAddOnMetric(ADDON_NAME, v)
+		print(strformat("%s: %s = %s", NS.CommFlare.Title, tostring(k), tostring(metric)))
+	end
+end
+
+-- build battle ground commander sync data
+function NS:Build_Battleground_Commander_Sync_Data()
+	-- build sync data
+	local syncData = {
+		addonVersion = NS.CommFlare.Version,
+		remainingMercenary = -1,
+		remainingDeserter = -1,
+		autoAcceptRole = true,
+		wantLead = true,
+	}
+
+	-- return string
+	return NS:TableToString("LibCompressHuffman", syncData)
 end

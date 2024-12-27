@@ -29,6 +29,7 @@ NS.Libs = {
 	AceDB = LibStub("AceDB-3.0"),
 	AceDBOptions = LibStub("AceDBOptions-3.0"),
 	AceSerializer = LibStub("AceSerializer-3.0"),
+	LibCompress = LibStub("LibCompress"),
 	LibDeflate = LibStub("LibDeflate"),
 }
 
@@ -50,6 +51,7 @@ NS.CommFlare.CF = {
 	AutoPromote = false,
 	AutoQueue = false,
 	AutoQueueable = false,
+	ChannelStreamsLoaded = false,
 	DefaultVerified = false,
 	Disabled = false,
 	InActiveDelve = false,
@@ -58,11 +60,13 @@ NS.CommFlare.CF = {
 	HasAura = false,
 	MatchStartLogged = false,
 	NeedAddonData = false,
+	NeedTransmissionData = false,
 	NewZoneWarning = false,
 	PlayerMercenary = false,
 	Popped = false,
 	PvpLoggingCombat = false,
 	QueuePopped = false,
+	RaidLeadPassed = false,
 	Reloaded = false,
 	UpgradeDisplayed = false,
 	VersionSent = false,
@@ -92,6 +96,7 @@ NS.CommFlare.CF = {
 	MaxPriority = 999,
 	MercCount = 0,
 	NumScores = 0,
+	PassLeadWarning = 0,
 	PlayerRank = 0,
 	Position = 0,
 	PreviousCount = 0,
@@ -122,6 +127,8 @@ NS.CommFlare.CF = {
 	CommunityLeaders = {},
 	CurrentPopped = {},
 	FullRoster = {},
+	KosAlerted = {},
+	KosList = {},
 	LocalData = {},
 	LocalQueues = {},
 	LogListNamesList = {},
@@ -144,6 +151,8 @@ NS.CommFlare.CF = {
 	StatusCheck = {},
 	StreamsLoaded = {},
 	TeamUnits = {},
+	TransmissionCheck = {},
+	VignetteWarnings = {},
 	WidgetCache = {},
 	WidgetInfo = {},
 
@@ -218,6 +227,9 @@ end
 
 -- on initialize
 function NS.CommFlare:OnInitialize()
+	-- setup encoder for LibCompress
+	NS.Libs.LibCompress.Encoder = NS.Libs.LibCompress:GetAddonEncodeTable()
+
 	-- create config options
 	NS:CreateConfigOptions()
 

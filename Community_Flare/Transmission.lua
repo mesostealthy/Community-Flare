@@ -6,6 +6,7 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
+local GetNumBattlefieldScores                   = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                        = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                     = _G.GetNumSubgroupMembers
 local GetRaidRosterInfo                         = _G.GetRaidRosterInfo
@@ -17,8 +18,10 @@ local UnitFactionGroup                          = _G.UnitFactionGroup
 local UnitGUID                                  = _G.UnitGUID
 local UnitName                                  = _G.UnitName
 local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
+local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
+local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPIsBattleground                         = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                    = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                         = _G.C_PvP.IsRatedSoloRBG
@@ -26,6 +29,7 @@ local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
 local ipairs                                    = _G.ipairs
+local next                                      = _G.next
 local pairs                                     = _G.pairs
 local print                                     = _G.print
 local time                                      = _G.time
@@ -41,48 +45,88 @@ local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
 
 -- get clubs
-function NS:Get_Clubs_Text()
+function NS:Get_Clubs_Text(senderID)
 	-- count eligible communities
-	local text = nil
+	local count = 0
+	local text = ""
+	local lines = {}
 	local player_faction = UnitFactionGroup("player")
 	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
 	for k,v in ipairs(NS.CommFlare.CF.Clubs) do
 		-- community?
-		if (v.clubType and (v.clubType == Enum.ClubType.Character)) then
-			-- no cross faction?
-			if (v.crossFaction == nil) then
-				-- assume not
-				v.crossFaction = false
-			end
-
-			-- has everything?
-			if (v.clubId and v.name and v.shortName and v.memberCount) then
-				-- not cross faction?
-				local faction = nil
-				if (v.crossFaction == false) then
-					-- assume same faction as player with club
-					faction = player_faction
+		if (v.clubType) then
+			-- community / guild?
+			if ((v.clubType == Enum.ClubType.Character) or (v.clubType == Enum.ClubType.Guild)) then
+				-- no cross faction?
+				if (v.crossFaction == nil) then
+					-- assume not
+					v.crossFaction = false
 				end
 
-				-- first?
-				local current = strformat("%s,%s,%s,%s,%s,%s", tostring(v.clubId), tostring(v.name), tostring(v.shortName), tostring(v.memberCount), tostring(v.crossFaction), tostring(faction))
-				if (not text) then
-					-- initialize
-					text = current
-				else
-					-- append
-					text = strformat("%s;%s", text, current)
+				-- has everything?
+				if (v.clubId and v.name and v.memberCount) then
+					-- not cross faction?
+					local faction = nil
+					if (v.crossFaction == false) then
+						-- assume same faction as player with club
+						faction = player_faction
+					end
+
+					-- build new club
+					local club = strformat("%s,%s,%s,%s,%s,%s,%s", tostring(v.clubId), tostring(v.name), tostring(v.shortName), tostring(v.memberCount), tostring(v.crossFaction), tostring(faction), tostring(v.clubType))
+					local clublength = strlen(club)
+					local textlength = strlen(text)
+					if ((textlength + clublength + 1) > 4032) then
+						-- insert
+						tinsert(lines, text)
+
+						-- restart text
+						text = strformat("DB:%d@%s;", tonumber(clubId), club)
+					else
+						-- append club
+						text = strformat("%s%s;", text, club)
+					end
+
+					-- increase
+					count = count + 1
+
 				end
 			end
 		end 
 	end
 
-	-- return text
-	return text
+	-- has text?
+	if (text) then
+		-- still more?
+		local textlength = strlen(text)
+		if (textlength > 0) then
+			-- insert
+			tinsert(lines, text)
+		end
+	end
+
+	-- none found?
+	if (count == 0) then
+		-- none
+		tinsert(lines, "None")
+	end
+
+	-- process all
+	local timer = 0.0
+	for k,v in ipairs(lines) do
+		-- send data
+		TimerAfter(timer, function()
+			-- send localized data
+			NS:BNSendData(senderID, strformat("!CommFlare@Clubs@%s", tostring(v)))
+		end)
+
+		-- next
+		timer = timer + 0.5
+	end
 end
 
 -- get deserter text
-function NS:Get_Deserter_Text()
+function NS:Get_Deserter_Text(senderID)
 	-- check for deserter buff
 	local text = "false"
 	NS:CheckForAura("player", "HARMFUL", L["Deserter"])
@@ -97,12 +141,78 @@ function NS:Get_Deserter_Text()
 		text = strformat("%s,%s", text, tostring(NS.CommFlare.CF.AuraData.timeLeft))
 	end
 
-	-- return text
-	return text
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@Deserter@%s", tostring(text)))
+end
+
+-- get history list text
+function NS:Get_History_List_Text(senderID, names)
+	local text = nil
+	local first, second = strsplit("@", names)
+	if (first == "GetHistory") then
+		-- multiple members?
+		local members = {}
+		if (strmatch(second, ",")) then
+			-- get all members
+			members = {strsplit(",", second)}
+		else
+			-- only one member
+			tinsert(members, second)
+		end
+
+		-- has members?
+		local list = nil
+		if (members and next(members)) then
+			-- process all
+			list = {}
+			for k,v in ipairs(members) do
+				-- get player history
+				local history = NS:Get_Player_History(v)
+				if (history) then
+					-- insert
+					local firstseen = tonumber(history.first) or 0
+					local lastseen = tonumber(history.last) or 0
+					local lastgrouped = tonumber(history.lastgrouped) or 0
+					local gmc = tonumber(history.gmc) or 0
+					local cmc = tonumber(history.cmc) or 0
+					local ncm = tonumber(history.ncm) or 0
+					local lcmt = tonumber(history.lcmt) or 0
+					tinsert(list, strformat("%s,%d,%d,%d,%d,%d,%d,%d", v, firstseen, lastseen, lastgrouped, gmc, cmc, ncm, lcmt))
+				else
+					-- insert
+					tinsert(list, strformat("%s,nil", v))
+				end
+			end
+		end
+
+		-- found list?
+		if (list and next(list)) then
+			-- process all
+			for k,v in ipairs(list) do
+				-- first?
+				if (not text) then
+					-- initialize
+					text = v
+				else
+					-- add text
+					text = strformat("%s;%s", text, v)
+				end
+			end
+		end
+	end
+
+	-- no text?
+	if (not text) then
+		-- none
+		text = "None"
+	end
+
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@History@%s", tostring(text)))
 end
 
 -- get leaders text
-function NS:Get_Leaders_Text()
+function NS:Get_Leaders_Text(senderID)
 	-- is battleground?
 	local type = nil
 	local leaders = {}
@@ -156,12 +266,15 @@ function NS:Get_Leaders_Text()
 	end
 
 	-- has leaders?
-	if (#leaders > 0) then
+	local text = nil
+	if (#leaders == 0) then
+		-- none
+		text = "None"
+	else
 		-- sort
 		tsort(leaders)
 
 		-- process all
-		local text = nil
 		for k,v in ipairs(leaders) do
 			-- first?
 			if (not text) then
@@ -172,13 +285,10 @@ function NS:Get_Leaders_Text()
 				text = strformat("%s;%s", text, v)
 			end
 		end
-
-		-- return text
-		return strformat("%s@%s", type, text)
-	else
-		-- none
-		return strformat("%s@None", type)
 	end
+
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@Leaders@%s@%s", tostring(type), tostring(text)))
 end
 
 -- get members text
@@ -211,39 +321,48 @@ function NS:Get_Members_Text(senderID, input)
 			return
 		end
 
-		-- process all
-		local lower = strlower(input)
-		for k,v in pairs(NS.db.global.clubs) do
-			-- has short name?
-			if (v.shortName and (v.shortName ~= "")) then
-				-- matches short name?
-				local shortName = strlower(v.shortName)
-				if ((v.shortName == input) or (shortName == lower)) then
-					-- found
-					clubId = k
-					break
-				end
-			end
+		-- guild?
+		if (input == "nil") then
+			-- get guild club id
+			clubId = ClubGetGuildClubId()
+		end
 
-			-- has full name?
-			if (v.name and (v.name ~= "")) then
-				-- matches full name?
-				local fullName = strlower(v.name)
-				if ((v.name == input) or (fullName == lower)) then
-					-- found
-					clubId = k
-					break
+		-- no club id found?
+		if (not clubId) then
+			-- process all
+			local lower = strlower(input)
+			for k,v in pairs(NS.db.global.clubs) do
+				-- has short name?
+				if (v.shortName and (v.shortName ~= "")) then
+					-- matches short name?
+					local shortName = strlower(v.shortName)
+					if ((v.shortName == input) or (shortName == lower)) then
+						-- found
+						clubId = k
+						break
+					end
 				end
-			end
 
-			-- has club id?
-			if (v.clubId and (v.clubId > 1)) then
-				-- matches clubId?
-				local strClubID = tostring(v.clubId)
-				if (strClubID == lower) then
-					-- found
-					clubId = k
-					break
+				-- has full name?
+				if (v.name and (v.name ~= "")) then
+					-- matches full name?
+					local fullName = strlower(v.name)
+					if ((v.name == input) or (fullName == lower)) then
+						-- found
+						clubId = k
+						break
+					end
+				end
+
+				-- has club id?
+				if (v.clubId and (v.clubId > 1)) then
+					-- matches clubId?
+					local strClubID = tostring(v.clubId)
+					if (strClubID == lower) then
+						-- found
+						clubId = k
+						break
+					end
 				end
 			end
 		end
@@ -313,7 +432,7 @@ function NS:Get_Members_Text(senderID, input)
 		-- try local database
 		if (NS.db.global.members) then
 			-- process local
-			text = strformat("ClubID:%d@", tonumber(clubId))
+			text = strformat("DB:%d@", tonumber(clubId))
 			for k,v in pairs(NS.db.global.members) do
 				-- has clubs and is member?
 				if (v.clubs and v.clubs[clubId]) then
@@ -339,7 +458,7 @@ function NS:Get_Members_Text(senderID, input)
 							tinsert(lines, text)
 
 							-- restart text
-							text = strformat("ClubID:%d@%s;", tonumber(clubId), player)
+							text = strformat("DB:%d@%s;", tonumber(clubId), player)
 						else
 							-- append player
 							text = strformat("%s%s;", text, player)
@@ -353,7 +472,7 @@ function NS:Get_Members_Text(senderID, input)
 		end
 	else
 		-- process all members
-		text = strformat("ClubID:%d@", tonumber(clubId))
+		text = strformat("ID:%d@", tonumber(clubId))
 		for _,v in ipairs(members) do
 			-- get member info
 			local mi = ClubGetMemberInfo(clubId, v)
@@ -380,7 +499,7 @@ function NS:Get_Members_Text(senderID, input)
 						tinsert(lines, text)
 
 						-- restart text
-						text = strformat("ClubID:%d@%s;", tonumber(clubId), player)
+						text = strformat("ID:%d@%s;", tonumber(clubId), player)
 					else
 						-- append player
 						text = strformat("%s%s;", text, player)
@@ -405,26 +524,26 @@ function NS:Get_Members_Text(senderID, input)
 
 	-- none found?
 	if (count == 0) then
-		-- send data
-		NS:BNSendData(senderID, strformat("!CommFlare@Members@No Club Members Found"))
-	else
-		-- process all
-		local timer = 0.0
-		for k,v in ipairs(lines) do
-			-- send data
-			TimerAfter(timer, function()
-				-- send localized data
-				NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
-			end)
+		-- none
+		tinsert(lines, "None")
+	end
 
-			-- next
-			timer = timer + 0.5
-		end
+	-- process all
+	local timer = 0.0
+	for k,v in ipairs(lines) do
+		-- send data
+		TimerAfter(timer, function()
+			-- send localized data
+			NS:BNSendData(senderID, strformat("!CommFlare@Members@%s", tostring(v)))
+		end)
+
+		-- next
+		timer = timer + 0.5
 	end
 end
 
 -- get mercenary text
-function NS:Get_Mercenary_Text()
+function NS:Get_Mercenary_Text(senderID)
 	-- check for mercenary buff
 	local text = "false"
 	NS:CheckForAura("player", "HELPFUL", L["Mercenary Contract"])
@@ -439,12 +558,12 @@ function NS:Get_Mercenary_Text()
 		text = strformat("%s,%s", text, tostring(NS.CommFlare.CF.AuraData.timeLeft))
 	end
 
-	-- return text
-	return text
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@Mercenary@%s", tostring(text)))
 end
 
 -- get party text
-function NS:Get_Party_Text()
+function NS:Get_Party_Text(senderID)
 	-- build party info
 	local text = NS:GetGroupCountText()
 	local isRaid = IsInRaid() and "true" or "false"
@@ -506,14 +625,16 @@ function NS:Get_Party_Text()
 		text = strformat("%s@%s-%s;%s", text, name, realm, guid)
 	end
 
-	-- return text
-	return text
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@Party@%s", tostring(text)))
 end
 
 -- get popped text
-function NS:Get_Popped_Text()
+function NS:Get_Popped_Text(senderID)
 	-- process all
-	local list = {}
+	local count = 0
+	local text = ""
+	local lines = {}
 	for k,v in pairs (NS.CommFlare.CF.SocialQueues) do
 		-- has all needed info?
 		if (v.leader and v.leader.name and v.leader.realm and v.leader.guid and v.members) then
@@ -522,11 +643,25 @@ function NS:Get_Popped_Text()
 				-- stale?
 				local timestamp = v.popped + 30
 				if (time() < timestamp) then
-					-- build party string
-					local count = strformat("%d/5", #v.members)
+					-- build new party
+					local numMembers = strformat("%d/5", #v.members)
 					local mapName = NS.CommFlare.CF.SocialQueues[k].name
-					local text = strformat("%s,%s,%s,%s-%s,%s", mapName, k, v.leader.guid, v.leader.name, v.leader.realm, count)
-					tinsert(list, text)
+					local party = strformat("%s,%s,%s,%s-%s,%s", mapName, k, v.leader.guid, v.leader.name, v.leader.realm, numMembers)
+					local partylength = strlen(party)
+					local textlength = strlen(text)
+					if ((textlength + partylength + 1) > 4032) then
+						-- insert
+						tinsert(lines, text)
+
+						-- restart text
+						text = strformat("ID:%d@%s;", tonumber(clubId), party)
+					else
+						-- append party
+						text = strformat("%s%s;", text, party)
+					end
+
+					-- increase
+					count = count + 1
 				else
 					-- update group
 					NS:Update_Group(k)
@@ -535,31 +670,163 @@ function NS:Get_Popped_Text()
 		end
 	end
 
-	-- process all lists
-	local text = nil
-	for k,v in pairs(list) do
-		-- first?
-		if (not text) then
-			-- start queues
-			text = strformat("%s", v)
-		else
-			-- append queues
-			text = strformat("%s;%s", text, v)
+	-- has text?
+	if (text) then
+		-- still more?
+		local textlength = strlen(text)
+		if (textlength > 0) then
+			-- insert
+			tinsert(lines, text)
 		end
 	end
 
-	-- no text?
-	if (not text) then
+	-- none found?
+	if (count == 0) then
 		-- none
-		text = "None"
+		tinsert(lines, "None")
 	end
 
-	-- return text
-	return text
+	-- process all
+	local timer = 0.0
+	for k,v in ipairs(lines) do
+		-- send data
+		TimerAfter(timer, function()
+			-- send localized data
+			NS:BNSendData(senderID, strformat("!CommFlare@Popped@%s", tostring(v)))
+		end)
+
+		-- next
+		timer = timer + 0.5
+	end
+end
+
+-- get roster text
+function NS:Get_Roster_Text(senderID, type)
+	-- in battleground?
+	local roster = {}
+	if (NS:IsInBattleground() == true) then
+		-- horde only?
+		if (type:find("Horde")) then
+			-- get horde roster
+			type = 0
+		-- alliance only?
+		elseif (type:find("Alliance")) then
+			-- get alliance roster
+			type = 1
+		-- all roster
+		else
+			-- unset
+			type = nil
+		end
+
+		-- process all scores
+		for i=1, GetNumBattlefieldScores() do
+			local info = PvPGetScoreInfo(i)
+			if (info) then
+				-- should log player?
+				if (not type or (info.faction == type)) then
+					-- force name-realm format
+					local player = info.name
+					if (not strmatch(player, "-")) then
+						-- add realm name
+						player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+					end
+
+					-- get specID
+					local specID = NS:Get_SpecID(info.className, info.talentSpec)
+					if (specID and (specID > 0)) then
+						-- append specID
+						player = strformat("%s:%d", player, tonumber(specID))
+					end
+
+					-- insert
+					tinsert(roster, player)
+				end
+			end
+		end
+	
+		-- setup type
+		if (type == 0) then
+			-- horde
+			type = "Horde"
+		elseif (type == 1) then
+			-- alliance
+			type = "Alliance"
+		else
+			-- full
+			type = "Full"
+		end
+	else
+		-- process all
+		for k,v in pairs(NS.CommFlare.CF.SocialQueues) do
+			-- process queues
+			local found = false
+			for k2,v2 in ipairs(v.queues) do
+				-- has queue data?
+				local mapName = nil
+				if (v2.queueData and v2.queueData.mapName) then
+					-- save map name
+					mapName = v2.queueData.mapName
+				-- local queue?
+				elseif (v2.name) then
+					-- save map name
+					mapName = v2.name
+				end
+
+				-- found map?
+				if (mapName) then
+					-- is tracked pvp?
+					local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
+					if (isTracked == true) then
+						-- found
+						found = true
+					end
+				end
+			end
+
+			-- found tracked queue?
+			if (found == true) then
+				-- get members
+				for k2,v2 in ipairs(v.members) do
+					-- insert player
+					local player = strformat("%s-%s", v2.name, v2.realm)
+					tinsert(roster, player)
+				end
+			end
+		end
+
+		-- setup type
+		type = "Queued"
+	end
+
+	-- no roster?
+	if (#roster == 0) then
+		-- none
+		text = "None"
+	else
+		-- sort
+		tsort(roster)
+
+		-- process all
+		local text = nil
+		for k,v in ipairs(roster) do
+			-- first?
+			if (not text) then
+				-- add first
+				text = v
+			else
+				-- append
+				text = strformat("%s;%s", text, v)
+			end
+		end
+	end
+
+	-- send data
+	NS:BNSendData(senderID, strformat("!CommFlare@Roster@%s@%s", tostring(type), tostring(text)))
 end
 
 -- get status text
-function NS:Get_Status_Text()
+function NS:Get_Status_Text(senderID)
 	-- get battleground status
 	local text = NS:Get_Battleground_Status()
 	if (text) then
@@ -586,11 +853,19 @@ function NS:Get_Status_Text()
 
 			-- copy status
 			text = status
+		else
+			-- isle of conquest?
+			if (NS.CommFlare.CF.MapID == 169) then
+				-- issue capping gate request command
+				NS.CommFlare.CF.NeedTransmissionData = true
+				NS.CommFlare.CF.TransmissionCheck[senderID] = time()
+				NS.CommFlare:SendCommMessage("Capping", "gr", "INSTANCE_CHAT")
+			end
 		end
-	end
 
-	-- return text
-	return text
+		-- send data
+		NS:BNSendData(senderID, strformat("!CommFlare@Status@%s", tostring(text)))
+	end
 end
 
 -- process battle net commands
@@ -598,35 +873,19 @@ function NS:Process_BattleNET_Commands(senderID, text)
 	-- get clubs?
 	if (text:find("GetClubs")) then
 		-- get clubs text
-		local clubs = NS:Get_Clubs_Text()
-		if (clubs) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Clubs@%s", tostring(clubs)))
-		end
+		NS:Get_Clubs_Text(senderID)
 	-- get deserter?
 	elseif (text:find("GetDeserter")) then
 		-- get deserter text
-		local deserter = NS:Get_Deserter_Text()
-		if (deserter) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Deserter@%s", tostring(deserter)))
-		end
+		NS:Get_Deserter_Text(senderID)
 	-- get history?
 	elseif (text:find("GetHistory")) then
 		-- get history list text
-		local history = NS:Get_History_List_Text(text)
-		if (history) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@History@%s", tostring(history)))
-		end
+		NS:Get_History_List_Text(senderID, text)
 	-- get leaders?
 	elseif (text:find("GetLeaders")) then
 		-- get leaders text
-		local leaders = NS:Get_Leaders_Text()
-		if (leaders) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Leaders@%s", tostring(leaders)))
-		end
+		NS:Get_Leaders_Text(senderID)
 	-- get members?
 	elseif (text:find("GetMembers")) then
 		-- get members text
@@ -634,38 +893,19 @@ function NS:Process_BattleNET_Commands(senderID, text)
 	-- get mercenary?
 	elseif (text:find("GetMercenary")) then
 		-- get mercenary text
-		local mercenary = NS:Get_Mercenary_Text()
-		if (mercenary) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Mercenary@%s", tostring(mercenary)))
-		end
+		NS:Get_Mercenary_Text(senderID)
 	-- get party?
 	elseif (text:find("GetParty")) then
 		-- get party text
-		local party = NS:Get_Party_Text()
-		if (party) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Party@%s", tostring(party)))
-		end
+		NS:Get_Party_Text(senderID)
 	-- get pops?
 	elseif (text:find("GetPopped")) then
 		-- get popped text
-		local popped = NS:Get_Popped_Text()
-		if (popped) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Popped@%s", tostring(popped)))
-		end
+		NS:Get_Popped_Text(senderID)
 	-- get queues?
 	elseif (text:find("GetQueues")) then
-		-- refresh all social queues
-		NS:RefreshAllSocialQueues()
-
 		-- find social queues by map name
-		local queues = NS:Find_Social_Queues_By_MapName(text)
-		if (queues) then
-			-- send data
-			NS:BNSendData(senderID, strformat("!CommFlare@Queues@%s", tostring(queues)))
-		end
+		NS:Find_Social_Queues_By_MapName(senderID, text)
 	-- get roster?
 	elseif (text:find("GetRoster")) then
 		-- in battleground?
@@ -684,12 +924,8 @@ function NS:Process_BattleNET_Commands(senderID, text)
 
 		-- start processing
 		TimerAfter(timer, function()
-			-- get current roster
-			local roster = NS:Battlefield_Get_Current_Roster(text)
-			if (roster) then
-				-- send data
-				NS:BNSendData(senderID, strformat("!CommFlare@Roster@%s", tostring(roster)))
-			end
+			-- get roster text
+			NS:Get_Roster_Text(senderID, text)
 		end)
 	-- get status?
 	elseif (text:find("GetStatus")) then
@@ -709,12 +945,8 @@ function NS:Process_BattleNET_Commands(senderID, text)
 
 		-- start processing
 		TimerAfter(timer, function()
-			-- get status
-			local status = NS:Get_Status_Text()
-			if (status) then
-				-- send data
-				NS:BNSendData(senderID, strformat("!CommFlare@Status@%s", tostring(status)))
-			end
+			-- get status text
+			NS:Get_Status_Text(senderID)
 		end)
 	-- get version?
 	elseif (text:find("GetVersion")) then
@@ -722,3 +954,61 @@ function NS:Process_BattleNET_Commands(senderID, text)
 		NS:BNSendData(senderID, strformat("!CommFlare@Version@%s,%s", tostring(NS.CommFlare.Version), tostring(NS.CommFlare.Build)))
 	end
 end
+
+-- create frame for events
+local f = CreateFrame("Frame")
+f:RegisterEvent("CHAT_MSG_ADDON")
+f:SetScript("OnEvent", function(self, event, ...)
+	-- chat message addon?
+	if (event == "CHAT_MSG_ADDON") then
+		-- does not need addon data
+		local prefix, text, channel, sender, target, zoneChannelID, localID, name, instanceID = ...
+		if (NS.CommFlare.CF.NeedTransmissionData ~= true) then
+			-- finished
+			return
+		end
+
+		-- capping?
+		print(prefix, "-", channel, "-", sender, "-", text, "-", target)
+		if (prefix == "Capping") then
+			-- isle of conquest?
+			if (NS.CommFlare.CF.MapID == 169) then
+				-- skip these messages
+				if ((text == "gr") or (text == "rb") or (text == "rbh")) then
+					-- finished
+					return
+				end
+			end
+
+			-- sanity check?
+			local h1, h1hp, h2, h2hp, h3, h3hp, a1, a1hp, a2, a2hp, a3, a3hp = strsplit(":", text)
+			local hGate1, hGate2, hGate3, aGate1, aGate2, aGate3 = tonumber(h1hp), tonumber(h2hp), tonumber(h3hp), tonumber(a1hp), tonumber(a2hp), tonumber(a3hp)
+			if (hGate1 and hGate2 and hGate3 and aGate1 and aGate2 and aGate3) then
+				-- find lowest gates
+				local allyLowest = math.min(aGate1, aGate2, aGate3) / 2400000 * 100
+				local hordeLowest = math.min(hGate1, hGate2, hGate3) / 2400000 * 100
+
+				-- report to anyone?
+				local text = strformat(L["%s: Alliance Gate = %.1f, Horde Gate = %.1f"], L["Isle of Conquest"], allyLowest, hordeLowest)
+				if (NS.CommFlare.CF.TransmissionCheck and next(NS.CommFlare.CF.TransmissionCheck)) then
+					-- process all
+					local timer = 0.0
+					for k,v in pairs(NS.CommFlare.CF.TransmissionCheck) do
+						-- send replies staggered
+						TimerAfter(timer, function()
+							-- send message
+							NS:SendMessage(k, text)
+						end)
+
+						-- next
+						timer = timer + 0.2
+					end
+				end
+
+				-- finished
+				NS.CommFlare.CF.TransmissionCheck = {}
+				NS.CommFlare.CF.NeedTransmissionData = false
+			end
+		end
+	end
+end)

@@ -126,6 +126,7 @@ L["All Community Members"] = true
 L["Always automatically queue?"] = true
 L["Always pass Raid Leadership to Community Leaders?"] = true
 L["Always remove, then re-add community channels to general?"] = true
+L["Always request party leadership?"] = true
 L["Always save Combat Log inside PVP content?"] = true
 L["Assistants Only"] = true
 L["Automatically accept invites from Battle.NET friends?"] = true
@@ -147,6 +148,7 @@ L["Community Leaders?"] = true
 L["Community Options"] = true
 L["Community to report to?"] = true
 L["Database members found: %s"] = true
+L["Database Options"] = true
 L["Debug Options"] = true
 L["Default (180)"] = true
 L["Disabled"] = true
@@ -176,6 +178,7 @@ L["One or more of the changes you have made require a ReloadUI."] = true
 L["Other Communities?"] = true
 L["Party Options"] = true
 L["Performs an action if you are about to hearth stone or teleport out of an active battleground."] = true
+L["Player List Manager?"] = true
 L["Pops up a box to uninvite any users that are AFK at the time of queuing."] = true
 L["Popup PVP queue window upon leaders queing up? (Only for group leaders.)"] = true
 L["Purge logged roster matches timeframe?"] = true
@@ -190,6 +193,7 @@ L["Tanks & Healers Only"] = true
 L["This is the amount of time before it starts purging logged roster list for matches."] = true
 L["This is the amount of time delayed between Mage attacks in Ashran."] = true
 L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."] = true
+L["This will always attempt to request party leadership upon joining a new party."] = true
 L["This will always automatically accept all queues for you."] = true
 L["This will automatically accept group/party invites from Battle.NET friends."] = true
 L["This will automatically accept group/party invites from community members."] = true
@@ -216,6 +220,7 @@ L["This will show a raid warning to you when your Mage is under attack in Ashran
 L["This will show you a message when a party member changes zones."] = true
 L["This will treat your Guild Members as Community Members."] = true
 L["Uninvite any players that are AFK?"] = true
+L["Use this to manage the Players and KOS in the Member GUIDs list."] = true
 L["Use this to refresh the members database from currently selected communities."] = true
 L["Use this to totally rebuild the members database from currently selected communities."] = true
 L["Warn before hearth stoning or teleporting inside a battleground?"] = true
@@ -285,6 +290,7 @@ L["CPU Usage"] = true
 L["Deserter"] = true
 L["deserter"] = true
 L["Dumping POIs:"] = true
+L["Dumping Vehicles:"] = true
 L["Dumping Vignettes:"] = true
 L["Epic battleground has completed with a"] = true
 L["Entered"] = true
@@ -332,8 +338,13 @@ L["Protection"] = true
 L["Restoration"] = true
 L["Send"] = true
 L["Send: %s?"] = true
+L["Set Player Note for %s:"] = true
 L["Uninviting ..."] = true
 L["Vengeance"] = "Venganza"
+L["War Supply Crate has been looted for the Alliance!"] = true
+L["War Supply Crate has been looted for the Horde!"] = true
+L["War Supply Crate has fully dropped to the ground!"] = true
+L["War Supply Crate is dropping in now!"] = true
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = true
 L["Yes"] = true
 L["You've been removed from the party for being AFK."] = true
@@ -352,6 +363,13 @@ L["Request Party Leader"] = true
 -- Social.lua
 L["%s: Group%d = %d Members"] = true
 L["Community Leader %s has queued for %s. You should probably queue up now too!"] = true
+
+-- UI/PlayerListFrame.lua
+L["Add KOS"] = true
+L["Delete Player"] = true
+L["Player List Manager"] = true
+L["Remove KOS"] = true
+L["Set Player Note"] = true
 
 -- blizzard translated strings
 L["Captain Balinda Stonehearth"] = true		-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=enUS

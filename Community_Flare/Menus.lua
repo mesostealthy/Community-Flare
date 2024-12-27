@@ -93,8 +93,12 @@ end
 
 -- request party lead
 function NS:Request_Party_Leader(owner, rootDescription, contextData)
-	-- are you in local party?
-	if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
+	-- are you in a raid?
+	if (IsInRaid()) then
+		-- send addon message to raid
+		NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+	-- local party?
+	elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
 		-- send addon message to party
 		NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
 	end
@@ -110,6 +114,17 @@ end)
 
 -- add party context menu
 Menu.ModifyMenu("MENU_UNIT_PARTY", function(owner, rootDescription, contextData)
+	-- are you not group leader currently?
+	if (NS:IsGroupLeader() == false) then
+		-- display context menu
+		rootDescription:CreateDivider()
+		rootDescription:CreateTitle(NS.CommFlare.Title)
+		rootDescription:CreateButton(L["Request Party Leader"], function() NS:Request_Party_Leader(owner, rootDescription, contextData) end)
+	end
+end)
+
+-- add raid context menu
+Menu.ModifyMenu("MENU_UNIT_RAID_PLAYER", function(owner, rootDescription, contextData)
 	-- are you not group leader currently?
 	if (NS:IsGroupLeader() == false) then
 		-- display context menu

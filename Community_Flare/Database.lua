@@ -9,6 +9,7 @@ local _G                                        = _G
 local AddChatWindowChannel                      = _G.AddChatWindowChannel
 local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
 local Chat_GetCommunitiesChannelName            = _G.Chat_GetCommunitiesChannelName
+local CopyTable                                 = _G.CopyTable
 local GetChannelName                            = _G.GetChannelName
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local UnitFactionGroup                          = _G.UnitFactionGroup
@@ -327,6 +328,7 @@ function NS:Verify_Club_Streams(clubs)
 
 	-- reset
 	NS.CommFlare.CF.StreamsRetryCount = 0
+	NS.CommFlare.CF.ChannelStreamsLoaded = true
 end
 
 -- is community leader?
@@ -356,6 +358,108 @@ function NS:Is_Community_Leader(name)
 	-- failed
 	return false
 end
+
+-- process member guid
+function NS:Process_MemberGUID(guid, player)
+	-- no guid?
+	if (not guid or (guid == "")) then
+		-- failed
+		return false
+	end
+
+	-- no player?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
+	-- database created?
+	if (NS.db.global and NS.db.global.MemberGUIDs) then
+		-- new / updated?
+		if (not NS.db.global.MemberGUIDs[guid] or (NS.db.global.MemberGUIDs[guid] ~= player)) then
+			-- check for old member?
+			local old_player = NS.db.global.MemberGUIDs[guid]
+			if (NS.db.global.members[old_player]) then
+				-- move member
+				NS.db.global.members[old_player].name = player
+				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+				NS.db.global.members[old_player] = nil
+			end
+
+			-- check for old history?
+			if (NS.db.global.history[old_player]) then
+				-- no new history?
+				if (not NS.db.global.history[player]) then
+					-- move history
+					NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+				-- has old history?
+				elseif (NS.db.global.history[player]) then
+					-- first seen updated?
+					if (not NS.db.global.history[player].first) then
+						-- update first
+						NS.db.global.history[player].first = NS.db.global.history[old_player].last
+					elseif (NS.db.global.history[old_player].first and (NS.db.global.history[old_player].first < NS.db.global.history[player].first)) then
+						-- update first
+						NS.db.global.history[player].first = NS.db.global.history[old_player].last
+					end
+
+					-- last seen updated?
+					if (not NS.db.global.history[player].last) then
+						-- update first
+						NS.db.global.history[player].last = NS.db.global.history[old_player].last
+					elseif (NS.db.global.history[old_player].last and (NS.db.global.history[old_player].last > NS.db.global.history[player].last)) then
+						-- update first
+						NS.db.global.history[player].last = NS.db.global.history[old_player].last
+					end
+
+					-- last grouped updated?
+					if (not NS.db.global.history[player].lastgrouped) then
+						-- update first
+						NS.db.global.history[player].lastgrouped = NS.db.global.history[old_player].lastgrouped
+					elseif (NS.db.global.history[old_player].lastgrouped and (NS.db.global.history[old_player].lastgrouped > NS.db.global.history[player].lastgrouped)) then
+						-- update first
+						NS.db.global.history[player].lastgrouped = NS.db.global.history[old_player].lastgrouped
+					end
+
+					-- no chat message count?
+					if (not NS.db.global.history[player].cmc) then
+						-- initialize
+						NS.db.global.history[player].cmc = 0
+					end
+
+					-- no grouped matches count?
+					if (not NS.db.global.history[player].gmc) then
+						-- initialize
+						NS.db.global.history[player].gmc = 0
+					end
+
+					-- has chat message count to update?
+					if (NS.db.global.history[old_player].cmc and (NS.db.global.history[old_player].cmc > 0)) then
+						-- add to chat message count
+						NS.db.global.history[player].cmc = NS.db.global.history[player].cmc + NS.db.global.history[old_player].cmc
+					end
+
+					-- has grouped matches count to update?
+					if (NS.db.global.history[old_player].gmc and (NS.db.global.history[old_player].gmc > 0)) then
+						-- add to grouped matches count
+						NS.db.global.history[player].gmc = NS.db.global.history[player].gmc + NS.db.global.history[old_player].gmc
+					end
+				end
+
+				-- clear old history
+				NS.db.global.history[old_player] = nil
+			end
+
+			-- update member guid
+			NS.db.global.MemberGUIDs[guid] = player
+			return true
+		end
+	end
+
+	-- failed
+	return false
+end
+
 
 -- get community member
 function NS:Get_Community_Member(name)
@@ -990,6 +1094,9 @@ function NS:Add_Member(clubId, info, rebuild)
 		NS:Update_First_Seen(player)
 	end
 
+	-- process member guid
+	NS:Process_MemberGUID(info.guid, player)
+
 	-- rebuild leaders?
 	if (rebuild == true) then
 		-- rebuild community leaders
@@ -1045,6 +1152,13 @@ end
 
 -- add all club members from club id
 function NS:Add_All_Club_Members_By_ClubID(clubId)
+	-- has guild?
+	if (not clubId) then
+		-- not in guild
+		print(L["You are not currently in a Guild."])
+		return
+	end
+
 	-- get club info
 	local info = ClubGetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
@@ -1064,6 +1178,12 @@ function NS:Add_All_Club_Members_By_ClubID(clubId)
 
 		-- rebuild community leaders
 		NS:Rebuild_Community_Leaders()
+
+		-- guild?
+		if (info.clubType == Enum.ClubType.Guild) then
+			-- add guild
+			info.name = strformat("%s (Guild)", info.name)
+		end
 
 		-- any added?
 		if (added > 0) then
@@ -1109,6 +1229,12 @@ function NS:Remove_All_Club_Members_By_ClubID(clubId)
 
 		-- rebuild community leaders
 		NS:Rebuild_Community_Leaders()
+
+		-- guild?
+		if (info.clubType == Enum.ClubType.Guild) then
+			-- add guild
+			info.name = strformat("%s (Guild)", info.name)
+		end
 
 		-- any removed?
 		if (removed > 0) then
@@ -1212,34 +1338,6 @@ function NS:Process_Club_Members()
 	return true
 end
 
--- process member guid
-function NS:Process_MemberGUID(guid, player)
-	-- no guid?
-	if (not guid or (guid == "")) then
-		-- failed
-		return false
-	end
-
-	-- no player?
-	if (not player or (player == "")) then
-		-- failed
-		return false
-	end
-
-	-- database created?
-	if (NS.db.global and NS.db.global.MemberGUIDs) then
-		-- new / updated?
-		if (not NS.db.global.MemberGUIDs[guid] or (NS.db.global.MemberGUIDs[guid] ~= player)) then
-			-- update member
-			NS.db.global.MemberGUIDs[guid] = player
-			return true
-		end
-	end
-
-	-- failed
-	return false
-end
-
 -- refresh club members
 function NS:Refresh_Club_Members()
 	-- update invisible status
@@ -1320,22 +1418,13 @@ function NS:Refresh_Club_Members()
 	NS:Cleanup_Members()
 
 	-- build member guids list / update if already created
-	local updated = 0
 	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.members) do
 		-- updated?
 		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= v.name)) then
 			-- save / update member guid / name
 			NS.db.global.MemberGUIDs[v.guid] = v.name
-			updated = updated + 1
 		end
-	end
-
-	-- updated?
-	if (updated > 0) then
-		-- flush members / guids
-		CommunityFlareDB.global.members = NS.db.global.members
-		CommunityFlareDB.global.MemberGUIDs = NS.db.global.MemberGUIDs
 	end
 
 	-- clean up history

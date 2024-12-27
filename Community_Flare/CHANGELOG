@@ -1,3 +1,14 @@
+v1.21.001
+-NEW Player List Manager: Can view all Players seen in Battlegrounds / PVP matches.
+-NEW Party Setting: Always request party leadership to auto request party lead upon joining a new party.
+--Can Add/Remove Players to/from Kill On Sight list. This will display a Raid Warning when they're in your matches!
+--Can Add/Edit Notes to individual Players.
+-Korrak's Revenge: Added some more stuff for queuing/reporting with Raids.
+-NEW Command: /comf plm to open the Player List Manager.
+-NEW Debug Command: /comf perf to see the Performance Metrics for Community Flare.
+-NEW Debug Command: /comf vehicles to view all vehicles in your current location.
+-Bumped TOC to v11.0.7
+
 v1.20.003
 -Auto Invite feature now working when in a Raid, for example for Korrak's Revenge.
 -NEW Queue Setting: Warn when Honor capped or close to it upon queuing?
@@ -30,16 +41,16 @@ v1.16.002 features:
 -BUGFIX: Fixed some more LUA bugs found, this time relating to Brawls.
 
 v1.16.001 features:
--New Version Check Feature: Shows a message if it detects someone with a newer version of Community Flare.
--New /comf find inactivity to search Community Member database for members not active more than 60 days.
+-NEW Version Check Feature: Shows a message if it detects someone with a newer version of Community Flare.
+-NEW /comf find inactivity to search Community Member database for members not active more than 60 days.
 -BUGFIX: Fixed lua error with mercenary text.
 -Bumped TOC to v11.0.2
 
 v1.15.001 features:
--New Setting: Always pass Raid Leadership to Community Leaders? (Passes Raid Leadership to Community Leaders by priority if enabled.)
--New Debug Command: /comf pois to view all points of interest in your current location.
--New Debug Command: /comf popped to view all currently popped groups, if there are any.
--New Debug Command: /comf vignettes to view all vignettes in your current location.
+-NEW Setting: Always pass Raid Leadership to Community Leaders? (Passes Raid Leadership to Community Leaders by priority if enabled.)
+-NEW Debug Command: /comf pois to view all points of interest in your current location.
+-NEW Debug Command: /comf popped to view all currently popped groups, if there are any.
+-NEW Debug Command: /comf vignettes to view all vignettes in your current location.
 
 v1.14.003 features:
 -!status check now reports number of Community Members in the Battleground for all maps.
@@ -50,7 +61,7 @@ v1.14.002 features:
 -BUGFIX: Fix some LUA bugs found due to various new systems.
 
 v1.14 features:
--New Command: /comf report added to send your current queues to community, with auto INV message if enabled & party has room.
+-NEW Command: /comf report added to send your current queues to community, with auto INV message if enabled & party has room.
 -!status check for Battle for Wintergrasp now reports Vehicle counts.
 -!status check now reports status for Arathi Basin.
 -!status check now reports status for Brawl: Southshore vs. Tarren Mill.
@@ -68,20 +79,20 @@ v1.14 features:
 -Bumped TOC to v11.0.0
 
 v1.13 features:
--New Command: /comf debug added to better help with debugging issues for Mesostealthy & others to report. (Must have Debug Mode enabled to utilize.)
--New Setting: Always save Combat Log inside PVP content, will always save combat logs for PVP matches.
+-NEW Command: /comf debug added to better help with debugging issues for Mesostealthy & others to report. (Must have Debug Mode enabled to utilize.)
+-NEW Setting: Always save Combat Log inside PVP content, will always save combat logs for PVP matches.
 -When joining tracked PVP Queues, it will now report your current faction when reporting.
 -BUGFIX: If /reload used during Battleground, match data/roster was not saved into the match log list.
 -Bumped TOC to v10.2.7
 
 v1.12 features:
--New Feature: Right click on your Party Members to "Request Party Lead". (They must have Community Flare v1.12+ as well.)
+-NEW Feature: Right click on your Party Members to "Request Party Lead". (They must have Community Flare v1.12+ as well.)
 -BUGFIX: Fixed some issues with the Community Leaders priority being updated properly.
 -Bumped TOC to v10.2.6
 
 v1.11 features:
 -History: Added more stuff to track, like first seen, last channel message time, channel message count, etc.
--New /comf find <x> <y> commands to search Community Member database for various stuff.
+-NEW /comf find <x> <y> commands to search Community Member database for various stuff.
 --x = inactive to search for members who you have never seen online.
 --x = nocompleted to search for members who have never completed a match with you.
 --x = nogrouped to search for members who have never grouped with you.
@@ -103,7 +114,7 @@ v1.08 features:
 -BUGFIX: Fixed !status reporting a win/loss properly as a Mercenary.
 
 v1.07 features:
--New /comf deployed command to check if you still have people in community deployed in PVP.
+-NEW /comf deployed command to check if you still have people in community deployed in PVP.
 -NEW setting to allow Community Leaders list to only build from selected Communities.
 -Block game menu hotkeys inside PVP content reworked a bit with raw hooks.
 
@@ -123,7 +134,7 @@ v1.03 features:
 -No Subscribed clubs found message will only show up once per character that does not have any club selected.
 -Can Report Queue Joins/Drops/Pops/etc for Brawl: Comp Stomp.
 -Log Names List now stores properly if you are a Mercenary.
--New Setting: Display notification for popped groups?
+-NEW Setting: Display notification for popped groups?
 --If enabled, will show popped groups and member counts.
 -frFR Locale language has first been added.
 -Added better queue tracking stuff.
