@@ -1027,8 +1027,8 @@ local PartyGroup = {
 		alwaysRequestPartyLead = {
 			type = "toggle",
 			order = 4,
-			name = L["Always request party leadership?"],
-			desc = L["This will always attempt to request party leadership upon joining a new party."],
+			name = L["Always request party leadership? (Community Leaders Only)"],
+			desc = L["This will always attempt to request party leadership upon joining a new party. (Only for Community Leaders!)"],
 			width = "full",
 			get = function(info) return NS.db.global.alwaysRequestPartyLead end,
 			set = function(info, value) NS.db.global.alwaysRequestPartyLead = value end,

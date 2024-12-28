@@ -81,7 +81,7 @@ function NS:Get_Clubs_Text(senderID)
 						tinsert(lines, text)
 
 						-- restart text
-						text = strformat("DB:%d@%s;", tonumber(clubId), club)
+						text = strformat("%s;", club)
 					else
 						-- append club
 						text = strformat("%s%s;", text, club)
@@ -800,6 +800,7 @@ function NS:Get_Roster_Text(senderID, type)
 	end
 
 	-- no roster?
+	local text = nil
 	if (#roster == 0) then
 		-- none
 		text = "None"
@@ -808,7 +809,6 @@ function NS:Get_Roster_Text(senderID, type)
 		tsort(roster)
 
 		-- process all
-		local text = nil
 		for k,v in ipairs(roster) do
 			-- first?
 			if (not text) then

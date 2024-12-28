@@ -2124,13 +2124,17 @@ function NS.CommFlare:GROUP_JOINED(msg, ...)
 		if (UnitIsGroupLeader("player") == false) then
 			-- always request party leadership?
 			if (NS.db.global.alwaysRequestPartyLead == true) then
-				-- are you in a raid?
-				if (IsInRaid()) then
-					-- send addon message to raid
-					NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
-				else
-					-- send addon message to party
-					NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+				-- player is community leader?
+				local player = NS:GetPlayerName("full")
+				if (NS:Is_Community_Leader(player) == true) then
+					-- are you in a raid?
+					if (IsInRaid()) then
+						-- send addon message to raid
+						NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+					else
+						-- send addon message to party
+						NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+					end
 				end
 			end
 		end

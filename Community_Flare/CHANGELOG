@@ -1,6 +1,6 @@
-v1.21.001
+v1.21.002
 -NEW Player List Manager: Can view all Players seen in Battlegrounds / PVP matches.
--NEW Party Setting: Always request party leadership to auto request party lead upon joining a new party.
+-NEW Party Setting: Always request party leadership to auto request party lead upon joining a new party. (Community Leaders Only!)
 --Can Add/Remove Players to/from Kill On Sight list. This will display a Raid Warning when they're in your matches!
 --Can Add/Edit Notes to individual Players.
 -Korrak's Revenge: Added some more stuff for queuing/reporting with Raids.
