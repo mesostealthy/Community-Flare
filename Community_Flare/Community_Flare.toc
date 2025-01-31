@@ -1,0 +1,49 @@
+## Interface: 110007
+## Title: Community Flare
+## Version: v1.24.001
+## X-Build: 124001
+## Author: Mesostealthy
+## SavedVariables: CommunityFlareDB
+## SavedVariablesPerCharacter: CommFlareCharDB
+## OptionalDeps: Ace3
+## IconTexture: Interface\AddOns\Community_Flare\Media\icon.tga
+## AddonCompartmentFunc: CommunityFlare_AddonCompartmentOnClick
+## X-Website: https://www.curseforge.com/wow/addons/community-flare
+## X-Curse-Project-ID: 941906
+## X-Wago-ID: j6jzxx6R
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceTimer-3.0\AceTimer-3.0.xml
+Libs\AceBucket-3.0\AceBucket-3.0.xml
+Libs\AceHook-3.0\AceHook-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+Libs\AceComm-3.0\AceComm-3.0.xml
+Libs\AceTab-3.0\AceTab-3.0.xml
+Libs\AceSerializer-3.0\AceSerializer-3.0.xml
+Libs\LibCompress\lib.xml
+Libs\LibDeflate\lib.xml
+
+Locales\enUS.lua
+Locales\frFR.lua
+
+Bootstrap.lua
+Constants.lua
+Config.lua
+Battlegrounds.lua
+Database.lua
+Events.lua
+History.lua
+Init.lua
+Menus.lua
+Social.lua
+Specialization.lua
+
+UI\PlayerListFrame.xml
