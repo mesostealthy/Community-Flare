@@ -279,6 +279,10 @@ L["Are you really sure you want to hearthstone?"] = true
 L["Are you really sure you want to teleport?"] = true
 L["Auto declined quest from"] = true
 L["begone, uncouth scum!"] = true
+L["Checking for inactive members"] = true
+L["Checking for members not seen recently"] = true
+L["Checking for members who never have completed a match with you"] = true
+L["Checking for members who you've never grouped with"] = true
 L["Checking for older members"] = true
 L["Cleared clubs database!"] = true
 L["Cleared members database!"] = true
@@ -363,6 +367,8 @@ L["POPPED"] = true
 
 -- UI/PlayerListFrame.lua
 L["Add KOS"] = true
+L["Copy Player Name"] = true
+L["Copy Player Name for %s [Use Ctrl+c]:"] = true
 L["Delete Player"] = true
 L["Player List Manager"] = true
 L["Remove KOS"] = true

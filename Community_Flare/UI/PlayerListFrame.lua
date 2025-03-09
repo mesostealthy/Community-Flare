@@ -740,6 +740,38 @@ end
 UnitPopupMenuCFQueues = CreateFromMixins(UnitPopupTopLevelMenuMixin)
 UnitPopupManager:RegisterMenu("CF_QUEUES", UnitPopupMenuCFQueues)
 
+-- copy player name mixin
+UnitPopupCFCopyPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFCopyPlayerNameMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- get set player note text
+function UnitPopupCFCopyPlayerNameMixin:GetText()
+	-- return text
+	return L["Copy Player Name"]
+end
+
+-- copy player note on click
+function UnitPopupCFCopyPlayerNameMixin:OnClick()
+	-- find proper dropdown menu
+	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
+	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+		-- create context data
+		local data = { 
+			guid = dropdownMenu.guid,
+			info = dropdownMenu.info,
+			player = dropdownMenu.info.player
+		}
+
+		-- show set player note dialog
+		StaticPopup_Show("CommunityFlare_Copy_Player_Name_Dialog", dropdownMenu.info.player, nil, data)
+	end
+end
+
 -- get entries
 function UnitPopupMenuCFQueues:GetEntries()
 	-- return menu buttons
@@ -748,6 +780,7 @@ function UnitPopupMenuCFQueues:GetEntries()
 		UnitPopupCFRemoveKosButtonMixin,
 		UnitPopupCFDeletePlayerButtonMixin,
 		UnitPopupCFSetPlayerNoteButtonMixin,
+		UnitPopupCFCopyPlayerNameMixin,
 	}
 end
 

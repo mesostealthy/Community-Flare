@@ -114,7 +114,7 @@ local hook_AcceptBattlefieldPort_installed = false
 local hook_AcceptProposal_installed = false
 local hook_LeaveBattlefield_installed = false
 local hook_RejectProposal_installed = false
-local hook_PVPMatchResults_OnUpdate_installed = false
+local hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = false
 
 -- list current POI's
 function NS:List_POIs()
@@ -253,7 +253,6 @@ function NS:Get_Current_Vignettes()
 	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
-		print(L["Map ID: Not Found"])
 		return nil
 	end
 
@@ -510,44 +509,6 @@ local function hook_RejectProposal()
 		NS:Update_Brawl_Status()
 	end
 end
-
--- overwrite PVPMatchResults OnUpdate
-local function hook_PVPMatchResults_OnUpdate(self, elapsed)
-	-- update leave button
-	if (self.UpdateLeaveButton) then
-		self:UpdateLeaveButton()
-	end
-
-	-- mimic PVPMatchUtil.UpdateDataProvider (but retain scroll position)
-	local forceNewDataProvider = true
-	local scores = GetNumBattlefieldScores()
-	if (self.scrollBox:GetDataProviderSize() ~= scores or forceNewDataProvider) then
-		local useAlternateColor = not PvPIsMatchFactional()
-		local dataProvider = CreateDataProvider()
-		if (PvPGetCustomVictoryStatID() == 0) then
-			for index = 1, scores do 
-				dataProvider:Insert({index=index, useAlternateColor=useAlternateColor})
-			end
-		else
-			local isMatchComplete = PVPMatchUtil.IsActiveMatchComplete()
-			for index = 1, scores do 
-				if (isMatchComplete) then
-					local scoreInfo = PvPGetScoreInfo(index)
-					local isLocalPlayer = scoreInfo and IsPlayerGuid(scoreInfo.guid)
-					local backgroundColor = isLocalPlayer and PVP_SCOREBOARD_ALLIANCE_ALT_ROW_COLOR or PVP_SCOREBOARD_HORDE_ALT_ROW_COLOR
-					dataProvider:Insert({index=index, backgroundColor=backgroundColor})
-				else
-					dataProvider:Insert({index=index, useAlternateColor=useAlternateColor})
-				end
-			end
-		end
-
-		-- retain scroll position (do not scroll to beginning)
-		local retainScrollPosition = true
-		self.scrollBox:SetDataProvider(dataProvider, retainScrollPosition)
-	end
-end
-
 
 -- process main menu micro button on mouse down
 local function hook_MainMenuMicroButton_OnMouseDown()
@@ -1225,11 +1186,14 @@ function NS:SetupHooks()
 		hook_RejectProposal_installed = true
 	end
 
-	-- PVPMatchResults OnUpdate not hooked?
-	if (hook_PVPMatchResults_OnUpdate_installed ~= true) then
-		-- hook PVPMatchResults OnUpdate
-		PVPMatchResults:SetScript("OnUpdate", hook_PVPMatchResults_OnUpdate)
-		hook_PVPMatchResults_OnUpdate_installed = true
+	-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
+	if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
+		-- fix pvp match results scrolling
+		if (PVPMatchResults and PVPMatchResults.scrollBox) then
+			-- disable ScrollToBegin
+			NS.CommFlare:RawHook(PVPMatchResults.scrollBox, "ScrollToBegin", function(self)	end, true)
+			hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
+		end
 	end
 end
 
@@ -4254,23 +4218,27 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			-- old?
 			if (second == "old") then
 				-- check for older members
-				print(strformat("%s: %s", NS.CommFlare.Title, L["Checking for older members"]))
+				print(strformat("%s: %s ...", NS.CommFlare.Title, L["Checking for older members"]))
 				NS:Find_ExCommunity_Members(clubId)
 			-- inactive?
 			elseif (second == "inactive") then
 				-- find inactive members
+				print(strformat("%s: %s ...", NS.CommFlare.Title, L["Checking for inactive members"]))
 				NS:Find_Community_Members(second, clubId)
 			-- inactivity?
 			elseif (second == "inactivity") then
 				-- find inactive members
+				print(strformat("%s: %s ...", NS.CommFlare.Title, L["Checking for members not seen recently"]))
 				NS:Find_Community_Members(second, clubId)
 			-- noplay?
 			elseif (second == "nocompleted") then
 				-- find nocomplete members
+				print(strformat("%s: %s ...", NS.CommFlare.Title, L["Checking for members who never have completed a match with you"]))
 				NS:Find_Community_Members(second, clubId)
 			-- nogroup?
 			elseif (second == "nogrouped") then
 				-- find nogroup members
+				print(strformat("%s: %s ...", NS.CommFlare.Title, L["Checking for members who you've never grouped with"]))
 				NS:Find_Community_Members(second, clubId)
 			end
 		-- reset?

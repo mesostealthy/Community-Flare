@@ -1567,7 +1567,30 @@ StaticPopupDialogs["CommunityFlare_Set_Player_Note_Dialog"] = {
 	exclusive = 1,
 	whileDead = 1,
 	hideOnEscape = 1
-};
+}
+
+-- copy player name dialog box 
+StaticPopupDialogs["CommunityFlare_Copy_Player_Name_Dialog"] = {
+	text = L["Copy Player Name for %s [Use Ctrl+c]:"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 31,
+	editBoxWidth = 260,
+	OnShow = function(self, data)
+		-- has player?
+		if (data.player and (data.player ~= "")) then
+			-- set current player
+			self.editBox:SetText(data.player)
+			self.editBox:HighlightText()
+			self.editBox:SetFocus()
+		end
+	end,
+	timeout = 0,
+	exclusive = 1,
+	whileDead = 1,
+	hideOnEscape = 1
+}
 
 -- rebuild database members
 function NS:Rebuild_Database_Members()

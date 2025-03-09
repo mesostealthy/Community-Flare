@@ -2542,7 +2542,8 @@ function NS:Update_Brawl_Status()
 						NS.CommFlare.CF.LocalQueues[index].popped = time()
 						NS.CommFlare.CF.SocialQueues["local"].name = mapName
 						NS.CommFlare.CF.SocialQueues["local"].popped = NS.CommFlare.CF.LocalQueues[index].popped
-						NS.CommFlare.CF.SocialQueues["local"].queues[index].popped = NS.CommFlare.CF.SocialQueues["local"].popped
+
+						-- update group / process popped
 						NS:Update_Group("local")
 						NS:Process_Popped("local")
 

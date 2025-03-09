@@ -539,6 +539,7 @@ function NS:Cleanup_Members()
 
 	-- process all members
 	local removed = 0
+	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.members) do
 		-- check for leader / owner
 		local player = v.name
@@ -590,6 +591,12 @@ function NS:Cleanup_Members()
 			-- move to history
 			NS.db.global.history[player].lastgrouped = v.lastgrouped
 			NS.db.global.members[player].lastgrouped = nil
+		end
+
+		-- updated?
+		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= player)) then
+			-- save / update member guid / name
+			NS.db.global.MemberGUIDs[v.guid] = player
 		end
 	end
 end
@@ -946,8 +953,15 @@ function NS:Add_Member(clubId, info, rebuild)
 	-- build proper name
 	local player = info.name
 	if (not strmatch(player, "-")) then
-		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		-- get player info by guid
+		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+		if (name and realm and (realm ~= "")) then
+			-- rebuild full
+			player = name .. "-" .. realm
+		else
+			-- add realm name
+			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		end
 	end
 
 	-- sanity check
@@ -1109,8 +1123,15 @@ function NS:Remove_Member(clubId, info)
 	-- build proper name
 	local player = info.name
 	if (not strmatch(player, "-")) then
-		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		-- get player info by guid
+		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+		if (name and realm and (realm ~= "")) then
+			-- rebuild full
+			player = name .. "-" .. realm
+		else
+			-- add realm name
+			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		end
 	end
 
 	-- member exists?
@@ -1417,16 +1438,6 @@ function NS:Refresh_Club_Members()
 	-- clean up members
 	NS:Cleanup_Members()
 
-	-- build member guids list / update if already created
-	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
-	for k,v in pairs(NS.db.global.members) do
-		-- updated?
-		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= v.name)) then
-			-- save / update member guid / name
-			NS.db.global.MemberGUIDs[v.guid] = v.name
-		end
-	end
-
 	-- clean up history
 	NS:Cleanup_History()
 end
@@ -1496,8 +1507,15 @@ function NS:Club_Member_Removed(clubId, memberId)
 		-- build proper name
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
-			-- add realm name
-			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			-- get player info by guid
+			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
+			if (name and realm and (realm ~= "")) then
+				-- rebuild full
+				player = name .. "-" .. realm
+			else
+				-- add realm name
+				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			end
 		end
 
 		-- has clubs?
@@ -1548,8 +1566,15 @@ function NS:Club_Member_Updated(clubId, memberId)
 		-- build proper name
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
-			-- add realm name
-			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			-- get player info by guid
+			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
+			if (name and realm and (realm ~= "")) then
+				-- rebuild full
+				player = name .. "-" .. realm
+			else
+				-- add realm name
+				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			end
 		end
 
 		-- member exists?
@@ -1621,12 +1646,19 @@ function NS:Find_ExCommunity_Members(clubId)
 	local members = ClubGetClubMembers(clubId)
 	for _,v in ipairs(members) do
 		local info = ClubGetMemberInfo(clubId, v)
-		if ((info ~= nil) and (info.name ~= nil)) then
+		if ((info ~= nil) and (info.guid ~= nil) and (info.name ~= nil)) then
 			-- build proper name
 			local player = info.name
 			if (not strmatch(player, "-")) then
-				-- add realm name
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				-- get player info by guid
+				local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+				if (name and realm and (realm ~= "")) then
+					-- rebuild full
+					player = name .. "-" .. realm
+				else
+					-- add realm name
+					player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				end
 			end
 
 			-- add to current
