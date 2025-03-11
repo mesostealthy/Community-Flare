@@ -989,6 +989,15 @@ local DebugGroup = {
 			get = function(info) return NS.db.global.debugMode end,
 			set = function(info, value) NS.db.global.debugMode = value end,
 		},
+		debugPrint = {
+			type = "toggle",
+			order = 3,
+			name = L["Enable debug print chat window to log debug events?"],
+			desc = L["This will log some debug event messages into a debug window to help MESO fix bugs."],
+			width = "full",
+			get = function(info) return NS.db.global.debugPrint end,
+			set = function(info, value) NS.db.global.debugPrint = value end,
+		},
 	}
 }
 

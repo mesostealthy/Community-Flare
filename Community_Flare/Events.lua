@@ -109,7 +109,6 @@ local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
 
 -- local variables
-local PVPMatchResults_display = false
 local hook_AcceptBattlefieldPort_installed = false
 local hook_AcceptProposal_installed = false
 local hook_LeaveBattlefield_installed = false
@@ -2820,6 +2819,13 @@ end
 
 -- process pvp match active
 function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
+	-- debug print enabled?
+	local status = PvPGetActiveMatchState()
+	if (NS.db.global.debugPrint == true) then
+		-- debug print
+		NS:Debug_Print(strformat("%s: PVP_MATCH_ACTIVE = %d", NS.CommFlare.Title, tonumber(status)))
+	end
+
 	-- initialize
 	NS.CommFlare.CF.KosAlerted = {}
 	NS.CommFlare.CF.FullRoster = {}
@@ -2832,7 +2838,6 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	NS.CommFlare.CF.ASH.Rylai = L["Up"]
 
 	-- reset settings
-	PVPMatchResults_display = false
 	NS.CommFlare.CF.LastBossRW = 0
 	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.MatchStatus = 1
@@ -2867,31 +2872,16 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	end
 end
 
--- PVP Match Results Begin Show
-local function PVPMatchResults_BeginShow()
-	-- not displayed?
-	if (PVPMatchResults_display == false) then
-		-- not shown?
-		if (not PVPMatchResults:IsShown()) then
-			-- begin show
-			PVPMatchResults:BeginShow()
-		end
-
-		-- still not shown?
-		if (not PVPMatchResults:IsShown()) then
-			-- call again
-			TimerAfter(0.5, PVPMatchResults_BeginShow)
-			return
-		end
-
-		-- shown
-		PVPMatchResults_display = true
-	end
-end
-
 -- process pvp match complete
 function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	local winner, duration = ...
+
+	-- debug print enabled?
+	local status = PvPGetActiveMatchState()
+	if (NS.db.global.debugPrint == true) then
+		-- debug print
+		NS:Debug_Print(strformat("%s: PVP_MATCH_COMPLETE = %d, %d, %d", NS.CommFlare.Title, tonumber(status), tonumber(winner), tonumber(duration)))
+	end
 
 	-- enabled vehicle turn speed?
 	if (NS.db.global.adjustVehicleTurnSpeed > 0) then
@@ -3004,25 +2994,34 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 		-- reset combat logging
 		LoggingCombat(NS.CommFlare.CF.PvpLoggingCombat)
 	end
-
-	-- PVP Match Results Begin Show
-	PVPMatchResults_BeginShow()
 end
 
 -- process pvp match inactive
 function NS.CommFlare:PVP_MATCH_INACTIVE(msg)
+	-- debug print enabled?
+	local status = PvPGetActiveMatchState()
+	if (NS.db.global.debugPrint == true) then
+		-- debug print
+		NS:Debug_Print(strformat("%s: PVP_MATCH_INACTIVE = %d", NS.CommFlare.Title, tonumber(status)))
+	end
+
 	-- reset battleground status
-	PVPMatchResults_display = false
 	NS.CommFlare.CF.MatchStatus = 0
 	NS:Reset_Battleground_Status()
 end
 
 -- process pvp match state changed
 function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
+	-- debug print enabled?
+	local status = PvPGetActiveMatchState()
+	if (NS.db.global.debugPrint == true) then
+		-- debug print
+		NS:Debug_Print(strformat("%s: PVP_MATCH_STATE_CHANGED = %d", NS.CommFlare.Title, tonumber(status)))
+	end
+
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
 		-- match just started?
-		local status = PvPGetActiveMatchState()
 		if (status == Enum.PvPMatchState.Engaged) then
 			-- verify ping status
 			NS:VerifyPingStatus()

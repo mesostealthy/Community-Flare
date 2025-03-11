@@ -20,7 +20,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.25.001
+v1.25.002
 -Player List Manager: Copy Player Name popup window added. Must use Ctrl+C to copy to clipboard.
 -PVP Match Results screen scrolling fixed in a different way, now always opens at end of matches.
 -Explosive Hearthstone now warns you if cast during Battlegrounds/Epic Battlegrounds.

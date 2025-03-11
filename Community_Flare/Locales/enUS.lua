@@ -158,6 +158,7 @@ L["Disabled"] = true
 L["Display community member names when running /comf command?"] = true
 L["Display notification for popped groups?"] = true
 L["Enable debug mode to help debug issues?"] = true
+L["Enable debug print chat window to log debug events?"] = true
 L["Enable the right click menu for community member list?"] = true
 L["Fast (360)"] = true
 L["Frequency?"] = true
@@ -212,6 +213,7 @@ L["This will block players from using the /ping system if they do not have raid 
 L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"] = true
 L["This will display a notification in your General chat window when groups pop."] = true
 L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."] = true
+L["This will log some debug event messages into a debug window to help MESO fix bugs."] = true
 L["This will open up the PVP queue window if a leader is queing up for PVP so you can queue up too."] = true
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = true
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = true

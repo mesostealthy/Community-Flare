@@ -1778,10 +1778,16 @@ end
 
 -- verify ping status
 function NS:VerifyPingStatus()
+	-- debug print enabled?
+	local status = PartyInfoGetRestrictPings()
+	if (NS.db.global.debugPrint == true) then
+		-- debug print
+		NS:Debug_Print(strformat("%s: VerifyPingStatus = %d, %d", NS.CommFlare.Title, tonumber(status), tonumber(NS.db.global.restrictPings)))
+	end
+
 	-- restrict pings?
 	if (NS.db.global.restrictPings and (NS.db.global.restrictPings >= 0)) then
 		-- check current ping status
-		local status = PartyInfoGetRestrictPings()
 		if (status ~= NS.db.global.restrictPings) then
 			-- do you have lead?
 			local player = NS:GetPlayerName("full")
