@@ -11,6 +11,7 @@ local BNInviteFriend                            = _G.BNInviteFriend
 local BNRequestInviteFriend                     = _G.BNRequestInviteFriend
 local GetBattlefieldInstanceRunTime             = _G.GetBattlefieldInstanceRunTime
 local GetBattlefieldEstimatedWaitTime           = _G.GetBattlefieldEstimatedWaitTime
+local GetBattlefieldPortExpiration              = _G.GetBattlefieldPortExpiration
 local GetBattlefieldStatus                      = _G.GetBattlefieldStatus
 local GetBattlefieldTimeWaited                  = _G.GetBattlefieldTimeWaited
 local GetDisplayedInviteType                    = _G.GetDisplayedInviteType
@@ -279,6 +280,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.WG = {}
 	NS.CommFlare.CF.WSG = {}
 	NS.CommFlare.CF.MapInfo = {}
+	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchStartTime = 0
 	NS.CommFlare.CF.Reloaded = false
 
@@ -2667,6 +2669,11 @@ function NS:Update_Brawl_Status()
 							NS:SendMessage(nil, text)
 						end
 					end
+
+					-- save stuff
+					NS.CommFlare.CF.LeftTime = 0
+					NS.CommFlare.CF.EnteredTime = time()
+					NS.CommFlare.CF.Expiration = GetBattlefieldPortExpiration(index)
 				-- rejected?
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
 					-- player is horde?
@@ -2844,4 +2851,20 @@ function NS:Get_Current_Queues_Text()
 
 	-- return text
 	return text
+end
+
+-- report queue entry time left
+function NS:Report_Queue_Entry_Time_Left()
+	-- display time left message?
+	local seconds = NS.CommFlare.CF.Expiration - (time() - NS.CommFlare.CF.EnteredTime)
+	if (NS.CommFlare.ReportTimesLeft[seconds] == true) then
+		-- display message
+		print(strformat(L["%s: %d seconds remaining for players to take the queue."], NS.CommFlare.Title, seconds))
+	end
+
+	-- call again?
+	if (seconds > 0) then
+		-- call recursively
+		TimerAfter(1, function() NS:Report_Queue_Entry_Time_Left() end)
+	end
 end

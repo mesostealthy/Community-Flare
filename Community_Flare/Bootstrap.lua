@@ -88,6 +88,7 @@ NS.CommFlare.CF = {
 	LastBossRW = 0,
 	LastMageRW = 0,
 	LastRaidWarning = 0,
+	LastRestrictPingTime = 0,
 	LeftTime = 0,
 	LogListCount = 0,
 	MapID = 0,
@@ -114,6 +115,9 @@ NS.CommFlare.CF = {
 	Options = nil,
 	PartyGUID = nil,
 	PopupMessage = nil,
+	RdyCrate = nil,
+	TargetNearestEnemy = nil,
+	TargetPreviousEnemy = nil,
 	Winner = nil,
 
 	-- tables
@@ -156,6 +160,7 @@ NS.CommFlare.CF = {
 	WaitForUpdate = {},
 	WidgetCache = {},
 	WidgetInfo = {},
+	zRdyCrate = nil,
 
 	-- misc stuff
 	Alliance = { Count = 0, Healers = 0, Tanks = 0 },

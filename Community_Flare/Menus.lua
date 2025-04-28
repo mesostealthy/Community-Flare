@@ -7,6 +7,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                        = _G
 local IsInGroup                                 = _G.IsInGroup
+local IsInInstance                              = _G.IsInInstance
 local IsInRaid                                  = _G.IsInRaid
 local date                                      = _G.date
 local print                                     = _G.print
@@ -16,8 +17,13 @@ local strformat                                 = _G.string.format
 
 -- show history
 function NS:Show_History(owner, rootDescription, contextData)
+	local player = contextData.name
+	if (not contextData.server) then
+		-- add realm name
+		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+	end
+
 	-- find member
-	local player = strformat("%s-%s", contextData.name, contextData.server)
 	local member = NS:Get_Community_Member(player)
 	if (member) then
 		-- get player history
@@ -95,8 +101,15 @@ end
 function NS:Request_Party_Leader(owner, rootDescription, contextData)
 	-- are you in a raid?
 	if (IsInRaid()) then
-		-- send addon message to raid
-		NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+		-- in instance?
+		local inInstance, instanceType = IsInInstance()
+		if (inInstance) then
+			-- send addon message to raid
+			NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "INSTANCE_CHAT")
+		else
+			-- send addon message to raid
+			NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+		end
 	-- local party?
 	elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
 		-- send addon message to party
@@ -146,7 +159,7 @@ function NS:Setup_Context_Menus()
 	end
 
 	-- not already enabled?
-	if (party_menu == false) then
+	if (raid_player == false) then
 		-- add raid player context menu
 		Menu.ModifyMenu("MENU_UNIT_RAID_PLAYER", function(owner, rootDescription, contextData)
 			-- are you not group leader currently?

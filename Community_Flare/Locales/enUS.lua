@@ -3,6 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale(ADDON_NAME, "enUS", true)
 
 -- Battlegrounds.lua
 L["%d minutes, %d seconds"] = true
+L["%s: %d seconds remaining for players to take the queue."] = true
 L["%s: AFK after %d minutes, %d seconds?"] = true
 L["%s: Healers = %d, Tanks = %d"] = true
 L["%s: Not an epic battleground to track."] = true
@@ -128,6 +129,7 @@ L["Always pass Raid Leadership to Community Leaders?"] = true
 L["Always remove, then re-add community channels to general?"] = true
 L["Always request party leadership? (Community Leaders Only)"] = true
 L["Always save Combat Log inside PVP content?"] = true
+L["Always target nearest/previous enemy players inside PVP content?"] = true
 L["Assistants Only"] = true
 L["Automatically accept invites from Battle.NET friends?"] = true
 L["Automatically accept invites from community members?"] = true
@@ -156,6 +158,7 @@ L["Debug Options"] = true
 L["Default (180)"] = true
 L["Disabled"] = true
 L["Display community member names when running /comf command?"] = true
+L["Display how much time left for people in your group to enter the queue?"] = true
 L["Display notification for popped groups?"] = true
 L["Enable debug mode to help debug issues?"] = true
 L["Enable debug print chat window to log debug events?"] = true
@@ -203,6 +206,7 @@ L["This will always attempt to request party leadership upon joining a new party
 L["This will always automatically accept all queues for you."] = true
 L["This will automatically accept group/party invites from Battle.NET friends."] = true
 L["This will automatically accept group/party invites from community members."] = true
+L["This will automatically bind your tab and shift+tab keys to only target enemy players inside PVP content."] = true
 L["This will automatically delete communities channels from general and re-add them upon login."] = true
 L["This will automatically display all community members found in the battleground when the /comf command is run."] = true
 L["This will automatically enable the combat logging to WowCombatLog while inside an arena or battleground."] = true
@@ -215,6 +219,7 @@ L["This will display a notification in your General chat window when groups pop.
 L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."] = true
 L["This will log some debug event messages into a debug window to help MESO fix bugs."] = true
 L["This will open up the PVP queue window if a leader is queing up for PVP so you can queue up too."] = true
+L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."] = true
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = true
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = true
 L["This will provide a warning message when you are honor capped, or close to it when queuing."] = true
@@ -327,6 +332,8 @@ L["you will be removed from"] = true
 L["your kind has no place in alterac valley"] = true
 
 -- Init.lua
+L["%s: Key Bindings updated for PVP mode."] = true
+L["%s: Key Bindings updated for non-PVP mode."] = true
 L["AFK"] = true
 L["Are you sure you want to wipe the members database and totally rebuild from scratch?"] = true
 L["Blood"] = true

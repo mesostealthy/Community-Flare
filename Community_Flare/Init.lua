@@ -17,17 +17,23 @@ local ChatFrame_ContainsChannel                   = _G.ChatFrame_ContainsChannel
 local ChatFrame_RemoveCommunitiesChannel          = _G.ChatFrame_RemoveCommunitiesChannel
 local FCF_IsChatWindowIndexReserved               = _G.FCF_IsChatWindowIndexReserved
 local FCF_IterateActiveChatWindows                = _G.FCF_IterateActiveChatWindows
+local GetBindingAction                            = _G.GetBindingAction
+local GetBindingKey                               = _G.GetBindingKey
 local GetChannelName                              = _G.GetChannelName
+local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                       = _G.GetNumSubgroupMembers
 local GetTime                                     = _G.GetTime
+local InCombatLockdown                            = _G.InCombatLockdown
 local IsInGroup                                   = _G.IsInGroup
 local IsInGuild                                   = _G.IsInGuild
+local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local SendChatMessage                             = _G.SendChatMessage
+local SetBinding                                  = _G.SetBinding
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
 local StaticPopup_Show                            = _G.StaticPopup_Show
@@ -61,6 +67,7 @@ local MapSetUserWaypoint                          = _G.C_Map.SetUserWaypoint
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                    = _G.C_PartyInfo.IsDelveComplete
 local PartyInfoIsDelveInProgress                  = _G.C_PartyInfo.IsDelveInProgress
+local PartyInfoIsPartyWalkIn                      = _G.C_PartyInfo.IsPartyWalkIn
 local PartyInfoSetRestrictPings                   = _G.C_PartyInfo.SetRestrictPings
 local PvPIsBattleground                           = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
@@ -438,6 +445,13 @@ end
 function NS:IsInDelve()
 	-- in active delve?
 	if (NS.CommFlare.CF.InActiveDelve == true) then
+		-- yup
+		return true
+	end
+
+	-- is party walk in?
+	local walkin = PartyInfoIsPartyWalkIn()
+	if (walkin == true) then
 		-- yup
 		return true
 	end
@@ -937,13 +951,17 @@ end
 
 -- is currently group leader?
 function NS:IsGroupLeader()
-	-- has sub group members?
-	if (GetNumSubgroupMembers() == 0) then
-		return true
 	-- is group leader?
-	elseif (UnitIsGroupLeader("player")) then
+	if (UnitIsGroupLeader("player")) then
+		-- yes
+		return true
+	-- has no group members?
+	elseif (GetNumGroupMembers() == 0) then
+		-- yes
 		return true
 	end
+
+	-- no 
 	return false
 end
 
@@ -1778,42 +1796,104 @@ end
 
 -- verify ping status
 function NS:VerifyPingStatus()
-	-- debug print enabled?
-	local status = PartyInfoGetRestrictPings()
-	if (NS.db.global.debugPrint == true) then
-		-- debug print
-		NS:Debug_Print(strformat("%s: VerifyPingStatus = %d, %d", NS.CommFlare.Title, tonumber(status), tonumber(NS.db.global.restrictPings)))
+	-- already been restricted?
+	local next_restrict = 0
+	if (NS.CommFlare.CF.LastRestrictPingTime > 0) then
+		-- refresh in 30 seconds
+		next_restrict = NS.CommFlare.CF.LastRestrictPingTime + 30
 	end
 
-	-- restrict pings?
-	if (NS.db.global.restrictPings and (NS.db.global.restrictPings >= 0)) then
-		-- check current ping status
-		if (status ~= NS.db.global.restrictPings) then
-			-- do you have lead?
-			local player = NS:GetPlayerName("full")
-			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-			if (NS.CommFlare.CF.PlayerRank ~= 0) then
-				-- none?
-				if (NS.db.global.restrictPings == 0) then
-					-- none
-					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.None)
-				elseif (NS.db.global.restrictPings == 1) then
-					-- leader
-					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Lead)
-				elseif (NS.db.global.restrictPings == 2) then
-					-- assist
-					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
-				elseif (NS.db.global.restrictPings == 3) then
-					-- tank/healer
-					PartyInfoSetRestrictPings(Enum.RestrictPingsTo.TankHealer)
+	-- should restrict?
+	if (time() > next_restrict) then
+		-- restrict pings?
+		local status = PartyInfoGetRestrictPings()
+		if (NS.db.global.restrictPings and (NS.db.global.restrictPings >= 0)) then
+			-- check current ping status
+			if (status ~= NS.db.global.restrictPings) then
+				-- do you have lead?
+				local player = NS:GetPlayerName("full")
+				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+				if (NS.CommFlare.CF.PlayerRank == 2) then
+					-- none?
+					if (NS.db.global.restrictPings == 0) then
+						-- none
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.None)
+					-- leaders?
+					elseif (NS.db.global.restrictPings == 1) then
+						-- leader
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Lead)
+					-- assistants?
+					elseif (NS.db.global.restrictPings == 2) then
+						-- assist
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+					-- tank/healers?
+					elseif (NS.db.global.restrictPings == 3) then
+						-- tank/healer
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.TankHealer)
+					end
+				-- do you have assist?
+				elseif (NS.CommFlare.CF.PlayerRank == 1) then
+					-- assistants?
+					if (NS.db.global.restrictPings == 2) then
+						-- assist
+						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+					end
 				end
 			end
 		end
+
+		-- last restrict pings time
+		NS.CommFlare.CF.LastRestrictPingTime = time()
 	end
+end
+
+-- check for invalid war crate position
+function NS:Check_For_Invalid_War_Crate_Position(x, y)
+	-- Azh-Kahet
+	if ((x == 0.62041199207306) and (y == 0.86914432048798)) then
+		-- invalid
+		return true
+	-- Hallowfall
+	elseif ((x == 0.32797354459763) and (y == 0.21520841121674)) then
+		-- invalid
+		return true
+	-- Isle of Dorn
+	elseif ((x == 0.69920414686203) and (y == 0.75819730758667)) then
+		-- invalid
+		return true
+	-- Ringing Deeps
+	elseif ((x == 0.62094902992249) and (y == 0.97968757152557)) then
+		-- invalid
+		return true
+	-- Siren Isle
+	elseif ((x == 0.95618790388107) and (y == 0.53979897499084)) then
+		-- invalid
+		return true
+	-- Undermine
+	elseif ((x == 0.22974973917007) and (y == 0.50090676546097)) then
+		-- invalid
+		return true
+	end
+
+	-- valid
+	return false
 end
 
 -- vignette check for alerts
 function NS:VignetteCheckForAlerts(list)
+	-- rdy war crate tracker being used?
+	if (NS.CommFlare.CF.RdyCrate) then
+		-- finished
+		return
+	end
+
+	--in instance?
+	local inInstance, instanceType = IsInInstance()
+	if (inInstance == true) then
+		-- finished
+		return
+	end
+
 	-- flying in?
 	local timer = 300
 	local message = nil
@@ -1836,7 +1916,7 @@ function NS:VignetteCheckForAlerts(list)
 		createPin = true
 		vignetteID = 6066
 		message = L["War Supply Crate has fully dropped to the ground!"]
-	-- war chest looted for the horde
+	-- war chest looted for the alliance
 	elseif (list[6067]) then
 		-- war supply looted has been looted for the alliance
 		createPin = true
@@ -1860,6 +1940,12 @@ function NS:VignetteCheckForAlerts(list)
 			if (not NS.CommFlare.CF.VignetteWarnings[guid]) then
 				-- has coordinates?
 				if (info.x and info.y) then
+					-- check for invalid locations
+					if (NS:Check_For_Invalid_War_Crate_Position(info.x, info.y) == true) then
+						-- finished
+						return
+					end
+
 					-- issue raid warning
 					NS.CommFlare.CF.VignetteWarnings[guid] = time()
 					TimerAfter(timer, function()
@@ -1948,4 +2034,124 @@ function NS:Build_Battleground_Commander_Sync_Data()
 
 	-- return string
 	return NS:TableToString("LibCompressHuffman", syncData)
+end
+
+-- enforce binding rules
+function NS:Enforce_Binding_Rules()
+	-- get current binding set
+	local which = GetCurrentBindingSet()
+	if ((which ~= Enum.BindingSet.Account) and (which ~= Enum.BindingSet.Character)) then
+		-- finished
+		return
+	end
+
+	-- target nearest enemy key not found yet?
+	if (not NS.CommFlare.CF.TargetNearestEnemy) then
+		-- try getting binding for target nearest enemy player first
+		NS.CommFlare.CF.TargetNearestEnemy = GetBindingKey("TARGETNEARESTENEMYPLAYER")
+		if (not NS.CommFlare.CF.TargetNearestEnemy) then
+			-- next try getting binding for target nearest enemy
+			NS.CommFlare.CF.TargetNearestEnemy = GetBindingKey("TARGETNEARESTENEMY")
+		end
+
+		-- still not found?
+		if (not NS.CommFlare.CF.TargetNearestEnemy) then
+			-- default TAB
+			NS.CommFlare.CF.TargetNearestEnemy = "TAB"
+		end
+	end
+
+	-- target previous enemy key not found yet?
+	if (not NS.CommFlare.CF.TargetPreviousEnemy) then
+		-- try getting binding for target previous enemy player first
+		NS.CommFlare.CF.TargetPreviousEnemy = GetBindingKey("TARGETPREVIOUSENEMYPLAYER")
+		if (not NS.CommFlare.CF.TargetPreviousEnemy) then
+			-- next try getting binding for target previous enemy
+			NS.CommFlare.CF.TargetPreviousEnemy = GetBindingKey("TARGETPREVIOUSENEMY")
+		end
+
+		-- still not found?
+		if (not NS.CommFlare.CF.TargetPreviousEnemy) then
+			-- default TAB
+			NS.CommFlare.CF.TargetPreviousEnemy = "SHIFT-TAB"
+		end
+	end
+
+	-- rebind target keys not enabled?
+	if (NS.charDB.profile.rebindTargetKeys ~= true) then
+		-- finished
+		return
+	end
+
+	-- not in combat lockdown?
+	if (InCombatLockdown() ~= true) then
+		-- in battleground?
+		local action, changes, status = nil, 0, nil
+		if (NS:IsInBattleground() == true) then
+			-- has target nearest enemy key?
+			if (NS.CommFlare.CF.TargetNearestEnemy) then
+				-- binding action for target nearest enemy not target nearest enemy?
+				action = GetBindingAction(NS.CommFlare.CF.TargetNearestEnemy)
+				if (action ~= "TARGETNEARESTENEMYPLAYER") then
+					-- save
+					status = SetBinding(NS.CommFlare.CF.TargetNearestEnemy, "TARGETNEARESTENEMYPLAYER")
+					if (status == true) then
+						-- increase
+						changes = changes + 1
+					end
+				end
+
+				-- binding action for target previous enemy not target previous enemy?
+				action = GetBindingAction(NS.CommFlare.CF.TargetPreviousEnemy)
+				if (action ~= "TARGETPREVIOUSENEMYPLAYER") then
+					-- save
+					status = SetBinding(NS.CommFlare.CF.TargetPreviousEnemy, "TARGETPREVIOUSENEMYPLAYER")
+					if (status == true) then
+						-- increase
+						changes = changes + 1
+					end
+				end
+
+				-- found changes?
+				if (changes > 0) then
+					-- save bindings
+					SaveBindings(which)
+					print(strformat(L["%s: Key Bindings updated for PVP mode."], NS.CommFlare.Title))
+				end
+			end
+		else
+			-- has target nearest enemy key?
+			if (NS.CommFlare.CF.TargetNearestEnemy) then
+				-- binding action for target nearest enemy not target nearest enemy?
+				action = GetBindingAction(NS.CommFlare.CF.TargetNearestEnemy)
+				if (action ~= "TARGETNEARESTENEMY") then
+					-- save
+					status = SetBinding(NS.CommFlare.CF.TargetNearestEnemy, "TARGETNEARESTENEMY")
+					if (status == true) then
+						-- increase
+						changes = changes + 1
+					end
+				end
+
+				-- binding action for target previous enemy not target previous enemy?
+				action = GetBindingAction(NS.CommFlare.CF.TargetPreviousEnemy)
+				if (action ~= "TARGETPREVIOUSENEMY") then
+					-- save
+					status = SetBinding(NS.CommFlare.CF.TargetPreviousEnemy, "TARGETPREVIOUSENEMY")
+					if (status == true) then
+						-- increase
+						changes = changes + 1
+					end
+				end
+
+				-- found changes?
+				if (changes > 0) then
+					-- save bindings
+					SaveBindings(which)
+					print(strformat(L["%s: Key Bindings updated for non-PVP mode."], NS.CommFlare.Title))
+					
+				end
+			end
+		end
+	end
 end

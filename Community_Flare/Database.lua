@@ -539,6 +539,7 @@ function NS:Cleanup_Members()
 
 	-- process all members
 	local removed = 0
+	NS.CommFlare.CF.KosList = NS.CommFlare.CF.KosList or {}
 	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.members) do
 		-- check for leader / owner
@@ -597,6 +598,18 @@ function NS:Cleanup_Members()
 		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= player)) then
 			-- save / update member guid / name
 			NS.db.global.MemberGUIDs[v.guid] = player
+		end
+	end
+
+	-- process all member GUIDs
+	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- KOS?
+		if (NS.CommFlare.CF.KosList[k]) then
+			-- has player and needs updating?
+			if (NS.CommFlare.CF.KosList[k].player and (NS.CommFlare.CF.KosList[k].player ~= v)) then
+				-- update player
+				NS.CommFlare.CF.KosList[k].player = v
+			end
 		end
 	end
 end

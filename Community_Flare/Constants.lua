@@ -165,3 +165,16 @@ NS.CommFlare.TeleportSpells = {
 	[446540] = "Teleport: Dornogal",
 	[448126] = "Wormhole Generator: Khaz Algar",
 }
+
+-- report times left
+NS.CommFlare.ReportTimesLeft = {
+	[0] = true,
+	[5] = true,
+	[10] = true,
+	[15] = true,
+	[20] = true,
+	[25] = true,
+	[30] = true,
+	[45] = true,
+	[60] = true,
+}

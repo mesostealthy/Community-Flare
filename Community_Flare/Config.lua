@@ -782,9 +782,27 @@ local BattlegroundGroup = {
 			get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
 			set = Block_Game_Menu_Hot_Keys_Set,
 		},
+		rebindTargetKeys = {
+			type = "toggle",
+			order = 11,
+			name = L["Always target nearest/previous enemy players inside PVP content?"],
+			desc = L["This will automatically bind your tab and shift+tab keys to only target enemy players inside PVP content."],
+			width = "full",
+			get = function(info) return NS.charDB.profile.rebindTargetKeys end,
+			set = function(info, value) NS.charDB.profile.rebindTargetKeys = value end,
+		},
+		displayQueueEntryTimeLeft = {
+			type = "toggle",
+			order = 12,
+			name = L["Display how much time left for people in your group to enter the queue?"],
+			desc = L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."],
+			width = "full",
+			get = function(info) return NS.db.global.displayQueueEntryTimeLeft end,
+			set = function(info, value) NS.db.global.displayQueueEntryTimeLeft = value end,
+		},
 		communityLogList = {
 			type = "multiselect",
-			order = 11,
+			order = 13,
 			name = L["Log roster list for matches from these communities?"],
 			desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
 			values = Setup_Community_List,
@@ -794,7 +812,7 @@ local BattlegroundGroup = {
 		},
 		purgeLogTime = {
 			type = "select",
-			order = 12,
+			order = 14,
 			name = L["Purge logged roster matches timeframe?"],
 			desc = L["This is the amount of time before it starts purging logged roster list for matches."],
 			values = {
@@ -808,12 +826,12 @@ local BattlegroundGroup = {
 		ashranTitle = {
 			name = L["Ashran Options"],
 			type = "header",
-			order = 13,
+			order = 15,
 			width = "full",
 		},
 		ashranMageWarnAttacked = {
 			type = "select",
-			order = 14,
+			order = 16,
 			width = 1.20,
 			name = L["Notify you when your Mage is under attack?"],
 			desc = L["This will show a raid warning to you when your Mage is under attack in Ashran."],
@@ -827,7 +845,7 @@ local BattlegroundGroup = {
 		},
 		ashranMageWarnFreq = {
 			type = "select",
-			order = 15,
+			order = 17,
 			name = L["Frequency?"],
 			desc = L["This is the amount of time delayed between Mage attacks in Ashran."],
 			values = {
@@ -841,7 +859,7 @@ local BattlegroundGroup = {
 		},
 		ashranAncientInfernoSpawned = {
 			type = "select",
-			order = 16,
+			order = 18,
 			name = L["Notify you when the Ancient Inferno has spawned?"],
 			desc = L["This will show a raid warning to you when the Ancient Inferno has spawned in Ashran."],
 			values = {
@@ -1292,7 +1310,9 @@ local GlobalDefaults = {
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
 		debugMode = false,
+		debugPrint = false,
 		displayPoppedGroups = false,
+		displayQueueEntryTimeLeft = false,
 		notifyPartyZoneChanges = false,
 		notifyWarCrateInbound = false,
 		pvpCombatLogging = false,
@@ -1336,6 +1356,7 @@ local CharDefaults = {
 		forceHealer = false,
 		forceTank = false,
 		maxPartySize = 5,
+		rebindTargetKeys = false,
 
 		-- community stuff
 		communityMain = 0,
