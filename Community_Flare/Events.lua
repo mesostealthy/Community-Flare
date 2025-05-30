@@ -66,6 +66,9 @@ local GetCVar                                   = _G.C_CVar.GetCVar
 local GetCVarDefault                            = _G.C_CVar.GetCVarDefault
 local SetCVar                                   = _G.C_CVar.SetCVar
 local DelvesUIHasActiveDelve                    = _G.C_DelvesUI.HasActiveDelve
+local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
+local EquipmentSetGetEquipmentSetInfo           = _G.C_EquipmentSet.GetEquipmentSetInfo
+local EquipmentSetUseEquipmentSet               = _G.C_EquipmentSet.UseEquipmentSet
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local MapCanSetUserWaypointOnMap                = _G.C_Map.CanSetUserWaypointOnMap
@@ -100,6 +103,7 @@ local time                                      = _G.time
 local tonumber                                  = _G.tonumber
 local tostring                                  = _G.tostring
 local bitband                                   = _G.bit.band
+local bitbnot                                   = _G.bit.bnot
 local mfloor                                    = _G.math.floor
 local strfind                                   = _G.string.find
 local strformat                                 = _G.string.format
@@ -1444,7 +1448,7 @@ end
 
 -- process chat communities channel message
 function NS.CommFlare:CHAT_MSG_COMMUNITIES_CHANNEL(msg, ...)
-	local text, sender, _, _, _, _, _, _, channelBaseName, _, _, bnSenderID = ...
+	local text, sender, _, _, _, _, _, _, channelBaseName, _, _, _, bnSenderID = ...
 	if (channelBaseName) then
 		-- split up
 		local name, clubId, streamId = strsplit(":", channelBaseName)
@@ -2566,8 +2570,13 @@ end
 
 -- process lfg update
 function NS.CommFlare:LFG_UPDATE(msg)
-	-- update brawl status
-	NS:Update_Brawl_Status()
+	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
+
+	-- is battleground queue?
+	if (bgQueue) then
+		-- update brawl status
+		NS:Update_Brawl_Status()
+	end
 end
 
 -- process notify pvp afk result
@@ -2827,18 +2836,15 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- initial clubs loaded
 			self:INITIAL_CLUBS_LOADED()
 		end
-	end
 
-	-- sanity checks
-	NS:Sanity_Checks()
-
-	-- initial login or reloading?
-	if ((isInitialLogin == true) or (isReloadingUi == true)) then
 		-- verify club streams
 		NS.CommFlare.CF.StreamsRetryCount = 0
 		local clubs = NS:Get_Enabled_Clubs()
 		NS:Verify_Club_Streams(clubs)
 	end
+
+	-- sanity checks
+	NS:Sanity_Checks()
 
 	-- run once only?
 	if (NS.CommFlare.CF.RunOnce == false) then
@@ -2873,6 +2879,24 @@ function NS.CommFlare:PLAYER_MAP_CHANGED(msg, ...)
 	if (NS.CommFlare.CF.InActiveDelve == true) then
 		-- exited
 		NS.CommFlare.CF.InActiveDelve = false
+	end
+end
+
+-- process player regen enabled
+function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
+	-- has regen options?
+	if (NS.CommFlare.CF.RegenOptions > 0) then
+		-- change equipment set?
+		if (bitband(NS.CommFlare.CF.RegenOptions, 1)) then
+			-- equip pvp gear equipment set
+			EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+
+			-- clear regen options bit
+			NS.CommFlare.CF.RegenOptions = bitband(NS.CommFlare.CF.RegenOptions, bitbnot(1))
+		else
+			-- reset
+			NS.CommFlare.CF.RegenOptions = 0
+		end
 	end
 end
 
@@ -2922,6 +2946,24 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 		if (NS.CommFlare.CF.PvpLoggingCombat ~= true) then
 			-- enable combat logging
 			LoggingCombat(true)
+		end
+	end
+
+	-- has pvp equipment set?
+	if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
+		-- can use equipment sets?
+		if (EquipmentSetCanUseEquipmentSets() == true) then
+			local name, iconFileID, setID, isEquipped = EquipmentSetGetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
+			if (name and (isEquipped == false)) then
+				-- not in combat lockdown?
+				if (InCombatLockdown() ~= true) then
+					-- equip pvp gear equipment set
+					EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+				else
+					-- set regen options bit
+					NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
+				end
+			end
 		end
 	end
 
@@ -3924,6 +3966,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
 	self:RegisterEvent("PLAYER_MAP_CHANGED")
+	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
 	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("PVP_MATCH_INACTIVE")
@@ -3988,6 +4031,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
 	self:UnregisterEvent("PLAYER_MAP_CHANGED")
+	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")
 	self:UnregisterEvent("PVP_MATCH_COMPLETE")
 	self:UnregisterEvent("PVP_MATCH_INACTIVE")
@@ -4207,25 +4251,25 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 	if (lower == "auras") then
 		-- list helpful auras for target
 		local numauras = 0
-		print("Helpful Auras:")
+		print(L["Helpful Auras:"])
 		AuraUtilForEachAura("target", "HELPFUL", nil, function(...)
 			-- display
 			local name, icon, count, debuffType, duration, expirationTime = ...
-			print("Aura: ", name)
+			print(strformat("%s: %s", L["Aura"], name))
 			numauras = numauras + 1
 		end)
-		print(strformat("Found %d Auras.", numauras))
+		print(strformat(L["Found %d Auras."], numauras))
 
-		-- list helpful auras for target
+		-- list harmful auras for target
 		numauras = 0
-		print("Harmful Auras:")
+		print(L["Harmful Auras:"])
 		AuraUtilForEachAura("target", "HARMFUL", nil, function(...)
 			-- display
 			local name, icon, count, debuffType, duration, expirationTime = ...
-			print("Aura: ", name)
+			print(strformat("%s: %s", L["Aura"], name))
 			numauras = numauras + 1
 		end)
-		print(strformat("Found %d Auras.", numauras))
+		print(strformat(L["Found %d Auras."], numauras))
 	elseif (lower == "debug") then
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then

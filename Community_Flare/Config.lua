@@ -11,6 +11,9 @@ local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
+local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
+local EquipmentSetGetEquipmentSetIDs            = _G.C_EquipmentSet.GetEquipmentSetIDs
+local EquipmentSetGetEquipmentSetInfo           = _G.C_EquipmentSet.GetEquipmentSetInfo
 local ipairs                                    = _G.ipairs
 local next                                      = _G.next
 local pairs                                     = _G.pairs
@@ -668,6 +671,37 @@ local function Set_Force_DPS_Item(info, value)
 	NS:Enforce_PVP_Roles()
 end
 
+-- setup equipment sets lists
+local function Setup_Equipment_Sets_List(info)
+	-- can use equipment sets?
+	local list = {}
+	list[-1] = L["None"]
+	if (EquipmentSetCanUseEquipmentSets() == true) then
+		-- process all equipment sets
+		local ids = EquipmentSetGetEquipmentSetIDs()
+		for k,v in ipairs(ids) do
+			-- add to list by name
+			local name = EquipmentSetGetEquipmentSetInfo(v)
+			list[v] = name
+		end
+	end
+
+	-- return list
+	return list
+end
+
+-- equipment sets disabled?
+local function Equipment_Sets_Disabled()
+	-- can use equipment sets?
+	if (EquipmentSetCanUseEquipmentSets() == true) then
+		-- enabled
+		return false
+	else
+		-- disabled
+		return true
+	end
+end
+
 -- battleground group
 local BattlegroundGroup = {
 	name = L["Battleground Options"],
@@ -743,6 +777,7 @@ local BattlegroundGroup = {
 				[1] = L["None"],
 				[2] = L["Local Warning Only"],
 			},
+			width = "full",
 			get = function(info) return NS.db.global.warningLeavingBG end,
 			set = function(info, value) NS.db.global.warningLeavingBG = value end,
 		},
@@ -1169,9 +1204,22 @@ local QueueGroup = {
 			get = function(info) return NS.db.global.warningQueuePaused end,
 			set = function(info, value) NS.db.global.warningQueuePaused = value end,
 		},
+		warningLowWarModeItemCount = {
+			type = "select",
+			order = 7,
+			name = L["Warn when you are low or out of War Mode PVP Items?"],
+			desc = L["This will provide a warning message when you are low or out of War Mode PVP items when queuing."],
+			values = {
+				[0] = L["Disabled"],
+				[5] = L["5 Charges"],
+				[10] = L["10 Charges"],
+			},
+			get = function(info) return NS.db.global.warningLowWarModeItemCount end,
+			set = function(info, value) NS.db.global.warningLowWarModeItemCount = value end,
+		},
 		warningHonorCapped = {
 			type = "toggle",
-			order = 7,
+			order = 8,
 			name = L["Warn when Honor capped or close to it?"],
 			desc = L["This will provide a warning message when you are honor capped, or close to it when queuing."],
 			width = "full",
@@ -1180,7 +1228,7 @@ local QueueGroup = {
 		},
 		uninvitePlayersAFK = {
 			type = "select",
-			order = 8,
+			order = 9,
 			name = L["Uninvite any players that are AFK?"],
 			desc = L["Pops up a box to uninvite any users that are AFK at the time of queuing."],
 			values = {
@@ -1195,7 +1243,7 @@ local QueueGroup = {
 		},
 		forcedRoles = {
 			type = "group",
-			order = 9,
+			order = 10,
 			name = "Force PVP Role?",
 			inline = true,
 			args = {
@@ -1229,6 +1277,16 @@ local QueueGroup = {
 					set = Set_Force_DPS_Item,
 				},
 			},
+		},
+		pvpGearEquipmentSet = {
+			type = "select",
+			order = 11,
+			name = L["PVP Gear Equipment Set"],
+			desc = L["This will automatically equip your PVP Gear Set upon queing for a battleground."],
+			values = Setup_Equipment_Sets_List,
+			disabled = Equipment_Sets_Disabled,
+			get = function(info) return NS.charDB.profile.pvpGearEquipmentSet end,
+			set = function(info, value) NS.charDB.profile.pvpGearEquipmentSet = value end,
 		},
 	}
 }
@@ -1330,6 +1388,7 @@ local GlobalDefaults = {
 		restrictPings = 0,
 		uninvitePlayersAFK = 0,
 		warningLeavingBG = 2,
+		warningLowWarModeItemCount = 0,
 	},
 }
 
@@ -1356,6 +1415,7 @@ local CharDefaults = {
 		forceHealer = false,
 		forceTank = false,
 		maxPartySize = 5,
+		pvpGearEquipmentSet = -1,
 		rebindTargetKeys = false,
 
 		-- community stuff

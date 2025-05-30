@@ -1794,6 +1794,38 @@ function NS:TomTomAddWaypoint(title, x, y)
 	return nil
 end
 
+-- add tom tom way point
+function NS:TomTomAddWaypointByMapID(mapID, title, x, y)
+	-- sanity checks
+	if (not mapID or not title or not x or not y) then
+		-- finished
+		return nil
+	end
+
+	-- has tom tom?
+	local TT = TomTom
+	if (TT and TT.AddWaypoint) then
+		-- setup options
+		local options =
+		{
+			desc = tostring(title),
+			title = tostring(title),
+			persistent = true,
+			minimap = true,
+			world = true,
+			callbacks = nil,
+			silent = true,
+			from = "CommFlare",
+		}
+
+		-- add way point
+		return securecallfunction(TT.AddWaypoint, TT, mapID, tonumber(x), tonumber(y), options)
+	end
+
+	-- not enabled
+	return nil
+end
+
 -- verify ping status
 function NS:VerifyPingStatus()
 	-- already been restricted?

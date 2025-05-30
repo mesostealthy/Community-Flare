@@ -23,6 +23,7 @@ local GetNumBattlefieldScores                   = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                        = _G.GetNumGroupMembers
 local GetPVPRoles                               = _G.GetPVPRoles
 local GetRaidRosterInfo                         = _G.GetRaidRosterInfo
+local InCombatLockdown                          = _G.InCombatLockdown
 local IsAddOnLoaded                             = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
 local IsInGroup                                 = _G.IsInGroup
 local IsInRaid                                  = _G.IsInRaid
@@ -39,6 +40,10 @@ local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInf
 local BattleNetGetFriendGameAccountInfo         = _G.C_BattleNet.GetFriendGameAccountInfo
 local BattleNetGetFriendNumGameAccounts         = _G.C_BattleNet.GetFriendNumGameAccounts
 local CurrencyInfoGetCurrencyInfo               = _G.C_CurrencyInfo.GetCurrencyInfo
+local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
+local EquipmentSetGetEquipmentSetInfo           = _G.C_EquipmentSet.GetEquipmentSetInfo
+local EquipmentSetUseEquipmentSet               = _G.C_EquipmentSet.UseEquipmentSet
+local ItemGetItemCount                          = _G.C_Item.GetItemCount
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
@@ -61,6 +66,7 @@ local time                                      = _G.time
 local tonumber                                  = _G.tonumber
 local tostring                                  = _G.tostring
 local type                                      = _G.type
+local bitbor                                    = _G.bit.bor
 local mfloor                                    = _G.math.floor
 local strformat                                 = _G.string.format
 local strmatch                                  = _G.string.match
@@ -2161,6 +2167,7 @@ function NS:Update_Battlefield_Status(index)
 	end
 
 	-- is tracked pvp?
+	local shouldCheckEquipmentSet = false
 	local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 	if (isTracked == true) then
 		-- has leader GUID?
@@ -2176,6 +2183,9 @@ function NS:Update_Battlefield_Status(index)
 		if (status == "queued") then
 			-- just entering queue?
 			if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
+				-- check equipmentset
+				shouldCheckEquipmentSet = true
+
 				-- warn when honor capped?
 				if (NS.db.global.warningHonorCapped == true) then
 					-- get honor info
@@ -2194,6 +2204,20 @@ function NS:Update_Battlefield_Status(index)
 								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
 							end
 						end
+					end
+				end
+
+				-- war when low or out of war mode pvp items?
+				if (NS.db.global.warningLowWarModeItemCount > 0) then
+					-- check war mode item counts
+					local count1 = ItemGetItemCount(224048) -- electric shock
+					local count2 = ItemGetItemCount(224049) -- web pull
+					if ((count1 < NS.db.global.warningLowWarModeItemCount) or (count2 < NS.db.global.warningLowWarModeItemCount)) then
+						-- add tom tom way point
+						local uid = NS:TomTomAddWaypointByMapID(2339, "Maara War Mode PVP Vendor", "0.6020", "0.7000") -- Maara NPC in Dornogal
+
+						-- issue local raid warning (with raid warning audio sound)
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Low or out of War Mode PVP Items! Go get some!"])
 					end
 				end
 
@@ -2295,6 +2319,9 @@ function NS:Update_Battlefield_Status(index)
 		elseif (status == "confirm") then
 			-- queue just popped?
 			if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped == 0)) then
+				-- check equipmentset
+				shouldCheckEquipmentSet = true
+
 				-- update local group
 				NS.CommFlare.CF.LocalQueues[index].popped = time()
 				NS.CommFlare.CF.SocialQueues["local"].name = mapName
@@ -2458,6 +2485,27 @@ function NS:Update_Battlefield_Status(index)
 			NS.CommFlare.CF.LocalQueues[index] = nil
 			NS.CommFlare.CF.SocialQueues["local"] = nil
 			NS:Update_Group("local")
+		end
+	end
+
+	-- should check equipment set?
+	if (shouldCheckEquipmentSet == true) then
+		-- has pvp equipment set?
+		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
+			-- can use equipment sets?
+			if (EquipmentSetCanUseEquipmentSets() == true) then
+				local name, iconFileID, setID, isEquipped = EquipmentSetGetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
+				if (name and (isEquipped == false)) then
+					-- not in combat lockdown?
+					if (InCombatLockdown() ~= true) then
+						-- equip pvp gear equipment set
+						EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+					else
+						-- set regen options bit
+						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
+					end
+				end
+			end
 		end
 	end
 end

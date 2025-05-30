@@ -20,11 +20,8 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.26.001
--NEW SETTING: Always target nearest/previous enemy players inside PVP content? (Inside Battleground Options)
--NEW SETTING: Display how much time left for people in your group to enter the queue? (Inside Battleground Options)
--BUGFIX: Right click on raid nameplates to request party leadership. (Obeys Community & Priority rules.)
--BUGFIX: Invalid incoming War Crate notifications are not reported anymore.
--!status now reports the length of the match upon sending completed messages.
--Ready Check now reports number of Tanks, Healers & DPS in your party.
--TOC updated to v11.1.5
+v1.27.001:
+-NEW SETTING: Warn when you are low or out of War Mode PVP Items? (Inside Queue Options)
+-NEW SETTING: PVP Gear Equipment Set (Inside Queue Options)
+-BUGFIX: Right click on Community Players -> Last Seen working again!
+--This will equip your selected Equipment Set upon queuing up for a Battleground.

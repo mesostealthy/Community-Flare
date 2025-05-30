@@ -18,7 +18,10 @@ local strformat                                 = _G.string.format
 -- show history
 function NS:Show_History(owner, rootDescription, contextData)
 	local player = contextData.name
-	if (not contextData.server) then
+	if (contextData.server) then
+		-- add realm name
+		player = player .. "-" .. contextData.server
+	else
 		-- add realm name
 		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
 	end

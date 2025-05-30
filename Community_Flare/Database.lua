@@ -705,7 +705,8 @@ function NS:Rebuild_Community_Leaders()
 	NS.CommFlare.CF.CommunityLeaders = {}
 	for k,v in pairs(NS.db.global.members) do
 		-- owner?
-		if (v.owner) then
+		local added = false
+		if (v.owner == true) then
 			-- always verify leader status
 			local player = v.name
 			local sharesLeaderCommunity = false
@@ -742,14 +743,17 @@ function NS:Rebuild_Community_Leaders()
 				-- allowed?
 				if (allowed == true) then
 					-- add first
+					added = true
 					NS.CommFlare.CF.CommunityLeaders[count] = v.name
 
 					-- next
 					count = count + 1
 				end
 			end
-		-- leader?
-		elseif (v.leader) then
+		end
+
+		-- not added and leader?
+		if ((added == false) and (v.leader == true)) then
 			-- always verify leader status
 			local player = v.name
 			local sharesLeaderCommunity = false
@@ -786,6 +790,7 @@ function NS:Rebuild_Community_Leaders()
 				-- allowed?
 				if (allowed == true) then
 					-- has priority?
+					added = true
 					if (v.priority and (v.priority > 0) and (v.priority < NS.CommFlare.CF.MaxPriority)) then
 						-- not created?
 						if (not orderedLeaders[v.priority]) then
@@ -801,8 +806,10 @@ function NS:Rebuild_Community_Leaders()
 					end
 				end
 			end
-		-- moderator?
-		elseif (v.moderator) then
+		end
+
+		-- not added and moderator?
+		if ((added == false) and (v.moderator == true)) then
 			-- always verify leader status
 			local player = v.name
 			local sharesLeaderCommunity = false
@@ -839,6 +846,7 @@ function NS:Rebuild_Community_Leaders()
 				-- allowed?
 				if (allowed == true) then
 					-- has priority?
+					added = true
 					if (v.priority and (v.priority > 0) and (v.priority < NS.CommFlare.CF.MaxPriority)) then
 						-- not created?
 						if (not orderedModerators[v.priority]) then
@@ -851,7 +859,7 @@ function NS:Rebuild_Community_Leaders()
 					else
 						-- add to unordered moderators
 						tinsert(unorderedModerators, v.name)
-					end	
+					end
 				end
 			end
 		end
