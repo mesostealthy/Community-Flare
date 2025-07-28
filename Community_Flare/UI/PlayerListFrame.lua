@@ -10,10 +10,12 @@ local CreateDataProvider                        = _G.CreateDataProvider
 local CreateFromMixins                          = _G.CreateFromMixins
 local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                             = _G.DevTools_Dump
+local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local StaticPopup_Show                          = _G.StaticPopup_Show
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
 local UIDropDownMenu_Initialize                 = _G.UIDropDownMenu_Initialize
+local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
 local ipairs                                    = _G.ipairs
 local pairs                                     = _G.pairs
@@ -39,6 +41,7 @@ function CF_PlayerListFrameMixin:OnLoad()
 	self.HeaderFrame.Title:SetText(title)
 
 	-- register left button for dragging
+	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 
 	-- closes when you press Escape
@@ -231,11 +234,10 @@ function CF_PlayerListMixin:RefreshListDisplay()
 			local index = 1
 			for k,v in ipairs(self.KosList) do
 				-- has guid?
-				local info = nil
 				local guid = self.PlayerNames[v]
 				if (guid) then
 					-- insert
-					info = { index = index, guid = guid, player = v, kos = true}
+					local info = { index = index, guid = guid, player = v, kos = true}
 					dataProvider:Insert({info=info})
 					index = index + 1
 				end
@@ -259,7 +261,7 @@ function CF_PlayerListMixin:RefreshListDisplay()
 			end
 		end
 
-		-- update player count
+		-- update counts
 		self.PlayerCount:SetText(strformat("%d KOS, %d Players", #self.KosList, #self.PlayerList))
 
 		-- update scroll box
@@ -365,7 +367,7 @@ function CF_PlayerListMixin:OnLoad()
 	local track = self.ScrollBar.Track
 	if (track) then
 		-- disable artwork layer
-		track:DisableDrawLayer('ARTWORK')
+		track:DisableDrawLayer("ARTWORK")
 	end
 end
 
@@ -429,7 +431,7 @@ function CF_PlayerListEntryMixin:OnClick(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- display info
-		print("GUID: ", self.guid)
+		print(strformat("%s: %s", L["GUID"], self.guid))
 
 		-- has member note?
 		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
@@ -772,6 +774,99 @@ function UnitPopupCFCopyPlayerNameMixin:OnClick()
 	end
 end
 
+-- copy player name mixin
+UnitPopupCFRefreshPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFRefreshPlayerNameMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- get set player note text
+function UnitPopupCFRefreshPlayerNameMixin:GetText()
+	-- return text
+	return L["Refresh Player Name"]
+end
+
+-- refresh player name
+local refresh_retries = 0
+local function RefreshPlayerName(guid, old_player)
+	-- invalid old player?
+	if (not old_player) then
+		-- finished
+		return
+	end
+
+	-- get player info by GUID
+	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+	if (not name or (name == "")) then
+		-- increase
+		refresh_retries = refresh_retries + 1
+		if (refresh_retries >= 5) then
+			-- finished
+			return
+		end
+
+		-- try again
+		TimerAfter(1, function()
+			-- call recursively
+			RefreshPlayerName(guid, old_player)
+		end)
+		return
+	end
+
+	-- check for old member?
+	local player = name
+	if (not realm or (realm == "")) then
+		-- add realm name
+		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+	else
+		-- use realm name
+		player = player .. "-" .. realm
+	end
+
+	-- has name updated?
+	if (player ~= old_player) then
+		-- kos target?
+		local updated = false
+		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
+			-- update player
+			NS.db.global.MemberGUIDs[guid] = player
+			NS.CommFlare.CF.KosList[guid].player = player
+			updated = true
+		end
+
+		-- check for old player
+		if (NS.db.global.members[old_player]) then
+			-- move member
+			NS.db.global.members[old_player].name = player
+			NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+			NS.db.global.members[old_player] = nil
+			updated = true
+		end
+
+		-- updated?
+		if (updated == true) then
+			-- refresh list
+			CF_PlayerListFrame:RefreshList()
+		end
+	end
+end
+
+-- copy player note on click
+function UnitPopupCFRefreshPlayerNameMixin:OnClick()
+	-- find proper dropdown menu
+	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
+	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+		-- refresh player name
+		refresh_retries = 0
+		local guid = dropdownMenu.guid
+		local player = dropdownMenu.info.player
+		RefreshPlayerName(guid, player)
+	end
+end
+
 -- get entries
 function UnitPopupMenuCFQueues:GetEntries()
 	-- return menu buttons
@@ -781,6 +876,7 @@ function UnitPopupMenuCFQueues:GetEntries()
 		UnitPopupCFDeletePlayerButtonMixin,
 		UnitPopupCFSetPlayerNoteButtonMixin,
 		UnitPopupCFCopyPlayerNameMixin,
+		UnitPopupCFRefreshPlayerNameMixin,
 	}
 end
 
@@ -891,5 +987,47 @@ function CF_PlayerListSearchBox_OnTextChanged(self)
 		-- show clear button
 		self.searchIcon:SetVertexColor(1.0, 1.0, 1.0);
 		self.clearButton:Show();
+	end
+end
+
+-- create table
+CF_PlayerListResizeBottomLeftButtonMixin = {}
+
+-- on mouse down
+function CF_PlayerListResizeBottomLeftButtonMixin:OnMouseDown(button)
+	-- left button?
+	if (button == "LeftButton") then
+		-- start sizing
+		CF_PlayerListFrame:StartSizing("BOTTOMLEFT")
+	end
+end
+
+-- on mouse up
+function CF_PlayerListResizeBottomLeftButtonMixin:OnMouseUp(button)
+	-- left button?
+	if (button == "LeftButton") then
+		-- stop sizing
+		CF_PlayerListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+	end
+end
+
+-- create table
+CF_PlayerListResizeBottomRightButtonMixin = {}
+
+-- on mouse down
+function CF_PlayerListResizeBottomRightButtonMixin:OnMouseDown(button)
+	-- left button?
+	if (button == "LeftButton") then
+		-- start sizing
+		CF_PlayerListFrame:StartSizing("BOTTOMRIGHT")
+	end
+end
+
+-- on mouse up
+function CF_PlayerListResizeBottomRightButtonMixin:OnMouseUp(button)
+	-- left button?
+	if (button == "LeftButton") then
+		-- stop sizing
+		CF_PlayerListFrame:StopMovingOrSizing("BOTTOMRIGHT")
 	end
 end

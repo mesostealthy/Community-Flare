@@ -1,5 +1,10 @@
-v1.27.001:
--NEW SETTING: Warn when you are low or out of War Mode PVP Items? (Inside Queue Options)
--NEW SETTING: PVP Gear Equipment Set (Inside Queue Options)
--BUGFIX: Right click on Community Players -> Last Seen working again!
---This will equip your selected Equipment Set upon queuing up for a Battleground.
+v1.28.001:
+-NEW SETTING: Vehicle Alert System to alert you when Vehicles die/respawn in Isle of Conquest.
+-Raid Warning options not allowed to issue a Raid Warning to everyone if it's capable of spamming.
+-Added custom version of LibRangeCheck-3.0 so CF can add items to the Spells tables.
+-Added resize ability for Area POI, Player & Vignettes List Frames.
+-Player List Manager: Refresh Player Name in right click menu.
+-Disabling Community Right Click Menu will ask to Reload UI now.
+-/comf vignettes now has a GUI that lists the Vignettes.
+-/comf pois now has a GUI that lists the POIs.
+-TOC updated to v11.1.7

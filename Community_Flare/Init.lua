@@ -32,7 +32,7 @@ local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local SendChatMessage                             = _G.SendChatMessage
+local SendChatMessage                             = _G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage or _G.SendChatMessage
 local SetBinding                                  = _G.SetBinding
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
@@ -207,6 +207,154 @@ function CommunityFlare_GetVar(name)
 
 	-- nothing
 	return nil
+end
+
+-- has table updated?
+function NS:HasTableUpdated(table1, table2)
+	-- process all
+	local count = 0
+	for k,v in pairs(table1) do
+		-- updated?
+		if (table2[k] ~= v) then
+			-- not table?
+			--if (type(v) ~= "table") then
+			--	-- display
+			--	print(strformat("%s = %s", tostring(k), tostring(v)))
+			--end
+
+			-- updated
+			count = count + 1
+		end
+
+		-- table?
+		if (type(v) == "table") then
+			-- call recursively
+			local updated = NS:HasTableUpdated(v, table2[k])
+			if (updated == true) then
+				-- yes
+				return true
+			end
+		end
+	end
+
+	-- updated?
+	if (count > 0) then
+		-- yup
+		return true
+	else
+		-- nope
+		return false
+	end
+end
+
+-- check for table additions
+function NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
+	-- check for added fields
+	local count = 0
+	for k,v in pairs(table1) do
+		-- build proper field
+		local field = tostring(k)
+		if (basename) then
+			-- sub field
+			field = strformat("%s.%s", basename, field)
+		end
+
+		-- not in table2?
+		if (table2[k] == nil) then
+			-- new
+			print(strformat("ADDED %s: Item %s, %s = %s", tabletype, name, field, tostring(v)))
+			count = count + 1
+
+			-- add
+			table2[k] = table1[k]
+		-- table?
+		elseif (type(table1[k]) == "table") then
+			-- call recursively
+			count = count + NS:CheckForTableAdditions(tabletype, name, table1[k], table2[k], field)
+		end
+	end
+
+	-- return count
+	return count
+end
+
+-- check for table deltions
+function NS:CheckForTableDeletions(tabletype, name, table1, table2, basename)
+	-- check for added fields
+	local count = 0
+	for k,v in pairs(table2) do
+		-- build proper field
+		local field = tostring(k)
+		if (basename) then
+			-- sub field
+			field = strformat("%s.%s", basename, field)
+		end
+
+		-- not in table1?
+		if (table1[k] == nil) then
+			-- new
+			print(strformat("DELETED %s: Item %s, %s = %s", tabletype, name, field, tostring(v)))
+			count = count + 1
+
+			-- delete
+			table2[k] = nil
+		-- table?
+		elseif (type(table1[k]) == "table") then
+			-- call recursively
+			count = count + NS:CheckForTableDeletions(tabletype, name, table1[k], table2[k], field)
+		end
+	end
+
+	-- return count
+	return count
+end
+
+-- check for table updates
+function NS:CheckForTableUpdates(tabletype, name, table1, table2, basename)
+	-- invalid tables?
+	if (not table1 or not table2) then
+		-- return 1
+		return 1
+	end
+
+	-- check for updated fields
+	local count = 0
+	for k,v in pairs(table1) do
+		-- build proper field
+		local field = tostring(k)
+		if (basename) then
+			-- sub field
+			field = strformat("%s.%s", basename, field)
+		end
+
+		-- updated?
+		if (table1[k] ~= table2[k]) then
+			-- table?
+			if (type(table1[k]) == "table") then
+				-- call recursively
+				local count2 = NS:CheckForTableUpdates(tabletype, name, table1[k], table2[k], field)
+				if (count2 > 0) then
+					-- add to count
+					count = count + count2
+				else
+					-- updated
+					count = count + 1
+				end
+			else
+				-- updated
+				count = count + 1
+			end
+
+			-- update field
+			table2[k] = table1[k]
+		end
+	end
+
+	-- check for table deletions
+	count = count + NS:CheckForTableDeletions(tabletype, name, table1, table2, basename)
+
+	-- return count
+	return count
 end
 
 -- compare versions
@@ -564,6 +712,7 @@ function NS:LoadSession()
 	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID
 	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
+	NS.CommFlare.CF.VehicleDeaths = NS.charDB.profile.VehicleDeaths or {}
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 
 	-- load match log stuff
@@ -609,6 +758,7 @@ function NS:SaveSession()
 	NS.charDB.profile.PartyGUID = NS.CommFlare.CF.PartyGUID
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
+	NS.charDB.profile.VehicleDeaths = NS.CommFlare.CF.VehicleDeaths or {}
 	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
 
 	-- in battleground?
@@ -2187,3 +2337,93 @@ function NS:Enforce_Binding_Rules()
 		end
 	end
 end
+
+-- add spell for GetRangeCheck3.0
+function NS:AddRangeCheckSpell(classType, spellType, spellID)
+	-- not loaded?
+	if (not NS.Libs.LibRangeCheck) then
+		-- not loaded
+		return
+	end
+
+	-- not patched?
+	if (not NS.Libs.LibRangeCheck.GetSpellTables) then
+		-- not patched
+		return
+	end
+
+	-- get spell tablkes
+	local FriendSpells, HarmSpells, ResSpells, PetSpells = NS.Libs.LibRangeCheck:GetSpellTables()
+	if (FriendSpells and HarmSpells and ResSpells and PetSpells) then
+		-- friend spell?
+		if (spellType == "Friend") then
+			-- find class type table
+			local list = FriendSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- added already
+						return
+					end
+				end
+
+				-- add spell
+				tinsert(FriendSpells[classType], spellID)
+			end
+		-- harm spell?
+		elseif (spellType == "Harm") then
+			-- find class type table
+			local list = HarmSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- added already
+						return
+					end
+				end
+
+				-- add spell
+				tinsert(HarmSpells[classType], spellID)
+			end
+		-- res spell?
+		elseif (spellType == "Res") then
+			-- find class type table
+			local list = ResSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- added already
+						return
+					end
+				end
+
+				-- add spell
+				tinsert(ResSpells[classType], spellID)
+			end
+		-- pet spell?
+		elseif (spellType == "Pet") then
+			-- find class type table
+			local list = PetSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- added already
+						return
+					end
+				end
+
+				-- add spell
+				tinsert(PetSpells[classType], spellID)
+			end
+		end
+	end
+end
+ 

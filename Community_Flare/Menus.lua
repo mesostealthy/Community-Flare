@@ -9,6 +9,7 @@ local _G                                        = _G
 local IsInGroup                                 = _G.IsInGroup
 local IsInInstance                              = _G.IsInInstance
 local IsInRaid                                  = _G.IsInRaid
+local Menu_ModifyMenu                           = _G.Menu.ModifyMenu
 local date                                      = _G.date
 local print                                     = _G.print
 local tostring                                  = _G.tostring
@@ -17,7 +18,14 @@ local strformat                                 = _G.string.format
 
 -- show history
 function NS:Show_History(owner, rootDescription, contextData)
+	-- verify player
 	local player = contextData.name
+	if (not player) then
+		-- finished
+		return
+	end
+
+	-- has server?
 	if (contextData.server) then
 		-- add realm name
 		player = player .. "-" .. contextData.server

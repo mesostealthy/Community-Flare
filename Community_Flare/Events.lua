@@ -10,11 +10,11 @@ local AcceptGroup                               = _G.AcceptGroup
 local AchievementFrame_LoadUI                   = _G.AchievementFrame_LoadUI
 local ChatFrame_AddMessageEventFilter           = _G.ChatFrame_AddMessageEventFilter
 local CollectionsJournal_LoadUI                 = _G.CollectionsJournal_LoadUI
-local CombatLogGetCurrentEventInfo              = _G.CombatLogGetCurrentEventInfo
 local Communities_LoadUI                        = _G.Communities_LoadUI
 local CreateDataProvider                        = _G.CreateDataProvider
 local DeclineQuest                              = _G.DeclineQuest
 local EncounterJournal_LoadUI                   = _G.EncounterJournal_LoadUI
+local FlashClientIcon                           = _G.FlashClientIcon
 local GetAddOnCPUUsage                          = _G.GetAddOnCPUUsage
 local GetAddOnMemoryUsage                       = _G.GetAddOnMemoryUsage
 local GetAutoCompletePresenceID                 = _G.GetAutoCompletePresenceID
@@ -77,7 +77,6 @@ local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
 local PartyInfoLeaveParty                       = _G.C_PartyInfo.LeaveParty
 local PvPGetActiveMatchState                    = _G.C_PvP.GetActiveMatchState
 local PvPGetActiveMatchDuration                 = _G.C_PvP.GetActiveMatchDuration
-local PvPGetBattlefieldVehicles                 = _G.C_PvP.GetBattlefieldVehicles
 local PvPGetCustomVictoryStatID                 = _G.C_PvP.GetCustomVictoryStatID
 local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
@@ -86,9 +85,6 @@ local PvPIsArena                                = _G.C_PvP.IsArena
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local PvPIsMatchFactional                       = _G.C_PvP.IsMatchFactional
 local PvPIsWarModeFeatureEnabled                = _G.C_PvP.IsWarModeFeatureEnabled
-local VignetteInfoGetVignettes                  = _G.C_VignetteInfo.GetVignettes
-local VignetteInfoGetVignetteInfo               = _G.C_VignetteInfo.GetVignetteInfo
-local VignetteInfoGetVignettePosition           = _G.C_VignetteInfo.GetVignettePosition
 local Settings_OpenToCategory                   = _G.Settings.OpenToCategory
 local SocialQueueGetGroupInfo                   = _G.C_SocialQueue.GetGroupInfo
 local TimerAfter                                = _G.C_Timer.After
@@ -121,243 +117,6 @@ local hook_LeaveBattlefield_installed = false
 local hook_RejectProposal_installed = false
 local hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = false
 local hook_PVPMatchScoreboard_ScrollBox_ScrollToBegin_installed = false
-
--- list current POI's
-function NS:List_POIs()
-	-- get map id
-	print(L["Dumping POIs:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		print(L["Map ID: Not Found"])
-		return
-	end
-
-	-- get map info
-	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-	if (not NS.CommFlare.CF.MapInfo) then
-		-- not found
-		print(L["Map ID: Not Found"])
-		return
-	end
-
-	-- process any POI's
-	print(strformat("Map Name: %s", NS.CommFlare.CF.MapInfo.name))
-	local pois = AreaPoiInfoGetAreaPOIForMap(NS.CommFlare.CF.MapID)
-	if (pois and (#pois > 0)) then
-		-- display infos
-		print(strformat(L["Count: %d"], #pois))
-		for _,v in ipairs(pois) do
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
-			if (NS.CommFlare.CF.POIInfo and NS.CommFlare.CF.POIInfo.areaPoiID) then
-				-- has texture index?
-				local text = strformat("%s: ID = %d", NS.CommFlare.CF.POIInfo.name, NS.CommFlare.CF.POIInfo.areaPoiID)
-				if (NS.CommFlare.CF.POIInfo.textureIndex) then
-					-- add texture index
-					text = strformat("%s; textureIndex = %d", text, NS.CommFlare.CF.POIInfo.textureIndex)
-				end
-
-				-- has position?
-				if (NS.CommFlare.CF.POIInfo.position) then
-					-- validate position
-					local x, y = NS.CommFlare.CF.POIInfo.position:GetXY()
-					if (x and y) then
-						-- add position
-						text = strformat("%s; x = %s; y = %s", text, tostring(x), tostring(y))
-					end
-				end
-
-				-- has description?
-				if (NS.CommFlare.CF.POIInfo.description and (NS.CommFlare.CF.POIInfo.description ~= "")) then
-					-- add description
-					text = strformat("%s; Description = %s", text, NS.CommFlare.CF.POIInfo.description)
-				end
-
-				-- display info
-				print(text)
-			end
-		end
-	else
-		-- none found
-		print(strformat(L["Count: %d"], 0))
-	end
-end
-
--- get current vehicles
-function NS:Get_Current_Vehicles()
-	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		return nil
-	end
-
-	-- get map info
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-	if (not NS.CommFlare.CF.MapInfo) then
-		-- not found
-		return nil
-	end
-
-	-- process any vehicles
-	local vehicles = PvPGetBattlefieldVehicles(NS.CommFlare.CF.MapID)
-	if (vehicles and (#vehicles > 0)) then
-		-- display infos
-		local vehicleList = {}
-		for k,v in ipairs(vehicles) do
-			-- insert
-			tinsert(vehicleList, v)
-		end
-
-		-- return vehicle list
-		return vehicleList
-	end
-
-	-- none
-	return nil
-end
-
--- list vehicles
-function NS:List_Vehicles()
-	-- get map id
-	print(L["Dumping Vehicles:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		print(L["Map ID: Not Found"])
-		return
-	end
-
-	-- get map info
-	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-	if (not NS.CommFlare.CF.MapInfo) then
-		-- not found
-		print(L["Map ID: Not Found"])
-		return
-	end
-
-	-- process any vehicles
-	local vehicles = PvPGetBattlefieldVehicles(NS.CommFlare.CF.MapID)
-	if (vehicles and (#vehicles > 0)) then
-		-- display infos
-		print(strformat(L["Count: %d"], #vehicles))
-		for k,v in ipairs(vehicles) do
-			-- display
-			print(strformat("%s: %d; isAlive = %s; Position = %s, %s", v.name, k, tostring(v.isAlive), tostring(v.x), tostring(v.y)))
-		end
-	else
-		-- none found
-		print(strformat(L["Count: %d"], 0))
-	end
-end
-
--- get current vignettes
-function NS:Get_Current_Vignettes()
-	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		return nil
-	end
-
-	-- process any vignettes
-	local guids = VignetteInfoGetVignettes()
-	if (guids and (#guids > 0)) then
-		-- display infos
-		local vignettes = {}
-		for _,v in ipairs(guids) do
-			-- get vignette info
-			local info = VignetteInfoGetVignetteInfo(v)
-			if (info and info.vignetteID) then
-				-- get position
-				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
-				if (pos) then
-					-- get x/y
-					local x, y = pos:GetXY()
-					if (x and y) then
-						-- save position
-						info.x = x
-						info.y = y
-
-						-- debug print enabled?
-						if (NS.db.global.debugPrint == true) then
-							-- debug War Supply Crate only
-							if (info.name == "War Supply Crate") then
-								print(strformat("%s (%d) [%s]: %s, %s", tostring(info.name), tonumber(info.vignetteID), tostring(v), tostring(info.x), tostring(info.y)))
-							end
-						end
-					end
-				end
-
-				-- add to table
-				local id = info.vignetteID
-				vignettes[id] = info
-			end
-		end
-
-		-- return table
-		return vignettes
-	end
-
-	-- none
-	return nil
-end
-
--- list current vignettes
-function NS:List_Vignettes()
-	-- get map id
-	print(L["Dumping Vignettes:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		print(L["Map ID: Not Found"])
-		return
-	end
-
-	-- process any vignettes
-	local guids = VignetteInfoGetVignettes()
-	if (guids and (#guids > 0)) then
-		-- display infos
-		print(strformat(L["Count: %d"], #guids))
-		for _,v in ipairs(guids) do
-			-- get vignette info
-			local info = VignetteInfoGetVignetteInfo(v)
-			if (info and info.vignetteID) then
-				-- get position
-				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
-				if (pos) then
-					-- get x/y
-					local x, y = pos:GetXY()
-					if (x and y) then
-						-- has name?
-						if (info.name) then
-							-- add tom tom way point
-							NS:TomTomAddWaypoint(info.name, x, y)
-						end
-
-						-- add position
-						info.x = strformat("%0.02f", x * 100.0)
-						info.y = strformat("%0.02f", y * 100.0)
-					end
-				end
-
-				-- has x/y?
-				if (info.x and info.y) then
-					-- display
-					print(strformat("%s: ID = %d; GUID = %s; Position = %s, %s", info.name, info.vignetteID, info.vignetteGUID, info.x, info.y))
-				else
-					-- display
-					print(strformat("%s: ID = %d; GUID = %s", info.name, info.vignetteID, info.vignetteGUID))
-				end
-			end			
-		end
-	else
-		-- none found
-		print(strformat(L["Count: %d"], 0))
-	end
-end
 
 -- securely hook accept battlefield port
 local function hook_AcceptBattlefieldPort(index, acceptFlag)
@@ -526,6 +285,7 @@ local function hook_RejectProposal()
 end
 
 -- process main menu micro button on mouse down
+local hook_MainMenuMicroButton_installed = false
 local function hook_MainMenuMicroButton_OnMouseDown()
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -613,6 +373,7 @@ local function hook_CharacterMicroButton_OnClick(self, ...)
 end
 
 -- process character toggle
+local hook_ToggleCharacter_installed = false
 local function hook_ToggleCharacter(tab, onlyShow)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -662,6 +423,7 @@ local function hook_ProfessionMicroButton_OnClick(self, ...)
 end
 
 -- process professions toggle
+local hook_ToggleProfessionsBook_installed = false
 local function hook_ToggleProfessionsBook(bookType)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -717,6 +479,7 @@ local function hook_PlayerSpellsMicroButton_OnClick(self, ...)
 end
 
 -- process player spells toggle
+local hook_TogglePlayerSpellsFrame_installed = false
 local function hook_PlayerSpellsUtil_TogglePlayerSpellsFrame(suggestedTab, inspectUnit)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -828,6 +591,7 @@ local function hook_AchievementMicroButton_OnClick(self, ...)
 end
 
 -- process achievement toggle
+local hook_ToggleAchievementFrame_installed = false
 local function hook_ToggleAchievementFrame(stats)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -883,6 +647,7 @@ local function hook_GuildMicroButton_OnClick(self, ...)
 end
 
 -- process guild toggle
+local hook_ToggleGuildFrame_installed = false
 local function hook_ToggleGuildFrame()
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -938,6 +703,7 @@ local function hook_LFDMicroButton_OnClick(self, ...)
 end
 
 -- process group finder toggle
+local hook_GroupFinder_installed = false
 local function hook_PVEFrame_ToggleFrame(sidePanelName, selection)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -987,6 +753,7 @@ local function hook_EJMicroButton_OnClick(self, ...)
 end
 
 -- process adventure guide toggle
+local hook_ToggleEncounterJournal_installed = false
 local function hook_ToggleEncounterJournal(tabIndex)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -1042,6 +809,7 @@ local function hook_CollectionsMicroButton_OnClick(self, ...)
 end
 
 -- process collections toggle
+local hook_ToggleCollectionsJournal_installed = false
 local function hook_ToggleCollectionsJournal(tabIndex)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -1079,6 +847,7 @@ local function hook_ToggleCollectionsJournal(tabIndex)
 end
 
 -- process friends toggle
+local hook_ToggleFriendsFrame_installed = false
 local function hook_ToggleFriendsFrame(tab)
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
@@ -1117,58 +886,98 @@ function NS:Setup_BlockGameMenuHooks()
 		PlayerSpellsFrame_LoadUI()
 	end
 
-	-- hooks to block character frame inside pvp content
-	NS.CommFlare.CF.AllowCharacterFrame = false
-	NS.CommFlare:RawHook("ToggleCharacter", hook_ToggleCharacter, true)
-	NS.CommFlare:RawHookScript(CharacterMicroButton, "OnClick", hook_CharacterMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleCharacter_installed == false) then
+		-- hooks to block character frame inside pvp content
+		NS.CommFlare.CF.AllowCharacterFrame = false
+		NS.CommFlare:RawHook("ToggleCharacter", hook_ToggleCharacter, true)
+		NS.CommFlare:RawHookScript(CharacterMicroButton, "OnClick", hook_CharacterMicroButton_OnClick, true)
+		hook_ToggleCharacter_installed = true
+	end
 
-	-- hooks to block spellbook frame inside pvp content
-	NS.CommFlare.CF.AllowProfessionsBookFrame = false
-	NS.CommFlare:RawHook("ToggleProfessionsBook", hook_ToggleProfessionsBook, true)
-	NS.CommFlare:RawHookScript(ProfessionMicroButton, "OnClick", hook_ProfessionMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleProfessionsBook_installed == false) then
+		-- hooks to block spellbook frame inside pvp content
+		NS.CommFlare.CF.AllowProfessionsBookFrame = false
+		NS.CommFlare:RawHook("ToggleProfessionsBook", hook_ToggleProfessionsBook, true)
+		NS.CommFlare:RawHookScript(ProfessionMicroButton, "OnClick", hook_ProfessionMicroButton_OnClick, true)
+		hook_ToggleProfessionsBook_installed = true
+	end
 
-	-- hooks to block talent frame inside pvp content
-	NS.CommFlare.CF.AllowPlayerSpellsFrame = false
-	NS.CommFlare:RawHook(PlayerSpellsUtil, "TogglePlayerSpellsFrame", hook_PlayerSpellsUtil_TogglePlayerSpellsFrame, true)
-	NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleSpellBookFrame", hook_PlayerSpellsUtil_ToggleSpellBookFrame, true)
-	NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleClassTalentOrSpecFrame", hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame, true)
-	NS.CommFlare:RawHookScript(PlayerSpellsMicroButton, "OnClick", hook_PlayerSpellsMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_TogglePlayerSpellsFrame_installed == false) then
+		-- hooks to block talent frame inside pvp content
+		NS.CommFlare.CF.AllowPlayerSpellsFrame = false
+		NS.CommFlare:RawHook(PlayerSpellsUtil, "TogglePlayerSpellsFrame", hook_PlayerSpellsUtil_TogglePlayerSpellsFrame, true)
+		NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleSpellBookFrame", hook_PlayerSpellsUtil_ToggleSpellBookFrame, true)
+		NS.CommFlare:RawHook(PlayerSpellsUtil, "ToggleClassTalentOrSpecFrame", hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame, true)
+		NS.CommFlare:RawHookScript(PlayerSpellsMicroButton, "OnClick", hook_PlayerSpellsMicroButton_OnClick, true)
+		hook_TogglePlayerSpellsFrame_installed = true
+	end
 
-	-- hooks to block achievement frame inside pvp content
-	NS.CommFlare.CF.AllowAchievementFrame = false
-	NS.CommFlare:RawHook("ToggleAchievementFrame", hook_ToggleAchievementFrame, true)
-	NS.CommFlare:RawHookScript(AchievementMicroButton, "OnClick", hook_AchievementMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleAchievementFrame_installed == false) then
+		-- hooks to block achievement frame inside pvp content
+		NS.CommFlare.CF.AllowAchievementFrame = false
+		NS.CommFlare:RawHook("ToggleAchievementFrame", hook_ToggleAchievementFrame, true)
+		NS.CommFlare:RawHookScript(AchievementMicroButton, "OnClick", hook_AchievementMicroButton_OnClick, true)
+		hook_ToggleAchievementFrame_installed = true
+	end
 
-	-- hooks to block guild frame inside pvp content
-	NS.CommFlare.CF.AllowGuildFrame = false
-	NS.CommFlare:RawHook("ToggleGuildFrame", hook_ToggleGuildFrame, true)
-	NS.CommFlare:RawHookScript(GuildMicroButton, "OnClick", hook_GuildMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleGuildFrame_installed == false) then
+		-- hooks to block guild frame inside pvp content
+		NS.CommFlare.CF.AllowGuildFrame = false
+		NS.CommFlare:RawHook("ToggleGuildFrame", hook_ToggleGuildFrame, true)
+		NS.CommFlare:RawHookScript(GuildMicroButton, "OnClick", hook_GuildMicroButton_OnClick, true)
+		hook_ToggleGuildFrame_installed = true
+	end
 
-	-- hooks to block group finder frame inside pvp content
-	NS.CommFlare.CF.AllowGroupFinderFrame = false
-	NS.CommFlare:RawHook("PVEFrame_ToggleFrame", hook_PVEFrame_ToggleFrame, true)
-	NS.CommFlare:RawHookScript(LFDMicroButton, "OnClick", hook_LFDMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_GroupFinder_installed == false) then
+		-- hooks to block group finder frame inside pvp content
+		NS.CommFlare.CF.AllowGroupFinderFrame = false
+		NS.CommFlare:RawHook("PVEFrame_ToggleFrame", hook_PVEFrame_ToggleFrame, true)
+		NS.CommFlare:RawHookScript(LFDMicroButton, "OnClick", hook_LFDMicroButton_OnClick, true)
+		hook_GroupFinder_installed = true
+	end
 
-	-- hooks to block adventure guide frame inside pvp content
-	NS.CommFlare.CF.AllowAdvGuideFrame = false
-	NS.CommFlare:RawHook("ToggleEncounterJournal", hook_ToggleEncounterJournal, true)
-	NS.CommFlare:RawHookScript(EJMicroButton, "OnClick", hook_EJMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleEncounterJournal_installed == false) then
+		-- hooks to block adventure guide frame inside pvp content
+		NS.CommFlare.CF.AllowAdvGuideFrame = false
+		NS.CommFlare:RawHook("ToggleEncounterJournal", hook_ToggleEncounterJournal, true)
+		NS.CommFlare:RawHookScript(EJMicroButton, "OnClick", hook_EJMicroButton_OnClick, true)
+		hook_ToggleEncounterJournal_installed = true
+	end
 
-	-- hooks to block collections frame inside pvp content
-	NS.CommFlare.CF.AllowCollectionsFrame = false
-	NS.CommFlare:RawHook("ToggleCollectionsJournal", hook_ToggleCollectionsJournal, true)
-	NS.CommFlare:RawHookScript(CollectionsMicroButton, "OnClick", hook_CollectionsMicroButton_OnClick, true)
+	-- not installed?
+	if (hook_ToggleCollectionsJournal_installed == false) then
+		-- hooks to block collections frame inside pvp content
+		NS.CommFlare.CF.AllowCollectionsFrame = false
+		NS.CommFlare:RawHook("ToggleCollectionsJournal", hook_ToggleCollectionsJournal, true)
+		NS.CommFlare:RawHookScript(CollectionsMicroButton, "OnClick", hook_CollectionsMicroButton_OnClick, true)
+		hook_ToggleCollectionsJournal_installed = true
+	end
 
-	-- hooks to block friends frame inside pvp content
-	NS.CommFlare.CF.AllowFriendsFrame = false
-	NS.CommFlare:RawHook("ToggleFriendsFrame", hook_ToggleFriendsFrame, true)
+	-- not installed?
+	if (hook_ToggleFriendsFrame_installed == false) then
+		-- hooks to block friends frame inside pvp content
+		NS.CommFlare.CF.AllowFriendsFrame = false
+		NS.CommFlare:RawHook("ToggleFriendsFrame", hook_ToggleFriendsFrame, true)
+		hook_ToggleFriendsFrame_installed = true
+	end
 
-	-- TODO: REDO BELOW WITH RAW HOOKS!
-	-- hooks for blocking escape key menu inside a battleground
-	NS.CommFlare.CF.AllowMainMenu = false
-	MainMenuMicroButton:HookScript("OnMouseDown", hook_MainMenuMicroButton_OnMouseDown)
-	GameMenuFrame:HookScript("OnShow", hook_GameMenuFrame_OnShow)
-	GameMenuFrame:HookScript("OnHide", hook_GameMenuFrame_OnHide)
+	-- not installed?
+	if (hook_MainMenuMicroButton_installed == false) then
+		-- TODO: REDO BELOW WITH RAW HOOKS!
+		-- hooks for blocking escape key menu inside a battleground
+		NS.CommFlare.CF.AllowMainMenu = false
+		MainMenuMicroButton:HookScript("OnMouseDown", hook_MainMenuMicroButton_OnMouseDown)
+		GameMenuFrame:HookScript("OnShow", hook_GameMenuFrame_OnShow)
+		GameMenuFrame:HookScript("OnHide", hook_GameMenuFrame_OnHide)
+		hook_MainMenuMicroButton_installed = true
+	end
 end
 
 -- setup hooks
@@ -1244,6 +1053,9 @@ end
 
 -- process area pois updated
 function NS.CommFlare:AREA_POIS_UPDATED(msg)
+	-- update pois
+	NS:UpdatePOIs()
+
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
 		-- get best map for player
@@ -1419,9 +1231,9 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = {}
-				NS.CommFlare.CF.WaitForUpdate["type"] = "WHISPER"
+				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = bnSenderID
+				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
 				SetBattlefieldScoreFaction(-1)
 				RequestBattlefieldScoreData()
 
@@ -1497,8 +1309,8 @@ function NS:Event_Chat_Message_Party(...)
 						-- battlefield score needs updating?
 						if (PVPMatchScoreboard.selectedTab ~= 1) then
 							-- request battlefield score
-							NS.CommFlare.CF.WaitForUpdate = {}
-							NS.CommFlare.CF.WaitForUpdate["type"] = "PARTY"
+							NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
+							NS.CommFlare.CF.WaitForUpdate["party"] = true
 							SetBattlefieldScoreFaction(-1)
 							RequestBattlefieldScoreData()
 
@@ -1660,16 +1472,8 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 						NS.CommFlare.CF.LastBossRW = 0
 					end)
 
-					-- do you have lead?
-					local player = NS:GetPlayerName("full")
-					NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-					if (NS.CommFlare.CF.PlayerRank == 2) then
-						-- issue global raid warning
-						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], sender))
-					else
-						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
-					end
+					-- issue local raid warning (with raid warning audio sound)
+					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
 				end
 			end
 		end
@@ -1688,16 +1492,8 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 						NS.CommFlare.CF.LastBossRW = 0
 					end)
 
-					-- do you have lead?
-					local player = NS:GetPlayerName("full")
-					NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-					if (NS.CommFlare.CF.PlayerRank == 2) then
-						-- issue global raid warning
-						NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], sender))
-					else
-						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
-					end
+					-- issue local raid warning (with raid warning audio sound)
+					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
 				end
 			end
 		end
@@ -1726,7 +1522,6 @@ function NS.CommFlare:CHAT_MSG_RAID_WARNING(msg, ...)
 		NS.CommFlare.CF.RdyCrate = true
 	end
 end
-
 
 -- process system message
 function NS.CommFlare:CHAT_MSG_SYSTEM(msg, ...)
@@ -1761,9 +1556,9 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = {}
-				NS.CommFlare.CF.WaitForUpdate["type"] = "WHISPER"
+				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = sender
+				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
 				SetBattlefieldScoreFaction(-1)
 				RequestBattlefieldScoreData()
 
@@ -1872,133 +1667,8 @@ end
 
 -- process combat log event unfiltered
 function NS.CommFlare:COMBAT_LOG_EVENT_UNFILTERED(msg)
-	-- ashran?
-	if (NS.CommFlare.CF.MapID == 1478) then
-		-- SPELL_CAST_SUCCESS?
-		local timedate, event, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlag = CombatLogGetCurrentEventInfo()
-		if (event == "SPELL_CAST_SUCCESS") then
-			-- horde faction?
-			if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
-				-- boss performing action?
-				local timer = 15
-				local npc_name = nil
-				local npc_type = "boss"
-				local warning_type = 0
-				sourceFlags = tonumber(sourceFlags)
-				if (sourceName == L["High Warlord Volrath"]) then
-					-- needs to issue raid warning?
-					if (NS.CommFlare.CF.LastBossRW == 0) then
-						-- always warn
-						warning_type = 1 -- raid warning (if possible)
-						npc_name = L["High Warlord Volrath"]
-					end
-				-- action performed on boss?
-				elseif (destName == L["High Warlord Volrath"]) then
-					-- needs to issue raid warning?
-					if (NS.CommFlare.CF.LastBossRW == 0) then
-						-- is source hostile?
-						if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
-							-- should warn
-							warning_type = 1 -- raid warning (if possible)
-							npc_name = L["High Warlord Volrath"]
-						end
-					end
-				-- action performed on mage?
-				elseif (destName == L["Jeron Emberfall"]) then
-					-- warn when mage is under attack?
-					if (NS.db.global.ashranMageWarnAttacked > 1) then
-						-- needs to issue raid warning?
-						if (NS.CommFlare.CF.LastMageRW == 0) then
-							-- is source hostile?
-							if (bitband(sourceFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
-								-- should warn
-								npc_name = L["Jeron Emberfall"]
-								npc_type = "mage"
-								timer = 30
-
-								-- local warning only?
-								warning_type = 1 -- raid warning (if possible)
-								if (NS.db.global.ashranMageWarnAttacked == 3) then
-									-- set local warning type
-									warning_type = 2 -- local warning only
-								end
-
-								-- different frequency set?
-								if (NS.db.global.ashranMageWarnFreq == 1) then
-									-- 15 seconds
-									timer = 15
-								elseif (NS.db.global.ashranMageWarnFreq == 3) then
-									-- 60 seconds
-									timer = 60
-								end
-							end
-						end
-					end
-				end
-
-				-- warning type and npc found?
-				if ((warning_type > 0) and npc_name) then
-					-- boss?
-					local issue_warning = false
-					if (npc_type == "boss") then
-						-- needs to issue raid warning?
-						if (NS.CommFlare.CF.LastBossRW == 0) then
-							-- update last raid warning
-							NS.CommFlare.CF.LastBossRW = time()
-							TimerAfter(timer, function()
-								-- clear last raid warning
-								NS.CommFlare.CF.LastBossRW = 0
-							end)
-
-							-- has npc name?
-							if (npc_name and (npc_name ~= "")) then
-								-- send instance addon message
-								local message = strformat("!CommFlare@%s@BOSS_ATTACKED@%s", NS.CommFlare.Version, npc_name)
-								NS.CommFlare:SendCommMessage(ADDON_NAME, message, "INSTANCE_CHAT")
-							end
-
-							-- issue warning
-							issue_warning = true
-						end
-					-- mage?
-					elseif (npc_type == "mage") then
-						-- needs to issue raid warning?
-						if (NS.CommFlare.CF.LastMageRW == 0) then
-							-- update last raid warning
-							NS.CommFlare.CF.LastMageRW = time()
-							TimerAfter(timer, function()
-								-- clear last raid warning
-								NS.CommFlare.CF.LastMageRW = 0
-							end)
-
-							-- issue warning
-							issue_warning = true
-						end
-					end
-
-					-- should issue warning?
-					if (issue_warning == true) then
-						-- local warning only?
-						if (warning_type == 2) then
-							-- issue local raid warning (with raid warning audio sound)
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-						else
-							-- do you have lead?
-							local player = NS:GetPlayerName("full")
-							NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-							if (NS.CommFlare.CF.PlayerRank == 2) then
-								-- issue global raid warning
-								NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-							else
-								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+	-- process combat log event
+	NS:Process_Combat_Log_Event_Unfiltered()
 end
 
 -- process currency display update
@@ -2758,6 +2428,9 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	-- setup hooks
 	NS:SetupHooks()
 
+	-- add get range check spell/s
+	NS:AddRangeCheckSpell("DEATHKNIGHT", "Friend", 410358)
+
 	-- zRdyCrate loaded?
 	NS.CommFlare.CF.RdyCrate = nil
 	if (AddOnsIsAddOnLoaded("zRdyCrate") == true) then
@@ -2788,12 +2461,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			NS.charDB.profile.communityLeadersList[NS.charDB.profile.communityMain] = true
 		end
 
-		-- block game menu hot keys enabled?
-		if (NS.charDB.profile.blockGameMenuHotKeys == true) then
-			-- enable block game menu hooks
-			NS:Setup_BlockGameMenuHooks()
-		end
-
 		-- enforce pvp roles
 		NS:Enforce_PVP_Roles()
 
@@ -2821,6 +2488,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- in battleground?
 			NS.CommFlare.CF.MatchStatus = 0
 			if (NS:IsInBattleground() == true) then
+				-- block game menu hot keys enabled?
+				if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+					-- enable block game menu hooks
+					NS:Setup_BlockGameMenuHooks()
+				end
+
 				-- match state is active?
 				if (PvPGetActiveMatchState() == Enum.PvPMatchState.Active) then
 					-- match is active state?
@@ -2841,6 +2514,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		NS.CommFlare.CF.StreamsRetryCount = 0
 		local clubs = NS:Get_Enabled_Clubs()
 		NS:Verify_Club_Streams(clubs)
+
+		-- update pois
+		NS:UpdatePOIs()
+
+		-- update vignette's
+		NS:UpdateVignettes()
 	end
 
 	-- sanity checks
@@ -2910,9 +2589,11 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	end
 
 	-- initialize
+	NS.CommFlare.CF.DisplayedLists = {}
 	NS.CommFlare.CF.KosAlerted = {}
 	NS.CommFlare.CF.FullRoster = {}
 	NS.CommFlare.CF.RosterList = {}
+	NS.CommFlare.CF.VehicleDeaths = {}
 	NS:Initialize_Battleground_Status()
 
 	-- always reset ashran stuff
@@ -2986,6 +2667,12 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 				end
 			end
 		end
+	end
+
+	-- block game menu hot keys enabled?
+	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+		-- enable block game menu hooks
+		NS:Setup_BlockGameMenuHooks()
 	end
 end
 
@@ -3074,6 +2761,18 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 					-- victory
 					status = "Loss"
 				end
+			end
+		end
+	end
+
+	-- has active timers?
+	if (NS.CommFlare.CF.ActiveTimers and next(NS.CommFlare.CF.ActiveTimers)) then
+		-- process all timers
+		for k,v in pairs(NS.CommFlare.CF.ActiveTimers) do
+			-- timer exists?
+			if (v.timer) then
+				-- cancel timer
+				v.timer:Cancel()
 			end
 		end
 	end
@@ -3199,6 +2898,12 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			end
 		end
 	end
+end
+
+-- process pvp vehicle info updated
+function NS.CommFlare:PVP_VEHICLE_INFO_UPDATED(msg)
+	-- update vehicles's
+	NS:UpdateVehicles()
 end
 
 -- process quest detail
@@ -3613,6 +3318,7 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 					-- reported for inactive?
 					if (v.spellId == 94028) then
 						-- issue local raid warning (with raid warning audio sound)
+						FlashClientIcon()
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: REPORTED INACTIVE!\nGet into combat quickly!"])
 					-- mercenary contract?
 					elseif ((v.spellId == 193472) or (v.spellId == 193475)) then
@@ -3708,32 +3414,53 @@ end
 
 -- process update battlefield score
 function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
-	-- anything waiting for update?
-	if (NS.CommFlare.CF.WaitForUpdate["type"]) then
-		-- inactive?
-		if (NS.CommFlare.CF.WaitForUpdate["type"] == "INACTIVE") then
-			-- check for inactive players
-			NS:Check_For_Inactive_Players()
-		-- party?
-		elseif (NS.CommFlare.CF.WaitForUpdate["type"] == "PARTY") then
-			-- process status check
-			NS:Process_Status_Check(nil)
-		-- update?
-		elseif (NS.CommFlare.CF.WaitForUpdate["type"] == "UPDATE") then
-			-- display full battleground setup
-			NS:Update_Battleground_Stuff(true, true)
-		-- whisper?
-		elseif (NS.CommFlare.CF.WaitForUpdate["type"] == "WHISPER") then
-			-- process status check
-			NS:Process_Status_Check(NS.CommFlare.CF.WaitForUpdate["sender"])
-		end
+	-- inactive?
+	if (NS.CommFlare.CF.WaitForUpdate["inactive"] == true) then
+		-- check for inactive players
+		NS:Check_For_Inactive_Players()
 
-		-- clear waiting for update
-		NS.CommFlare.CF.WaitForUpdate = {}
+		-- clear inactive
+		NS.CommFlare.CF.WaitForUpdate["inactive"] = nil
+	end
+
+	-- party?
+	if (NS.CommFlare.CF.WaitForUpdate["party"] == true) then
+		-- process status check
+		NS:Process_Status_Check(nil)
+
+		-- clear party
+		NS.CommFlare.CF.WaitForUpdate["party"] = nil
+	end
+
+	-- update?
+	if (NS.CommFlare.CF.WaitForUpdate["update"] == true) then
+		-- display full battleground setup
+		NS:Update_Battleground_Stuff(true, true)
+
+		-- clear update
+		NS.CommFlare.CF.WaitForUpdate["update"] = nil
+	end
+
+	-- whisper?
+	if (NS.CommFlare.CF.WaitForUpdate["whisper"] == true) then
+		-- process status check
+		NS:Process_Status_Check(NS.CommFlare.CF.WaitForUpdate["sender"])
+
+		-- clear sender / whisper
+		NS.CommFlare.CF.WaitForUpdate["sender"] = nil
+		NS.CommFlare.CF.WaitForUpdate["whisper"] = nil
 	end
 
 	-- match still going?
 	if (NS.CommFlare.CF.MatchStatus < 3) then
+		-- not displayed mercenary?
+		if (NS.CommFlare.CF.DisplayedLists["mercenary"] ~= true) then
+			-- update / display mercenary stuff
+			local timer = 0.0
+			NS:Update_Battleground_Stuff(false, false)
+			NS:Print_Mercenary_Stuff(true, timer)
+		end
+
 		-- not created?
 		if (not NS.CommFlare.CF.KosList) then
 			-- initialize
@@ -3817,6 +3544,9 @@ end
 
 -- process vignettes updated
 function NS.CommFlare:VIGNETTES_UPDATED(msg)
+	-- update vignette's
+	NS:UpdateVignettes()
+
 	-- not in instance?
 	local inInstance, instanceType = IsInInstance()
 	if (inInstance == true) then
@@ -3971,6 +3701,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("PVP_MATCH_INACTIVE")
 	self:RegisterEvent("PVP_MATCH_STATE_CHANGED")
+	self:RegisterEvent("PVP_VEHICLE_INFO_UPDATED")
 	self:RegisterEvent("QUEST_DETAIL")
 	self:RegisterEvent("READY_CHECK")
 	self:RegisterEvent("READY_CHECK_CONFIRM")
@@ -4036,6 +3767,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PVP_MATCH_COMPLETE")
 	self:UnregisterEvent("PVP_MATCH_INACTIVE")
 	self:UnregisterEvent("PVP_MATCH_STATE_CHANGED")
+	self:UnregisterEvent("PVP_VEHICLE_INFO_UPDATED")
 	self:UnregisterEvent("QUEST_DETAIL")
 	self:UnregisterEvent("READY_CHECK")
 	self:UnregisterEvent("READY_CHECK_CONFIRM")
@@ -4054,190 +3786,8 @@ end
 
 -- communication received
 function NS.CommFlare:Community_Flare_OnCommReceived(prefix, message, distribution, sender)
-	-- get player name
-	local player = UnitName("player")
-	if (player == sender) then
-		-- finished
-		return
-	end
-
-	-- verify prefix
-	if (prefix == ADDON_NAME) then
-		-- community flare message?
-		if (message:find("!CommFlare@")) then
-			-- split args
-			local args = {strsplit("@", message)}
-			if (not args) then
-				-- finished
-				return
-			end
-
-			-- no version?
-			if (not args[2] or (args[2] == "")) then
-				-- finished
-				return
-			end
-
-			-- no command
-			if (not args[3] or (args[3] == "")) then
-				-- finished
-				return
-			end
-
-			-- boss attacked & has npc name?
-			if (args[3] == "BOSS_ATTACKED") then
-				-- instance chat message?
-				if (distribution == "INSTANCE_CHAT") then
-					-- has npc name?
-					local npc_name = args[4]
-					if (npc_name and (npc_name ~= "")) then
-						-- needs to issue raid warning?
-						if (NS.CommFlare.CF.LastBossRW == 0) then
-							-- update last raid warning
-							local timer = 15
-							NS.CommFlare.CF.LastBossRW = time()
-							TimerAfter(timer, function()
-								-- clear last raid warning
-								NS.CommFlare.CF.LastBossRW = 0
-							end)
-
-							-- do you have lead?
-							local player = NS:GetPlayerName("full")
-							NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-							if (NS.CommFlare.CF.PlayerRank == 2) then
-								-- issue global raid warning
-								NS:SendMessage("RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-							else
-								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], npc_name))
-							end
-
-						end
-					end
-				end
-			-- version checked?
-			elseif (args[3] == "VERSION_CHECK") then
-				-- guild or instance chat message?
-				if ((distribution == "GUILD") or (distribution == "INSTANCE_CHAT")) then
-					-- not already displayed?
-					if (NS.CommFlare.CF.UpgradeDisplayed == false) then
-						-- updated version?
-						local updated = NS:Compare_Version(args[2])
-						if (updated == true) then
-							-- updated version
-							print(strformat(L["%s version %s update available. Download the latest version from curseforge!"], NS.CommFlare.Title, args[2]))
-
-							-- displayed
-							NS.CommFlare.CF.UpgradeDisplayed = true
-						end
-					end
-				end
-			-- zone changed new area?
-			elseif (args[3] == "ZONE_CHANGED_NEW_AREA") then
-				-- party or raid message?
-				if ((distribution == "PARTY") or (distribution == "RAID")) then
-					-- notified when party member changes zones?
-					if (NS.db.global.notifyPartyZoneChanges == true) then
-						-- are you in a party?
-						if (IsInGroup()) then
-							-- are you group leader?
-							if (NS:IsGroupLeader() == true) then
-								-- has map name?
-								local mapID, mapName = strsplit(":", message)
-								if (not mapName) then
-									-- get map info by id
-									local info = MapGetMapInfo(tonumber(message))
-									if (info and info.name) then
-										-- set map name
-										mapName = info.name
-									else
-										-- use full message (fall back)
-										mapName = message
-									end
-								end
-
-								-- display zone change message
-								print(strformat(L["%s has changed zones to %s."], sender, mapName))
-							end
-						end
-					end
-				end
-			end
-		else
-			-- group joined?
-			if (message:find("GROUP_ROSTER_UPDATE")) then
-				-- party message?
-				if (distribution == "PARTY") then
-					-- are you not group leader?
-					if (NS:IsGroupLeader() ~= true) then
-						-- community member?
-						if (message:find("YES")) then
-							-- enable community party leader
-							NS.charDB.profile.communityPartyLeader = true
-						end
-					end
-				end
-			-- ready check?
-			elseif (message:find("READY_CHECK")) then
-				-- party or raid message?
-				if ((distribution == "PARTY") or (distribution == "RAID")) then
-					-- reply?
-					if (message:find("READY_CHECK:")) then
-						-- get unit for sender
-						local unit = NS:GetPartyUnit(sender)
-						player = NS:GetFullName(sender)
-						if (unit and player) then
-							-- split message
-							local title, version, build = strsplit(":", message)
-							if (not build) then
-								-- not available
-								build = L["N/A"]
-							end
-
-							-- save version number
-							NS.CommFlare.CF.PartyVersions[unit] = version
-
-							-- display player's community flare version / build
-							print(strformat(L["%s has %s %s (%s)"], player, NS.CommFlare.Title, version, build))
-						end
-					else
-						-- are you in a party / raid?
-						if (IsInGroup()) then
-							-- are you in a raid?
-							local message = strformat("READY_CHECK:%s:%s", NS.CommFlare.Version, NS.CommFlare.Build)
-							if (IsInRaid()) then
-								-- send raid addon message
-								NS.CommFlare:SendCommMessage(ADDON_NAME, message, "RAID")
-							else
-								-- send party addon message
-								NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
-							end
-						end
-					end
-				end
-			-- request party lead?
-			elseif (message:find("REQUEST_PARTY_LEAD")) then
-				-- instance chat, party or raid message?
-				if ((distribution == "INSTANCE_CHAT") or (distribution == "PARTY") or (distribution == "RAID")) then
-					-- process pass leadership
-					NS:Process_Pass_Leadership(sender)
-				end
-			end
-		end
-	else
-		-- zRdyCrate?
-		if (prefix == "zRdyCrate") then
-			-- not in instance?
-			local inInstance, instanceType = IsInInstance()
-			if (inInstance ~= true) then
-				-- inside raid?
-				if (IsInRaid() == true) then
-					-- assume rdy war crate tracker being used
-					NS.CommFlare.CF.RdyCrate = true
-				end
-			end
-		end
-	end
+	-- process communication received
+	NS:Process_OnCommReceived(prefix, message, distribution, sender)
 end
 
 -- register addon communications
@@ -4274,6 +3824,7 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then
 			-- expose local tables for debug purposes
+			CommFlare_NS = NS
 			CommFlare_DB = NS.db
 			CommFlare_CF = NS.CommFlare.CF
 			CommFlare_LocalQueues = NS.CommFlare.CF.LocalQueues
@@ -4300,8 +3851,8 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = {}
-				NS.CommFlare.CF.WaitForUpdate["type"] = "INACTIVE"
+				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
+				NS.CommFlare.CF.WaitForUpdate["inactive"] = true
 				SetBattlefieldScoreFaction(-1)
 				RequestBattlefieldScoreData()
 
@@ -4349,8 +3900,14 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			CF_PlayerListFrame:Show()
 		end
 	elseif (lower == "pois") then
-		-- list all POI's
-		NS:List_POIs()
+		-- shown?
+		if (CF_POIListFrame:IsShown()) then
+			-- hide
+			CF_POIListFrame:Hide()
+		else
+			-- show
+			CF_POIListFrame:Show()
+		end
 	elseif (lower == "report") then
 		-- get current queues text
 		local text = NS:Get_Current_Queues_Text()
@@ -4379,8 +3936,14 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 		-- list all vehicles
 		NS:List_Vehicles()
 	elseif (lower == "vignettes") then
-		-- list all Vignette's
-		NS:List_Vignettes()
+		-- shown?
+		if (CF_VignetteListFrame:IsShown()) then
+			-- hide
+			CF_VignetteListFrame:Hide()
+		else
+			-- show
+			CF_VignetteListFrame:Show()
+		end
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)
@@ -4453,8 +4016,8 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 				-- battlefield score needs updating?
 				if (PVPMatchScoreboard.selectedTab ~= 1) then
 					-- update battlefield score
-					NS.CommFlare.CF.WaitForUpdate = {}
-					NS.CommFlare.CF.WaitForUpdate["type"] = "UPDATE"
+					NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
+					NS.CommFlare.CF.WaitForUpdate["update"] = true
 					SetBattlefieldScoreFaction(-1)
 
 					-- delay 0.5 seconds

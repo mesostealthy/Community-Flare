@@ -107,6 +107,12 @@ L["Wintergrasp"] = true
 -- Bootstrap.lua
 L["Sorry, can not accept invites while currently queued as a mercenary."] = true
 
+-- CombatLog.lua
+L["Catapult"] = true
+L["Demolisher"] = true
+L["Glaive Thrower"] = true
+L["Siege Engine"] = true
+
 -- Config.lua
 L["%d community leaders found."] = true
 L["1 Member"] = true
@@ -174,6 +180,7 @@ L["Guild Members?"] = true
 L["Instance Chat Warning"] = true
 L["Invite Options"] = true
 L["Irrelevant"] = true
+L["Isle of Conquest Options"] = true
 L["Leaders Only"] = true
 L["Local Warning Only"] = true
 L["Log roster list for matches from these communities?"] = true
@@ -208,6 +215,7 @@ L["Tanks & Healers Only"] = true
 L["This is the amount of time before it starts purging logged roster list for matches."] = true
 L["This is the amount of time delayed between Mage attacks in Ashran."] = true
 L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."] = true
+L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."] = true
 L["This will always attempt to request party leadership upon joining a new party. (Only for Community Leaders!)"] = true
 L["This will always automatically accept all queues for you."] = true
 L["This will automatically accept group/party invites from Battle.NET friends."] = true
@@ -242,6 +250,7 @@ L["Uninvite any players that are AFK?"] = true
 L["Use this to manage the Players and KOS in the Member GUIDs list."] = true
 L["Use this to refresh the members database from currently selected communities."] = true
 L["Use this to totally rebuild the members database from currently selected communities."] = true
+L["Vehicle Alert System?"] = true
 L["Warn before hearth stoning or teleporting inside a battleground?"] = true
 L["Warn if/when queues become paused?"] = true
 L["Warn when Honor capped or close to it?"] = true
@@ -386,13 +395,23 @@ L["Request Party Leader"] = true
 L["POPPED"] = true
 
 -- UI/PlayerListFrame.lua
+-- UI/POIListFrame.lua
+-- UI/VignetteList.lua
 L["Add KOS"] = true
+L["Area POI"] = true
 L["Copy Player Name"] = true
 L["Copy Player Name for %s [Use Ctrl+c]:"] = true
 L["Delete Player"] = true
+L["Description"] = true
+L["GUID"] = true
+L["ID"] = true
+L["Name"] = true
 L["Player List Manager"] = true
+L["Position"] = true
+L["Refresh Player Name"] = true
 L["Remove KOS"] = true
 L["Set Player Note"] = true
+L["Vignette"] = true
 
 -- blizzard translated strings
 L["Captain Balinda Stonehearth"] = true		-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=enUS

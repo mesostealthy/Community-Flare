@@ -9,6 +9,7 @@ local _G                                        = _G
 local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
 local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
+local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
 local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
@@ -23,6 +24,92 @@ local tinsert                                   = _G.table.insert
 
 -- local variables
 local settings_that_require_reload = {}
+
+-- global defaults
+local GlobalDefaults = {
+	-- global
+	global = {
+		-- tables
+		clubs = {},
+		history = {},
+		KosList = {},
+		matchLogList = {},
+		MemberGUIDs = {},
+		MemberNotes = {},
+		members = {},
+		SocialQueues = {},
+
+		-- booleans
+		alwaysRequestPartyLead = false,
+		bnetAutoInvite = true,
+		bnetAutoQueue = true,
+		debugMode = false,
+		debugPrint = false,
+		displayPoppedGroups = false,
+		displayQueueEntryTimeLeft = false,
+		iocVehicleAlertSystem = false,
+		notifyPartyZoneChanges = false,
+		notifyWarCrateInbound = false,
+		pvpCombatLogging = false,
+		warningHonorCapped = true,
+		warningQueuePaused = true,
+
+		-- numbers
+		adjustVehicleTurnSpeed = 0,
+		ashranAncientInfernoSpawned = 1,
+		ashranMageWarnAttacked = 1,
+		ashranMageWarnFreq = 2,
+		blockSharedQuests = 2,
+		partyLeaderNotify = 2,
+		purgeLogTime = 2,
+		restrictPings = 0,
+		uninvitePlayersAFK = 0,
+		warningLeavingBG = 2,
+		warningLowWarModeItemCount = 10,
+	},
+}
+
+-- character defaults
+local CharDefaults = {
+	profile = {
+		-- variables
+		MatchStatus = 0,
+		SavedTime = 0,
+
+		-- profile only options
+		alwaysAutoQueue = false,
+		alwaysReaddChannels = false,
+		blockGameMenuHotKeys = false,
+		communityAutoAssist = 3,
+		communityAutoInvite = true,
+		communityAutoPassLead = true,
+		communityAutoQueue = true,
+		communityDisplayNames = true,
+		communityPartyLeader = false,
+		communityReporter = true,
+		communityRightClickMenu = false,
+		forceDPS = false,
+		forceHealer = false,
+		forceTank = false,
+		maxPartySize = 5,
+		pvpGearEquipmentSet = -1,
+		rebindTargetKeys = false,
+
+		-- community stuff
+		communityMain = 0,
+		communityList = {},
+		communityRefreshed = 0,
+		communityReportList = nil,
+		membersCount = "",
+
+		-- tables
+		communityLeadersList = {},
+		communityLogList = {},
+		POIList = {},
+		Queues = {},
+		VignetteList = {},
+	},
+}
 
 -- add / remove guild
 local function Set_Add_Guild_Members(info, value)
@@ -531,7 +618,7 @@ local function Rebuild_Database_Members_Confirmation()
 	NS:PopupBox("CommunityFlare_Rebuild_Members_Dialog")
 end
 
--- rebuild members dialog box
+-- reloadUI required dialog box
 StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 	text = L["One or more of the changes you have made require a ReloadUI."],
 	button1 = L["Yes"],
@@ -543,6 +630,10 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 			if (k == "blockGameMenuHotKeys") then
 				-- save value
 				NS.charDB.profile.blockGameMenuHotKeys = v
+			-- community right click menu?
+			elseif (k == "communityRightClickMenu") then
+				-- save value
+				NS.charDB.profile.communityRightClickMenu = v
 			end
 		end
 
@@ -556,11 +647,18 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 
 -- set community right menu click
 local function Community_Right_Click_Menu_Set(info, value)
-	-- save value
-	NS.charDB.profile.communityRightClickMenu = value
+	-- enabled?
+	if (value == true) then
+		-- save value
+		NS.charDB.profile.communityRightClickMenu = value
 
-	-- setup context menus
-	NS:Setup_Context_Menus()
+		-- setup context menus
+		NS:Setup_Context_Menus()
+	else
+		-- setting requires reload
+		settings_that_require_reload["communityRightClickMenu"] = value
+		NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
+	end
 end
 
 -- set block game menu hot keys (reload when disabled)
@@ -570,13 +668,40 @@ local function Block_Game_Menu_Hot_Keys_Set(info, value)
 		-- save value
 		NS.charDB.profile.blockGameMenuHotKeys = value
 
-		-- enable block game menu hooks
-		NS:Setup_BlockGameMenuHooks()
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
+			-- enable block game menu hooks
+			NS:Setup_BlockGameMenuHooks()
+		end
 	else
 		-- setting requires reload
 		settings_that_require_reload["blockGameMenuHotKeys"] = value
 		NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
 	end
+end
+
+-- get ashran mage warning attack
+local function Ashran_Mage_Warning_Attack_Get(info)
+	-- outdated value?
+	if ((NS.db.global.ashranMageWarnAttacked < 1) or (NS.db.global.ashranMageWarnAttacked > 2)) then
+		-- force default
+		NS.db.global.ashranMageWarnAttacked = GlobalDefaults.global.ashranMageWarnAttacked
+	end
+
+	-- return value
+	return NS.db.global.ashranMageWarnAttacked
+end
+
+-- set ashran mage warning attack
+local function Ashran_Mage_Warning_Attack_Set(info, value)
+	-- outdated value?
+	if ((value < 1) or (value > 2)) then
+		-- force default
+		value = GlobalDefaults.global.ashranMageWarnAttacked
+	end
+
+	-- save value
+	NS.db.global.ashranMageWarnAttacked = value
 end
 
 -- is disabled?
@@ -872,11 +997,10 @@ local BattlegroundGroup = {
 			desc = L["This will show a raid warning to you when your Mage is under attack in Ashran."],
 			values = {
 				[1] = L["None"],
-				[2] = L["Raid Warning"],
-				[3] = L["Local Warning Only"],
+				[2] = L["Local Warning Only"],
 			},
-			get = function(info) return NS.db.global.ashranMageWarnAttacked end,
-			set = function(info, value) NS.db.global.ashranMageWarnAttacked = value end,
+			get = Ashran_Mage_Warning_Attack_Get,
+			set = Ashran_Mage_Warning_Attack_Set,
 		},
 		ashranMageWarnFreq = {
 			type = "select",
@@ -906,6 +1030,22 @@ local BattlegroundGroup = {
 			get = function(info) return NS.db.global.ashranAncientInfernoSpawned end,
 			set = function(info, value) NS.db.global.ashranAncientInfernoSpawned = value end,
 		},
+		iocTitle = {
+			name = L["Isle of Conquest Options"],
+			type = "header",
+			order = 19,
+			width = "full",
+		},
+		iocVehicleAlertSystem = {
+			type = "toggle",
+			order = 20,
+			name = L["Vehicle Alert System?"],
+			desc = L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."],
+			width = "full",
+			get = function(info) return NS.db.global.iocVehicleAlertSystem end,
+			set = function(info, value) NS.db.global.iocVehicleAlertSystem = value end,
+		},
+
 	}
 }
 
@@ -1347,89 +1487,6 @@ local WorldGroup = {
 			set = function(info, value) NS.db.global.notifyWarCrateInbound = value end,
 		},
 	}
-}
-
--- global defaults
-local GlobalDefaults = {
-	-- global
-	global = {
-		-- tables
-		clubs = {},
-		history = {},
-		KosList = {},
-		matchLogList = {},
-		MemberGUIDs = {},
-		MemberNotes = {},
-		members = {},
-		SocialQueues = {},
-
-		-- booleans
-		alwaysRequestPartyLead = false,
-		bnetAutoInvite = true,
-		bnetAutoQueue = true,
-		debugMode = false,
-		debugPrint = false,
-		displayPoppedGroups = false,
-		displayQueueEntryTimeLeft = false,
-		notifyPartyZoneChanges = false,
-		notifyWarCrateInbound = false,
-		pvpCombatLogging = false,
-		warningHonorCapped = true,
-		warningQueuePaused = true,
-
-		-- numbers
-		adjustVehicleTurnSpeed = 0,
-		ashranAncientInfernoSpawned = 1,
-		ashranMageWarnAttacked = 1,
-		ashranMageWarnFreq = 2,
-		blockSharedQuests = 2,
-		partyLeaderNotify = 2,
-		purgeLogTime = 2,
-		restrictPings = 0,
-		uninvitePlayersAFK = 0,
-		warningLeavingBG = 2,
-		warningLowWarModeItemCount = 0,
-	},
-}
-
--- character defaults
-local CharDefaults = {
-	profile = {
-		-- variables
-		MatchStatus = 0,
-		SavedTime = 0,
-
-		-- profile only options
-		alwaysAutoQueue = false,
-		alwaysReaddChannels = false,
-		blockGameMenuHotKeys = false,
-		communityAutoAssist = 3,
-		communityAutoInvite = true,
-		communityAutoPassLead = true,
-		communityAutoQueue = true,
-		communityDisplayNames = true,
-		communityPartyLeader = false,
-		communityReporter = true,
-		communityRightClickMenu = false,
-		forceDPS = false,
-		forceHealer = false,
-		forceTank = false,
-		maxPartySize = 5,
-		pvpGearEquipmentSet = -1,
-		rebindTargetKeys = false,
-
-		-- community stuff
-		communityMain = 0,
-		communityList = {},
-		communityRefreshed = 0,
-		communityReportList = nil,
-		membersCount = "",
-
-		-- tables
-		communityLeadersList = {},
-		communityLogList = {},
-		Queues = {},
-	},
 }
 
 -- refresh config

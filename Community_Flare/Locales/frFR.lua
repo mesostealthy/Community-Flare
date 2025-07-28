@@ -108,6 +108,12 @@ L["Wintergrasp"] = "Wintergrasp"
 -- Bootstrap.lua
 L["Sorry, can not accept invites while currently queued as a mercenary."] = "Désolé, je ne peux pas accepter les invitations alors que je suis actuellement en file d'attente en tant que mercenaire."
 
+-- CombatLog.lua
+L["Catapult"] = "Catapulte" -- TODO: needs verification
+L["Demolisher"] = "Démolisseur" -- TODO: needs verification
+L["Glaive Thrower"] = "Lanceur de glaive" -- TODO: needs verification
+L["Siege Engine"] = "Engin de siège" -- TODO: needs verification
+
 -- Config.lua
 L["%d community leaders found."] = "%d chef de la communauté trouvé"
 L["1 Member"] = "1 membre"
@@ -175,6 +181,7 @@ L["Guild Members?"] = "Membres de la guilde ?"
 L["Instance Chat Warning"] = "Avertissement de discussion d'instance"
 L["Invite Options"] = "Options d'invitation"
 L["Irrelevant"] = "Impertinent"
+L["Isle of Conquest Options"] = "Options de l'île de la Conquête"
 L["Leaders Only"] = "Seulement les Chefs"
 L["Local Warning Only"] = "Avertissement local uniquement"
 L["Log roster list for matches from these communities?"] = "Enregistrer la liste des membres pour les matchs de ces communautés ?"
@@ -209,6 +216,7 @@ L["Tanks & Healers Only"] = "Tanks et guérisseurs uniquement"
 L["This is the amount of time before it starts purging logged roster list for matches."] = "C'est le temps qui s'écoule avant qu'il ne commence à purger la liste des joueurs enregistrés pour les matchs."
 L["This is the amount of time delayed between Mage attacks in Ashran."] = "C'est le temps qui s'écoule entre les attaques des mages à Ashran."
 L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."] = "Ceci ajustera votre vitesse de rotation lorsque vous êtes à l'intérieur d'un véhicule pour les faire tourner plus rapidement pendant un champ de bataille."
+L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."] = "Cela vous avertira lorsqu'un véhicule meurt et lorsqu'un nouveau doit apparaître/apparaître."
 L["This will always attempt to request party leadership upon joining a new party. (Only for Community Leaders!)"] = "Cela tentera toujours de demander la direction d'un parti lors de l'adhésion à un nouveau parti. (Uniquement pour les dirigeants communautaires !)"
 L["This will always automatically accept all queues for you."] = "Ceci acceptera automatiquement toutes les files d'attente pour vous."
 L["This will automatically accept group/party invites from Battle.NET friends."] = "Ceci acceptera automatiquement les invitations de groupe/amis Battle.NET."
@@ -243,6 +251,7 @@ L["Uninvite any players that are AFK?"] = "Retirez tous les joueurs qui sont LDC
 L["Use this to manage the Players and KOS in the Member GUIDs list."] = "Utilisez ceci pour gérer les joueurs et les KOS dans la liste des GUID des membres."
 L["Use this to refresh the members database from currently selected communities."] = "Utilisez ceci pour rafraîchir la base de données des membres des communautés actuellement sélectionnées."
 L["Use this to totally rebuild the members database from currently selected communities."] = "Utilisez ceci pour reconstruire entièrement la base de données des membres des communautés actuellement sélectionnées."
+L["Vehicle Alert System?"] = "Système d'alerte du véhicule ?"
 L["Warn before hearth stoning or teleporting inside a battleground?"] = "Prévenir avant d'utiliser la pierre de foyer ou de se téléporter à l'intérieur d'un champ de bataille ?"
 L["Warn if/when queues become paused?"] = "Prévenir si/quand les files d'attente sont mises en pause ?"
 L["Warn when Honor capped or close to it?"] = "Avertir lorsque Honor est plafonné ou proche ?"
@@ -387,13 +396,23 @@ L["Request Party Leader"] = "Demander le chef du groupe"
 L["POPPED"] = "ÉCLATÉ"
 
 -- UI/PlayerListFrame.lua
+-- UI/POIListFrame.lua
+-- UI/VignetteList.lua
 L["Add KOS"] = "Ajouter KOS"
+L["Area POI"] = "POI de zone"
 L["Copy Player Name"] = "Copier le nom du joueur"
 L["Copy Player Name for %s [Use Ctrl+c]:"] = "Copier le nom du joueur pour %s [Utilisez Ctrl+c]"
 L["Delete Player"] = "Supprimer le joueur"
+L["Description"] = "Description"
+L["GUID"] = "GUID"
+L["ID"] = "IDENTIFIANT"
+L["Name"] = "Nom"
 L["Player List Manager"] = "Gestionnaire de liste de joueurs"
+L["Position"] = "Position"
+L["Refresh Player Name"] = "Actualiser le nom du joueur"
 L["Remove KOS"] = "Supprimer KOS"
 L["Set Player Note"] = "Définir la note du joueur"
+L["Vignette"] = "Vignette"
 
 -- blizzard translated strings
 L["Captain Balinda Stonehearth"] = "Capitaine Balinda Gîtepierre"	-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=frFR

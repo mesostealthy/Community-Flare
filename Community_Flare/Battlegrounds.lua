@@ -888,6 +888,240 @@ function NS:Get_Current_Battleground_Status()
 	return false
 end
 
+-- print community stuff
+function NS:Print_Community_Stuff(isPrint, timer)
+	-- has community players?
+	if (NS.CommFlare.CF.CommCount > 0) then
+		-- display community names?
+		if (NS.charDB.profile.communityDisplayNames == true) then
+			-- build member list
+			local list = nil
+			for k,v in pairs(NS.CommFlare.CF.CommNamesList) do
+				-- list still empty? start it!
+				if (list == nil) then
+					list = tostring(v)
+				else
+					list = strformat("%s, %s", tostring(list), tostring(v))
+				end
+			end
+
+			-- found list?
+			if (list ~= nil) then
+				-- has timer?
+				if (timer) then
+					-- display results staggered
+					TimerAfter(timer, function()
+						-- display community members
+						print(strformat(L["Community Members: %s"], list))
+					end)
+
+					-- next
+					timer = timer + 0.1
+				else
+					-- display community members
+					print(strformat(L["Community Members: %s"], list))
+				end
+			end
+		end
+
+		-- found community counts?
+		if (NS.CommFlare.CF.CommCounts and next(NS.CommFlare.CF.CommCounts)) then
+			-- build count list
+			for k,v in pairs(NS.CommFlare.CF.CommCounts) do
+				-- verify club name
+				local club = NS.db.global.clubs[k]
+				if (not club or not club.name) then
+					-- clear count
+					NS.CommFlare.CF.CommCounts[k] = nil
+				else
+					-- guild?
+					if (club.clubType == Enum.ClubType.Guild) then
+						-- insert
+						tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
+					else
+						-- insert
+						tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s:%d", club.name, tonumber(v)))
+					end
+				end
+			end
+
+			-- sort
+			tsort(NS.CommFlare.CF.CommCountsList)
+
+			-- build count list
+			local list = nil
+			for k,v in pairs(NS.CommFlare.CF.CommCountsList) do
+				-- get name / count
+				local name, count = strsplit(":", v)
+				if (name and count) then
+					-- add to list
+					if (list == nil) then
+						list = strformat("%s = %d", name, tonumber(count))
+					else
+						list = strformat("%s, %s = %d", list, name, tonumber(count))
+					end
+				end
+			end
+
+			-- found list?
+			if (list ~= nil) then
+				-- has timer?
+				if (timer) then
+					-- display results staggered
+					TimerAfter(timer, function()
+						-- display community counts
+						print(strformat(L["Community Counts: %s"], list))
+					end)
+
+					-- next
+					timer = timer + 0.1
+				else
+					-- display community counts
+					print(strformat(L["Community Counts: %s"], list))
+				end
+			end
+		end
+
+		-- has timer?
+		if (timer) then
+			-- display results staggered
+			TimerAfter(timer, function()
+				-- display community count
+				print(strformat(L["Total Members: %d"], NS.CommFlare.CF.CommCount))
+			end)
+
+			-- next
+			timer = timer + 0.1
+		else
+			-- display community count
+			print(strformat(L["Total Members: %d"], NS.CommFlare.CF.CommCount))
+		end
+
+		-- displayed community
+		NS.CommFlare.CF.DisplayedLists["community"] = true
+	end
+
+	-- return timer
+	return timer
+end
+
+-- print mercenary stuff
+function NS:Print_Mercenary_Stuff(isPrint, timer)
+	-- has mercenary players?
+	if (NS.CommFlare.CF.MercCount > 0) then
+		-- display community names?
+		if (NS.charDB.profile.communityDisplayNames == true) then
+			-- build mercenary list
+			local list = nil
+			for k,v in pairs(NS.CommFlare.CF.MercNamesList) do
+				-- list still empty? start it!
+				if (list == nil) then
+					list = tostring(v)
+				else
+					list = strformat("%s, %s", tostring(list), tostring(v))
+				end
+			end
+
+			-- found merc list?
+			if (list ~= nil) then
+				-- has timer?
+				if (timer) then
+					-- display results staggered
+					TimerAfter(timer, function()
+						-- display community mercenaries
+						print(strformat(L["Community Mercenaries: %s"], list))
+					end)
+
+					-- next
+					timer = timer + 0.1
+				else
+					-- display community mercenaries
+					print(strformat(L["Community Mercenaries: %s"], list))
+				end
+			end
+		end
+
+		-- found mercenary counts?
+		if (NS.CommFlare.CF.MercCounts and next(NS.CommFlare.CF.MercCounts)) then
+			-- build count list
+			for k,v in pairs(NS.CommFlare.CF.MercCounts) do
+				-- verify club name
+				local club = NS.db.global.clubs[k]
+				if (not club or not club.name) then
+					-- clear count
+					NS.CommFlare.CF.MercCounts[k] = nil
+				else
+					-- guild?
+					if (club.clubType == Enum.ClubType.Guild) then
+						-- insert
+						tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
+					else
+						-- insert
+						tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s:%d", club.name, tonumber(v)))
+					end
+				end
+			end
+
+			-- sort
+			tsort(NS.CommFlare.CF.MercCountsList)
+
+			-- build count list
+			local list = nil
+			for k,v in ipairs(NS.CommFlare.CF.MercCountsList) do
+				-- get name / count
+				local name, count = strsplit(":", v)
+				if (name and count) then
+					-- add to list
+					if (list == nil) then
+						list = strformat("%s = %d", name, tonumber(count))
+					else
+						list = strformat("%s, %s = %d", list, name, tonumber(count))
+					end
+				end
+			end
+
+			-- found list?
+			if (list ~= nil) then
+				-- has timer?
+				if (timer) then
+					-- display results staggered
+					TimerAfter(timer, function()
+						-- display community counts
+						print(strformat(L["Mercenary Counts: %s"], list))
+					end)
+
+					-- next
+					timer = timer + 0.1
+				else
+					-- display community counts
+					print(strformat(L["Mercenary Counts: %s"], list))
+				end
+			end
+		end
+
+		-- has timer?
+		if (timer) then
+			-- display results staggered
+			TimerAfter(timer, function()
+				-- display mercs count
+				print(strformat(L["Total Mercenaries: %d"], NS.CommFlare.CF.MercCount))
+			end)
+
+			-- next
+			timer = timer + 0.1
+		else
+			-- display mercs count
+			print(strformat(L["Total Mercenaries: %d"], NS.CommFlare.CF.MercCount))
+		end
+
+		-- displayed mercenary
+		NS.CommFlare.CF.DisplayedLists["mercenary"] = true
+	end
+
+	-- return timer
+	return timer
+end
+
 -- count stuff in battlegrounds and promote to assists
 function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	-- initialize community stuff
@@ -1205,182 +1439,14 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 
 			-- has mercenary players?
 			if (NS.CommFlare.CF.MercCount > 0) then
-				-- display community names?
-				if (NS.charDB.profile.communityDisplayNames == true) then
-					-- build mercenary list
-					local list = nil
-					for k,v in pairs(NS.CommFlare.CF.MercNamesList) do
-						-- list still empty? start it!
-						if (list == nil) then
-							list = tostring(v)
-						else
-							list = strformat("%s, %s", tostring(list), tostring(v))
-						end
-					end
-
-					-- found merc list?
-					if (list ~= nil) then
-						-- display results staggered
-						TimerAfter(timer, function()
-							-- display community mercenaries
-							print(strformat(L["Community Mercenaries: %s"], list))
-						end)
-
-						-- next
-						timer = timer + 0.1
-					end
-				end
-
-				-- found mercenary counts?
-				if (NS.CommFlare.CF.MercCounts and next(NS.CommFlare.CF.MercCounts)) then
-					-- build count list
-					for k,v in pairs(NS.CommFlare.CF.MercCounts) do
-						-- verify club name
-						local club = NS.db.global.clubs[k]
-						if (not club or not club.name) then
-							-- clear count
-							NS.CommFlare.CF.MercCounts[k] = nil
-						else
-							-- guild?
-							if (club.clubType == Enum.ClubType.Guild) then
-								-- insert
-								tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
-							else
-								-- insert
-								tinsert(NS.CommFlare.CF.MercCountsList, strformat("%s:%d", club.name, tonumber(v)))
-							end
-						end
-					end
-
-					-- sort
-					tsort(NS.CommFlare.CF.MercCountsList)
-
-					-- build count list
-					local list = nil
-					for k,v in ipairs(NS.CommFlare.CF.MercCountsList) do
-						-- get name / count
-						local name, count = strsplit(":", v)
-						if (name and count) then
-							-- add to list
-							if (list == nil) then
-								list = strformat("%s = %d", name, tonumber(count))
-							else
-								list = strformat("%s, %s = %d", list, name, tonumber(count))
-							end
-						end
-					end
-
-					-- found list?
-					if (list ~= nil) then
-						-- display results staggered
-						TimerAfter(timer, function()
-							-- display community counts
-							print(strformat(L["Mercenary Counts: %s"], list))
-						end)
-
-						-- next
-						timer = timer + 0.1
-					end
-				end
-
-				-- display results staggered
-				TimerAfter(timer, function()
-					-- display mercs count
-					print(strformat(L["Total Mercenaries: %d"], NS.CommFlare.CF.MercCount))
-				end)
-
-				-- next
-				timer = timer + 0.1
+				-- print mercenary stuff
+				timer = NS:Print_Mercenary_Stuff(isPrint, timer)
 			end
 
 			-- has community players?
 			if (NS.CommFlare.CF.CommCount > 0) then
-				-- display community names?
-				if (NS.charDB.profile.communityDisplayNames == true) then
-					-- build member list
-					local list = nil
-					for k,v in pairs(NS.CommFlare.CF.CommNamesList) do
-						-- list still empty? start it!
-						if (list == nil) then
-							list = tostring(v)
-						else
-							list = strformat("%s, %s", tostring(list), tostring(v))
-						end
-					end
-
-					-- found list?
-					if (list ~= nil) then
-						-- display results staggered
-						TimerAfter(timer, function()
-							-- display community members
-							print(strformat(L["Community Members: %s"], list))
-						end)
-
-						-- next
-						timer = timer + 0.1
-					end
-				end
-
-				-- found community counts?
-				if (NS.CommFlare.CF.CommCounts and next(NS.CommFlare.CF.CommCounts)) then
-					-- build count list
-					for k,v in pairs(NS.CommFlare.CF.CommCounts) do
-						-- verify club name
-						local club = NS.db.global.clubs[k]
-						if (not club or not club.name) then
-							-- clear count
-							NS.CommFlare.CF.CommCounts[k] = nil
-						else
-							-- guild?
-							if (club.clubType == Enum.ClubType.Guild) then
-								-- insert
-								tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s (Guild):%d", club.name, tonumber(v)))
-							else
-								-- insert
-								tinsert(NS.CommFlare.CF.CommCountsList, strformat("%s:%d", club.name, tonumber(v)))
-							end
-						end
-					end
-
-					-- sort
-					tsort(NS.CommFlare.CF.CommCountsList)
-
-					-- build count list
-					local list = nil
-					for k,v in pairs(NS.CommFlare.CF.CommCountsList) do
-						-- get name / count
-						local name, count = strsplit(":", v)
-						if (name and count) then
-							-- add to list
-							if (list == nil) then
-								list = strformat("%s = %d", name, tonumber(count))
-							else
-								list = strformat("%s, %s = %d", list, name, tonumber(count))
-							end
-						end
-					end
-
-					-- found list?
-					if (list ~= nil) then
-						-- display results staggered
-						TimerAfter(timer, function()
-							-- display community counts
-							print(strformat(L["Community Counts: %s"], list))
-						end)
-
-						-- next
-						timer = timer + 0.1
-					end
-				end
-
-				-- display results staggered
-				TimerAfter(timer, function()
-					-- display community count
-					print(strformat(L["Total Members: %d"], NS.CommFlare.CF.CommCount))
-				end)
-
-				-- next
-				timer = timer + 0.1
+				-- print community stuff
+				timer = NS:Print_Community_Stuff(isPrint, timer)
 			end
 		end
 	end

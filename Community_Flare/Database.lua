@@ -95,6 +95,40 @@ function NS:Verify_Default_Community_Setup()
 
 			-- save refresh date
 			NS.charDB.profile.communityRefreshed = time()
+		else
+			-- find oldest subscribed club
+			local clubId = 0
+			local lowest = 0
+			local clubs = ClubGetSubscribedClubs()
+			for k,v in pairs(clubs) do
+				-- community?
+				if (v.clubType == Enum.ClubType.Character) then
+					-- earliest community?
+					if ((lowest == 0) or (v.joinTime < lowest)) then
+						-- update lowest
+						lowest = v.joinTime
+						clubId = v.clubId
+					end
+				end
+			end
+
+			-- found?
+			if (clubId > 0) then
+				-- save main club
+				NS.charDB.profile.communityMain = clubId
+
+				-- remove all members
+				NS:Remove_All_Club_Members_By_ClubID(clubId)
+
+				-- add all members
+				NS:Add_All_Club_Members_By_ClubID(clubId)
+
+				-- setup report channels
+				NS:Setup_Report_Channels()
+
+				-- save refresh date
+				NS.charDB.profile.communityRefreshed = time()
+			end
 		end
 	end
 
@@ -603,6 +637,15 @@ function NS:Cleanup_Members()
 
 	-- process all member GUIDs
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- not current?
+		if (NS.db.global.members[v] and NS.db.global.members[v].guid and (NS.db.global.members[v].guid ~= k)) then
+			-- remove
+			NS.db.global.MemberGUIDs[k] = nil
+		end
+	end
+
+	-- process all member GUIDs
+	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- KOS?
 		if (NS.CommFlare.CF.KosList[k]) then
 			-- has player and needs updating?
@@ -976,7 +1019,10 @@ function NS:Add_Member(clubId, info, rebuild)
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
 		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
-		if (name and realm and (realm ~= "")) then
+		if (not name) then
+			-- failed
+			return
+		elseif (name and realm and (realm ~= "")) then
 			-- rebuild full
 			player = name .. "-" .. realm
 		else
@@ -1146,7 +1192,10 @@ function NS:Remove_Member(clubId, info)
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
 		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
-		if (name and realm and (realm ~= "")) then
+		if (not name) then
+			-- failed
+			return
+		elseif (name and realm and (realm ~= "")) then
 			-- rebuild full
 			player = name .. "-" .. realm
 		else
@@ -1530,7 +1579,10 @@ function NS:Club_Member_Removed(clubId, memberId)
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
 			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (name and realm and (realm ~= "")) then
+			if (not name) then
+				-- failed
+				return
+			elseif (name and realm and (realm ~= "")) then
 				-- rebuild full
 				player = name .. "-" .. realm
 			else
@@ -1589,7 +1641,10 @@ function NS:Club_Member_Updated(clubId, memberId)
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
 			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (name and realm and (realm ~= "")) then
+			if (not name) then
+				-- failed
+				return
+			elseif (name and realm and (realm ~= "")) then
 				-- rebuild full
 				player = name .. "-" .. realm
 			else
@@ -1673,7 +1728,9 @@ function NS:Find_ExCommunity_Members(clubId)
 			if (not strmatch(player, "-")) then
 				-- get player info by guid
 				local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
-				if (name and realm and (realm ~= "")) then
+				if (not name) then
+					-- do nothing
+				elseif (name and realm and (realm ~= "")) then
 					-- rebuild full
 					player = name .. "-" .. realm
 				else
@@ -1919,7 +1976,7 @@ function NS:Find_Community_Member_By_GUID(guid)
 		return nil
 	end
 
-	-- not found?
+	-- get player info by guid?
 	local player, realm = select(6, GetPlayerInfoByGUID(guid))
 	if (not player or (player == "")) then
 		-- failed

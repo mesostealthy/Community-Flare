@@ -397,12 +397,15 @@ function NS:Update_Group(groupGUID)
 					-- get player info
 					local playerGUID = members[i].guid
 					local playerName, playerRealm = select(6, GetPlayerInfoByGUID(playerGUID))
-					if (not playerRealm or (playerRealm == "")) then
-						playerRealm = NS.CommFlare.CF.PlayerServerName
-					end
+					if (playerName) then
+						-- has no player realm?
+						if (not playerRealm or (playerRealm == "")) then
+							playerRealm = NS.CommFlare.CF.PlayerServerName
+						end
 
-					-- add group member
-					NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+						-- add group member
+						NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+					end
 				end
 			else
 				-- group no longer exists

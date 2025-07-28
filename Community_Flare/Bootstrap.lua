@@ -31,6 +31,7 @@ NS.Libs = {
 	AceSerializer = LibStub("AceSerializer-3.0"),
 	LibCompress = LibStub("LibCompress"),
 	LibDeflate = LibStub("LibDeflate"),
+	LibRangeCheck = LibStub("LibRangeCheck-3.0"),
 }
 
 -- initialize
@@ -122,6 +123,7 @@ NS.CommFlare.CF = {
 	Winner = nil,
 
 	-- tables
+	ActiveTimers = {},
 	AuraData = {},
 	Clubs = {},
 	ClubList = {},
@@ -131,6 +133,7 @@ NS.CommFlare.CF = {
 	CommNames = {},
 	CommNamesList = {},
 	CommunityLeaders = {},
+	DisplayedLists = {},
 	FullRoster = {},
 	KosAlerted = {},
 	KosList = {},
@@ -147,6 +150,7 @@ NS.CommFlare.CF = {
 	PartyVersions = {},
 	PlayerInfo = {},
 	POIInfo = {},
+	POIList = {},
 	PoppedGroups = {},
 	ReadyCheck = {},
 	RoleChosen = {},
@@ -157,6 +161,9 @@ NS.CommFlare.CF = {
 	StreamsLoaded = {},
 	TeamUnits = {},
 	TransmissionCheck = {},
+	VehicleDeaths = {},
+	VehicleList = {},
+	VignetteList = {},
 	VignetteWarnings = {},
 	WaitForUpdate = {},
 	WidgetCache = {},
