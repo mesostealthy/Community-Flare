@@ -20,13 +20,11 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.28.001:
--NEW SETTING: Vehicle Alert System to alert you when Vehicles die/respawn in Isle of Conquest.
--Raid Warning options not allowed to issue a Raid Warning to everyone if it's capable of spamming.
--Added custom version of LibRangeCheck-3.0 so CF can add items to the Spells tables.
--Added resize ability for Area POI, Player & Vignettes List Frames.
--Player List Manager: Refresh Player Name in right click menu.
--Disabling Community Right Click Menu will ask to Reload UI now.
--/comf vignettes now has a GUI that lists the Vignettes.
--/comf pois now has a GUI that lists the POIs.
--TOC updated to v11.1.7
+v1.29.001:
+-Community Member List: Refreshes per community every 7 days to make sure it's up to date.
+-Player List Manager: Hover over names to display more info about each player.
+-BUGFIX: Battle.NET requested invites now canceled if party is full to your Max Party Size setting.
+-BUGFIX: Community Members could get removed from the database. This caused INV to not work for those players.
+-BUGFIX: Inviting to groups already in Queue now work properly and select roles selected. (If you set any.)
+-BUGFIX: Isle of Conquest does not report when Timers are canceled.
+-TOC updated to v11.2.0

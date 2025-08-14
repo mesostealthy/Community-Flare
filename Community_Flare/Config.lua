@@ -98,7 +98,6 @@ local CharDefaults = {
 		-- community stuff
 		communityMain = 0,
 		communityList = {},
-		communityRefreshed = 0,
 		communityReportList = nil,
 		membersCount = "",
 
@@ -623,7 +622,7 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 	text = L["One or more of the changes you have made require a ReloadUI."],
 	button1 = L["Yes"],
 	button2 = L["No"],
-	OnAccept = function(self, player)
+	OnAccept = function(dialog, player)
 		-- save settings
 		for k,v in pairs(settings_that_require_reload) do
 			-- block hotkeys?

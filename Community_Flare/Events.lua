@@ -61,7 +61,7 @@ local AreaPoiInfoGetAreaPOIForMap               = _G.C_AreaPoiInfo.GetAreaPOIFor
 local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetAccountInfoByGUID             = _G.C_BattleNet.GetAccountInfoByGUID
 local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
-local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
+local ClubAreMembersReady                       = _G.C_Club.AreMembersReady
 local GetCVar                                   = _G.C_CVar.GetCVar
 local GetCVarDefault                            = _G.C_CVar.GetCVarDefault
 local SetCVar                                   = _G.C_CVar.SetCVar
@@ -1605,20 +1605,20 @@ function NS.CommFlare:CLUB_MEMBER_PRESENCE_UPDATED(msg, ...)
 		local club = ClubGetClubInfo(clubId)
 		if (club.clubType == Enum.ClubType.Character) then
 			-- get member info
-			local mi = ClubGetMemberInfo(clubId, memberId)
+			local mi = NS:GetClubMemberInfo(clubId, memberId)
 			if (mi and mi.name and (mi.name ~= "")) then
 				-- build proper name
 				local player = mi.name
 				if (not strmatch(player, "-")) then
 					-- add realm name
-					player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 				end
 
 				-- get community member
 				local member = NS:Get_Community_Member(player)
-				if (member ~= nil) then
+				if (member) then
 					-- update last seen
-					NS:Update_Last_Seen(member.name)
+					NS:Update_Last_Seen(player)
 				end
 			end
 		end
@@ -1651,6 +1651,64 @@ function NS.CommFlare:CLUB_MEMBER_UPDATED(msg, ...)
 
 	-- update club member
 	NS:Club_Member_Updated(clubId, memberId)
+end
+
+-- process club members updated
+function NS.CommFlare:CLUB_MEMBERS_UPDATED(msg, ...)
+	local clubId = ...
+
+	-- are members ready?
+	if (ClubAreMembersReady(clubId) == true) then
+		-- update last seen
+		local members = CommunitiesUtil.GetAndSortMemberInfo(clubId)
+		for k,v in ipairs(members) do
+			-- online?
+			if (v.presence and (v.presence == Enum.ClubMemberPresence.Online)) then
+				-- get community member
+				local member = NS:Get_Community_Member(v.name)
+				if (member ~= nil) then
+					-- update last seen
+					NS:Update_Last_Seen(v.name)
+				end
+			end
+		end
+
+		-- verify refreshed
+		local last_refresh = NS.db.global.clubs[clubId].refreshed
+		if (not last_refresh) then
+			-- set zero
+			last_refresh = 0
+		end
+
+		-- needs refreshing?
+		local refresh = false
+		if (last_refresh == 0) then
+			-- refresh
+			refresh = true
+		elseif (last_refresh > 0) then
+			-- refreshed more than 7 days ago?
+			local next_refresh = last_refresh + (7 * 86400)
+			if (time() > next_refresh) then
+				-- refresh
+				refresh = true
+			end
+		end
+
+		-- should refresh?
+		if (refresh == true) then
+			-- process after 5 seconds
+			TimerAfter(5, function()
+				-- remove all club members
+				NS:Remove_All_Club_Members_By_ClubID(clubId)
+
+				-- add all club members
+				NS:Add_All_Club_Members_By_ClubID(clubId)
+
+				-- save time
+				NS.db.global.clubs[clubId].refreshed = time()
+			end)
+		end
+	end
 end
 
 -- process club streams loaded
@@ -1753,7 +1811,28 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 					local playerName, color, selfRelationship = SocialQueueUtil_GetRelationshipInfo(guid, name, clubId)
 
 					-- will invite cause conversion to raid?
+					local cancelInvite = false
 					if (willConvertToRaid or (GetNumGroupMembers() > 4) or PartyInfoIsPartyFull()) then
+						-- cancel invite
+						cancelInvite = true
+					else
+						-- get count / maxCount
+						local count = GetNumGroupMembers()
+						local maxCount = NS:GetMaxGroupCount()
+						if (count == 0) then
+							-- at least 1
+							count = 1
+						end
+
+						-- group is already full?
+						if (count >= maxCount) then
+							-- cancel invite
+							cancelInvite = true
+						end
+					end
+
+					-- cancel invite?
+					if (cancelInvite == true) then
 						-- cancel invite
 						RespondToInviteConfirmation(invite, false)
 
@@ -1782,7 +1861,7 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 							player = name
 							if (not strmatch(player, "-")) then
 								-- add realm name
-								player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+								player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 							end
 						end
 
@@ -1915,12 +1994,12 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 						local full_name = name
 						if (not strmatch(full_name, "-")) then
 							-- add realm name
-							full_name = full_name .. "-" .. NS.CommFlare.CF.PlayerServerName
+							full_name = strformat("%s-%s", full_name, NS.CommFlare.CF.PlayerServerName)
 						end
 
 						-- get community member
 						local member = NS:Get_Community_Member(full_name)
-						if (member and member.name and member.clubs) then
+						if (member and member.clubs) then
 							-- not already processed?
 							if (not NS.CommFlare.CF.RosterList[full_name]) then
 								-- should log list / i.e. has shared community?
@@ -2111,7 +2190,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 	local player = name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- are you group leader?
@@ -2287,49 +2366,8 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 		if (NS.CommFlare.CF.AutoInvite == true) then
 			-- lfg invite popup shown?
 			if (LFGInvitePopup:IsShown()) then
-				-- force tank?
-				local timer = nil
-				if (NS.charDB.profile.forceTank == true) then
-					-- wait some
-					timer = 0.5
-					TimerAfter(timer, function()
-						-- click tank button
-						LFGInvitePopupRoleButtonTank:Click()
-					end)
-				end
-
-				-- force healer?
-				if (NS.charDB.profile.forceHealer == true) then
-					-- wait some
-					timer = 0.5
-					TimerAfter(timer, function()
-						-- click healer button
-						LFGInvitePopupRoleButtonHealer:Click()
-					end)
-				end
-
-				-- force healer?
-				if (NS.charDB.profile.forceDPS == true) then
-					-- wait some
-					timer = 0.5
-					TimerAfter(timer, function()
-						-- click dps button
-						LFGInvitePopupRoleButtonDPS:Click()
-					end)
-				end
-
-				-- no wait?
-				if (not timer) then
-					-- click accept button
-					LFGInvitePopupAcceptButton:Click()
-				else
-					-- wait some
-					timer = timer + 0.2
-					TimerAfter(timer, function()
-						-- click accept button
-						LFGInvitePopupAcceptButton:Click()
-					end)
-				end
+				-- click accept button
+				LFGInvitePopupAcceptButton:Click()
 			-- static popup shown?
 			elseif (StaticPopup_FindVisible("PARTY_INVITE")) then
 				-- accept party
@@ -2916,7 +2954,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 		-- has realm?
 		if (realm and (realm ~= "")) then
 			-- add realm
-			player = player .. "-" .. realm
+			player = strformat("%s-%s", player, realm)
 		end
 
 		-- unit in raid?
@@ -3458,7 +3496,12 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 			-- update / display mercenary stuff
 			local timer = 0.0
 			NS:Update_Battleground_Stuff(false, false)
-			NS:Print_Mercenary_Stuff(true, timer)
+
+			-- match engaged?
+			if (NS.CommFlare.CF.MatchStatus == 2) then
+				-- print mercenary stuff
+				NS:Print_Mercenary_Stuff(true, timer)
+			end
 		end
 
 		-- not created?
@@ -3477,7 +3520,7 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 				local player = info.name
 				if (not strmatch(player, "-")) then
 					-- add realm name
-					player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 				end
 
 				-- add to full roster
@@ -3673,6 +3716,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CLUB_MEMBER_REMOVED")
 	self:RegisterEvent("CLUB_MEMBER_ROLE_UPDATED")
 	self:RegisterEvent("CLUB_MEMBER_UPDATED")
+	self:RegisterEvent("CLUB_MEMBERS_UPDATED")
 	self:RegisterEvent("CLUB_STREAMS_LOADED")
 	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
@@ -3739,6 +3783,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CLUB_MEMBER_REMOVED")
 	self:UnregisterEvent("CLUB_MEMBER_ROLE_UPDATED")
 	self:UnregisterEvent("CLUB_MEMBER_UPDATED")
+	self:UnregisterEvent("CLUB_MEMBERS_UPDATED")
 	self:UnregisterEvent("CLUB_STREAMS_LOADED")
 	self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 	self:UnregisterEvent("CURRENCY_DISPLAY_UPDATE")
@@ -3905,6 +3950,12 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			-- hide
 			CF_POIListFrame:Hide()
 		else
+			-- debug print enabled?
+			if (NS.db.global.debugPrint == true) then
+				-- list pois
+				NS:List_POIs()
+			end
+
 			-- show
 			CF_POIListFrame:Show()
 		end
@@ -3941,6 +3992,12 @@ function NS.CommFlare:Community_Flare_Slash_Command(input)
 			-- hide
 			CF_VignetteListFrame:Hide()
 		else
+			-- debug print enabled?
+			if (NS.db.global.debugPrint == true) then
+				-- list vignettes
+				NS:List_Vignettes()
+			end
+
 			-- show
 			CF_VignetteListFrame:Show()
 		end

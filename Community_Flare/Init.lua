@@ -15,12 +15,14 @@ local ChatEdit_FocusActiveWindow                  = _G.ChatEdit_FocusActiveWindo
 local ChatFrame_AddNewCommunitiesChannel          = _G.ChatFrame_AddNewCommunitiesChannel
 local ChatFrame_ContainsChannel                   = _G.ChatFrame_ContainsChannel
 local ChatFrame_RemoveCommunitiesChannel          = _G.ChatFrame_RemoveCommunitiesChannel
+local CopyTable                                   = _G.CopyTable
 local FCF_IsChatWindowIndexReserved               = _G.FCF_IsChatWindowIndexReserved
 local FCF_IterateActiveChatWindows                = _G.FCF_IterateActiveChatWindows
 local GetBindingAction                            = _G.GetBindingAction
 local GetBindingKey                               = _G.GetBindingKey
 local GetChannelName                              = _G.GetChannelName
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
+local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                       = _G.GetNumSubgroupMembers
@@ -32,10 +34,11 @@ local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local SaveBindings                                = _G.SaveBindings
 local SendChatMessage                             = _G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage or _G.SendChatMessage
 local SetBinding                                  = _G.SetBinding
+local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
-local StaticPopupDialogs                          = _G.StaticPopupDialogs
 local StaticPopup_Show                            = _G.StaticPopup_Show
 local StaticPopup_StandardEditBoxOnEscapePressed  = _G.StaticPopup_StandardEditBoxOnEscapePressed
 local UninviteUnit                                = _G.UninviteUnit
@@ -44,8 +47,8 @@ local UnitFullName                                = _G.UnitFullName
 local UnitGUID                                    = _G.UnitGUID
 local UnitIsConnected                             = _G.UnitIsConnected
 local UnitIsDeadOrGhost                           = _G.UnitIsDeadOrGhost
-local UnitInParty                                 = _G.UnitInParty
 local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
+local UnitInParty                                 = _G.UnitInParty
 local UnitName                                    = _G.UnitName
 local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local AuraUtilForEachAura                         = _G.AuraUtil.ForEachAura
@@ -59,11 +62,8 @@ local ClubGetMemberInfo                           = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
 local DelvesUIHasActiveDelve                      = _G.C_DelvesUI.HasActiveDelve
-local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
 local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                               = _G.C_Map.GetMapInfo
-local MapGetUserWaypointHyperlink                 = _G.C_Map.GetUserWaypointHyperlink
-local MapSetUserWaypoint                          = _G.C_Map.SetUserWaypoint
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                    = _G.C_PartyInfo.IsDelveComplete
 local PartyInfoIsDelveInProgress                  = _G.C_PartyInfo.IsDelveInProgress
@@ -74,12 +74,12 @@ local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
 local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
 local SocialQueueGetGroupForPlayer                = _G.C_SocialQueue.GetGroupForPlayer
-local SuperTrackSetSuperTrackedUserWaypoint       = _G.C_SuperTrack.SetSuperTrackedUserWaypoint
 local TimerAfter                                  = _G.C_Timer.After
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local securecallfunction                          = _G.securecallfunction
+local select                                      = _G.select
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
@@ -92,104 +92,6 @@ local strmatch                                    = _G.string.match
 local strsplit                                    = _G.string.split
 local strsub                                      = _G.string.sub
 local tinsert                                     = _G.table.insert
-
--- hearth stone spells
-NS.CommFlare.HearthStoneSpells = {
-	[8690] = "Hearthstone",
-	[39937] = "There's No Place Like Home",
-	[75136] = "Ethereal Portal",
-	[94719] = "The Innkeeper's Daughter",
-	[136508] = "Dark Portal",
-	[171253] = "Garrison Hearthstone",
-	[222695] = "Dalaran Hearthstone",
-	[231504] = "Tome of Town Portal",
-	[278244] = "Greatfather Winter's Hearthstone",
-	[278559] = "Headless Horseman's Hearthstone",
-	[285362] = "Lunar Elder's Hearthstone",
-	[285424] = "Peddlefeet's Lovely Hearthstone",
-	[286031] = "Noble Gardener's Hearthstone",
-	[286331] = "Fire Eater's Hearthstone",
-	[286353] = "Brewfest Reveler's Hearthstone",
-	[298068] = "Holographic Digitalization Hearthstone",
-	[308742] = "Eternal Traveler's Hearthstone",
-	[326064] = "Night Fae Hearthstone",
-	[342122] = "Venthyr Sinstone",
-	[345393] = "Kyrian Hearthstone",
-	[346060] = "Necrolord Hearthstone",
-	[363799] = "Dominated Hearthstone",
-	[366945] = "Enlightened Hearthstone",
-	[367013] = "Broker Translocation Matrix",
-	[375357] = "Timewalker's Hearthstone",
-	[391042] = "Ohn'ir Windsage's Hearthstone",
-	[412555] = "Path of the Naaru",
-	[420418] = "Deepdweller's Earthen Hearthstone",
-	[422284] = "Hearthstone of the Flame",
-	[431644] = "Stone of the Hearth",
-	[438606] = "Draenic Hologem",
-	[463481] = "Notorious Thread's Hearthstone",
-}
-
--- teleport spells
-NS.CommFlare.TeleportSpells = {
-	[556] = "Astral Recall",
-	[3561] = "Teleport: Stormwind",
-	[3562] = "Teleport: Ironforge",
-	[3563] = "Teleport: Undercity",
-	[3565] = "Teleport: Darnassus",
-	[3566] = "Teleport: Thunder Bluff",
-	[3567] = "Teleport: Orgrimmar",
-	[23442] = "Dimensional Ripper - Everlook",
-	[23453] = "Ultrasafe Transporter: Gadgetzan",
-	[32271] = "Teleport: Exodar",
-	[32272] = "Teleport: Silvermoon",
-	[33690] = "Teleport: Shattrath",
-	[35715] = "Teleport: Shattrath",
-	[36890] = "Dimensional Ripper - Area 52",
-	[36941] = "Ultrasafe Transporter: Toshley's Station",
-	[41234] = "Teleport: Black Temple",
-	[49358] = "Teleport: Stonard",
-	[49359] = "Teleport: Theramore",
-	[53140] = "Teleport: Dalaran - Northrend",
-	[54406] = "Teleport: Dalaran",
-	[66238] = "Teleport: Argent Tournament",
-	[71436] = "Teleport: Booty Bay",
-	[88342] = "Teleport: Tol Borad",
-	[88344] = "Teleport: Tol Borad",
-	[89157] = "Teleport: Stormwind",
-	[89158] = "Teleport: Orgrimmar",
-	[89597] = "Teleport: Tol Borad",
-	[89598] = "Teleport: Tol Borad",
-	[126755] = "Wormhole Generator: Pandaria",
-	[132621] = "Teleport: Vale of Eternal Blossoms",
-	[132627] = "Teleport: Vale of Eternal Blossoms",
-	[145430] = "Call of the Mists",
-	[175604] = "Bladespire Relic",
-	[175608] = "Relic of Karabor",
-	[176242] = "Teleport: Warspear",
-	[176248] = "Teleport: Stormshield",
-	[189838] = "Admiral's Compass",
-	[193669] = "Beginner's Guide to Dimensional Rifting",
-	[193759] = "Teleport: Hall of the Guardian",
-	[216138] = "Emblem of Margoss",
-	[220746] = "Scroll of Teleport: Ravenholdt",
-	[220989] = "Teleport: Dalaran",
-	[223805] = "Adept's Guide to Dimensional Rifting",
-	[224869] = "Teleport: Dalaran - Broken Isles",
-	[231054] = "Violet Seal of the Grand Magus",
-	[250796] = "Wormhole Generator: Argus",
-	[281403] = "Teleport: Boralus",
-	[281404] = "Teleport: Dazar'alor",
-	[289283] = "Teleport: Dazar'alor",
-	[289284] = "Teleport: Boralus",
-	[299083] = "Wormhome Generator: Kul Tiras",
-	[299084] = "Wormhome Generator: Zandalar",
-	[300047] = "Mountebank's Colorful Cloak",
-	[335671] = "Scroll of Teleport: Theater of Pain",
-	[344587] = "Teleport: Oribos",
-	[395277] = "Teleport: Valdrakken",
-	[406714] = "Scroll of Teleport: Zskera Vaults",
-	[446540] = "Teleport: Dornogal",
-}
 
 -- global function (send variables to other addons)
 function CommunityFlare_GetVar(name)
@@ -209,44 +111,6 @@ function CommunityFlare_GetVar(name)
 	return nil
 end
 
--- has table updated?
-function NS:HasTableUpdated(table1, table2)
-	-- process all
-	local count = 0
-	for k,v in pairs(table1) do
-		-- updated?
-		if (table2[k] ~= v) then
-			-- not table?
-			--if (type(v) ~= "table") then
-			--	-- display
-			--	print(strformat("%s = %s", tostring(k), tostring(v)))
-			--end
-
-			-- updated
-			count = count + 1
-		end
-
-		-- table?
-		if (type(v) == "table") then
-			-- call recursively
-			local updated = NS:HasTableUpdated(v, table2[k])
-			if (updated == true) then
-				-- yes
-				return true
-			end
-		end
-	end
-
-	-- updated?
-	if (count > 0) then
-		-- yup
-		return true
-	else
-		-- nope
-		return false
-	end
-end
-
 -- check for table additions
 function NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
 	-- check for added fields
@@ -261,12 +125,17 @@ function NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
 
 		-- not in table2?
 		if (table2[k] == nil) then
-			-- new
-			print(strformat("ADDED %s: Item %s, %s = %s", tabletype, name, field, tostring(v)))
-			count = count + 1
+			-- table?
+			if (type(table1) == "table") then
+				-- copy table
+				table2[k] = CopyTable(table1[k])
+			else
+				-- copy value
+				table2[k] = table1[k]
+			end
 
-			-- add
-			table2[k] = table1[k]
+			-- added
+			count = count + 1
 		-- table?
 		elseif (type(table1[k]) == "table") then
 			-- call recursively
@@ -278,7 +147,7 @@ function NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
 	return count
 end
 
--- check for table deltions
+-- check for table deletions
 function NS:CheckForTableDeletions(tabletype, name, table1, table2, basename)
 	-- check for added fields
 	local count = 0
@@ -292,12 +161,9 @@ function NS:CheckForTableDeletions(tabletype, name, table1, table2, basename)
 
 		-- not in table1?
 		if (table1[k] == nil) then
-			-- new
-			print(strformat("DELETED %s: Item %s, %s = %s", tabletype, name, field, tostring(v)))
-			count = count + 1
-
-			-- delete
+			-- deleted
 			table2[k] = nil
+			count = count + 1
 		-- table?
 		elseif (type(table1[k]) == "table") then
 			-- call recursively
@@ -312,13 +178,16 @@ end
 -- check for table updates
 function NS:CheckForTableUpdates(tabletype, name, table1, table2, basename)
 	-- invalid tables?
+	local count = 0
 	if (not table1 or not table2) then
 		-- return 1
 		return 1
 	end
 
+	-- check for table additions
+	count = count + NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
+
 	-- check for updated fields
-	local count = 0
 	for k,v in pairs(table1) do
 		-- build proper field
 		local field = tostring(k)
@@ -559,14 +428,40 @@ function NS:StringToTable(method, string)
 	return nil
 end
 
--- parse command
-function NS:ParseCommand(text)
-	local table = {}
-	local params = strgmatch(text, "([^@]+)");
-	for param in params do
-		tinsert(table, param)
+-- get club members
+function NS:GetClubMembers(clubId)
+	-- get club members
+	local members = ClubGetClubMembers(clubId)
+	return members
+end
+
+-- get club member info
+function NS:GetClubMemberInfo(clubId, memberId)
+	-- found member?
+	local mi = ClubGetMemberInfo(clubId, memberId)
+	if (not mi or not mi.name) then
+		-- failed
+		return nil
 	end
-	return table
+
+	-- has name only?
+	local player = mi.name
+	local _, c = player:gsub("-", "")
+	if (c == 0) then
+		-- update name
+		mi.name = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+	-- has extra data?
+	elseif (c > 1) then
+		-- has extra?
+		local name, realm, extra = strsplit("-", player)
+		if (extra) then
+			-- update name
+			mi.name = strformat("%s-%s", name, realm)
+		end
+	end
+
+	-- return member info
+	return mi
 end
 
 -- is in battleground?
@@ -654,10 +549,10 @@ function NS:IsInvisible()
 		if (v.clubType == Enum.ClubType.Character) then
 			-- process members
 			local clubId = v.clubId
-			local members = ClubGetClubMembers(clubId)
+			local members = NS:GetClubMembers(clubId)
 			for _,v2 in ipairs(members) do
-				local mi = ClubGetMemberInfo(clubId, v2)
-				if ((mi ~= nil) and (mi.name ~= nil)) then
+				local mi = NS:GetClubMemberInfo(clubId, v2)
+				if (mi and mi.name) then
 					-- found player?
 					if (mi.name == player) then
 						-- offline?
@@ -816,7 +711,7 @@ end
 function NS:SendMessage(sender, msg)
 	-- party?
 	if (not sender) then
-		-- are you in local party?
+		-- in local party?
 		if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
 			-- send to party
 			SendChatMessage(msg, "PARTY")
@@ -825,7 +720,7 @@ function NS:SendMessage(sender, msg)
 	elseif (type(sender) == "string") then
 		-- guild?
 		if (sender == "GUILD") then
-			-- are you in a guild?
+			-- in guild?
 			if (IsInGuild()) then
 				-- send to guild
 				SendChatMessage(msg, "GUILD")
@@ -836,21 +731,21 @@ function NS:SendMessage(sender, msg)
 			SendChatMessage(msg, "INSTANCE_CHAT")
 		-- party?
 		elseif (sender == "PARTY") then
-			-- are you in local party?
+			-- in local party?
 			if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
 				-- send to party
 				SendChatMessage(msg, "PARTY")
 			end
 		-- raid?
 		elseif (sender == "RAID") then
-			-- are you in raid?
+			-- in raid?
 			if (IsInRaid() == true) then
 				-- send to raid
 				SendChatMessage(msg, "RAID")
 			end
 		-- raid warning?
 		elseif (sender == "RAID_WARNING") then
-			-- are you in raid?
+			-- in raid?
 			if (IsInRaid() == true) then
 				-- send to raid warning
 				SendChatMessage(msg, "RAID_WARNING")
@@ -1050,8 +945,24 @@ function NS:Enforce_PVP_Roles()
 
 	-- any roles forced?
 	if ((isTank == true) or (isHealer == true) or (isDPS == true)) then
-		-- set pvp roles
-		SetPVPRoles(isTank, isHealer, isDPS)
+		-- get lfg role update
+		local isBGRoleCheck = select(6, GetLFGRoleUpdate())
+		if (isBGRoleCheck == true) then
+			-- set pvp roles
+			SetPVPRoles(isTank, isHealer, isDPS)
+		end
+
+		-- lfg invite popup show?
+		if (LFGInvitePopup:IsShown()) then
+			-- setup roles
+			local isLeader = GetLFGRoles()
+			SetLFGRoles(isLeader, isTank, isHealer, isDPS)
+
+			-- set checked boxes
+			LFGRole_SetChecked(LFDQueueFrameRoleButtonTank, isTank)
+			LFGRole_SetChecked(LFDQueueFrameRoleButtonHealer, isHealer)
+			LFGRole_SetChecked(LFDQueueFrameRoleButtonDPS, isDPS)
+		end
 	end
 end
 
@@ -1060,7 +971,7 @@ function NS:GetFullName(player)
 	-- force name-realm format
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 	return player
 end
@@ -1076,27 +987,6 @@ function NS:GetPlayerName(type)
 		return strformat("%s-%s", name, realm)
 	end
 	return name
-end
-
--- get map info
-function NS:GetCurrentMapInfo()
-	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (not NS.CommFlare.CF.MapID) then
-		-- not found
-		return false
-	end
-
-	-- get map info
-	local mapID = NS.CommFlare.CF.MapID
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-	if (not NS.CommFlare.CF.MapInfo) then
-		-- not found
-		return false
-	end
-
-	-- success
-	return true
 end
 
 -- is currently group leader?
@@ -1159,7 +1049,7 @@ function NS:GetPartyUnit(player)
 		-- force name-realm format
 		if (not strmatch(player, "-")) then
 			-- add realm name
-			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 		end
 
 		-- process all group members
@@ -1254,40 +1144,6 @@ function NS:GetPartyLeaderGUID()
 	return UnitGUID("player")
 end
 
--- get party members
-function NS:GetPartyMembers()
-	-- in group and not in raid?
-	local members = {}
-	if (IsInGroup() and not IsInRaid()) then
-		-- process all group members
-		for i=1, GetNumGroupMembers() do
-			-- unit exists?
-			local unit = "party" .. i
-			if (not UnitExists(unit)) then
-				-- player
-				unit = "player"
-			end
-
-			-- get unit name / realm (if available)
-			local name, realm = UnitName(unit)
-			if (name and (name ~= "")) then
-				-- no realm name?
-				if (not realm or (realm == "")) then
-					-- get realm name
-					realm = NS.CommFlare.CF.PlayerServerName
-				end
-
-				-- add member
-				name = strformat("%s-%s", name, realm)
-				members[name] = true
-			end
-		end
-	end
-
-	-- return members
-	return members
-end
-
 -- get max party count
 function NS:GetMaxPartyCount()
 	-- get max count
@@ -1295,6 +1151,7 @@ function NS:GetMaxPartyCount()
 	if (not maxCount or (type(maxCount) ~= "number")) then
 		-- force 5
 		maxCount = 5
+	-- invalid max count?
 	elseif ((maxCount < 1) or (maxCount > 5)) then
 		-- reset max party size
 		NS.charDB.profile.maxPartySize = 5
@@ -1305,42 +1162,17 @@ function NS:GetMaxPartyCount()
 	return maxCount
 end
 
--- get party count
-function NS:GetPartyCount()
-	-- in group and not in raid?
-	NS.CommFlare.CF.Count = 1
-	if (IsInGroup() and not IsInRaid()) then
-		-- get num group members
-		NS.CommFlare.CF.Count = GetNumGroupMembers()
-	end
-
-	-- no members? (solo)
-	if (NS.CommFlare.CF.Count == 0) then
-		-- solo
-		NS.CommFlare.CF.Count = 1
-	end
-
-	-- return count
-	return NS.CommFlare.CF.Count
-end
-
 -- get max group count
 function NS:GetMaxGroupCount()
+	-- in raid?
 	local maxCount = 5
 	if (IsInRaid()) then
 		-- set to 40
 		maxCount = 40
+	-- in group?
 	elseif (IsInGroup()) then
 		-- get max count
-		maxCount = NS.charDB.profile.maxPartySize
-		if (not maxCount or (type(maxCount) ~= "number")) then
-			-- force 5
-			maxCount = 5
-		elseif ((maxCount < 1) or (maxCount > 5)) then
-			-- reset max party size
-			NS.charDB.profile.maxPartySize = 5
-			maxCount = NS.charDB.profile.maxPartySize
-		end
+		maxCount = NS:GetMaxPartyCount()
 	end
 
 	-- return max count
@@ -1349,7 +1181,7 @@ end
 
 -- get group count text
 function NS:GetGroupCountText()
-	-- in group and not in raid?
+	-- in group?
 	NS.CommFlare.CF.Count = 1
 	if (IsInGroup()) then
 		-- get num group members
@@ -1371,51 +1203,6 @@ function NS:GetGroupCountText()
 
 	-- return x/y count
 	return strformat("%d/%d", NS.CommFlare.CF.Count, maxCount)
-end
-
--- get group members
-function NS:GetGroupMembers()
-	-- in group and not in raid?
-	local players = {}
-	if (IsInGroup() and not IsInRaid()) then
-		-- process all group members
-		for i=1, GetNumGroupMembers() do
-			-- unit exists?
-			local unit = "party" .. i
-			if (not UnitExists(unit)) then
-				-- player
-				unit = "player"
-			end
-
-			-- get unit name / realm (if available)
-			local name, realm = UnitName(unit)
-			if (name and (name ~= "")) then
-				-- no realm name?
-				if (not realm or (realm == "")) then
-					-- get realm name
-					realm = NS.CommFlare.CF.PlayerServerName
-				end
-
-				-- add party member
-				local player = strformat("%s-%s", name, realm)
-				players[i] = {
-					["guid"] = UnitGUID(unit),
-					["name"] = name,
-					["realm"] = realm,
-					["player"] = player,
-				}
-			end
-		end
-	else
-		-- add yourself
-		players[1] = {
-			["guid"] = UnitGUID("player"),
-			["player"] = NS:GetPlayerName("full"),
-		}
-	end
-
-	-- return players
-	return players
 end
 
 -- get member count
@@ -1520,8 +1307,9 @@ function NS:CheckForAura(unit, type, auraName)
 end
 
 -- popup box
-function NS:PopupBox(dlg, message)
+function NS:PopupBox(dlg, ...)
 	-- requires community id?
+	local args = ...
 	local showPopup = true
 	if (dlg == "CommunityFlare_Send_Community_Dialog") then
 		-- setup report channels
@@ -1535,18 +1323,11 @@ function NS:PopupBox(dlg, message)
 
 	-- show popup?
 	if (showPopup == true) then
-		-- popup box setup
-		local popup = StaticPopupDialogs[dlg]
-
 		-- show the popup box
-		NS.CommFlare.CF.PopupMessage = message
-		local dialog = StaticPopup_Show(dlg, message)
+		local dialog = StaticPopup_Show(dlg, args)
 		if (dialog) then
-			dialog.data = NS.CommFlare.CF.PopupMessage
+			dialog.data = args
 		end
-
-		-- restore popup
-		StaticPopupDialogs[dlg] = popup
 	end
 end
 
@@ -1561,31 +1342,6 @@ function NS:Process_Version_Check(sender)
 	-- send community flare version number
 	NS:SendMessage(sender, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 end
-
--- kick dialog box
-StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
-	text = L["Kick: %s?"],
-	button1 = L["Yes"],
-	button2 = L["No"],
-	OnAccept = function(self, player)
-		-- uninvite user
-		print(L["Uninviting ..."])
-		UninviteUnit(player, L["AFK"])
-
-		-- community auto invite enabled?
-		local text = L["You've been removed from the party for being AFK."]
-		if (NS.charDB.profile.communityAutoInvite == true) then
-			-- update text for info about being reinvited
-			text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
-		end
-
-		-- send message
-		NS:SendMessage(player, text)
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
 
 -- setup report channels
 function NS:Setup_Report_Channels()
@@ -1671,95 +1427,6 @@ function NS:Send_Report_Messages(message)
 	end
 end
 
--- send community dialog box
-StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
-	text = L["Send: %s?"],
-	button1 = L["Send"],
-	button2 = L["No"],
-	OnAccept = function(self, message)
-		-- setup report channels
-		local count = NS:Setup_Report_Channels()
-		if (count > 0) then
-			-- send report messages
-			NS:Send_Report_Messages(message)
-		end
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
--- set player note dialog box 
-StaticPopupDialogs["CommunityFlare_Set_Player_Note_Dialog"] = {
-	text = L["Set Player Note for %s:"],
-	button1 = ACCEPT,
-	button2 = CANCEL,
-	hasEditBox = 1,
-	maxLetters = 31,
-	editBoxWidth = 260,
-	OnAccept = function(self, data)
-		-- member notes created?
-		local text = self.editBox:GetText()
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
-			-- update member note
-			NS.db.global.MemberNotes[data.guid] = text
-		end
-	end,
-	OnShow = function(self, data)
-		-- has member note?
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[data.guid]) then
-			-- set current note
-			self.editBox:SetText(NS.db.global.MemberNotes[data.guid])
-			self.editBox:SetFocus()
-		end
-	end,
-	OnHide = function(self)
-		-- hide dialog
-		ChatEdit_FocusActiveWindow();
-		self.editBox:SetText("");
-	end,
-	EditBoxOnEnterPressed = function(self, data)
-		-- member notes created?
-		local text = self:GetText()
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
-			-- update member note
-			NS.db.global.MemberNotes[data.guid] = text
-		end
-
-		-- hide dialog
-		local parent = self:GetParent();
-		parent:Hide();
-	end,
-	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
-	timeout = 0,
-	exclusive = 1,
-	whileDead = 1,
-	hideOnEscape = 1
-}
-
--- copy player name dialog box 
-StaticPopupDialogs["CommunityFlare_Copy_Player_Name_Dialog"] = {
-	text = L["Copy Player Name for %s [Use Ctrl+c]:"],
-	button1 = ACCEPT,
-	button2 = CANCEL,
-	hasEditBox = 1,
-	maxLetters = 31,
-	editBoxWidth = 260,
-	OnShow = function(self, data)
-		-- has player?
-		if (data.player and (data.player ~= "")) then
-			-- set current player
-			self.editBox:SetText(data.player)
-			self.editBox:HighlightText()
-			self.editBox:SetFocus()
-		end
-	end,
-	timeout = 0,
-	exclusive = 1,
-	whileDead = 1,
-	hideOnEscape = 1
-}
-
 -- rebuild database members
 function NS:Rebuild_Database_Members()
 	-- clear lists
@@ -1786,21 +1453,6 @@ function NS:Rebuild_Database_Members()
 	end
 end
 
-
--- rebuild members dialog box
-StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
-	text = L["Are you sure you want to wipe the members database and totally rebuild from scratch?"],
-	button1 = L["Yes"],
-	button2 = L["No"],
-	OnAccept = function(self, player)
-		-- rebuild database
-		NS:Rebuild_Database_Members()
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
 -- process party states
 function NS:Process_Party_States(isDead, isOffline)
 	-- process all
@@ -1811,17 +1463,15 @@ function NS:Process_Party_States(isDead, isOffline)
 		if (player and (player ~= "")) then
 			-- realm name was given?
 			if (realm and (realm ~= "")) then
-				player = player .. "-" .. realm
+				player = strformat("%s-%s", player, realm)
 			end
 
 			-- are they dead/ghost?
 			if ((isDead == true) and (UnitIsDeadOrGhost(unit) == true)) then
 				-- kick them
 				kickPlayer = true
-			end
-
 			-- are they offline?
-			if ((isOffline == true) and (UnitIsConnected(unit) ~= true)) then
+			elseif ((isOffline == true) and (UnitIsConnected(unit) ~= true)) then
 				-- kick them
 				kickPlayer = true
 			end
@@ -1869,10 +1519,10 @@ function NS:Queue_Check_Role_Chosen()
 			local realmRelationship = UnitRealmRelationship(unit)
 			if (realmRelationship == LE_REALM_RELATION_SAME) then
 				-- player with same realm
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 			else
 				-- player with different realm
-				player = player .. "-" .. realm
+				player = strformat("%s-%s", player, realm)
 			end
 
 			-- role not chosen?
@@ -2026,170 +1676,6 @@ function NS:VerifyPingStatus()
 
 		-- last restrict pings time
 		NS.CommFlare.CF.LastRestrictPingTime = time()
-	end
-end
-
--- check for invalid war crate position
-function NS:Check_For_Invalid_War_Crate_Position(x, y)
-	-- Azh-Kahet
-	if ((x == 0.62041199207306) and (y == 0.86914432048798)) then
-		-- invalid
-		return true
-	-- Hallowfall
-	elseif ((x == 0.32797354459763) and (y == 0.21520841121674)) then
-		-- invalid
-		return true
-	-- Isle of Dorn
-	elseif ((x == 0.69920414686203) and (y == 0.75819730758667)) then
-		-- invalid
-		return true
-	-- Ringing Deeps
-	elseif ((x == 0.62094902992249) and (y == 0.97968757152557)) then
-		-- invalid
-		return true
-	-- Siren Isle
-	elseif ((x == 0.95618790388107) and (y == 0.53979897499084)) then
-		-- invalid
-		return true
-	-- Undermine
-	elseif ((x == 0.22974973917007) and (y == 0.50090676546097)) then
-		-- invalid
-		return true
-	end
-
-	-- valid
-	return false
-end
-
--- vignette check for alerts
-function NS:VignetteCheckForAlerts(list)
-	-- rdy war crate tracker being used?
-	if (NS.CommFlare.CF.RdyCrate) then
-		-- finished
-		return
-	end
-
-	--in instance?
-	local inInstance, instanceType = IsInInstance()
-	if (inInstance == true) then
-		-- finished
-		return
-	end
-
-	-- flying in?
-	local timer = 300
-	local message = nil
-	local createPin = false
-	local vignetteID = nil
-	if (list[2967]) then
-		-- war supply create is dropping in nows
-		createPin = true
-		vignetteID = 2967
-		message = L["War Supply Crate is dropping in now!"]
-	-- war supply crate flying in?
-	elseif (list[3689]) then
-		-- war supply crate is flying in now
-		vignetteID = 3689
-		message = L["War Supply Crate is flying in now!"]
-	-- war chest has fully dropped?
-	elseif (list[6066]) then
-		-- war supply crate has fully dropped to the ground
-		timer = 600
-		createPin = true
-		vignetteID = 6066
-		message = L["War Supply Crate has fully dropped to the ground!"]
-	-- war chest looted for the alliance
-	elseif (list[6067]) then
-		-- war supply looted has been looted for the alliance
-		createPin = true
-		vignetteID = 6067
-		message = L["War Supply Crate has been looted for the Alliance!"]
-	-- war chest looted for the horde
-	elseif (list[6068]) then
-		-- war supply looted has been looted for the horde
-		createPin = true
-		vignetteID = 6068
-		message = L["War Supply Crate has been looted for the Horde!"]
-	end
-
-	-- found vignette?
-	if (vignetteID and message) then
-		-- has coordinates?
-		local info = list[vignetteID]
-		if (info and info.vignetteGUID) then
-			-- needs to issue raid warning?
-			local guid = info.vignetteGUID
-			if (not NS.CommFlare.CF.VignetteWarnings[guid]) then
-				-- has coordinates?
-				if (info.x and info.y) then
-					-- check for invalid locations
-					if (NS:Check_For_Invalid_War_Crate_Position(info.x, info.y) == true) then
-						-- finished
-						return
-					end
-
-					-- issue raid warning
-					NS.CommFlare.CF.VignetteWarnings[guid] = time()
-					TimerAfter(timer, function()
-						-- clear last raid warning
-						NS.CommFlare.CF.VignetteWarnings[guid] = nil
-
-						-- remove all war supply crate waypoints
-						NS:TomTomRemoveWaypoints("War Supply Crate")
-					end)
-
-					-- add tom tom way point
-					local uid = NS:TomTomAddWaypoint(info.name, info.x, info.y)
-
-					-- create pin?
-					local hyperLink = nil
-					if (createPin == true) then
-						-- get MapID
-						local mapID = MapGetBestMapForUnit("player")
-						if (mapID) then
-							-- can set user waypoint?
-							if (MapCanSetUserWaypointOnMap(mapID)) then
-								-- create position from x/y
-								local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
-								MapSetUserWaypoint(point)
-								hyperLink = MapGetUserWaypointHyperlink()
-
-								-- not already tracked?
-								if (not uid) then
-									-- set super tracked
-									SuperTrackSetSuperTrackedUserWaypoint(true)
-								end
-							end
-						end
-					end
-
-					-- issue local raid warning (with raid warning audio sound)
-					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
-
-					-- has hyper link?
-					if (hyperLink) then
-						-- add to message
-						message = strformat("%s %s", message, hyperLink)
-					end
-
-					-- in raid?
-					if (IsInRaid()) then
-						-- display raid message
-						NS:SendMessage("RAID", message)
-					-- in party?
-					elseif (IsInGroup()) then
-						-- display party message
-						NS:SendMessage("PARTY", message)
-					end
-				else
-					-- try again
-					TimerAfter(2, function()
-						-- call recursively
-						NS:VignetteCheckForAlerts(list)
-					end)
-				end
-			end
-		end
 	end
 end
 
@@ -2352,7 +1838,7 @@ function NS:AddRangeCheckSpell(classType, spellType, spellID)
 		return
 	end
 
-	-- get spell tablkes
+	-- get spell tables
 	local FriendSpells, HarmSpells, ResSpells, PetSpells = NS.Libs.LibRangeCheck:GetSpellTables()
 	if (FriendSpells and HarmSpells and ResSpells and PetSpells) then
 		-- friend spell?
@@ -2427,3 +1913,240 @@ function NS:AddRangeCheckSpell(classType, spellType, spellID)
 	end
 end
  
+-- remove spell for GetRangeCheck3.0
+function NS:RemoteRangeCheckSpell(classType, spellType, spellID)
+	-- not loaded?
+	if (not NS.Libs.LibRangeCheck) then
+		-- not loaded
+		return
+	end
+
+	-- not patched?
+	if (not NS.Libs.LibRangeCheck.GetSpellTables) then
+		-- not patched
+		return
+	end
+
+	-- get spell tables
+	local FriendSpells, HarmSpells, ResSpells, PetSpells = NS.Libs.LibRangeCheck:GetSpellTables()
+	if (FriendSpells and HarmSpells and ResSpells and PetSpells) then
+		-- friend spell?
+		if (spellType == "Friend") then
+			-- find class type table
+			local list = FriendSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- remove spell
+						list[k] = nil
+						return
+					end
+				end
+			end
+		-- harm spell?
+		elseif (spellType == "Harm") then
+			-- find class type table
+			local list = HarmSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- remove spell
+						list[k] = nil
+						return
+					end
+				end
+			end
+		-- res spell?
+		elseif (spellType == "Res") then
+			-- find class type table
+			local list = ResSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- remove spell
+						list[k] = nil
+						return
+					end
+				end
+			end
+		-- pet spell?
+		elseif (spellType == "Pet") then
+			-- find class type table
+			local list = PetSpells[classType]
+			if (list and (type(list) == "table")) then
+				-- search if already added
+				for k,v in ipairs(list) do
+					-- matches?
+					if (spellID == v) then
+						-- remove spell
+						list[k] = nil
+						return
+					end
+				end
+			end
+		end
+	end
+end
+
+------------------------------------------------------
+-- Static Popup Dialog Boxes
+------------------------------------------------------
+
+-- copy player name dialog box 
+StaticPopupDialogs["CommunityFlare_Copy_Player_Name_Dialog"] = {
+	text = L["Copy Player Name for %s [Use Ctrl+c]:"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 31,
+	editBoxWidth = 260,
+	OnAccept = function(dialog, data)
+		-- hide dialog
+		ChatEdit_FocusActiveWindow()
+		dialog:GetEditBox():SetText("")
+	end,
+	OnShow = function(dialog, data)
+		-- has player?
+		if (data.player and (data.player ~= "")) then
+			-- set current player
+			local editBox = dialog:GetEditBox()
+			editBox:SetText(data.player)
+			editBox:HighlightText()
+			editBox:SetFocus()
+		end
+	end,
+	EditBoxOnEnterPressed = function(editBox, data)
+		-- hide dialog
+		local dialog = editBox:GetParent();
+		dialog:Hide();
+	end,
+	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
+	timeout = 0,
+	exclusive = 1,
+	whileDead = true,
+	hideOnEscape = true
+}
+
+-- kick dialog box
+StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
+	text = L["Kick: %s?"],
+	button1 = L["Yes"],
+	button2 = L["No"],
+	OnAccept = function(dialog, player)
+		-- uninvite user
+		print(strformat("%s %s", L["Uninviting ..."], player))
+		UninviteUnit(player, L["AFK"])
+
+		-- community auto invite enabled?
+		local text = L["You've been removed from the party for being AFK."]
+		if (NS.charDB.profile.communityAutoInvite == true) then
+			-- update text for info about being reinvited
+			text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
+		end
+
+		-- send message
+		NS:SendMessage(player, text)
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- rebuild members dialog box
+StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
+	text = L["Are you sure you want to wipe the members database and totally rebuild from scratch?"],
+	button1 = L["Yes"],
+	button2 = L["No"],
+	OnAccept = function(dialog, data)
+		-- rebuild database
+		NS:Rebuild_Database_Members()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- send community dialog box
+StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
+	text = L["Send: %s?"],
+	button1 = L["Send"],
+	button2 = L["No"],
+	OnAccept = function(dialog, message)
+		-- setup report channels
+		local count = NS:Setup_Report_Channels()
+		if (count > 0) then
+			-- send report messages
+			NS:Send_Report_Messages(message)
+		end
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- set player note dialog box 
+StaticPopupDialogs["CommunityFlare_Set_Player_Note_Dialog"] = {
+	text = L["Set Player Note for %s:"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 128,
+	editBoxWidth = 260,
+	OnAccept = function(dialog, data)
+		-- member notes created?
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
+			-- invalid text?
+			local text = dialog:GetEditBox():GetText()
+			if (not text or (text == "")) then
+				-- delete note
+				NS.db.global.MemberNotes[data.guid] = nil
+			else
+				-- update member note
+				NS.db.global.MemberNotes[data.guid] = text
+			end
+		end
+	end,
+	OnShow = function(dialog, data)
+		-- has member note?
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[data.guid]) then
+			-- set current note
+			local editBox = dialog:GetEditBox()
+			editBox:SetText(NS.db.global.MemberNotes[data.guid])
+			editBox:SetFocus()
+		end
+	end,
+	OnHide = function(dialog, data)
+		-- hide dialog
+		ChatEdit_FocusActiveWindow()
+		dialog:GetEditBox():SetText("")
+	end,
+	EditBoxOnEnterPressed = function(editBox, data)
+		-- member notes created?
+		local text = editBox:GetText()
+		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
+			-- invalid text?
+			if (not text or (text == "")) then
+				-- delete note
+				NS.db.global.MemberNotes[data.guid] = nil
+			else
+				-- update member note
+				NS.db.global.MemberNotes[data.guid] = text
+			end
+		end
+
+		-- hide dialog
+		local dialog = editBox:GetParent();
+		dialog:Hide();
+	end,
+	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
+	timeout = 0,
+	exclusive = 1,
+	whileDead = true,
+	hideOnEscape = true
+}

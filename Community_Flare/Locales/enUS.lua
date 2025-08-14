@@ -344,7 +344,6 @@ L["rylai crestfall has been slain"] = true
 L["Someone has deserter debuff"] = true
 L["Sorry, I currently have deserter"] = true
 L["victory"] = true
-L["War Supply Crate is flying in now!"] = true
 L["WARNING: REPORTED INACTIVE!\nGet into combat quickly!"] = true
 L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"] = true
 L["YOU ARE CURRENTLY THE NEW GROUP LEADER"] = true
@@ -372,10 +371,6 @@ L["Send: %s?"] = true
 L["Set Player Note for %s:"] = true
 L["Uninviting ..."] = true
 L["Vengeance"] = "Venganza"
-L["War Supply Crate has been looted for the Alliance!"] = true
-L["War Supply Crate has been looted for the Horde!"] = true
-L["War Supply Crate has fully dropped to the ground!"] = true
-L["War Supply Crate is dropping in now!"] = true
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = true
 L["Yes"] = true
 L["You've been removed from the party for being AFK."] = true
@@ -412,6 +407,13 @@ L["Refresh Player Name"] = true
 L["Remove KOS"] = true
 L["Set Player Note"] = true
 L["Vignette"] = true
+
+-- Vignettes.lua
+L["War Supply Crate has been looted for the Alliance!"] = true
+L["War Supply Crate has been looted for the Horde!"] = true
+L["War Supply Crate has fully dropped to the ground!"] = true
+L["War Supply Crate is dropping in now!"] = true
+L["War Supply Crate is flying in now!"] = true
 
 -- blizzard translated strings
 L["Captain Balinda Stonehearth"] = true		-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=enUS

@@ -317,7 +317,7 @@ function NS:Update_Group(groupGUID)
 		end
 
 		-- not previously in queue?
-		local leader = leaderName .. "-" .. leaderRealm
+		local leader = strformat("%s-%s", leaderName, leaderRealm)
 		if (not NS.CommFlare.CF.SocialQueues[groupGUID]) then
 			-- any trackable queues?
 			if (numTrackedQueues > 0) then

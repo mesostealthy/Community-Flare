@@ -83,10 +83,16 @@ end
 
 -- get player history
 function NS:Get_Player_History(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return nil
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not found?
@@ -101,10 +107,16 @@ end
 
 -- update first seen
 function NS:Update_First_Seen(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?
@@ -126,10 +138,16 @@ end
 
 -- update completed matches
 function NS:Update_Completed_Matches(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?
@@ -153,10 +171,16 @@ end
 
 -- update grouped matches
 function NS:Update_Grouped_Matches(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?
@@ -180,10 +204,16 @@ end
 
 -- update last grouped
 function NS:Update_Last_Grouped(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?
@@ -201,10 +231,16 @@ end
 
 -- update last seen
 function NS:Update_Last_Seen(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?
@@ -222,10 +258,16 @@ end
 
 -- update chat message data
 function NS:Update_Chat_Message_Data(player)
+	-- invalid?
+	if (not player or (player == "")) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- player not initialized?

@@ -116,7 +116,6 @@ NS.CommFlare.CF = {
 	LeaderGUID = nil,
 	Options = nil,
 	PartyGUID = nil,
-	PopupMessage = nil,
 	RdyCrate = nil,
 	TargetNearestEnemy = nil,
 	TargetPreviousEnemy = nil,

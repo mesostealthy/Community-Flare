@@ -28,10 +28,13 @@ function NS:Show_History(owner, rootDescription, contextData)
 	-- has server?
 	if (contextData.server) then
 		-- add realm name
-		player = player .. "-" .. contextData.server
+		player = strformat("%s-%s", player, contextData.server)
 	else
-		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		-- force name-realm format
+		if (not strmatch(player, "-")) then
+			-- add realm name
+			player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+		end
 	end
 
 	-- find member

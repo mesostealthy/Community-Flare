@@ -13,12 +13,13 @@ local CopyTable                                 = _G.CopyTable
 local GetChannelName                            = _G.GetChannelName
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local IsInGuild                                 = _G.IsInGuild
+local MergeTable                                = _G.MergeTable
 local UnitFactionGroup                          = _G.UnitFactionGroup
 local UnitName                                  = _G.UnitName
+local ClubAreMembersReady                       = _G.C_Club.AreMembersReady
+local ClubFocusMembers                          = _G.C_Club.FocusMembers
 local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
 local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
-local ClubGetClubMembers                        = _G.C_Club.GetClubMembers
-local ClubGetMemberInfo                         = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
 local ClubGetStreams                            = _G.C_Club.GetStreams
 local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
@@ -92,9 +93,6 @@ function NS:Verify_Default_Community_Setup()
 
 			-- setup report channels
 			NS:Setup_Report_Channels()
-
-			-- save refresh date
-			NS.charDB.profile.communityRefreshed = time()
 		else
 			-- find oldest subscribed club
 			local clubId = 0
@@ -125,9 +123,6 @@ function NS:Verify_Default_Community_Setup()
 
 				-- setup report channels
 				NS:Setup_Report_Channels()
-
-				-- save refresh date
-				NS.charDB.profile.communityRefreshed = time()
 			end
 		end
 	end
@@ -377,7 +372,7 @@ function NS:Is_Community_Leader(name)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- process all leaders
@@ -407,6 +402,12 @@ function NS:Process_MemberGUID(guid, player)
 		return false
 	end
 
+	-- force name-realm format
+	if (not strmatch(player, "-")) then
+		-- add realm name
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+	end
+
 	-- database created?
 	if (NS.db.global and NS.db.global.MemberGUIDs) then
 		-- new / updated?
@@ -415,7 +416,6 @@ function NS:Process_MemberGUID(guid, player)
 			local old_player = NS.db.global.MemberGUIDs[guid]
 			if (NS.db.global.members[old_player]) then
 				-- move member
-				NS.db.global.members[old_player].name = player
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
 				NS.db.global.members[old_player] = nil
 			end
@@ -507,7 +507,7 @@ function NS:Get_Community_Member(name)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- check inside database first
@@ -531,7 +531,7 @@ function NS:Get_LogList_Status(player)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- check inside database first
@@ -558,6 +558,39 @@ end
 
 -- clean up members
 function NS:Cleanup_Members()
+	-- initialize
+	NS.CommFlare.CF.KosList = NS.CommFlare.CF.KosList or {}
+	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
+
+	-- process all
+	local count = 0
+	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- has extra?
+		local name, realm, extra = strsplit("-", v)
+		if (extra) then
+			-- update member guid
+			local player = strformat("%s-%s", name, realm)
+			NS.db.global.MemberGUIDs[k] = player
+
+			-- check for old member?
+			if (NS.db.global.members[v]) then
+				-- move member
+				NS.db.global.members[player] = CopyTable(NS.db.global.members[v])
+				NS.db.global.members[v] = nil
+			end
+
+			-- check for old history?
+			if (NS.db.global.history[v]) then
+				-- move history
+				NS.db.global.history[player] = CopyTable(NS.db.global.history[v])
+				NS.db.global.history[v] = nil
+			end
+		end
+
+		-- increase
+		count = count + 1
+	end
+
 	-- process all members
 	for k,v in pairs(NS.db.global.members) do
 		-- has space?
@@ -565,7 +598,6 @@ function NS:Cleanup_Members()
 			-- fix player in database
 			local player = strgsub(k, "%s+", "")
 			NS.db.global.members[player] = v
-			NS.db.global.members[player].name = player
 			NS.db.global.members[k] = nil
 			print(strformat(L["Moved: %s to %s"], k, player))
 		end
@@ -573,65 +605,127 @@ function NS:Cleanup_Members()
 
 	-- process all members
 	local removed = 0
-	NS.CommFlare.CF.KosList = NS.CommFlare.CF.KosList or {}
-	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.members) do
 		-- check for leader / owner
-		local player = v.name
-		for k2,v2 in pairs(NS.db.global.members[player].clubs) do
+		for k2,v2 in pairs(NS.db.global.members[k].clubs) do
 			-- owner?
 			if (v2.role == Enum.ClubRoleIdentifier.Owner) then
 				-- leader
-				NS.db.global.members[player].owner = true
+				NS.db.global.members[k].owner = true
 				v.owner = true
 			-- leader?
 			elseif (v2.role == Enum.ClubRoleIdentifier.Leader) then
 				-- leader
-				NS.db.global.members[player].leader = true
+				NS.db.global.members[k].leader = true
 				v.leader = true
 			-- moderator?
 			elseif (v2.role == Enum.ClubRoleIdentifier.Moderator) then
 				-- leader
-				NS.db.global.members[player].moderator = true
+				NS.db.global.members[k].moderator = true
 				v.moderator = true
 			end
 
-			-- still has id?
-			if (NS.db.global.members[player].clubs[k2].id) then
+			-- has id?
+			if (NS.db.global.members[k].clubs[k2].id) then
 				-- delete id
-				NS.db.global.members[player].clubs[k2].id = nil
+				NS.db.global.members[k].clubs[k2].id = nil
 			end
+
+			-- copy priority
+			if (NS.db.global.members[k].clubs[k2].priority) then
+				-- move priority
+				NS.db.global.members[k].clubs[k2].P = NS.db.global.members[k].clubs[k2].priority
+				NS.db.global.members[k].clubs[k2].priority = nil
+			end
+
+			-- max priority saved?
+			if (NS.db.global.members[k].clubs[k2].P == NS.CommFlare.CF.MaxPriority) then
+				-- delete priority
+				NS.db.global.members[k].clubs[k2].P = nil
+			end
+		end
+
+		-- copy priority
+		if (v.priority) then
+			-- move priority
+			NS.db.global.members[k].P = v.priority
+			NS.db.global.members[k].priority = nil
 		end
 
 		-- not leader or owner?
 		if ((not v.leader or (v.leader == false)) and (not v.owner or (v.owner == false)) and (not v.moderator or (v.moderator == false))) then
-			-- reset priority
-			NS.db.global.members[player].priority = NS.CommFlare.CF.MaxPriority
+			-- delete priority
+			NS.db.global.members[k].P = nil
+		end
+
+		-- max priority saved?
+		if (NS.db.global.members[k].P == NS.CommFlare.CF.MaxPriority) then
+			-- delete priority
+			NS.db.global.members[k].P = nil
 		end
 
 		-- has added?
 		if (v.added) then
 			-- delete added
-			NS.db.global.members[player].added = nil
+			NS.db.global.members[k].added = nil
+		end
+
+		-- has classID?
+		if (v.classID) then
+			-- delete classID
+			NS.db.global.members[k].classID = nil
+		end
+
+		-- has faction?
+		if (v.faction) then
+			-- delete faction
+			NS.db.global.members[k].faction = nil
+		end
+
+		-- has index?
+		if (v.index) then
+			-- delete index
+			NS.db.global.members[k].index = nil
+		end
+
+		-- has name?
+		if (v.name) then
+			-- delete name
+			NS.db.global.members[k].name = nil
+		end
+
+		-- has race?
+		if (v.race) then
+			-- delete race
+			NS.db.global.members[k].race = nil
 		end
 
 		-- has updated?
 		if (v.updated) then
 			-- delete updated
-			NS.db.global.members[player].updated = nil
+			NS.db.global.members[k].updated = nil
 		end
 
 		-- has lastgrouped?
 		if (v.lastgrouped) then
 			-- move to history
-			NS.db.global.history[player].lastgrouped = v.lastgrouped
-			NS.db.global.members[player].lastgrouped = nil
+			NS.db.global.history[k].lastgrouped = v.lastgrouped
+			NS.db.global.members[k].lastgrouped = nil
 		end
 
 		-- updated?
-		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= player)) then
+		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= k)) then
 			-- save / update member guid / name
-			NS.db.global.MemberGUIDs[v.guid] = player
+			NS.db.global.MemberGUIDs[v.guid] = k
+		end
+	end
+
+	-- process all kos list
+	for k,v in pairs(NS.CommFlare.CF.KosList) do
+		-- has player?
+		if (v.player) then
+			-- no longer table
+			NS.CommFlare.CF.KosList[k] = v.player
 		end
 	end
 
@@ -639,20 +733,14 @@ function NS:Cleanup_Members()
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- not current?
 		if (NS.db.global.members[v] and NS.db.global.members[v].guid and (NS.db.global.members[v].guid ~= k)) then
-			-- remove
+			-- delete
 			NS.db.global.MemberGUIDs[k] = nil
 		end
-	end
 
-	-- process all member GUIDs
-	for k,v in pairs(NS.db.global.MemberGUIDs) do
-		-- KOS?
-		if (NS.CommFlare.CF.KosList[k]) then
-			-- has player and needs updating?
-			if (NS.CommFlare.CF.KosList[k].player and (NS.CommFlare.CF.KosList[k].player ~= v)) then
-				-- update player
-				NS.CommFlare.CF.KosList[k].player = v
-			end
+		-- updated KOS?
+		if (NS.CommFlare.CF.KosList[k] and (NS.CommFlare.CF.KosList[k] ~= v)) then
+			-- update player
+			NS.CommFlare.CF.KosList[k] = v
 		end
 	end
 end
@@ -665,14 +753,15 @@ function NS:Check_For_Deployed_Members()
 		-- process all clubs
 		local deployed_count = 0
 		for _,clubId in ipairs(clubs) do
-			-- process all members
+			-- process all
 			local count = 0
 			local deployed = {}
 			local club = ClubGetClubInfo(clubId)
-			local members = ClubGetClubMembers(clubId)
+			local members = NS:GetClubMembers(clubId)
 			for _,v in ipairs(members) do
-				local mi = ClubGetMemberInfo(clubId, v)
-				if ((mi ~= nil) and (mi.name ~= nil)) then
+				-- get club member info
+				local mi = NS:GetClubMemberInfo(clubId, v)
+				if (mi and mi.name) then
 					-- online?
 					if (mi.presence == Enum.ClubMemberPresence.Online) then
 						-- is tracked pvp?
@@ -751,10 +840,9 @@ function NS:Rebuild_Community_Leaders()
 		local added = false
 		if (v.owner == true) then
 			-- always verify leader status
-			local player = v.name
 			local sharesLeaderCommunity = false
-			NS.db.global.members[player].owner = nil
-			for k2,v2 in pairs(NS.db.global.members[player].clubs) do
+			NS.db.global.members[k].owner = nil
+			for k2,v2 in pairs(NS.db.global.members[k].clubs) do
 				-- owner?
 				if (v2.role == Enum.ClubRoleIdentifier.Owner) then
 					-- has community leaders list?
@@ -767,12 +855,12 @@ function NS:Rebuild_Community_Leaders()
 					end
 
 					-- owner
-					NS.db.global.members[player].owner = true
+					NS.db.global.members[k].owner = true
 				end
 			end
 
 			-- currently has owner role somewhere?
-			if (NS.db.global.members[player].owner == true) then
+			if (NS.db.global.members[k].owner == true) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -787,7 +875,7 @@ function NS:Rebuild_Community_Leaders()
 				if (allowed == true) then
 					-- add first
 					added = true
-					NS.CommFlare.CF.CommunityLeaders[count] = v.name
+					NS.CommFlare.CF.CommunityLeaders[count] = k
 
 					-- next
 					count = count + 1
@@ -798,10 +886,9 @@ function NS:Rebuild_Community_Leaders()
 		-- not added and leader?
 		if ((added == false) and (v.leader == true)) then
 			-- always verify leader status
-			local player = v.name
 			local sharesLeaderCommunity = false
-			NS.db.global.members[player].leader = nil
-			for k2,v2 in pairs(NS.db.global.members[player].clubs) do
+			NS.db.global.members[k].leader = nil
+			for k2,v2 in pairs(NS.db.global.members[k].clubs) do
 				-- leader?
 				if (v2.role == Enum.ClubRoleIdentifier.Leader) then
 					-- has community leaders list?
@@ -814,12 +901,12 @@ function NS:Rebuild_Community_Leaders()
 					end
 
 					-- leader
-					NS.db.global.members[player].leader = true
+					NS.db.global.members[k].leader = true
 				end
 			end
 
 			-- currently has leader role somewhere?
-			if (NS.db.global.members[player].leader == true) then
+			if (NS.db.global.members[k].leader == true) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -834,18 +921,18 @@ function NS:Rebuild_Community_Leaders()
 				if (allowed == true) then
 					-- has priority?
 					added = true
-					if (v.priority and (v.priority > 0) and (v.priority < NS.CommFlare.CF.MaxPriority)) then
+					if (v.P and (v.P > 0)) then
 						-- not created?
-						if (not orderedLeaders[v.priority]) then
+						if (not orderedLeaders[v.P]) then
 							-- create table
-							orderedLeaders[v.priority] = {}
+							orderedLeaders[v.P] = {}
 						end
 
 						-- add to ordered leaders
-						tinsert(orderedLeaders[v.priority], v.name)
+						tinsert(orderedLeaders[v.P], k)
 					else
 						-- add to unordered leaders
-						tinsert(unorderedLeaders, v.name)
+						tinsert(unorderedLeaders, k)
 					end
 				end
 			end
@@ -854,10 +941,9 @@ function NS:Rebuild_Community_Leaders()
 		-- not added and moderator?
 		if ((added == false) and (v.moderator == true)) then
 			-- always verify leader status
-			local player = v.name
 			local sharesLeaderCommunity = false
-			NS.db.global.members[player].moderator = nil
-			for k2,v2 in pairs(NS.db.global.members[player].clubs) do
+			NS.db.global.members[k].moderator = nil
+			for k2,v2 in pairs(NS.db.global.members[k].clubs) do
 				-- moderator?
 				if (v2.role == Enum.ClubRoleIdentifier.Moderator) then
 					-- has community leaders list?
@@ -870,12 +956,12 @@ function NS:Rebuild_Community_Leaders()
 					end
 
 					-- moderator
-					NS.db.global.members[player].moderator = true
+					NS.db.global.members[k].moderator = true
 				end
 			end
 
 			-- currently has moderator role somewhere?
-			if (NS.db.global.members[player].moderator == true) then
+			if (NS.db.global.members[k].moderator == true) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -890,18 +976,18 @@ function NS:Rebuild_Community_Leaders()
 				if (allowed == true) then
 					-- has priority?
 					added = true
-					if (v.priority and (v.priority > 0) and (v.priority < NS.CommFlare.CF.MaxPriority)) then
+					if (v.P and (v.P > 0)) then
 						-- not created?
-						if (not orderedModerators[v.priority]) then
+						if (not orderedModerators[v.P]) then
 							-- create table
-							orderedModerators[v.priority] = {}
+							orderedModerators[v.P] = {}
 						end
 
 						-- add to ordered moderators
-						tinsert(orderedModerators[v.priority], v.name)
+						tinsert(orderedModerators[v.P], k)
 					else
 						-- add to unordered moderators
-						tinsert(unorderedModerators, v.name)
+						tinsert(unorderedModerators, k)
 					end
 				end
 			end
@@ -985,8 +1071,7 @@ function NS:Get_Member_Priority(info)
 				local priority = strsplit("]", right)
 				if (priority and (type(priority) == "string")) then
 					-- return number
-					priority = tonumber(priority)
-					return priority
+					return tonumber(priority)
 				end
 			end
 		end
@@ -1002,33 +1087,44 @@ end
 
 -- add community
 function NS:Add_Community(clubId, info)
-	-- add to clubs
-	NS.db.global.clubs[clubId] = info
-
-	-- not cross faction?
-	if (info.crossFaction == false) then
-		-- assume same faction as player with club
-		NS.db.global.clubs[clubId].faction = UnitFactionGroup("player")
-	end
+	-- merge with clubs
+	MergeTable(NS.db.global.clubs[clubId], info)
 end
 
 -- add member
 function NS:Add_Member(clubId, info, rebuild)
+	-- sanity check?
+	if (not info or not info.name) then
+		-- failed
+		return
+	end
+
 	-- build proper name
-	local player = info.name
+	local player = strformat("%s", info.name)
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
 		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
-		if (not name) then
-			-- failed
+		if (not name or not realm) then
+			-- try again, 1 second later
+			TimerAfter(1, function(clubId, info, rebuild)
+				-- call recursively
+				NS:Add_Member(clubId, info, rebuild)
+			end)
 			return
-		elseif (name and realm and (realm ~= "")) then
+		elseif (realm ~= "") then
 			-- rebuild full
-			player = name .. "-" .. realm
+			player = strformat("%s-%s", name, realm)
 		else
 			-- add realm name
-			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 		end
+	end
+
+	-- count hyphens
+	local _, c = player:gsub("-", "")
+	if (c > 1) then
+		-- failed
+		return
 	end
 
 	-- sanity check
@@ -1041,7 +1137,7 @@ function NS:Add_Member(clubId, info, rebuild)
 	-- member exists?
 	local priority = NS:Get_Member_Priority(info)
 	if (NS.db.global.members[player]) then
-		-- remove old fields
+		-- delete old fields
 		NS.db.global.members[player].role = nil
 		NS.db.global.members[player].clubId = nil
 		NS.db.global.members[player].memberNote = nil
@@ -1050,30 +1146,6 @@ function NS:Add_Member(clubId, info, rebuild)
 		if (not NS.db.global.members[player].guid or (NS.db.global.members[player].guid ~= info.guid)) then
 			-- update guid
 			NS.db.global.members[player].guid = info.guid
-		end
-
-		-- class updated?
-		if (not NS.db.global.members[player].classID or (NS.db.global.members[player].classID ~= info.classID)) then
-			-- update class
-			NS.db.global.members[player].classID = info.classID
-		end
-
-		-- race updated?
-		if (not NS.db.global.members[player].race or (NS.db.global.members[player].race ~= info.race)) then
-			-- update race
-			NS.db.global.members[player].race = info.race
-		end
-
-		-- faction updated?
-		if (not NS.db.global.members[player].faction or (NS.db.global.members[player].faction ~= info.faction)) then
-			-- update faction
-			NS.db.global.members[player].faction = info.faction
-		end
-
-		-- always has some priority number?
-		if (not NS.db.global.members[player].priority) then
-			-- set max
-			NS.db.global.members[player].priority = NS.CommFlare.CF.MaxPriority
 		end
 
 		-- empty?
@@ -1101,12 +1173,20 @@ function NS:Add_Member(clubId, info, rebuild)
 			end
 
 			-- priority updated?
-			if (not NS.db.global.members[player].clubs[clubId].priority or (NS.db.global.members[player].clubs[clubId].priority ~= priority)) then
+			if (not NS.db.global.members[player].clubs[clubId].P or (NS.db.global.members[player].clubs[clubId].P ~= priority)) then
 				-- update priority
-				NS.db.global.members[player].clubs[clubId].priority = priority
+				NS.db.global.members[player].clubs[clubId].P = priority
+			end
+
+			-- has priority?
+			NS.db.global.members[player].clubs[clubId].P = nil
+			if (priority ~= NS.CommFlare.CF.MaxPriority) then
+				-- update priority
+				NS.db.global.members[player].clubs[clubId].P = priority
 			end
 
 			-- process all clubs
+			local lowest = NS.CommFlare.CF.MaxPriority
 			for k,v in pairs(NS.db.global.members[player].clubs) do
 				-- owner?
 				if (v.role == Enum.ClubRoleIdentifier.Owner) then
@@ -1127,30 +1207,31 @@ function NS:Add_Member(clubId, info, rebuild)
 				end
 
 				-- higher priority (lesser number)?
-				if (v.priority and NS.db.global.members[player].priority and (v.priority > 0) and (v.priority < NS.db.global.members[player].priority)) then
-					-- update priority
-					NS.db.global.members[player].priority = v.priority
+				if (v.P and (v.P > 0) and (v.P < lowest)) then
+					-- update lowest
+					lowest = v.P
 				end
+			end
+
+			-- found priority?
+			NS.db.global.members[player].P = nil
+			if (lowest ~= NS.CommFlare.CF.MaxPriority) then
+				-- update priority
+				NS.db.global.members[player].P = lowest
 			end
 		end
 	else
 		-- add to members
 		NS.db.global.members[player] = {
-			["name"] = player,
-			["guid"] = info.guid,
-			["classID"] = info.classID,
-			["race"] = info.race,
-			["faction"] = info.faction,
-			["priority"] = priority,
 			["clubs"] = {},
+			["guid"] = info.guid,
+			["name"] = player,
 		}
 
 		-- add to clubs
 		NS.db.global.members[player].clubs[clubId] = {
-			["id"] = clubId,
-			["role"] = info.role,
 			["memberNote"] = info.memberNote,
-			["priority"] = priority,
+			["role"] = info.role,
 		}
 
 		-- owner?
@@ -1171,6 +1252,13 @@ function NS:Add_Member(clubId, info, rebuild)
 			NS.db.global.members[player].moderator = true
 		end
 
+		-- found priority?
+		if (priority ~= NS.CommFlare.CF.MaxPriority) then
+			-- set priority
+			NS.db.global.members[player].P = priority
+			NS.db.global.members[player].clubs[clubId].P = priority
+		end
+
 		-- update first seen
 		NS:Update_First_Seen(player)
 	end
@@ -1187,21 +1275,38 @@ end
 
 -- remove member
 function NS:Remove_Member(clubId, info)
+	-- sanity check?
+	if (not info or not info.name) then
+		-- failed
+		return false
+	end
+
 	-- build proper name
 	local player = info.name
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
 		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
-		if (not name) then
-			-- failed
+		if (not name or not realm) then
+			-- try again, 1 second later
+			TimerAfter(1, function()
+				-- call recursively
+				NS:Remove_Member(clubId, info)
+			end)
 			return
-		elseif (name and realm and (realm ~= "")) then
+		elseif (realm ~= "") then
 			-- rebuild full
-			player = name .. "-" .. realm
+			player = strformat("%s-%s", name, realm)
 		else
 			-- add realm name
-			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 		end
+	end
+
+	-- sanity check
+	local name, server = strsplit("-", player)
+	if (not name or (name == "") or not server or (server == "")) then
+		-- failed
+		return false
 	end
 
 	-- member exists?
@@ -1243,27 +1348,26 @@ end
 
 -- add all club members from club id
 function NS:Add_All_Club_Members_By_ClubID(clubId)
-	-- has guild?
+	-- invalid clubId?
 	if (not clubId) then
-		-- not in guild
-		print(L["You are not currently in a Guild."])
+		-- finished
 		return
 	end
 
 	-- get club info
 	local info = ClubGetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
-		-- process all members
-		local added = 0
-		local members = ClubGetClubMembers(clubId)
-		for _,v in ipairs(members) do
-			local mi = ClubGetMemberInfo(clubId, v)
-			if ((mi ~= nil) and (mi.name ~= nil)) then
+		-- process all
+		local count = 0
+		local members = CommunitiesUtil.GetAndSortMemberInfo(clubId)
+		for k,v in ipairs(members) do
+			-- has name?
+			if (v.name) then
 				-- add member
-				NS:Add_Member(clubId, mi, false)
+				NS:Add_Member(clubId, v, false)
 
 				-- increase
-				added = added + 1
+				count = count + 1
 			end
 		end
 
@@ -1277,44 +1381,35 @@ function NS:Add_All_Club_Members_By_ClubID(clubId)
 		end
 
 		-- any added?
-		if (added > 0) then
+		if (count > 0) then
 			-- display amount added
-			print(strformat(L["%s: Added %d %s members to the database."], NS.CommFlare.Title, added, info.name))
+			print(strformat(L["%s: Added %d %s members to the database."], NS.CommFlare.Title, count, info.name))
 		end
 	end
 end
 
 -- remove all club members from club id
 function NS:Remove_All_Club_Members_By_ClubID(clubId)
+	-- invalid clubId?
+	if (not clubId) then
+		-- finished
+		return
+	end
+
 	-- get club info
 	local info = ClubGetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
-		-- process all members
-		local removed = 0
-		for k,v in pairs(NS.db.global.members) do
-			-- valid club?
-			if (NS.db.global.members[k].clubs and NS.db.global.members[k].clubs[clubId]) then
-				-- clear
-				NS.db.global.members[k].clubs[clubId] = nil
-			end
-
-			-- any clubs?
-			local count = 0
-			if (NS.db.global.members[k].clubs and next(NS.db.global.members[k].clubs)) then
-				-- process all clubs
-				for k2,v2 in pairs(NS.db.global.members[k].clubs) do
+		-- process all
+		local count = 0
+		local members = CommunitiesUtil.GetAndSortMemberInfo(clubId)
+		for k,v in ipairs(members) do
+			-- has name?
+			if (v.name) then
+				-- remove member
+				if (NS:Remove_Member(clubId, v) == true) then
 					-- increase
 					count = count + 1
 				end
-			end
-
-			-- none left?
-			if (count == 0) then
-				-- remove
-				NS.db.global.members[k] = nil
-
-				-- increase
-				removed = removed + 1
 			end
 		end
 
@@ -1328,9 +1423,9 @@ function NS:Remove_All_Club_Members_By_ClubID(clubId)
 		end
 
 		-- any removed?
-		if (removed > 0) then
+		if (count > 0) then
 			-- display amount removed
-			print(strformat(L["%s: Removed %d %s members from the database."], NS.CommFlare.Title, removed, info.name))
+			print(strformat(L["%s: Removed %d %s members from the database."], NS.CommFlare.Title, count, info.name))
 		end
 	end
 end
@@ -1401,24 +1496,34 @@ function NS:Process_Club_Members()
 				-- add community
 				NS:Add_Community(clubId, info)
 
-				-- process all members
-				local members = ClubGetClubMembers(clubId)
-				for k,v in ipairs(members) do
-					local mi = ClubGetMemberInfo(clubId, v)
-					if ((mi ~= nil) and (mi.name ~= nil)) then
-						-- add member
-						NS:Add_Member(clubId, mi, false)
-					end
+				-- are members ready?
+				if (ClubAreMembersReady(clubId) == true) then
+					-- process all
+					local members = NS:GetClubMembers(clubId)
+					if (members) then
+						-- process all
+						for k,v in ipairs(members) do
+							-- get club member info
+							local mi = NS:GetClubMemberInfo(clubId, v)
+							if (mi and mi.name) then
+								-- online?
+								if (mi.presence and (mi.presence == Enum.ClubMemberPresence.Online)) then
+									-- get community member
+									local member = NS:Get_Community_Member(mi.name)
+									if (member ~= nil) then
+										-- update last seen
+										NS:Update_Last_Seen(mi.name)
+									end
+								end
 
-					-- online?
-					if (mi.presence == Enum.ClubMemberPresence.Online) then
-						-- get community member
-						local member = NS:Get_Community_Member(mi.name)
-						if (member ~= nil) then
-							-- update last seen
-							NS:Update_Last_Seen(member.name)
+								-- add member
+								NS:Add_Member(clubId, mi, false)
+							end
 						end
 					end
+				else
+					-- focus members
+					ClubFocusMembers(clubId)
 				end
 			end
 		end
@@ -1439,43 +1544,6 @@ function NS:Refresh_Club_Members()
 	if (status == false) then
 		-- finished
 		return
-	end
-
-	-- find player in database
-	local player = NS:GetPlayerName("full")
-	local member = NS:Get_Community_Member(player)
-	if (not member or not member.clubs) then
-		-- finished
-		return
-	end
-
-	-- needs refreshing?
-	local refresh = false
-	if (NS.charDB.profile.communityRefreshed == 0) then
-		-- refresh
-		refresh = true
-	elseif (NS.charDB.profile.communityRefreshed > 0) then
-		-- refreshed more than 7 days ago?
-		local next_refresh = NS.charDB.profile.communityRefreshed + (7 * 86400)
-		if (time() > next_refresh) then
-			-- refresh
-			refresh = true
-		end
-	end
-
-	-- needs refreshing?
-	if (refresh == true) then
-		-- process all clubs
-		for k,v in pairs(member.clubs) do
-			-- remove all club members
-			NS:Remove_All_Club_Members_By_ClubID(k)
-
-			-- add all club members
-			NS:Add_All_Club_Members_By_ClubID(k)
-		end
-
-		-- save refresh date
-		NS.charDB.profile.communityRefreshed = time()
 	end
 
 	-- setup days purged
@@ -1505,6 +1573,14 @@ function NS:Refresh_Club_Members()
 		end
 	end
 
+	-- find player in database
+	local player = NS:GetPlayerName("full")
+	local member = NS:Get_Community_Member(player)
+	if (not member or not member.clubs) then
+		-- finished
+		return
+	end
+
 	-- clean up members
 	NS:Cleanup_Members()
 
@@ -1515,48 +1591,37 @@ end
 -- club member added
 function NS:Club_Member_Added(clubId, memberId)
 	-- get member info
-	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
-	if (NS.CommFlare.CF.MemberInfo ~= nil) then
+	local mi = NS:GetClubMemberInfo(clubId, memberId)
+	if (mi and mi.name) then
 		-- found community info?
 		local info = ClubGetClubInfo(clubId)
 		if (info and info.name) then
-			-- name not found?
-			if (not NS.CommFlare.CF.MemberInfo.name) then
-				-- try again, 2 seconds later
-				TimerAfter(2, function()
-					-- get member info
-					NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
-
-					-- name not found?
-					if ((NS.CommFlare.CF.MemberInfo ~= nil) and (NS.CommFlare.CF.MemberInfo.name ~= nil)) then
-						-- guild?
-						if (info.clubType == Enum.ClubType.Guild) then
-							-- display
-							print(strformat(L["%s: %s (%d, %d) added to guild %s."], NS.CommFlare.Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
-						else
-							-- display
-							print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommFlare.Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
-						end
-
-						-- add member
-						NS:Add_Member(clubId, NS.CommFlare.CF.MemberInfo, true)
-					end
-				end)
+			-- guild?
+			if (info.clubType == Enum.ClubType.Guild) then
+				-- display
+				print(strformat(L["%s: %s (%d, %d) added to guild %s."], NS.CommFlare.Title, mi.name, clubId, memberId, info.name))
 			else
 				-- display
-				print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommFlare.Title, NS.CommFlare.CF.MemberInfo.name, clubId, memberId, info.name))
-
-				-- add member
-				NS:Add_Member(clubId, NS.CommFlare.CF.MemberInfo, true)
+				print(strformat(L["%s: %s (%d, %d) added to community %s."], NS.CommFlare.Title, mi.name, clubId, memberId, info.name))
 			end
+
+			-- add member
+			NS:Add_Member(clubId, mi, true)
 		end
+	else
+		-- try again, 2 seconds later
+		TimerAfter(2, function()
+			-- call recursively
+			NS:Club_Member_Added(clubId, memberId)
+		end)
+		return
 	end
 end
 
 -- club member removed
 function NS:Club_Member_Removed(clubId, memberId)
 	-- get member info
-	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
+	NS.CommFlare.CF.MemberInfo = NS:GetClubMemberInfo(clubId, memberId)
 	if (not NS.CommFlare.CF.MemberInfo) then
 		-- has community frame member list?
 		if (CommunitiesFrame and CommunitiesFrame.MemberList and CommunitiesFrame.MemberList.allMemberList) then
@@ -1579,16 +1644,27 @@ function NS:Club_Member_Removed(clubId, memberId)
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
 			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (not name) then
-				-- failed
+			if (not name or not realm) then
+				-- try again, 1 second later
+				TimerAfter(1, function()
+					-- call recursively
+					NS:Club_Member_Removed(clubId, memberId)
+				end)
 				return
-			elseif (name and realm and (realm ~= "")) then
+			elseif (realm ~= "") then
 				-- rebuild full
-				player = name .. "-" .. realm
+				player = strformat("%s-%s", name, realm)
 			else
 				-- add realm name
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 			end
+		end
+
+		-- sanity check
+		local name, server = strsplit("-", player)
+		if (not name or (name == "") or not server or (server == "")) then
+			-- failed
+			return
 		end
 
 		-- has clubs?
@@ -1634,43 +1710,44 @@ end
 -- club member updated
 function NS:Club_Member_Updated(clubId, memberId)
 	-- get member info
-	NS.CommFlare.CF.MemberInfo = ClubGetMemberInfo(clubId, memberId)
+	NS.CommFlare.CF.MemberInfo = NS:GetClubMemberInfo(clubId, memberId)
 	if (NS.CommFlare.CF.MemberInfo and NS.CommFlare.CF.MemberInfo.name and (NS.CommFlare.CF.MemberInfo.name ~= "")) then
 		-- build proper name
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
 			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (not name) then
-				-- failed
+			if (not name or not realm) then
+				-- try again, 1 second later
+				TimerAfter(1, function()
+					-- call recursively
+					NS:Club_Member_Updated(clubId, memberId)
+				end)
 				return
-			elseif (name and realm and (realm ~= "")) then
+			elseif (realm ~= "") then
 				-- rebuild full
-				player = name .. "-" .. realm
+				player = strformat("%s-%s", name, realm)
 			else
 				-- add realm name
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 			end
+		end
+
+		-- sanity check
+		local name, server = strsplit("-", player)
+		if (not name or (name == "") or not server or (server == "")) then
+			-- failed
+			return
 		end
 
 		-- member exists?
 		if (NS.db.global.members[player]) then
-			-- no priority?
-			if (not NS.db.global.members[player].priority) then
-				-- save default priority
-				NS.db.global.members[player].priority = 999
-			end
-
 			-- valid club?
-			local rebuild = false
 			if (NS.db.global.members[player].clubs and NS.db.global.members[player].clubs[clubId]) then
 				-- role updated?
 				if (not NS.db.global.members[player].clubs[clubId].role or (NS.db.global.members[player].clubs[clubId].role ~= NS.CommFlare.CF.MemberInfo.role)) then
 					-- update role
 					NS.db.global.members[player].clubs[clubId].role = NS.CommFlare.CF.MemberInfo.role
-
-					-- rebuild
-					rebuild = true
 				end
 
 				-- member note updated?
@@ -1679,35 +1756,31 @@ function NS:Club_Member_Updated(clubId, memberId)
 					NS.db.global.members[player].clubs[clubId].memberNote = NS.CommFlare.CF.MemberInfo.memberNote
 				end
 
-				-- priority updated?
+				-- has priority?
+				NS.db.global.members[player].clubs[clubId].P = nil
 				local priority = NS:Get_Member_Priority(NS.CommFlare.CF.MemberInfo)
-				if (not NS.db.global.members[player].clubs[clubId].priority or (NS.db.global.members[player].clubs[clubId].priority ~= priority)) then
+				if (priority ~= NS.CommFlare.CF.MaxPriority) then
 					-- update priority
-					NS.db.global.members[player].clubs[clubId].priority = priority
+					NS.db.global.members[player].clubs[clubId].P = priority
+				end
 
-					-- find lowest priority
-					local lowest = 999
-					for k,v in pairs(NS.db.global.members[player].clubs) do
-						-- higher priority (lesser number)?
-						if (v.priority and (v.priority > 0) and (v.priority < lowest)) then
-							-- update lowest
-							lowest = v.priority
-						end
-					end
-
-					-- update player priority?
-					if (NS.db.global.members[player].priority ~= lowest) then
-						-- update priority
-						NS.db.global.members[player].priority = lowest
-
-						-- rebuild
-						rebuild = true
+				-- find lowest priority
+				local lowest = NS.CommFlare.CF.MaxPriority
+				for k,v in pairs(NS.db.global.members[player].clubs) do
+					-- higher priority (lesser number)?
+					if (v.P and (v.P > 0) and (v.P < lowest)) then
+						-- update lowest
+						lowest = v.P
 					end
 				end
-			end
 
-			-- rebuild leaders?
-			if (rebuild == true) then
+				-- found priority?
+				NS.db.global.members[player].P = nil
+				if (lowest ~= NS.CommFlare.CF.MaxPriority) then
+					-- update priority
+					NS.db.global.members[player].P = lowest
+				end
+
 				-- rebuild community leaders
 				NS:Rebuild_Community_Leaders()
 			end
@@ -1719,28 +1792,28 @@ end
 function NS:Find_ExCommunity_Members(clubId)
 	local count = 0
 	local current = {}
-	local members = ClubGetClubMembers(clubId)
+	local members = NS:GetClubMembers(clubId)
 	for _,v in ipairs(members) do
-		local info = ClubGetMemberInfo(clubId, v)
-		if ((info ~= nil) and (info.guid ~= nil) and (info.name ~= nil)) then
+		local mi = NS:GetClubMemberInfo(clubId, v)
+		if (mi and mi.guid and mi.name) then
 			-- build proper name
-			local player = info.name
+			local player = mi.name
 			if (not strmatch(player, "-")) then
 				-- get player info by guid
-				local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+				local name, realm = select(6, GetPlayerInfoByGUID(mi.guid))
 				if (not name) then
 					-- do nothing
 				elseif (name and realm and (realm ~= "")) then
 					-- rebuild full
-					player = name .. "-" .. realm
+					player = strformat("%s-%s", name, realm)
 				else
 					-- add realm name
-					player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+					player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 				end
 			end
 
 			-- add to current
-			current[player] = info
+			current[player] = mi
 		end
 	end
 
@@ -1764,7 +1837,7 @@ function NS:Find_ExCommunity_Members(clubId)
 				-- add removed
 				removed[k] = k
 				count = count + 1
-				print(strformat(L["Not Member: %s"], v.name))
+				print(strformat(L["Not Member: %s"], k))
 			end
 		end
 	end
@@ -1843,7 +1916,7 @@ function NS:Is_Community_Member(name)
 	-- build proper name
 	if (not strmatch(player, "-")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- check inside database first
@@ -1858,37 +1931,29 @@ end
 
 -- compare community priority
 function NS:Compare_Community_Priority(player1, player2)
-	-- always use full names
-	player1 = NS:GetFullName(player1)
-	player2 = NS:GetFullName(player2)
-
 	-- find player1 priority
+	player1 = NS:GetFullName(player1)
+	local member1_priority = NS.CommFlare.CF.MaxPriority
 	local member1 = NS:Get_Community_Member(player1)
-	if (not member1) then
-		-- force max priority
-		member1 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-	-- no priority?
-	elseif (not member1.priority or (member1.priority == 0)) then
-		-- force max priority
-		member1.priority = NS.CommFlare.CF.MaxPriority
+	if (member1 and member1.P and (member1.P > 0)) then
+		-- use priority
+		member1_priority = member1.P
 	end
 
 	-- find player2 priority
+	player2 = NS:GetFullName(player2)
+	local member2_priority = NS.CommFlare.CF.MaxPriority
 	local member2 = NS:Get_Community_Member(player2)
-	if (not member2) then
-		-- force max priority
-		member2 = { ["priority"] = NS.CommFlare.CF.MaxPriority }
-	-- no priority?
-	elseif (not member2.priority or (member2.priority == 0)) then
-		-- force max priority
-		member2.priority = NS.CommFlare.CF.MaxPriority
+	if (member2 and member2.P and (member2.P > 0)) then
+		-- use priority
+		member2_priority = member2.P
 	end
 
 	-- compare priorities
-	if (member1.priority < member2.priority) then
+	if (member1_priority < member2_priority) then
 		-- higher priority
 		return 1
-	elseif (member1.priority > member2.priority) then
+	elseif (member1_priority > member2_priority) then
 		-- lesser priority
 		return -1
 	end
@@ -1986,10 +2051,10 @@ function NS:Find_Community_Member_By_GUID(guid)
 	-- no realm found?
 	if (not realm or (realm == "")) then
 		-- add realm
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	else
 		-- add realm
-		player = player .. "-" .. realm
+		player = strformat("%s-%s", player, realm)
 	end
 
 	-- check inside database

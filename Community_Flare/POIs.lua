@@ -80,11 +80,11 @@ function NS:List_POIs()
 	end
 
 	-- process any POI's
+	local count = 0
 	print(strformat("Map Name: %s", NS.CommFlare.CF.MapInfo.name))
 	local pois = AreaPoiInfoGetAreaPOIForMap(NS.CommFlare.CF.MapID)
 	if (pois and (#pois > 0)) then
 		-- display infos
-		print(strformat(L["Count: %d"], #pois))
 		for _,v in ipairs(pois) do
 			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
 			if (NS.CommFlare.CF.POIInfo and NS.CommFlare.CF.POIInfo.areaPoiID) then
@@ -113,12 +113,15 @@ function NS:List_POIs()
 
 				-- display info
 				print(text)
+
+				-- increase
+				count = count + 1
 			end
 		end
-	else
-		-- none found
-		print(strformat(L["Count: %d"], 0))
 	end
+
+	-- display count
+	print(strformat(L["Count: %d"], count))
 end
 
 -- cancel active timers
@@ -132,7 +135,6 @@ function NS:Cancel_Active_Timers(name)
 				-- timer exists?
 				if (v.timer) then
 					-- cancel timer
-					print(strformat("CANCEL POI: %s (%s)", v.name, v.guid))
 					v.timer:Cancel()
 				end
 
@@ -183,7 +185,7 @@ function NS:UpdatePOIs()
 		local info = AreaPoiInfoGetAreaPOIInfo(mapID, id)
 		if (not info) then
 			-- removed
-			list[id] = nil
+			NS.CommFlare.CF.POIList[id] = nil
 		else
 			-- get name
 			list[id] = true
@@ -198,7 +200,6 @@ function NS:UpdatePOIs()
 				-- add poi
 				NS.CommFlare.CF.POIList[id] = CopyTable(info)
 				count = count + 1
-				list[id] = true
 
 				-- isle of conquest?
 				if (mapID == 169) then

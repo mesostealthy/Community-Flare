@@ -11,10 +11,11 @@ local CreateFromMixins                          = _G.CreateFromMixins
 local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                             = _G.DevTools_Dump
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
+local PlayerLocation                            = _G.PlayerLocation
 local StaticPopup_Show                          = _G.StaticPopup_Show
-local StaticPopupDialogs                        = _G.StaticPopupDialogs
 local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
 local UIDropDownMenu_Initialize                 = _G.UIDropDownMenu_Initialize
+local PlayerInfoGetRace                         = _G.C_PlayerInfo.GetRace
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
 local ipairs                                    = _G.ipairs
@@ -25,6 +26,7 @@ local sort                                      = _G.sort
 local time                                      = _G.time
 local strformat                                 = _G.string.format
 local strlower                                  = _G.string.lower
+local strsplit                                  = _G.string.split
 local tinsert                                   = _G.table.insert
 local tsort                                     = _G.table.sort
 
@@ -183,7 +185,7 @@ function CF_PlayerListAddKosButtonMixin:OnClick(button)
 				end
 
 				-- add user to kos list
-				NS.CommFlare.CF.KosList[guid] = { guid = guid, player = player }
+				NS.CommFlare.CF.KosList[guid] = player
 			end
 		end
 
@@ -233,11 +235,11 @@ function CF_PlayerListMixin:RefreshListDisplay()
 			-- process list
 			local index = 1
 			for k,v in ipairs(self.KosList) do
-				-- has guid?
-				local guid = self.PlayerNames[v]
-				if (guid) then
+				-- has player and guid?
+				local player, guid = strsplit("@", v)
+				if (player and guid) then
 					-- insert
-					local info = { index = index, guid = guid, player = v, kos = true}
+					local info = { index = index, guid = guid, player = player, kos = true}
 					dataProvider:Insert({info=info})
 					index = index + 1
 				end
@@ -251,10 +253,10 @@ function CF_PlayerListMixin:RefreshListDisplay()
 			for k,v in ipairs(self.PlayerList) do
 				-- has guid?
 				local info = nil
-				local guid = self.PlayerNames[v]
-				if (guid) then
+				local player, guid = strsplit("@", v)
+				if (player and guid) then
 					-- insert
-					info = { index = index, guid = guid, player = v}
+					info = { index = index, guid = guid, player = player}
 					dataProvider:Insert({info=info})
 					index = index + 1
 				end
@@ -278,7 +280,6 @@ function CF_PlayerListMixin:UpdatePlayerList()
 	-- initialize
 	self.KosList = {}
 	self.PlayerList = {}
-	self.PlayerNames = {}
 
 	-- find count
 	if (NS.db and NS.db.global and NS.db.global.MemberGUIDs) then
@@ -298,16 +299,14 @@ function CF_PlayerListMixin:UpdatePlayerList()
 			-- displayed?
 			if (display == true) then
 				-- kos target?
+				local player = v .. "@" .. k
 				if (NS.CommFlare and NS.CommFlare.CF and NS.CommFlare.CF.KosList and NS.CommFlare.CF.KosList[k]) then
 					-- insert
-					tinsert(self.KosList, v)
+					tinsert(self.KosList, player)
 				else
 					-- insert
-					tinsert(self.PlayerList, v)
+					tinsert(self.PlayerList, player)
 				end
-
-				-- add to player names
-				self.PlayerNames[v] = k
 			end
 		end
 	end
@@ -448,6 +447,7 @@ function CF_PlayerListEntryMixin:OnClick(button)
 end
 
 -- on enter
+local show_tooltip = false
 function CF_PlayerListEntryMixin:OnEnter()
 	-- start tooltip
 	GameTooltip:SetOwner(self)
@@ -455,40 +455,94 @@ function CF_PlayerListEntryMixin:OnEnter()
 
 	-- has member guid?
 	if (NS.db and NS.db.global and NS.db.global.MemberGUIDs) then
-		-- has community member info?
-		local member = NS:Get_Community_Member(NS.db.global.MemberGUIDs[self.guid])
-		if (member and member.clubs) then
-			-- process all clubs
-			for k,v in pairs(member.clubs) do
-				-- has club info?
-				if (NS.db and NS.db.global and NS.db.global.clubs and NS.db.global.clubs[k]) then
-					-- guild?
-					local club = NS.db.global.clubs[k]
-					if (club.clubType == Enum.ClubType.Guild) then
-						-- display guild note
-						GameTooltip:AddLine(strformat("Guild Member: %s", club.name), 1, 1, 1)
-					else
-						-- display club note
-						GameTooltip:AddLine(strformat("Club Member: %s", club.name), 1, 1, 1)
+		-- get player info by GUID
+		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(self.guid)
+		if (name and (name ~= "")) then
+			-- has realm?
+			local player = nil
+			if (not realm or (realm == "")) then
+				-- use player realm
+				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+			else
+				-- use proper realm
+				player = strformat("%s-%s", name, realm)
+			end
+
+			-- sanity check
+			if (not player) then
+				-- finished
+				return
+			end
+
+			-- display stuff
+			GameTooltip:AddLine(strformat("Player: %s", player), 1, 1, 1)
+			GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
+			GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+
+			-- create player location from guid
+			local playerLocation = PlayerLocation:CreateFromGUID(self.guid)
+			if (playerLocation) then
+				-- get race id
+				local raceID = PlayerInfoGetRace(playerLocation)
+				if (raceID) then
+					-- get faction
+					local factionInfo = C_CreatureInfo.GetFactionInfo(raceID)
+					if (factionInfo and factionInfo.name and (factionInfo.name ~= "")) then
+						-- display faction
+						GameTooltip:AddLine(strformat("Faction: %s", factionInfo.name), 1, 1, 1)
 					end
 				end
 			end
+
+			-- has community member info?
+			local member = NS:Get_Community_Member(NS.db.global.MemberGUIDs[self.guid])
+			if (member and member.clubs) then
+				-- process all clubs
+				for k,v in pairs(member.clubs) do
+					-- has club info?
+					if (NS.db and NS.db.global and NS.db.global.clubs and NS.db.global.clubs[k]) then
+						-- guild?
+						local club = NS.db.global.clubs[k]
+						if (club.clubType == Enum.ClubType.Guild) then
+							-- display guild note
+							GameTooltip:AddLine(strformat("Guild Member: %s", club.name), 1, 1, 1)
+						else
+							-- display club note
+							GameTooltip:AddLine(strformat("Club Member: %s", club.name), 1, 1, 1)
+						end
+					end
+				end
+			end
+
+			-- has member note?
+			if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
+				-- display member note
+				GameTooltip:AddLine(strformat("Member Note: %s", NS.db.global.MemberNotes[self.guid]), 1, 1, 1)
+			end
+		else
+			-- display guild note
+			GameTooltip:AddLine(strformat("Querying Server ..."), 1, 1, 1)
+
+			-- refresh 1 second
+			TimerAfter(1, function()
+				-- tooltip shown?
+				if (show_tooltip == true) then
+					-- call again
+					self:OnEnter()
+				end
+			end)
 		end
 	end
 
-	-- has member note?
-	if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
-		-- display member note
-		GameTooltip:AddLine(strformat("Member Note: %s", NS.db.global.MemberNotes[self.guid]), 1, 1, 1)
-	end
-
 	-- show tooltip
+	show_tooltip = true
 	GameTooltip:Show()
 end
 
 -- on leave
 function CF_PlayerListEntryMixin:OnLeave()
 	-- hide tooltip
+	show_tooltip = false
 	GameTooltip:Hide()
 end
 
@@ -596,7 +650,7 @@ function UnitPopupCFAddKosButtonMixin:OnClick()
 		if (not NS.CommFlare.CF.KosList[guid]) then
 			-- add to kos list
 			player = dropdownMenu.info.player
-			NS.CommFlare.CF.KosList[guid] = { guid = guid, player = player }
+			NS.CommFlare.CF.KosList[guid] = player
 		end
 
 		-- refresh list
@@ -799,7 +853,7 @@ local function RefreshPlayerName(guid, old_player)
 	end
 
 	-- get player info by GUID
-	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+	local name, realm = select(6, GetPlayerInfoByGUID(guid))
 	if (not name or (name == "")) then
 		-- increase
 		refresh_retries = refresh_retries + 1
@@ -817,32 +871,39 @@ local function RefreshPlayerName(guid, old_player)
 	end
 
 	-- check for old member?
-	local player = name
+	local player = nil
 	if (not realm or (realm == "")) then
 		-- add realm name
-		player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+		player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 	else
 		-- use realm name
-		player = player .. "-" .. realm
+		player = strformat("%s-%s", name, realm)
 	end
 
 	-- has name updated?
-	if (player ~= old_player) then
+	if (player and (player ~= old_player)) then
 		-- kos target?
 		local updated = false
 		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
 			-- update player
 			NS.db.global.MemberGUIDs[guid] = player
-			NS.CommFlare.CF.KosList[guid].player = player
+			NS.CommFlare.CF.KosList[guid] = player
 			updated = true
 		end
 
-		-- check for old player
+		-- check for old member
 		if (NS.db.global.members[old_player]) then
 			-- move member
-			NS.db.global.members[old_player].name = player
 			NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
 			NS.db.global.members[old_player] = nil
+			updated = true
+		end
+
+		-- check for old history
+		if (NS.db.global.history[old_player]) then
+			-- move history
+			NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+			NS.db.global.history[old_player] = nil
 			updated = true
 		end
 

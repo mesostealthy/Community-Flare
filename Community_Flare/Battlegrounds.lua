@@ -1175,7 +1175,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			-- force name-realm format
 			if (not strmatch(player, "-")) then
 				-- add realm name
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 			end
 
 			-- is this player leader?
@@ -1198,7 +1198,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			local player = info.name
 			if (not strmatch(player, "-")) then
 				-- add realm name
-				player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
+				player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 			end
 
 			-- has talent specialization?
@@ -1282,7 +1282,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			-- get community member
 			NS:Process_MemberGUID(info.guid, player)
 			local member = NS:Get_Community_Member(player)
-			if (member and member.name and member.clubs) then
+			if (member and member.clubs) then
 				-- mercenary?
 				if (mercenary == true) then
 					-- process all clubs
@@ -1303,12 +1303,12 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 						end
 
 						-- insert
-						tinsert(NS.CommFlare.CF.MercNames[k], member.name)
+						tinsert(NS.CommFlare.CF.MercNames[k], player)
 					end
 
 					-- update stuff
 					NS.CommFlare.CF.PlayerMercenary = true
-					tinsert(NS.CommFlare.CF.MercNamesList, member.name)
+					tinsert(NS.CommFlare.CF.MercNamesList, player)
 					NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
 				else
 					-- process all clubs
@@ -1329,12 +1329,12 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 						end
 
 						-- insert
-						tinsert(NS.CommFlare.CF.CommNames[k], member.name)
+						tinsert(NS.CommFlare.CF.CommNames[k], player)
 					end
 
 					-- update stuff
 					NS.CommFlare.CF.PlayerMercenary = false
-					tinsert(NS.CommFlare.CF.CommNamesList, member.name)
+					tinsert(NS.CommFlare.CF.CommNamesList, player)
 					NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 				end
 
@@ -1566,7 +1566,7 @@ function NS:Process_Pass_Leadership(sender)
 	-- no realm name?
 	elseif (not strmatch(sender, "-")) then
 		-- add realm name
-		sender = sender .. "-" .. NS.CommFlare.CF.PlayerServerName
+		sender = strformat("%s-%s", sender, NS.CommFlare.CF.PlayerServerName)
 	end
 
 	-- in battleground?
