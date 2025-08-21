@@ -15,6 +15,7 @@ local CreateDataProvider                        = _G.CreateDataProvider
 local DeclineQuest                              = _G.DeclineQuest
 local EncounterJournal_LoadUI                   = _G.EncounterJournal_LoadUI
 local FlashClientIcon                           = _G.FlashClientIcon
+local GenericTraitUI_LoadUI                     = _G.GenericTraitUI_LoadUI
 local GetAddOnCPUUsage                          = _G.GetAddOnCPUUsage
 local GetAddOnMemoryUsage                       = _G.GetAddOnMemoryUsage
 local GetAutoCompletePresenceID                 = _G.GetAutoCompletePresenceID
@@ -50,6 +51,7 @@ local SocialQueueUtil_GetRelationshipInfo       = _G.SocialQueueUtil_GetRelation
 local StaticPopup_FindVisible                   = _G.StaticPopup_FindVisible
 local StaticPopup_Hide                          = _G.StaticPopup_Hide
 local StaticPopup1Text                          = _G.StaticPopup1Text
+local ToggleFrame                               = _G.ToggleFrame
 local UnitFactionGroup                          = _G.UnitFactionGroup
 local UnitGUID                                  = _G.UnitGUID
 local UnitInRaid                                = _G.UnitInRaid
@@ -85,6 +87,8 @@ local PvPIsArena                                = _G.C_PvP.IsArena
 local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
 local PvPIsMatchFactional                       = _G.C_PvP.IsMatchFactional
 local PvPIsWarModeFeatureEnabled                = _G.C_PvP.IsWarModeFeatureEnabled
+local TraitsGetConfigIDByTreeID                 = _G.C_Traits.GetConfigIDByTreeID
+local TraitsGetTreeCurrencyInfo                 = _G.C_Traits.GetTreeCurrencyInfo
 local Settings_OpenToCategory                   = _G.Settings.OpenToCategory
 local SocialQueueGetGroupInfo                   = _G.C_SocialQueue.GetGroupInfo
 local TimerAfter                                = _G.C_Timer.After
@@ -115,8 +119,8 @@ local hook_AcceptBattlefieldPort_installed = false
 local hook_AcceptProposal_installed = false
 local hook_LeaveBattlefield_installed = false
 local hook_RejectProposal_installed = false
+local hook_PVPMatchResults_OnUpdate_installed = false
 local hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = false
-local hook_PVPMatchScoreboard_ScrollBox_ScrollToBegin_installed = false
 
 -- securely hook accept battlefield port
 local function hook_AcceptBattlefieldPort(index, acceptFlag)
@@ -268,6 +272,31 @@ local function hook_LeaveBattlefield()
 			else
 				-- send party message
 				NS:SendMessage(nil, text)
+			end
+		end
+	end
+end
+
+-- securely hook PVPMatchResults OnUpdate
+local function hook_PVPMatchResults_OnUpdate(self)
+	-- button exists?
+	if (DetailsOpenArenaSummaryButtonOnPVPMatchResults) then
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
+			-- is shown?
+			if (DetailsOpenArenaSummaryButtonOnPVPMatchResults:IsShown()) then
+				-- hide
+				DetailsOpenArenaSummaryButtonOnPVPMatchResults:Hide()
+			end
+
+			-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
+			if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
+				-- fix pvp match results scrolling
+				if (PVPMatchResults and PVPMatchResults.scrollBox) then
+					-- disable ScrollToBegin
+					PVPMatchResults.scrollBox.ScrollToBegin = function(self) end
+					hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
+				end
 			end
 		end
 	end
@@ -1010,23 +1039,13 @@ function NS:SetupHooks()
 		hook_RejectProposal_installed = true
 	end
 
-	-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
-	if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
-		-- fix pvp match results scrolling
-		if (PVPMatchResults and PVPMatchResults.scrollBox) then
-			-- disable ScrollToBegin
-			NS.CommFlare:RawHook(PVPMatchResults.scrollBox, "ScrollToBegin", function(self) end, true)
-			hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
-		end
-	end
-
-	-- PVPMatchScoreboard.ScrollBox:ScrollToBegin not hooked?
-	if (hook_PVPMatchScoreboard_ScrollBox_ScrollToBegin_installed ~= true) then
-		-- fix pvp match results scrolling
-		if (PVPMatchScoreboard and PVPMatchScoreboard.ScrollBox) then
-			-- disable ScrollToBegin
-			NS.CommFlare:RawHook(PVPMatchScoreboard.ScrollBox, "ScrollToBegin", function(self) end, true)
-			hook_PVPMatchScoreboard_ScrollBox_ScrollToBegin_installed = true
+	-- PVPMatchResults:OnUpdate not hooked?
+	if (hook_PVPMatchResults_OnUpdate_installed ~= true) then
+		-- pvp match results loaded?
+		if (PVPMatchResults) then
+			-- hook PVPMatchResults:OnUpdate
+			PVPMatchResults:HookScript("OnUpdate", hook_PVPMatchResults_OnUpdate)
+			hook_PVPMatchResults_OnUpdate_installed = true
 		end
 	end
 end
@@ -2505,33 +2524,17 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- enforce binding rules
 		NS:Enforce_Binding_Rules()
 
-		-- initialize login?
-		if (isInitialLogin == true) then
-			-- not reloaded
-			NS.CommFlare.CF.Reloaded = false
-
-			-- disable community party leader
-			NS.charDB.profile.communityPartyLeader = false
-		-- reloading?
-		elseif (isReloadingUi == true) then
-			-- reloaded
-			NS.CommFlare.CF.Reloaded = true
-
-			-- load previous session
-			NS:LoadSession()
-
-			-- update local group
-			NS:Update_Group("local")
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
+			-- block game menu hot keys enabled?
+			if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+				-- enable block game menu hooks
+				NS:Setup_BlockGameMenuHooks()
+			end
 
 			-- in battleground?
 			NS.CommFlare.CF.MatchStatus = 0
 			if (NS:IsInBattleground() == true) then
-				-- block game menu hot keys enabled?
-				if (NS.charDB.profile.blockGameMenuHotKeys == true) then
-					-- enable block game menu hooks
-					NS:Setup_BlockGameMenuHooks()
-				end
-
 				-- match state is active?
 				if (PvPGetActiveMatchState() == Enum.PvPMatchState.Active) then
 					-- match is active state?
@@ -2543,6 +2546,57 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 					end
 				end
 			end
+		end
+
+		-- initialize login?
+		if (isInitialLogin == true) then
+			-- not reloaded
+			NS.CommFlare.CF.Reloaded = false
+
+			-- disable community party leader
+			NS.charDB.profile.communityPartyLeader = false
+
+			-- get check for cloak upgrades
+			local treeID = 1115
+			local configID = TraitsGetConfigIDByTreeID(treeID)
+			local currencyInfo = TraitsGetTreeCurrencyInfo(configID, treeID, true)
+			if (currencyInfo and currencyInfo[1]) then
+				-- found currency info?
+				local info = currencyInfo[1]
+				if (info and info.quantity and info.maxQuantity and info.spent) then
+					-- has upgrades available?
+					if ((info.quantity > 0) or (info.spent ~= info.maxQuantity)) then
+						-- not loaded?
+						if (not GenericTraitFrame) then
+							-- initialize
+							GenericTraitUI_LoadUI()
+						end
+
+						-- not in combat lockdown?
+						if (InCombatLockdown() ~= true) then
+							-- not shown?
+							GenericTraitFrame:SetTreeID(1115)
+							if (GenericTraitFrame:IsShown() ~= true) then
+								-- toggle frame
+								ToggleFrame(GenericTraitFrame)
+							end
+						else
+							-- set cloak toggle
+							NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 2)
+						end
+					end
+				end
+			end
+		-- reloading?
+		elseif (isReloadingUi == true) then
+			-- reloaded
+			NS.CommFlare.CF.Reloaded = true
+
+			-- load previous session
+			NS:LoadSession()
+
+			-- update local group
+			NS:Update_Group("local")
 
 			-- initial clubs loaded
 			self:INITIAL_CLUBS_LOADED()
@@ -2610,6 +2664,17 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 
 			-- clear regen options bit
 			NS.CommFlare.CF.RegenOptions = bitband(NS.CommFlare.CF.RegenOptions, bitbnot(1))
+		-- toggle cloak upgrade?
+		elseif (bitband(NS.CommFlare.CF.RegenOptions, 2)) then
+			-- not shown?
+			GenericTraitFrame:SetTreeID(1115)
+			if (GenericTraitFrame:IsShown() ~= true) then
+				-- toggle frame
+				ToggleFrame(GenericTraitFrame)
+			end
+
+			-- clear regen options bit
+			NS.CommFlare.CF.RegenOptions = bitband(NS.CommFlare.CF.RegenOptions, bitbnot(2))
 		else
 			-- reset
 			NS.CommFlare.CF.RegenOptions = 0

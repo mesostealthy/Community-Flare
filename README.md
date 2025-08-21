@@ -20,11 +20,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.29.001:
--Community Member List: Refreshes per community every 7 days to make sure it's up to date.
--Player List Manager: Hover over names to display more info about each player.
--BUGFIX: Battle.NET requested invites now canceled if party is full to your Max Party Size setting.
--BUGFIX: Community Members could get removed from the database. This caused INV to not work for those players.
--BUGFIX: Inviting to groups already in Queue now work properly and select roles selected. (If you set any.)
--BUGFIX: Isle of Conquest does not report when Timers are canceled.
--TOC updated to v11.2.0
+v1.30.001:
+-Feature: Automatically open frame to upgrade Reshii Wraps on login if you have any upgrades available.
+-Feature: Remove the Open Arena Summary from the PVP Match Results when in Battlegrounds.
+-BUGFIX: PVP Match Results scroll feature should not block window from opening randomly.
