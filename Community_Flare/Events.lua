@@ -2556,33 +2556,36 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- disable community party leader
 			NS.charDB.profile.communityPartyLeader = false
 
-			-- get check for cloak upgrades
+			-- get config ID for Reshii Wraps
 			local treeID = 1115
 			local configID = TraitsGetConfigIDByTreeID(treeID)
-			local currencyInfo = TraitsGetTreeCurrencyInfo(configID, treeID, true)
-			if (currencyInfo and currencyInfo[1]) then
-				-- found currency info?
-				local info = currencyInfo[1]
-				if (info and info.quantity and info.maxQuantity and info.spent) then
-					-- has upgrades available?
-					if ((info.quantity > 0) or (info.spent ~= info.maxQuantity)) then
-						-- not loaded?
-						if (not GenericTraitFrame) then
-							-- initialize
-							GenericTraitUI_LoadUI()
-						end
-
-						-- not in combat lockdown?
-						if (InCombatLockdown() ~= true) then
-							-- not shown?
-							GenericTraitFrame:SetTreeID(1115)
-							if (GenericTraitFrame:IsShown() ~= true) then
-								-- toggle frame
-								ToggleFrame(GenericTraitFrame)
+			if (configID) then
+				-- get currency info
+				local currencyInfo = TraitsGetTreeCurrencyInfo(configID, treeID, true)
+				if (currencyInfo and currencyInfo[1]) then
+					-- found currency info?
+					local info = currencyInfo[1]
+					if (info and info.quantity and info.maxQuantity and info.spent) then
+						-- has upgrades available?
+						if ((info.quantity > 0) or (info.spent ~= info.maxQuantity)) then
+							-- not loaded?
+							if (not GenericTraitFrame) then
+								-- initialize
+								GenericTraitUI_LoadUI()
 							end
-						else
-							-- set cloak toggle
-							NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 2)
+
+							-- not in combat lockdown?
+							if (InCombatLockdown() ~= true) then
+								-- not shown?
+								GenericTraitFrame:SetTreeID(1115)
+								if (GenericTraitFrame:IsShown() ~= true) then
+									-- toggle frame
+									ToggleFrame(GenericTraitFrame)
+								end
+							else
+								-- set cloak toggle
+								NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 2)
+							end
 						end
 					end
 				end

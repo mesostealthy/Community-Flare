@@ -102,6 +102,8 @@ NS.CommFlare.HearthStoneSpells = {
 	[438606] = "Draenic Hologem",
 	[463481] = "Notorious Thread's Hearthstone",
 	[1220729] = "Explosive Hearthstone",
+	[1240219] = "P.O.S.T. Master's Express Hearthstone",
+	[1242509] = "Cosmic Hearthstone",
 }
 
 -- teleport spells
