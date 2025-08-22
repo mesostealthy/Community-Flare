@@ -41,7 +41,7 @@ function NS:Show_History(owner, rootDescription, contextData)
 	local member = NS:Get_Community_Member(player)
 	if (member) then
 		-- get player history
-		print(strformat("%s: %s", NS.CommFlare.Title, member.name))
+		print(strformat("%s: %s", NS.CommFlare.Title, player))
 		local history = NS:Get_Player_History(player)
 		if (history) then
 			-- has first seen?

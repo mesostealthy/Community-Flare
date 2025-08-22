@@ -20,7 +20,8 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.30.001:
+v1.30.002:
 -Feature: Automatically open frame to upgrade Reshii Wraps on login if you have any upgrades available.
 -Feature: Remove the Open Arena Summary from the PVP Match Results when in Battlegrounds.
 -BUGFIX: PVP Match Results scroll feature should not block window from opening randomly.
+-BUGFIX: Last Seen Around? Fixed for communities once again.
