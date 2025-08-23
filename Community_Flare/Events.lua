@@ -279,7 +279,17 @@ end
 
 -- securely hook PVPMatchResults OnUpdate
 local function hook_PVPMatchResults_OnUpdate(self)
-	-- button exists?
+	-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
+	if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
+		-- fix pvp match results scrolling
+		if (PVPMatchResults and PVPMatchResults.scrollBox) then
+			-- disable ScrollToBegin
+			PVPMatchResults.scrollBox.ScrollToBegin = function(self) end
+			hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
+		end
+	end
+
+	-- details button exists?
 	if (DetailsOpenArenaSummaryButtonOnPVPMatchResults) then
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
@@ -287,16 +297,6 @@ local function hook_PVPMatchResults_OnUpdate(self)
 			if (DetailsOpenArenaSummaryButtonOnPVPMatchResults:IsShown()) then
 				-- hide
 				DetailsOpenArenaSummaryButtonOnPVPMatchResults:Hide()
-			end
-
-			-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
-			if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
-				-- fix pvp match results scrolling
-				if (PVPMatchResults and PVPMatchResults.scrollBox) then
-					-- disable ScrollToBegin
-					PVPMatchResults.scrollBox.ScrollToBegin = function(self) end
-					hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
-				end
 			end
 		end
 	end
