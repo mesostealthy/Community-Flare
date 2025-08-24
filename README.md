@@ -20,10 +20,11 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.30.004:
+v1.30.005:
 -Feature: Automatically open frame to upgrade Reshii Wraps on login if you have any upgrades available.
 -Feature: Warn when using P.O.S.T. Master's Express Hearthstone or Cosmic Hearthstone in Battlegrounds.
 -Feature: Remove the Open Arena Summary from the PVP Match Results when in Battlegrounds.
 -BUGFIX: PVP Match Results scrolls again! (Only worked if you had Details Damage Meter installed.)
+-BUGFIX: Report sometimes happened in communities that were not enabled under Report Options.
 -BUGFIX: No lua error if toon is not high enough to obtain Reshii Wraps.
 -BUGFIX: Last Seen Around? Fixed for communities once again.

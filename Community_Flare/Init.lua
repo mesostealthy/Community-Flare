@@ -1367,6 +1367,7 @@ function NS:Setup_Report_Channels()
 	local count = 0
 	if (NS.charDB.profile.communityMain > 1) then
 		-- process all report list
+		NS.CommFlare.CF.ReportChannels = {}
 		for k,v in pairs(NS.charDB.profile.communityReportList) do
 			-- verify channel setup
 			local streamId = 1
