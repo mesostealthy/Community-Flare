@@ -616,6 +616,8 @@ function NS:LoadSession()
 	NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate
 	NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime
 	NS.CommFlare.CF.MatchStartLogged = NS.charDB.profile.MatchStartLogged
+	NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives
+	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives
 
 	-- load battleground specific data
 	NS.CommFlare.CF.AB = NS.charDB.profile.AB or {}
@@ -681,6 +683,8 @@ function NS:SaveSession()
 		NS.charDB.profile.MatchStartDate = NS.CommFlare.CF.MatchStartDate
 		NS.charDB.profile.MatchStartTime = NS.CommFlare.CF.MatchStartTime
 		NS.charDB.profile.MatchStartLogged = NS.CommFlare.CF.MatchStartLogged
+		NS.charDB.profile.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives
+		NS.charDB.profile.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives
 	else
 		-- reset settings
 		NS.charDB.profile.AB = {}
@@ -698,6 +702,8 @@ function NS:SaveSession()
 		NS.charDB.profile.MatchStartDate = 0
 		NS.charDB.profile.MatchStartTime = 0
 		NS.charDB.profile.MatchStartLogged = false
+		NS.charDB.profile.NumAllyGlaives = 0
+		NS.charDB.profile.NumHordeGlaives = 0
 	end
 
 	-- debug mode?
@@ -1329,6 +1335,45 @@ function NS:PopupBox(dlg, ...)
 			dialog.data = args
 		end
 	end
+end
+
+-- process talents check
+function NS:Process_Talents_Check(sender)
+	-- no shared community?
+	if (NS:Has_Shared_Community(sender) == false) then
+		-- finished
+		return
+	end
+
+	-- get active config id
+	local configID = C_ClassTalents.GetActiveConfigID()
+	if (configID) then
+		-- get current specialization info
+		local specID, specName = PlayerUtil.GetCurrentSpecID()
+		if (specID and specName) then
+			-- get hero spec id
+			local text = strformat("%s", specName)
+			local heroSpecID = C_ClassTalents.GetActiveHeroTalentSpec()
+			if (heroSpecID and NS.CommFlare.HeroTalentSpecs[heroSpecID]) then
+				-- add hero talent
+				text = strformat("%s (%s)", text, NS.CommFlare.HeroTalentSpecs[heroSpecID])
+			end
+
+			-- get import string
+			local data = C_Traits.GenerateImportString(configID)
+			if (data) then
+				-- finalize text
+				text = strformat("%s: %s", text, data)
+			end
+
+			-- send talents data
+			NS:SendMessage(sender, text)
+			return
+		end
+	end
+
+	-- send community flare version number
+	NS:SendMessage(sender, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 end
 
 -- process version check

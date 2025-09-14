@@ -152,6 +152,9 @@ function NS:Process_IOC_Nodes_Capped(id)
 		-- cancel docks related timers
 		NS:Cancel_Active_Timers(L["Catapult"])
 		NS:Cancel_Active_Timers(L["Glaive Thrower"])
+
+		-- stop any glaive thrower capping bars
+		NS:Capping_Stop_Bars(L["Glaive Thrower"])
 	-- workshop in conflict?
 	elseif ((id == 2347) or (id == 2348)) then
 		-- cancel workshop related timers

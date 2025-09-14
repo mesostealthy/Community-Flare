@@ -1,7 +1,7 @@
 ## Interface: 110200
 ## Title: Community Flare
-## Version: v1.30.004
-## X-Build: 130004
+## Version: v1.31.001
+## X-Build: 131001
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB
@@ -30,6 +30,7 @@ Libs\AceTab-3.0\AceTab-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
 Libs\LibCompress\lib.xml
 Libs\LibDeflate\lib.xml
+Libs\LibCandyBar-3.0\LibCandyBar-3.0.lua
 Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
 
 Locales\enUS.lua
@@ -39,6 +40,7 @@ Bootstrap.lua
 Constants.lua
 Config.lua
 Battlegrounds.lua
+Capping.lua
 CombatLog.lua
 Communication.lua
 Database.lua

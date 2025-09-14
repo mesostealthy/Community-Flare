@@ -2010,6 +2010,24 @@ function NS:Process_Status_Check(sender)
 				timer = timer + 0.2
 			end
 
+			-- verify player does not have deserter debuff
+			NS:CheckForAura("player", "HARMFUL", L["Deserter"])
+			if (NS.CommFlare.CF.HasAura == true) then
+				-- has time left?
+				local message = strformat("%s!", L["Sorry, I currently have deserter"])
+				if (NS.CommFlare.CF.AuraData.timeLeft) then
+					-- append time left
+					local seconds = NS.CommFlare.CF.AuraData.timeLeft
+					local minutes = mfloor(seconds / 60)
+					seconds = seconds - (minutes * 60)
+					local timeLeft = strformat(L["%d minutes, %d seconds"], minutes, seconds)
+					message = strformat(L["%s (%s left.)"], message, timeLeft)
+				end
+
+				-- send back to party that you have deserter
+				NS:SendMessage(sender, message)
+			end
+
 			-- not reported?
 			if (reported == false) then
 				-- not currently in queue

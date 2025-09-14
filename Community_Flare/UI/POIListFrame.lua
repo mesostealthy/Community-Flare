@@ -20,6 +20,8 @@ local print                                     = _G.print
 local select                                    = _G.select
 local sort                                      = _G.sort
 local time                                      = _G.time
+local tonumber                                  = _G.tonumber
+local tostring                                  = _G.tostring
 local strformat                                 = _G.string.format
 local strlower                                  = _G.string.lower
 local strsplit                                  = _G.string.split
@@ -344,6 +346,24 @@ function CF_POIListEntryMixin:OnEnter()
 	if (info.position and info.position.x and info.position.y) then
 		-- add position
 		GameTooltip:AddLine(strformat("Position: %s, %s", tostring(info.position.x), tostring(info.position.y)), 1, 1, 1)
+	end
+
+	-- has description?
+	if (info.description and (info.description ~= "")) then
+		-- add description
+		GameTooltip:AddLine(strformat("Description: %s", tostring(info.description)), 1, 1, 1)
+	end
+
+	-- has textureIndex?
+	if (info.textureIndex) then
+		-- add texture index
+		GameTooltip:AddLine(strformat("Texture Index: %d", tonumber(info.textureIndex)), 1, 1, 1)
+	end
+
+	-- has factionID?
+	if (info.factionID) then
+		-- add faction id
+		GameTooltip:AddLine(strformat("Faction ID: %d", tonumber(info.factionID)), 1, 1, 1)
 	end
 
 	-- show tooltip

@@ -8,6 +8,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                        = _G
 local CombatLogGetCurrentEventInfo              = _G.CombatLogGetCurrentEventInfo
 local RaidWarningFrame_OnEvent                  = _G.RaidWarningFrame_OnEvent
+local MinimapGetPOITextureCoords                = _G.C_Minimap.GetPOITextureCoords
 local TimerAfter                                = _G.C_Timer.After
 local TimerNewTimer                             = _G.C_Timer.NewTimer
 local print                                     = _G.print
@@ -125,6 +126,13 @@ function NS:Process_IOC_Events()
 	-- UNIT_DIED?
 	local timestamp, event, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlag = CombatLogGetCurrentEventInfo()
 	if (event == "UNIT_DIED") then
+		-- is hostile?
+		local hostile = false
+		if (bitband(destFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
+			-- hostile
+			hostile = true
+		end
+
 		-- catapult?
 		local should_log = false
 		local respawn_time = 180
@@ -140,6 +148,54 @@ function NS:Process_IOC_Events()
 		elseif (destName == L["Glaive Thrower"]) then
 			-- log this
 			should_log = true
+
+			-- vehicle death not already detected?
+			if (not NS.CommFlare.CF.VehicleDeaths[destGUID]) then
+				-- alert system enabled?
+				if (NS.db.global.iocVehicleAlertSystem == true) then
+					-- has player faction?
+					if (NS.CommFlare.CF.PlayerInfo and NS.CommFlare.CF.PlayerInfo.faction) then
+						-- player alliance?
+						local name = nil
+						local path = {136441}
+						local factionColor = nil
+						if (NS.CommFlare.CF.PlayerInfo.faction == 1) then
+							-- hostile glaive?
+							if (hostile == true) then
+								-- setup stuff
+								factionColor = "colorHorde"
+								NS.CommFlare.CF.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives + 1
+								path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(40) -- horde horse icon
+								name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
+							else
+								-- increase
+								factionColor = "colorAlliance"
+								NS.CommFlare.CF.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives + 1
+								path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(38) -- alliance horse icon
+								name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
+							end
+						else
+							-- hostile glaive?
+							if (hostile == true) then
+								-- increase
+								factionColor = "colorAlliance"
+								NS.CommFlare.CF.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives + 1
+								path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(38) -- alliance horse icon
+								name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
+							else
+								-- setup stuff
+								factionColor = "colorHorde"
+								NS.CommFlare.CF.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives + 1
+								path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(40) -- horde horse icon
+								name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
+							end
+						end
+
+						-- add new capping bar
+						NS:Capping_Add_New_Bar(name, respawn_time, factionColor, path)
+					end
+				end
+			end
 		-- siege engine?
 		elseif (destName == L["Siege Engine"]) then
 			-- log this
@@ -179,10 +235,10 @@ function NS:Process_IOC_Events()
 					-- hostile?
 					if (hostile == true) then
 						-- display message
-						print(strformat("ENEMY VEHICLE DEAD: %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
+						print(strformat("ENEMY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
 					else
 						-- display message
-						print(strformat("FRIENDLY VEHICLE DEAD: %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
+						print(strformat("FRIENDLY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
 					end
 				end
 

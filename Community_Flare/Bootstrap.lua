@@ -31,6 +31,7 @@ NS.Libs = {
 	AceSerializer = LibStub("AceSerializer-3.0"),
 	LibCompress = LibStub("LibCompress"),
 	LibDeflate = LibStub("LibDeflate"),
+	LibCandyBar = LibStub("LibCandyBar-3.0"),
 	LibRangeCheck = LibStub("LibRangeCheck-3.0"),
 }
 
@@ -98,6 +99,8 @@ NS.CommFlare.CF = {
 	MatchStatus = 0,
 	MaxPriority = 999,
 	MercCount = 0,
+	NumAllyGlaives = 0,
+	NumHordeGlaives = 0,
 	NumScores = 0,
 	PassLeadWarning = 0,
 	PlayerRank = 0,
@@ -124,6 +127,7 @@ NS.CommFlare.CF = {
 	-- tables
 	ActiveTimers = {},
 	AuraData = {},
+	CappingBars = {},
 	Clubs = {},
 	ClubList = {},
 	ClubMembers = {},

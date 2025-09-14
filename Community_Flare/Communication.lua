@@ -11,6 +11,7 @@ local IsInRaid                                  = _G.IsInRaid
 local RaidWarningFrame_OnEvent                  = _G.RaidWarningFrame_OnEvent
 local UnitName                                  = _G.UnitName
 local MapGetMapInfo                             = _G.C_Map.GetMapInfo
+local MinimapGetPOITextureCoords                = _G.C_Minimap.GetPOITextureCoords
 local TimerAfter                                = _G.C_Timer.After
 local TimerNewTimer                             = _G.C_Timer.NewTimer
 local print                                     = _G.print
@@ -59,6 +60,12 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 					-- has npc name?
 					local npc_name = args[4]
 					if (npc_name and (npc_name ~= "")) then
+						-- debug print enabled?
+						if (NS.db.global.debugPrint == true) then
+							-- debug print
+							NS:Debug_Print(strformat("%s: BOSS_ATTACKED = %s; %s", NS.CommFlare.Title, tostring(sender), tostring(npc_name)))
+						end
+
 						-- needs to issue raid warning?
 						if (NS.CommFlare.CF.LastBossRW == 0) then
 							-- update last raid warning
@@ -76,59 +83,108 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 				end
 			-- vehicle dead?
 			elseif (args[3] == "VEHICLE_DEAD") then
+				-- get parameters
+				local timestamp, destGUID, destName, destFlags = strsplit(",", args[4])
+
 				-- vehicle death not already detected?
-				local timestamp, guid, name, flags = {strsplit(",", args[4])}
-				if (not NS.CommFlare.CF.VehicleDeaths[guid] and timestamp and guid and name and flags) then
+				if (not NS.CommFlare.CF.VehicleDeaths[destGUID] and timestamp and destGUID and destName and destFlags) then
 					-- save time glaive died
 					NS.CommFlare.CF.VehicleDeaths[destGUID] = timestamp
 
 					-- is hostile?
 					local hostile = false
-					flags = tonumber(flags)
-					if (bitband(flags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
+					destFlags = tonumber(destFlags)
+					if (bitband(destFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE) then
 						-- hostile
 						hostile = true
 					end
 
 					-- initialize active timer
-					NS.CommFlare.CF.ActiveTimers[guid] = {
+					NS.CommFlare.CF.ActiveTimers[destGUID] = {
 						["timestamp"] = timestamp,
-						["guid"] = guid,
-						["name"] = name,
-						["flags"] = flags,
+						["guid"] = destGUID,
+						["name"] = destName,
+						["flags"] = destFlags,
 						["hostile"] = hostile,
 						["timer"] = {},
 					}
-
-					-- alert system enabled?
-					if (NS.db.global.iocVehicleAlertSystem == true) then
-						-- hostile?
-						if (hostile == true) then
-							-- display message
-							print(strformat("ENEMY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(guid), tostring(name), tostring(flags)))
-						else
-							-- display message
-							print(strformat("FRIENDLY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(guid), tostring(name), tostring(flags)))
-						end
-					end
 
 					-- catapult?
 					local respawn_time = 180
 					if (destName == L["Catapult"]) then
 						-- 1 minute
 						respawn_time = 60
+					-- glaive thrower?
+					elseif (destName == L["Glaive Thrower"]) then
+						-- alert system enabled?
+						if (NS.db.global.iocVehicleAlertSystem == true) then
+							-- has player faction?
+							if (NS.CommFlare.CF.PlayerInfo and NS.CommFlare.CF.PlayerInfo.faction) then
+								-- player alliance?
+								local name = nil
+								local path = {136441}
+								local factionColor = nil
+								if (NS.CommFlare.CF.PlayerInfo.faction == 1) then
+									-- hostile glaive?
+									if (hostile == true) then
+										-- setup stuff
+										factionColor = "colorHorde"
+										NS.CommFlare.CF.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives + 1
+										path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(40) -- horde horse icon
+										name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
+									else
+										-- increase
+										factionColor = "colorAlliance"
+										NS.CommFlare.CF.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives + 1
+										path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(38) -- alliance horse icon
+										name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
+									end
+								else
+									-- hostile glaive?
+									if (hostile == true) then
+										-- increase
+										factionColor = "colorAlliance"
+										NS.CommFlare.CF.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives + 1
+										path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(38) -- alliance horse icon
+										name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
+									else
+										-- setup stuff
+										factionColor = "colorHorde"
+										NS.CommFlare.CF.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives + 1
+										path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(40) -- horde horse icon
+										name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
+									end
+								end
+
+								-- add new capping bar
+								NS:Capping_Add_New_Bar(name, respawn_time, factionColor, path)
+							end
+						end
+					-- demolisher?
 					elseif (destName == L["Demolisher"]) then
 						-- 5-minute
 						respawn_time = 300
 					end
 
+					-- alert system enabled?
+					if (NS.db.global.iocVehicleAlertSystem == true) then
+						-- hostile?
+						if (hostile == true) then
+							-- display message
+							print(strformat("ENEMY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
+						else
+							-- display message
+							print(strformat("FRIENDLY VEHICLE DEAD: %s; %s; %s; %s", tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags)))
+						end
+					end
+
 					-- enable respawn timer
-					NS.CommFlare.CF.ActiveTimers[guid].timer = TimerNewTimer(respawn_time, function()
+					NS.CommFlare.CF.ActiveTimers[destGUID].timer = TimerNewTimer(respawn_time, function()
 						-- alert system enabled?
 						if (NS.db.global.iocVehicleAlertSystem == true) then
 							-- hostile?
-							local name = NS.CommFlare.CF.ActiveTimers[guid].name
-							if (NS.CommFlare.CF.ActiveTimers[guid].hostile == true) then
+							local name = NS.CommFlare.CF.ActiveTimers[destGUID].name
+							if (NS.CommFlare.CF.ActiveTimers[destGUID].hostile == true) then
 								-- display message
 								print(strformat("NEW ENEMY VEHICLE: %s should be spawned/spawning now!", name))
 							else
@@ -138,11 +194,17 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 						end
 
 						-- remove active timer
-						NS.CommFlare.CF.ActiveTimers[guid] = nil
+						NS.CommFlare.CF.ActiveTimers[destGUID] = nil
 					end)
 				end
 			-- version checked?
 			elseif (args[3] == "VERSION_CHECK") then
+				-- debug print enabled?
+				if (NS.db.global.debugPrint == true) then
+					-- debug print
+					NS:Debug_Print(strformat("%s: VERSION_CHECK = %s; %s", NS.CommFlare.Title, tostring(sender), tostring(distribution)))
+				end
+
 				-- guild or instance chat message?
 				if ((distribution == "GUILD") or (distribution == "INSTANCE_CHAT")) then
 					-- not already displayed?
@@ -180,6 +242,12 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 										-- use full message (fall back)
 										mapName = message
 									end
+								end
+
+								-- debug print enabled?
+								if (NS.db.global.debugPrint == true) then
+									-- debug print
+									NS:Debug_Print(strformat("%s: ZONE_CHANGED_NEW_AREA = %s; %s = %s", NS.CommFlare.Title, tostring(sender), tostring(distribution), tostring(mapName)))
 								end
 
 								-- display zone change message

@@ -1266,6 +1266,10 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 			-- process status check
 			NS:Process_Status_Check(bnSenderID)
 		end
+	-- talents check?
+	elseif (lower == "!talents") then
+		-- process talents check
+		NS:Process_Talents_Check(bnSenderID)
 	else
 		-- asking for invite?
 		local args = {strsplit(" ", text)}
@@ -1591,6 +1595,10 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 			-- process status check
 			NS:Process_Status_Check(sender)
 		end
+	-- talents check?
+	elseif (lower == "!talents") then
+		-- process talents check
+		NS:Process_Talents_Check(sender)
 	else
 		-- asking for invite?
 		local args = {strsplit(" ", text)}
@@ -2567,7 +2575,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 					local info = currencyInfo[1]
 					if (info and info.quantity and info.maxQuantity and info.spent) then
 						-- has upgrades available?
-						if ((info.quantity > 0) or (info.spent ~= info.maxQuantity)) then
+						if ((info.quantity > 2) and (info.spent ~= info.maxQuantity)) then
 							-- not loaded?
 							if (not GenericTraitFrame) then
 								-- initialize
@@ -2615,6 +2623,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 		-- update vignette's
 		NS:UpdateVignettes()
+	else
+		-- match is active state?
+		if (PvPGetActiveMatchDuration() > 0) then
+			-- match started
+			NS.CommFlare.CF.MatchStatus = 2
+		end
 	end
 
 	-- sanity checks
@@ -2711,14 +2725,26 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	NS.CommFlare.CF.LastBossRW = 0
 	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.MatchStatus = 1
+	NS.CommFlare.CF.NumAllyGlaives = 0
+	NS.CommFlare.CF.NumHordeGlaives = 0
 	NS.CommFlare.CF.PassLeadWarning = 0
 	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
+	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+
+	-- match is active state?
+	if (PvPGetActiveMatchDuration() > 0) then
+		-- match started
+		NS.CommFlare.CF.MatchStatus = 2
+	end
 
 	-- display queue entry time left enabled?
 	if (NS.db.global.displayQueueEntryTimeLeft == true) then
-		-- report queue entry time left
-		NS:Report_Queue_Entry_Time_Left()
+		-- match started?
+		if (NS.CommFlare.CF.MatchStatus ~= 1) then
+			-- report queue entry time left
+			NS:Report_Queue_Entry_Time_Left()
+		end
 	end
 
 	-- process club members
@@ -2809,6 +2835,8 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	NS.CommFlare.CF.PassLeadWarning = 0
 	NS.CommFlare.CF.MatchEndDate = date()
 	NS.CommFlare.CF.MatchEndTime = time()
+	NS.CommFlare.CF.NumAllyGlaives = 0
+	NS.CommFlare.CF.NumHordeGlaives = 0
 	NS.CommFlare.CF.Winner = GetBattlefieldWinner()
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
@@ -3125,10 +3153,13 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 						if (epicBG == true) then
 							-- list of allowed quests
 							local allowedQuests = {
+								[39040] = true, -- A Call to Battle (Weekend Event)
+								[47148] = true, -- Something Different (Seasonal)
 								[72166] = true, -- Proving in Battle [A]
 								[72167] = true, -- Proving in War [H]
 								[72723] = true, -- A Call to Battle
 								[80186] = true, -- Preserving in War
+								[83345] = true, -- A Call to Battle (Weekend Event)
 							}
 
 							-- allowed quest?
@@ -3139,7 +3170,9 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 						else
 							-- list of allowed quests
 							local allowedQuests = {
+								[39040] = true, -- A Call to Battle (Weekend Event)
 								[47148] = true, -- Something Different (Seasonal)
+								[83345] = true, -- A Call to Battle (Weekend Event)
 							}
 
 							-- allowed quest?

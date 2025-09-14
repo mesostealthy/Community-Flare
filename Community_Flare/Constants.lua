@@ -186,6 +186,74 @@ NS.CommFlare.TeleportSpells = {
 	[1221360] = "Teleport: Stormwind",
 }
 
+-- hero talent specs
+NS.CommFlare.HeroTalentSpecs = {
+	-- Death Knight
+	[31] = "San'layn",
+	[32] = "Rider of the Apocalypse",
+	[33] = "Deathbringer",
+
+	-- Demon Hunter
+	[34] = "Fel-Scarred",
+	[35] = "Aldrachi Reaver",
+
+	-- Druid
+	[21] = "Druid of the Claw",
+	[22] = "Wildstalker",
+	[23] = "Keeper of the Grove",
+	[24] = "Elune's Chosen",
+
+	-- Evoker
+	[36] = "Scalecommander",
+	[37] = "Flameshaper",
+	[38] = "Chronowarden",
+
+	-- Hunter
+	[42] = "Sentinel",
+	[43] = "Pack Leader",
+	[44] = "Dark Ranger",
+ 		
+	-- Mage
+	[39] = "Sunfury",
+	[40] = "Spellslinger",
+	[41] = "Frostfire",
+
+	-- Monk
+	[64] = "Conduit of the Celestials",
+	[65] = "Shado-pan",
+	[66] = "Master of Harmony",
+
+	-- Paladin
+	[48] = "Templar",
+	[49] = "Lightsmith",
+	[50] = "Herald of the Sun",
+
+	-- Priest
+	[18] = "Voidweaver",
+	[19] = "Archon",
+	[20] = "Oracle", 		
+
+	-- Rogue
+	[51] = "Trickster",
+	[52] = "Fatebound",
+	[53] = "Deathstalker",
+
+	-- Shaman
+	[54] = "Totemic",
+	[55] = "Stormbringer",
+	[56] = "Farseer",
+
+	-- Warlock
+	[57] = "Soul Harvester",
+	[58] = "Hellcaller",
+	[59] = "Diabolist",
+
+	-- Warrior
+	[60] = "Slayer",
+	[61] = "Mountain Thane",
+	[62] = "Colossus",
+}
+
 -- report times left
 NS.CommFlare.ReportTimesLeft = {
 	[0] = true,
