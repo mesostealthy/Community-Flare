@@ -59,7 +59,6 @@ local UnitIsGroupLeader                         = _G.UnitIsGroupLeader
 local UnitName                                  = _G.UnitName
 local AuraUtilForEachAura                       = _G.AuraUtil.ForEachAura
 local AddOnsIsAddOnLoaded                       = _G.C_AddOns.IsAddOnLoaded
-local AreaPoiInfoGetAreaPOIForMap               = _G.C_AreaPoiInfo.GetAreaPOIForMap
 local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetAccountInfoByGUID             = _G.C_BattleNet.GetAccountInfoByGUID
 local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
@@ -1396,33 +1395,6 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
 						end
 					end
-
-					-- process after 2 seconds
-					TimerAfter(2, function()
-						-- get current vignettes
-						local list = NS:Get_Current_Vignettes()
-						if (list and list[3689]) then
-							-- has coordinates?
-							local info = list[3689]
-							if (info and info.x and info.y) then
-								-- add tom tom way point
-								NS:TomTomAddWaypoint("War Supply Crate", info.x, info.y)
-							end
-
-							-- needs to issue raid warning?
-							if (NS.CommFlare.CF.LastRaidWarning == 0) then
-								-- update last raid warning
-								NS.CommFlare.CF.LastRaidWarning = time()
-								TimerAfter(148, function()
-									-- clear last raid warning
-									NS.CommFlare.CF.LastRaidWarning = 0
-								end)
-
-								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
-							end
-						end
-					end)
 				end
 			end
 		end
@@ -1480,28 +1452,8 @@ function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 		faction = UnitFactionGroup("player")
 	end
 
-	-- alliance faction?
-	if (faction == L["Alliance"]) then
-		-- captain balinda stonehearth?
-		if (sender == L["Captain Balinda Stonehearth"]) then
-			-- engaged?
-			if (lower:find(L["begone, uncouth scum!"])) then
-				-- needs to issue raid warning?
-				if (NS.CommFlare.CF.LastBossRW == 0) then
-					-- update last raid warning
-					NS.CommFlare.CF.LastBossRW = time()
-					TimerAfter(15, function()
-						-- clear last raid warning
-						NS.CommFlare.CF.LastBossRW = 0
-					end)
-
-					-- issue local raid warning (with raid warning audio sound)
-					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
-				end
-			end
-		end
 	-- horde faction?
-	elseif (faction == L["Horde"]) then
+	if (faction == L["Horde"]) then
 		-- captain galvangar?
 		if (sender == L["Captain Galvangar"]) then
 			-- engaged?
@@ -1606,6 +1558,32 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 		if ((command == "inv") or (command == "invite")) then
 			-- process auto invite
 			NS:Process_Auto_Invite(sender)
+		end
+	end
+end
+
+-- process club invitations received for club
+function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
+	local clubId = ...
+
+	-- process all
+	local list = C_ClubFinder.ReturnClubApplicantList(clubId)
+	for k,v in ipairs(list) do
+		-- get name / server
+		local name, realm = select(6, GetPlayerInfoByGUID(v.playerGUID))
+		if (name) then
+			-- no realm?
+			if (not realm or (realm == "")) then
+				-- use player server
+				realm = NS.CommFlare.CF.PlayerServerName
+			end
+
+			-- build proper name
+			local player = name
+			if (not strmatch(player, "-")) then
+				-- add realm name
+				player = strformat("%s-%s", player, realm)
+			end
 		end
 	end
 end
@@ -1942,14 +1920,17 @@ function NS.CommFlare:GROUP_JOINED(msg, ...)
 				-- player is community leader?
 				local player = NS:GetPlayerName("full")
 				if (NS:Is_Community_Leader(player) == true) then
-					-- are you in a raid?
-					if (IsInRaid()) then
-						-- send addon message to raid
-						NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
-					else
-						-- send addon message to party
-						NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
-					end
+					-- start processing
+					TimerAfter(0.5, function()
+						-- are you in a raid?
+						if (IsInRaid()) then
+							-- send addon message to raid
+							NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+						else
+							-- send addon message to party
+							NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+						end
+					end)
 				end
 			end
 		end
@@ -2498,7 +2479,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 	-- zRdyCrate loaded?
 	NS.CommFlare.CF.RdyCrate = nil
-	if (AddOnsIsAddOnLoaded("zRdyCrate") == true) then
+	if ((AddOnsIsAddOnLoaded("RCT") == true) or (AddOnsIsAddOnLoaded("zRdyCrate") == true)) then
 		-- setup stuff
 		NS.CommFlare.CF.zRdyCrate = LibStub("AceAddon-3.0"):GetAddon("RdysCrateTracker")
 		if (NS.CommFlare.CF.zRdyCrate) then
@@ -2709,7 +2690,11 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	end
 
 	-- initialize
+	NS.CommFlare.CF.AllianceJoinTimes = {}
+	NS.CommFlare.CF.AllianceLeftTimes = {}
 	NS.CommFlare.CF.DisplayedLists = {}
+	NS.CommFlare.CF.HordeJoinTimes = {}
+	NS.CommFlare.CF.HordeLeftTimes = {}
 	NS.CommFlare.CF.KosAlerted = {}
 	NS.CommFlare.CF.FullRoster = {}
 	NS.CommFlare.CF.RosterList = {}
@@ -3612,6 +3597,7 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 		end
 
 		-- process all scores
+		local roster = {}
 		local kosAlerts = {}
 		local numScores = GetNumBattlefieldScores()
 		for i=1, numScores do
@@ -3624,8 +3610,9 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 				end
 
-				-- add to full roster
+				-- add rosters
 				NS.CommFlare.CF.FullRoster[player] = info
+				roster[player] = true
 
 				-- has guid?
 				if (info.guid) then
@@ -3642,6 +3629,46 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 							tinsert(kosAlerts, player)
 						end
 					end
+				end
+
+				-- alliance?
+				if (info.faction == 1) then
+					-- not added?
+					if (not NS.CommFlare.CF.AllianceJoinTimes[player]) then
+						-- save join time
+						NS.CommFlare.CF.AllianceJoinTimes[player] = time()
+					end
+				-- horde?
+				elseif (info.faction == 0) then
+					-- not added?
+					if (not NS.CommFlare.CF.HordeJoinTimes[player]) then
+						-- save join time
+						NS.CommFlare.CF.HordeJoinTimes[player] = time()
+					end
+				end
+			end
+		end
+
+		-- process all alliance join times
+		for k,v in pairs(NS.CommFlare.CF.AllianceJoinTimes) do
+			-- not already left match?
+			if (not NS.CommFlare.CF.AllianceLeftTimes[k]) then
+				-- not in current roster?
+				if (not roster[k]) then
+					-- save left time
+					NS.CommFlare.CF.AllianceLeftTimes[k] = time()
+				end
+			end
+		end
+
+		-- process all horde join times
+		for k,v in pairs(NS.CommFlare.CF.HordeJoinTimes) do
+			-- not already left match?
+			if (not NS.CommFlare.CF.HordeLeftTimes[k]) then
+				-- not in current roster?
+				if (not roster[k]) then
+					-- save left time
+					NS.CommFlare.CF.HordeLeftTimes[k] = time()
 				end
 			end
 		end
@@ -3812,6 +3839,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CHAT_MSG_WHISPER")
 	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
 	self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
+	self:RegisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
 	self:RegisterEvent("CLUB_MEMBER_ADDED")
 	self:RegisterEvent("CLUB_MEMBER_PRESENCE_UPDATED")
 	self:RegisterEvent("CLUB_MEMBER_REMOVED")
@@ -3879,6 +3907,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CHAT_MSG_WHISPER")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_SAY")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
+	self:UnregisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
 	self:UnregisterEvent("CLUB_MEMBER_ADDED")
 	self:UnregisterEvent("CLUB_MEMBER_PRESENCE_UPDATED")
 	self:UnregisterEvent("CLUB_MEMBER_REMOVED")

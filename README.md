@@ -20,7 +20,8 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v1.31.001:
+v1.31.002:
 -Feature: You can whisper people in your Community / Battle.NET !talents to get their talent build string.
 -Vehicle Alert System now shows respawn timer bars in Capping for Glaives in Isle of Conquest.
+-BUGFIX: Add Community for the database is now working again properly.
 -UPDATED: Ace3 library files.

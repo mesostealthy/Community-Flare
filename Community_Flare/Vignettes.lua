@@ -22,34 +22,43 @@ local VignetteInfoGetVignetteInfo                 = _G.C_VignetteInfo.GetVignett
 local VignetteInfoGetVignettePosition             = _G.C_VignetteInfo.GetVignettePosition
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local print                                       = _G.print
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
 local strformat                                   = _G.string.format
+local tinsert                                     = _G.table.insert
 
 -- check for invalid war crate position
 function NS:Check_For_Invalid_War_Crate_Position(x, y)
 	-- Azh-Kahet
-	if ((x == 0.62041199207306) and (y == 0.86914432048798)) then
+	local posX = tostring(x)
+	local posY = tostring(y)
+	if ((posX == "0.62041199207306") and (posY == "0.86914432048798")) then
 		-- invalid
 		return true
 	-- Hallowfall
-	elseif ((x == 0.32797354459763) and (y == 0.21520841121674)) then
+	elseif ((posX == "0.32797354459763") and (posY == "0.21520841121674")) then
 		-- invalid
 		return true
 	-- Isle of Dorn
-	elseif ((x == 0.69920414686203) and (y == 0.75819730758667)) then
+	elseif ((posX == "0.69920414686203") and (posY == "0.75819730758667")) then
+		-- invalid
+		return true
+	-- K'aresh
+	elseif ((posX == "0.69890224933624") and (posY == "0.051990866661072")) then
 		-- invalid
 		return true
 	-- Ringing Deeps
-	elseif ((x == 0.62094902992249) and (y == 0.97968757152557)) then
+	elseif ((posX == "0.62094902992249") and (posY == "0.97968757152557")) then
 		-- invalid
 		return true
 	-- Siren Isle
-	elseif ((x == 0.95618790388107) and (y == 0.53979897499084)) then
+	elseif ((posX == "0.95618790388107") and (posY == "0.53979897499084")) then
 		-- invalid
 		return true
 	-- Undermine
-	elseif ((x == 0.22974973917007) and (y == 0.50090676546097)) then
+	elseif ((posX == "0.22974973917007") and (posY == "0.50090676546097")) then
 		-- invalid
 		return true
 	end
@@ -124,7 +133,7 @@ function NS:VignetteCheckForAlerts(list)
 						-- finished
 						return
 					end
-
+	
 					-- issue raid warning
 					NS.CommFlare.CF.VignetteWarnings[guid] = time()
 					TimerAfter(timer, function()
@@ -181,8 +190,12 @@ function NS:VignetteCheckForAlerts(list)
 				else
 					-- try again
 					TimerAfter(2, function()
-						-- call recursively
-						NS:VignetteCheckForAlerts(list)
+						-- get current vignettes
+						local list = NS:Get_Current_Vignettes()
+						if (list) then
+							-- call recursively
+							NS:VignetteCheckForAlerts(list)
+						end
 					end)
 					return
 				end

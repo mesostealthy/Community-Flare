@@ -1087,8 +1087,35 @@ end
 
 -- add community
 function NS:Add_Community(clubId, info)
-	-- merge with clubs
-	MergeTable(NS.db.global.clubs[clubId], info)
+	-- invalid clubId?
+	if (not clubId) then
+		-- finished
+		return
+	end
+
+	-- invalid info?
+	if (not info) then
+		-- finished
+		return
+	end
+
+	-- valid types?
+	if ((type(clubId) == "number") and (type(info) == "table")) then
+		-- invalid clubs?
+		if (not NS.db.global.clubs) then
+			-- initialize
+			NS.db.global.clubs = {}
+		end
+
+		-- invalid club?
+		if (not NS.db.global.clubs[clubId]) then
+			-- copy table
+			NS.db.global.clubs[clubId] = CopyTable(info)
+		else
+			-- merge with clubs
+			MergeTable(NS.db.global.clubs[clubId], info)
+		end
+	end
 end
 
 -- add member
@@ -2069,6 +2096,29 @@ function NS:Find_Community_Member_By_GUID(guid)
 		if (v.guid == guid) then
 			-- success
 			return v
+		end
+	end
+
+	-- failed
+	return nil
+end
+
+-- is community member (modular)
+function NS.CommFlare:Is_Community_Member(name)
+	-- has enabled clubs?
+	local clubs = NS:Get_Enabled_Clubs()
+	if (clubs) then
+		-- get community member
+		local member = NS:Get_Community_Member(name)
+		if (member and member.clubs) then
+			-- process all
+			for k,v in pairs(member.clubs) do
+				-- has club enabled?
+				if (clubs[k]) then
+					-- yes
+					return true
+				end
+			end
 		end
 	end
 

@@ -32,6 +32,7 @@ Libs\LibCompress\lib.xml
 Libs\LibDeflate\lib.xml
 Libs\LibCandyBar-3.0\LibCandyBar-3.0.lua
 Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
+Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
 Locales\enUS.lua
 Locales\frFR.lua

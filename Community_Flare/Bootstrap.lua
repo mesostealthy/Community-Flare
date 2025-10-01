@@ -33,6 +33,7 @@ NS.Libs = {
 	LibDeflate = LibStub("LibDeflate"),
 	LibCandyBar = LibStub("LibCandyBar-3.0"),
 	LibRangeCheck = LibStub("LibRangeCheck-3.0"),
+	LibSharedMedia = LibStub("LibSharedMedia-3.0"),
 }
 
 -- initialize
@@ -126,6 +127,8 @@ NS.CommFlare.CF = {
 
 	-- tables
 	ActiveTimers = {},
+	AllianceJoinTimes = {},
+	AllianceLeftTimes = {},
 	AuraData = {},
 	CappingBars = {},
 	Clubs = {},
@@ -138,6 +141,8 @@ NS.CommFlare.CF = {
 	CommunityLeaders = {},
 	DisplayedLists = {},
 	FullRoster = {},
+	HordeJoinTimes = {},
+	HordeLeftTimes = {},
 	KosAlerted = {},
 	KosList = {},
 	LocalData = {},
@@ -169,6 +174,7 @@ NS.CommFlare.CF = {
 	VignetteList = {},
 	VignetteWarnings = {},
 	WaitForUpdate = {},
+	WarCrateLocations = {},
 	WidgetCache = {},
 	WidgetInfo = {},
 	zRdyCrate = nil,

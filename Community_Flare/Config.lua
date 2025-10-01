@@ -38,6 +38,7 @@ local GlobalDefaults = {
 		MemberNotes = {},
 		members = {},
 		SocialQueues = {},
+		WarCrateLocations = {},
 
 		-- booleans
 		alwaysRequestPartyLead = false,
@@ -91,7 +92,7 @@ local CharDefaults = {
 		forceDPS = false,
 		forceHealer = false,
 		forceTank = false,
-		maxPartySize = 5,
+		maxPartySize = 4,
 		pvpGearEquipmentSet = -1,
 		rebindTargetKeys = false,
 

@@ -377,15 +377,27 @@ L["Yes"] = "Oui"
 L["You've been removed from the party for being AFK."] = "Vous avez été retiré du groupe pour être LDC."
 
 -- Menus.lua
+L["Applicant"] = "Demandeur"
+L["Class"] = "Classe"
 L["Community Messages Sent"] = "Messages communautaires envoyés"
 L["Completed Match Count"] = "Nombre de matchs terminés"
+L["Female"] = "Féminin"
 L["First Seen"] = "Vu la première fois"
+L["Get Information?"] = "Obtenir des informations ?"
 L["Grouped Match Count"] = "Nombre de parties en groupe"
+L["iLevel"] = "iNiveau"
+L["Invalid Applicant."] = "Candidat invalide."
 L["Last Community Message Sent"] = "Dernier message communautaire envoyé"
 L["Last Grouped"] = "Dernièrement groupé"
 L["Last Seen"] = "Dernièrement groupé"
 L["Last Seen Around?"] = "Dernièrement vue aux alentours de ?"
+L["Level"] = "Niveau"
+L["Male"] = "Homme"
+L["Message"] = "Message"
+L["Player"] = "Joueuse"
+L["Race"] = "Course"
 L["Request Party Leader"] = "Demander le chef du groupe"
+L["Sex"] = "Sexe"
 
 -- Social.lua
 L["POPPED"] = "ÉCLATÉ"
@@ -417,5 +429,4 @@ L["War Supply Crate is dropping in now!"] = "La Caisse de ravitaillement de guer
 L["War Supply Crate is flying in now!"] = "La caisse de ravitaillement de guerre arrive maintenant!"
 
 -- blizzard translated strings
-L["Captain Balinda Stonehearth"] = "Capitaine Balinda Gîtepierre"	-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=frFR
 L["Captain Galvangar"] = "Capitaine Galvangar"				-- https://nether.wowhead.com/tooltip/npc/11947?dataEnv=1&locale=frFR

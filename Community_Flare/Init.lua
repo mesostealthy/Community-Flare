@@ -602,6 +602,7 @@ function NS:LoadSession()
 	-- load global stuff
 	NS.CommFlare.CF.KosList = NS.db.global.KosList or {}
 	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
+	NS.CommFlare.CF.WarCrateLocations = NS.db.global.WarCrateLocations or {}
 
 	-- load profile stuff
 	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID
@@ -649,6 +650,7 @@ function NS:SaveSession()
 	-- save global stuff
 	NS.db.global.KosList = NS.CommFlare.CF.KosList or {}
 	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
+	NS.db.global.WarCrateLocations = NS.CommFlare.CF.WarCrateLocations or {}
 
 	-- save profile stuff
 	NS.charDB.profile.SavedTime = time()

@@ -376,15 +376,27 @@ L["Yes"] = true
 L["You've been removed from the party for being AFK."] = true
 
 -- Menus.lua
+L["Applicant"] = true
+L["Class"] = true
 L["Community Messages Sent"] = true
 L["Completed Match Count"] = true
+L["Female"] = true
 L["First Seen"] = true
+L["Get Information?"] = true
 L["Grouped Match Count"] = true
+L["iLevel"] = true
+L["Invalid Applicant."] = true
 L["Last Community Message Sent"] = true
 L["Last Grouped"] = true
 L["Last Seen"] = true
 L["Last Seen Around?"] = true
+L["Level"] = true
+L["Male"] = true
+L["Message"] = true
+L["Player"] = true
+L["Race"] = true
 L["Request Party Leader"] = true
+L["Sex"] = true
 
 -- Social.lua
 L["POPPED"] = true
@@ -416,5 +428,4 @@ L["War Supply Crate is dropping in now!"] = true
 L["War Supply Crate is flying in now!"] = true
 
 -- blizzard translated strings
-L["Captain Balinda Stonehearth"] = true		-- https://nether.wowhead.com/tooltip/npc/11949?dataEnv=1&locale=enUS
 L["Captain Galvangar"] = true			-- https://nether.wowhead.com/tooltip/npc/11947?dataEnv=1&locale=enUS
