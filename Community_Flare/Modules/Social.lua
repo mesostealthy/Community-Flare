@@ -5,27 +5,28 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local GetBattlefieldStatus                      = _G.GetBattlefieldStatus
-local GetBattlefieldTimeWaited                  = _G.GetBattlefieldTimeWaited
-local GetMaxBattlefieldID                       = _G.GetMaxBattlefieldID
-local GetNumGroupMembers                        = _G.GetNumGroupMembers
-local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
-local IsInGroup                                 = _G.IsInGroup
-local IsInRaid                                  = _G.IsInRaid
-local UnitExists                                = _G.UnitExists
-local UnitGUID                                  = _G.UnitGUID
-local UnitName                                  = _G.UnitName
-local SocialQueueGetGroupInfo                   = _G.C_SocialQueue.GetGroupInfo
-local SocialQueueGetGroupMembers                = _G.C_SocialQueue.GetGroupMembers
-local SocialQueueGetGroupQueues                 = _G.C_SocialQueue.GetGroupQueues
-local TimerAfter                                = _G.C_Timer.After
-local ipairs                                    = _G.ipairs
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local select                                    = _G.select
-local time                                      = _G.time
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
+local GetBattlefieldTimeWaited                    = _G.GetBattlefieldTimeWaited
+local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
+local GetNumGroupMembers                          = _G.GetNumGroupMembers
+local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
+local IsInGroup                                   = _G.IsInGroup
+local IsInRaid                                    = _G.IsInRaid
+local UnitExists                                  = _G.UnitExists
+local UnitGUID                                    = _G.UnitGUID
+local UnitName                                    = _G.UnitName
+local SocialQueueGetGroupInfo                     = _G.C_SocialQueue.GetGroupInfo
+local SocialQueueGetGroupMembers                  = _G.C_SocialQueue.GetGroupMembers
+local SocialQueueGetGroupQueues                   = _G.C_SocialQueue.GetGroupQueues
+local TimerAfter                                  = _G.C_Timer.After
+local ipairs                                      = _G.ipairs
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local select                                      = _G.select
+local time                                        = _G.time
+local mfloor                                      = _G.math.floor
+local strformat                                   = _G.string.format
 
 -- initialize group
 function NS:Initialize_Group(groupGUID)
@@ -193,7 +194,7 @@ function NS:Update_Group(groupGUID)
 
 				-- get time in queue
 				local msecs = GetBattlefieldTimeWaited(i)
-				seconds = math.floor(msecs / 1000)
+				seconds = mfloor(msecs / 1000)
 
 				-- increase
 				numTrackedQueues = numTrackedQueues + 1

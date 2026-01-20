@@ -5,20 +5,25 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L) then return end
 
 -- localize stuff
-local _G                                        = _G
-local GetAddOnMetadata                          = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
-local GetInviteConfirmationInfo                 = _G.GetInviteConfirmationInfo
-local GetNextPendingInviteConfirmation          = _G.GetNextPendingInviteConfirmation
-local RespondToInviteConfirmation               = _G.RespondToInviteConfirmation
-local Settings_OpenToCategory                   = _G.Settings.OpenToCategory
-local SocialQueueUtil_GetRelationshipInfo       = _G.SocialQueueUtil_GetRelationshipInfo
-local StaticPopup_FindVisible                   = _G.StaticPopup_FindVisible
-local StaticPopup_Hide                          = _G.StaticPopup_Hide
-local BattleNetGetAccountInfoByGUID             = _G.C_BattleNet.GetAccountInfoByGUID
-local PartyInfoGetInviteReferralInfo            = _G.C_PartyInfo.GetInviteReferralInfo
-local tonumber                                  = _G.tonumber
-local type                                      = _G.type
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local AddMessageEventFilter                       = _G.ChatFrameUtil and _G.ChatFrameUtil.AddMessageEventFilter or _G.ChatFrame_AddMessageEventFilter
+local GetAddOnMetadata                            = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+local GetBuildInfo                                = _G.GetBuildInfo
+local GetInviteConfirmationInfo                   = _G.GetInviteConfirmationInfo
+local GetNextPendingInviteConfirmation            = _G.GetNextPendingInviteConfirmation
+local RespondToInviteConfirmation                 = _G.RespondToInviteConfirmation
+local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
+local SocialQueueUtil_GetRelationshipInfo         = _G.SocialQueueUtil_GetRelationshipInfo
+local StaticPopup_FindVisible                     = _G.StaticPopup_FindVisible
+local StaticPopup_Hide                            = _G.StaticPopup_Hide
+local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
+local PartyInfoGetInviteReferralInfo              = _G.C_PartyInfo.GetInviteReferralInfo
+local issecretvalue                               = _G.issecretvalue
+local select                                      = _G.select
+local tonumber                                    = _G.tonumber
+local type                                        = _G.type
+local strformat                                   = _G.string.format
+local strmatch                                    = _G.string.match
 
 -- initialize libraries
 NS.Libs = {
@@ -32,7 +37,6 @@ NS.Libs = {
 	LibCompress = LibStub("LibCompress"),
 	LibDeflate = LibStub("LibDeflate"),
 	LibCandyBar = LibStub("LibCandyBar-3.0"),
-	LibRangeCheck = LibStub("LibRangeCheck-3.0"),
 	LibSharedMedia = LibStub("LibSharedMedia-3.0"),
 }
 
@@ -40,15 +44,6 @@ NS.Libs = {
 NS.CommFlare = NS.Libs.AceAddon:NewAddon(ADDON_NAME, "AceComm-3.0", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 if (not NS.CommFlare) then return end
 NS.CommFlare.CF = {
-	-- strings
-	MapName = L["N/A"],
-	MatchEndDate = "",
-	MatchStartDate = "",
-	PlayerFaction = "",
-	PlayerServerName = "",
-	RaidLeader = L["N/A"],
-	TurnSpeed = "",
-
 	-- booleans
 	AutoInvite = false,
 	AutoPromote = false,
@@ -61,10 +56,10 @@ NS.CommFlare.CF = {
 	InitialLogin = false,
 	Invisible = false,
 	HasAura = false,
-	MatchStartLogged = false,
 	NeedAddonData = false,
 	NeedTransmissionData = false,
 	NewZoneWarning = false,
+	PlayerListUpdated = false,
 	PlayerMercenary = false,
 	Popped = false,
 	PvpLoggingCombat = false,
@@ -74,6 +69,19 @@ NS.CommFlare.CF = {
 	RunOnce = false,
 	UpgradeDisplayed = false,
 	VersionSent = false,
+
+	-- misc
+	Category = nil,
+	Field = nil,
+	Header = nil,
+	Leader = nil,
+	LeaderGUID = nil,
+	Options = nil,
+	PartyGUID = nil,
+	RdyCrate = nil,
+	TargetNearestEnemy = nil,
+	TargetPreviousEnemy = nil,
+	Winner = nil,
 
 	-- numbers
 	AncientInferno = 0,
@@ -112,18 +120,15 @@ NS.CommFlare.CF = {
 	StreamsRetryCount = 0,
 	SavedTime = 0,
 
-	-- misc
-	Category = nil,
-	Field = nil,
-	Header = nil,
-	Leader = nil,
-	LeaderGUID = nil,
-	Options = nil,
-	PartyGUID = nil,
-	RdyCrate = nil,
-	TargetNearestEnemy = nil,
-	TargetPreviousEnemy = nil,
-	Winner = nil,
+	-- strings
+	MapName = L["N/A"],
+	MatchEndDate = "",
+	MatchStartDate = "",
+	PlayerFaction = "",
+	PlayerFullName = "",
+	PlayerServerName = "",
+	RaidLeader = L["N/A"],
+	TurnSpeed = "",
 
 	-- tables
 	ActiveTimers = {},
@@ -144,6 +149,7 @@ NS.CommFlare.CF = {
 	LocalData = {},
 	LocalQueues = {},
 	LogListNamesList = {},
+	LogListPlayers = {},
 	MapInfo = {},
 	MemberInfo = {},
 	MenuData = {},
@@ -175,12 +181,12 @@ NS.CommFlare.CF = {
 	WidgetInfo = {},
 	zRdyCrate = nil,
 
-	-- misc stuff
+	-- misc tables
 	Alliance = { Count = 0, Healers = 0, Tanks = 0 },
 	Horde = { Count = 0, Healers = 0, Tanks = 0 },
 	Timer = { Minutes = 0, MilliSeconds = 0, Seconds = 0 },
 
-	-- battleground specific data
+	-- battlegrounds
 	AB = {},
 	ASH = {},
 	AV = {},
@@ -244,19 +250,78 @@ local function hook_HandlePendingInviteConfirmation(invite)
 	end
 end
 
+-- chat message filter
+local function CommunityFlare_ChatMsgFilter(self, ...)
+	local event, text, sender, language, _, _, _, _, _, _, _, lineID, guid, bnSenderID = ...
+
+	-- in pvp instance?
+	local inInstance, instanceType = IsInInstance()
+	if ((inInstance == true) and (instanceType == "pvp")) then
+		-- get name / server
+		local name, realm = select(6, GetPlayerInfoByGUID(guid))
+		if (name) then
+			-- no realm?
+			if (not realm or (realm == "")) then
+				-- use player server
+				realm = NS.CommFlare.CF.PlayerServerName
+			end
+
+			-- build proper name
+			local player = name
+			if (not strmatch(player, "-")) then
+				-- add realm name
+				player = strformat("%s-%s", player, realm)
+			end
+
+			-- not player?
+			if (NS.CommFlare.CF.PlayerFullName ~= player) then
+				local info = NS.CommFlare.CF.FullRoster[player]
+				if (info) then
+					-- not same faction as player?
+					if (NS.CommFlare.CF.PlayerInfo.faction ~= info.faction) then
+						-- block enemy team emotes
+						print(event, sender, text, language, guid, bnSenderID)
+						return true
+					end
+				end
+
+				-- assume blocked
+				return true
+			end
+		end
+	end
+end
+
 -- on initialize
 function NS.CommFlare:OnInitialize()
-	-- setup encoder for LibCompress
+	-- get interface version
+	NS.CommFlare.isMidnight = false
+	local version = select(4, GetBuildInfo())
+	if (version >= 120000) then
+		-- has issecretvalue?
+		if (issecretvalue) then
+			-- midnight
+			NS.CommFlare.isMidnight = true
+		end
+	end
+
+	-- load libraries
+	NS.Libs.LibRangeCheck = LibStub("LibRangeCheck-3.0")
 	NS.Libs.LibCompress.Encoder = NS.Libs.LibCompress:GetAddonEncodeTable()
 
 	-- create config options
 	NS:CreateConfigOptions()
 
-	-- build classes
+	-- build stuff
 	NS:Build_Classes()
+	NS:Build_Spells()
 
 	-- setup hook
 	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
+
+	-- add chat message event fliters
+	AddMessageEventFilter("CHAT_MSG_EMOTE", CommunityFlare_ChatMsgFilter)
+	AddMessageEventFilter("CHAT_MSG_TEXT_EMOTE", CommunityFlare_ChatMsgFilter)
 end
 
 -- addon compartment on click
@@ -266,8 +331,7 @@ function CommunityFlare_AddonCompartmentOnClick(addonName, buttonName)
 		-- hide
 		SettingsPanel:Hide()
 	else
-		-- open options to Community Flare
-		Settings_OpenToCategory(NS.CommFlare.Title)
-		Settings_OpenToCategory(NS.CommFlare.Title) -- open options again (wow bug workaround)
+		-- open settings
+		Settings_OpenToCategory(NS.optionsID)
 	end
 end

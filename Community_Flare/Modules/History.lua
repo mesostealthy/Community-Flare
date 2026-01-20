@@ -5,16 +5,16 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local date                                      = _G.date
-local next                                      = _G.next
-local time                                      = _G.time
-local type                                      = _G.type
-local tonumber                                  = _G.tonumber
-local strformat                                 = _G.string.format
-local strgsub                                   = _G.string.gsub
-local strmatch                                  = _G.string.match
-local tinsert                                   = _G.table.insert
+local _G                                          = _G
+local date                                        = _G.date
+local next                                        = _G.next
+local time                                        = _G.time
+local type                                        = _G.type
+local tonumber                                    = _G.tonumber
+local strformat                                   = _G.string.format
+local strgsub                                     = _G.string.gsub
+local strmatch                                    = _G.string.match
+local tinsert                                     = _G.table.insert
 
 -- clean up history
 function NS:Cleanup_History()

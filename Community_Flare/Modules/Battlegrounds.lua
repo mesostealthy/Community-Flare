@@ -5,85 +5,136 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local BNGetFriendIndex                          = _G.BNGetFriendIndex
-local BNInviteFriend                            = _G.BNInviteFriend
-local BNRequestInviteFriend                     = _G.BNRequestInviteFriend
-local GetBattlefieldInstanceRunTime             = _G.GetBattlefieldInstanceRunTime
-local GetBattlefieldEstimatedWaitTime           = _G.GetBattlefieldEstimatedWaitTime
-local GetBattlefieldPortExpiration              = _G.GetBattlefieldPortExpiration
-local GetBattlefieldStatus                      = _G.GetBattlefieldStatus
-local GetBattlefieldTimeWaited                  = _G.GetBattlefieldTimeWaited
-local GetDisplayedInviteType                    = _G.GetDisplayedInviteType
-local GetLFGInfoServer                          = _G.GetLFGInfoServer
-local GetLFGQueueStats                          = _G.GetLFGQueueStats
-local GetLFGRoleUpdateBattlegroundInfo          = _G.GetLFGRoleUpdateBattlegroundInfo
-local GetMaxBattlefieldID                       = _G.GetMaxBattlefieldID
-local GetNumBattlefieldScores                   = _G.GetNumBattlefieldScores
-local GetNumGroupMembers                        = _G.GetNumGroupMembers
-local GetPVPRoles                               = _G.GetPVPRoles
-local GetRaidRosterInfo                         = _G.GetRaidRosterInfo
-local InCombatLockdown                          = _G.InCombatLockdown
-local IsAddOnLoaded                             = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
-local IsInGroup                                 = _G.IsInGroup
-local IsInRaid                                  = _G.IsInRaid
-local PromoteToAssistant                        = _G.PromoteToAssistant
-local PromoteToLeader                           = _G.PromoteToLeader
-local PVPReadyDialog                            = _G.PVPReadyDialog
-local RaidWarningFrame_OnEvent                  = _G.RaidWarningFrame_OnEvent
-local UnitFactionGroup                          = _G.UnitFactionGroup
-local UnitGUID                                  = _G.UnitGUID
-local UnitInRaid                                = _G.UnitInRaid
-local UnitLevel                                 = _G.UnitLevel
-local UnitName                                  = _G.UnitName
-local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local BattleNetGetFriendGameAccountInfo         = _G.C_BattleNet.GetFriendGameAccountInfo
-local BattleNetGetFriendNumGameAccounts         = _G.C_BattleNet.GetFriendNumGameAccounts
-local CurrencyInfoGetCurrencyInfo               = _G.C_CurrencyInfo.GetCurrencyInfo
-local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
-local EquipmentSetGetEquipmentSetInfo           = _G.C_EquipmentSet.GetEquipmentSetInfo
-local EquipmentSetUseEquipmentSet               = _G.C_EquipmentSet.UseEquipmentSet
-local ItemGetItemCount                          = _G.C_Item.GetItemCount
-local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                             = _G.C_Map.GetMapInfo
-local PartyInfoIsPartyFull                      = _G.C_PartyInfo.IsPartyFull
-local PartyInfoInviteUnit                       = _G.C_PartyInfo.InviteUnit
-local PvPGetActiveBrawlInfo                     = _G.C_PvP.GetActiveBrawlInfo
-local PvPGetActiveMatchDuration                 = _G.C_PvP.GetActiveMatchDuration
-local PvPGetAvailableBrawlInfo                  = _G.C_PvP.GetAvailableBrawlInfo
-local PvPGetScoreInfo                           = _G.C_PvP.GetScoreInfo
-local PvPGetScoreInfoByPlayerGuid               = _G.C_PvP.GetScoreInfoByPlayerGuid
-local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
-local TimerAfter                                = _G.C_Timer.After
-local GetDoubleStatusBarWidgetVisualizationInfo = _G.C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
-local GetIconAndTextWidgetVisualizationInfo     = _G.C_UIWidgetManager.GetIconAndTextWidgetVisualizationInfo
-local date                                      = _G.date
-local ipairs                                    = _G.ipairs
-local next                                      = _G.next
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local type                                      = _G.type
-local bitbor                                    = _G.bit.bor
-local mfloor                                    = _G.math.floor
-local strformat                                 = _G.string.format
-local strmatch                                  = _G.string.match
-local strsplit                                  = _G.string.split
-local tinsert                                   = _G.table.insert
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local BNGetFriendIndex                            = _G.BNGetFriendIndex
+local BNInviteFriend                              = _G.BNInviteFriend
+local BNRequestInviteFriend                       = _G.BNRequestInviteFriend
+local GetBattlefieldInstanceRunTime               = _G.GetBattlefieldInstanceRunTime
+local GetBattlefieldEstimatedWaitTime             = _G.GetBattlefieldEstimatedWaitTime
+local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
+local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
+local GetBattlefieldTimeWaited                    = _G.GetBattlefieldTimeWaited
+local GetDisplayedInviteType                      = _G.GetDisplayedInviteType
+local GetLFGInfoServer                            = _G.GetLFGInfoServer
+local GetLFGQueueStats                            = _G.GetLFGQueueStats
+local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
+local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
+local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
+local GetNumGroupMembers                          = _G.GetNumGroupMembers
+local GetPVPRoles                                 = _G.GetPVPRoles
+local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
+local InCombatLockdown                            = _G.InCombatLockdown
+local IsAddOnLoaded                               = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
+local IsInGroup                                   = _G.IsInGroup
+local IsInRaid                                    = _G.IsInRaid
+local PromoteToAssistant                          = _G.PromoteToAssistant
+local PromoteToLeader                             = _G.PromoteToLeader
+local PVPReadyDialog                              = _G.PVPReadyDialog
+local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local UnitFactionGroup                            = _G.UnitFactionGroup
+local UnitGUID                                    = _G.UnitGUID
+local UnitInRaid                                  = _G.UnitInRaid
+local UnitLevel                                   = _G.UnitLevel
+local UnitName                                    = _G.UnitName
+local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
+local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
+local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
+local CurrencyInfoGetCurrencyInfo                 = _G.C_CurrencyInfo.GetCurrencyInfo
+local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
+local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
+local EquipmentSetUseEquipmentSet                 = _G.C_EquipmentSet.UseEquipmentSet
+local ItemGetItemCount                            = _G.C_Item.GetItemCount
+local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
+local MapGetMapInfo                               = _G.C_Map.GetMapInfo
+local PartyInfoIsPartyFull                        = _G.C_PartyInfo.IsPartyFull
+local PartyInfoInviteUnit                         = _G.C_PartyInfo.InviteUnit
+local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
+local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
+local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
+local PvPGetScoreInfo                             = _G.C_PvP.GetScoreInfo
+local PvPGetScoreInfoByPlayerGuid                 = _G.C_PvP.GetScoreInfoByPlayerGuid
+local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
+local TimerAfter                                  = _G.C_Timer.After
+local GetDoubleStatusBarWidgetVisualizationInfo   = _G.C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
+local GetIconAndTextWidgetVisualizationInfo       = _G.C_UIWidgetManager.GetIconAndTextWidgetVisualizationInfo
+local date                                        = _G.date
+local ipairs                                      = _G.ipairs
+local next                                        = _G.next
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local type                                        = _G.type
+local bitbor                                      = _G.bit.bor
+local mfloor                                      = _G.math.floor
+local strformat                                   = _G.string.format
+local strmatch                                    = _G.string.match
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- is epic battleground?
 function NS:IsEpicBG(name)
 	-- check from name
 	if (NS.CommFlare.EpicBattlegrounds[name] and (NS.CommFlare.EpicBattlegrounds[name].id > 0)) then
 		-- yup
-		return true
+		return true, nil
+	end
+
+	-- process all
+	for k,v in pairs(NS.CommFlare.EpicBattlegrounds) do
+		-- matches?
+		if (v.name and (v.name == name) and (v.id > 0)) then
+			-- yup
+			return true, k
+		end
 	end
 
 	-- nope
-	return false
+	return false, nil
+end
+
+-- is random battleground?
+function NS:IsRandomBG(name)
+	-- check from name
+	if (NS.CommFlare.RandomBattlegrounds[name] and (NS.CommFlare.RandomBattlegrounds[name].id > 0)) then
+		-- yup
+		return true, nil
+	end
+
+	-- process all
+	for k,v in pairs(NS.CommFlare.RandomBattlegrounds) do
+		-- matches?
+		if (v.name and (v.name == name) and (v.id > 0)) then
+			-- yup
+			return true, k
+		end
+	end
+
+	-- nope
+	return false, nil
+end
+
+-- is brawl?
+function NS:IsBrawl(name)
+	-- check from name
+	if (NS.CommFlare.Brawls[name] and (NS.CommFlare.Brawls[name].id > 0)) then
+		-- yup
+		return true, nil
+	end
+
+	-- process all
+	for k,v in pairs(NS.CommFlare.Brawls) do
+		-- matches?
+		if (v.name and (v.name == name) and (v.id > 0)) then
+			-- yup
+			return true, k
+		end
+	end
+
+	-- nope
+	return false, nil
 end
 
 -- is in epic battleground?
@@ -128,48 +179,94 @@ function NS:IsInEpicBG()
 	return false
 end
 
--- is random battleground?
-function NS:IsRandomBG(name)
-	-- check from name
-	if (NS.CommFlare.RandomBattlegrounds[name] and (NS.CommFlare.RandomBattlegrounds[name].id > 0)) then
-		-- yup
-		return true
-	end
-
-	-- nope
-	return false
-end
-
--- is brawl?
-function NS:IsBrawl(name)
-	-- check from name
-	if (NS.CommFlare.Brawls[name] and (NS.CommFlare.Brawls[name].id > 0)) then
-		-- yup
-		return true
-	end
-
-	-- nope
-	return false
-end
-
 -- get battleground id
 function NS:GetBGID(name)
 	-- epic battleground?
-	if (NS:IsEpicBG(name) == true) then
-		-- return id
-		return NS.CommFlare.EpicBattlegrounds[name].id
-	-- random battleground?
-	elseif (NS:IsRandomBG(name) == true) then
-		-- return id
-		return NS.CommFlare.RandomBattlegrounds[name].id
-	-- brawl?
-	elseif (NS:IsBrawl(name) == true) then
-		-- return id
-		return NS.CommFlare.Brawls[name].id
-	else
-		-- invalid
-		return nil
+	local isEpic, epicID = NS:IsEpicBG(name)
+	if (isEpic == true) then
+		-- has epicID?
+		if (epicID) then
+			-- return id
+			return NS.CommFlare.RandomBattlegrounds[epicID].id
+		else
+			-- return id
+			return NS.CommFlare.RandomBattlegrounds[name].id
+		end
 	end
+
+	-- random battleground?
+	local isRandom, randomID = NS:IsRandomBG(name)
+	if (isRandom == true) then
+		-- has randomID?
+		if (randomID) then
+			-- return id
+			return NS.CommFlare.RandomBattlegrounds[randomID].id
+		else
+			-- return id
+			return NS.CommFlare.RandomBattlegrounds[name].id
+		end
+	end
+
+	-- brawl?
+	local isBrawl, brawlID = NS:IsBrawl(name)
+	if (isBrawl == true) then
+		-- has brawlID?
+		if (brawlID) then
+			-- return id
+			return NS.CommFlare.Brawls[brawlID].id
+		else
+			-- return id
+			return NS.CommFlare.Brawls[name].id
+		end
+	end
+
+	-- invalid
+	return nil
+end
+
+-- get battleground prefix
+function NS:GetBGPrefix(name)
+	-- epic battleground?
+	local isEpic, epicID = NS:IsEpicBG(name)
+	if (isEpic == true) then
+		-- has epicID?
+		if (epicID) then
+			-- return prefix
+			return NS.CommFlare.RandomBattlegrounds[epicID].prefix
+		else
+			-- return prefix
+			return NS.CommFlare.RandomBattlegrounds[name].prefix
+		end
+	end
+
+	-- random battleground?
+	local isRandom, randomID = NS:IsRandomBG(name)
+	if (isRandom == true) then
+		-- has randomID?
+		if (randomID) then
+			-- return prefix
+			return NS.CommFlare.RandomBattlegrounds[randomID].prefix
+		else
+			-- return prefix
+			return NS.CommFlare.RandomBattlegrounds[name].prefix
+		end
+	end
+
+	-- brawl?
+	local isBrawl, brawlID = NS:IsBrawl(name)
+	if (isBrawl == true) then
+		-- has brawlID?
+		if (brawlID) then
+			-- return prefix
+			return NS.CommFlare.Brawls[brawlID].prefix
+		else
+			-- return prefix
+			return NS.CommFlare.Brawls[name].prefix
+		end
+	end
+
+	-- invalid
+	return nil
 end
 
 -- is tracked pvp?
@@ -187,26 +284,6 @@ function NS:IsTrackedPVP(name)
 
 	-- nope
 	return false, nil, nil, nil
-end
-
--- get battleground prefix
-function NS:GetBGPrefix(name)
-	-- epic battleground?
-	if (NS:IsEpicBG(name) == true) then
-		-- return prefix
-		return NS.CommFlare.EpicBattlegrounds[name].prefix
-	-- random battleground?
-	elseif (NS:IsRandomBG(name) == true) then
-		-- return prefix
-		return NS.CommFlare.RandomBattlegrounds[name].prefix
-	-- brawl?
-	elseif (NS:IsBrawl(name) == true) then
-		-- return prefix
-		return NS.CommFlare.Brawls[name].prefix
-	end
-
-	-- invalid
-	return nil
 end
 
 -- is mercenary queued?
@@ -275,6 +352,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.ASH = {}
 	NS.CommFlare.CF.AV = {}
 	NS.CommFlare.CF.BFG = {}
+	NS.CommFlare.CF.DHR = {}
 	NS.CommFlare.CF.DWG = {}
 	NS.CommFlare.CF.EOTS = {}
 	NS.CommFlare.CF.IOC = {}
@@ -285,10 +363,32 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.TWP = {}
 	NS.CommFlare.CF.WG = {}
 	NS.CommFlare.CF.WSG = {}
+	NS.CommFlare.CF.DisplayedLists = {}
+	NS.CommFlare.CF.KosAlerted = {}
+	NS.CommFlare.CF.FullRoster = {}
+	NS.CommFlare.CF.LogListPlayers = {}
 	NS.CommFlare.CF.MapInfo = {}
+	NS.CommFlare.CF.RosterList = {}
+	NS.CommFlare.CF.VehicleDeaths = {}
+	NS.CommFlare.CF.LastBossRW = 0
+	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchStartTime = 0
+	NS.CommFlare.CF.MatchStatus = 1
+	NS.CommFlare.CF.NumAllyGlaives = 0
+	NS.CommFlare.CF.NumHordeGlaives = 0
+	NS.CommFlare.CF.PassLeadWarning = 0
+	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.Reloaded = false
+
+	-- get player info
+	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
+	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+
+	-- always reset ashran stuff
+	NS.CommFlare.CF.AncientInferno = 0
+	NS.CommFlare.CF.ASH.Jeron = L["Up"]
+	NS.CommFlare.CF.ASH.Rylai = L["Up"]
 
 	-- get MapID
 	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
@@ -1122,6 +1222,44 @@ function NS:Print_Mercenary_Stuff(isPrint, timer)
 	return timer
 end
 
+-- promote players
+function NS:Promote_Battleground_Player(info, player)
+	-- player has raid leader?
+	if (NS.CommFlare.CF.PlayerRank == 2) then
+		-- only allow leaders?
+		NS.CommFlare.CF.AutoPromote = false
+		if (NS.charDB.profile.communityAutoAssist == 2) then
+			-- player is community leader?
+			if (NS:Is_Community_Leader(player) == true) then
+				-- auto promote
+				NS.CommFlare.CF.AutoPromote = true
+			end
+		-- allow all members?
+		elseif (NS.charDB.profile.communityAutoAssist == 3) then
+			-- auto promote
+			NS.CommFlare.CF.AutoPromote = true
+		end
+
+		-- auto promote?
+		if (NS.CommFlare.CF.AutoPromote == true) then
+			-- found raid unit / rank?
+			if (NS.CommFlare.CF.TeamUnits[player] and NS.CommFlare.CF.TeamUnits[player].unit and NS.CommFlare.CF.TeamUnits[player].rank) then
+				-- already assist?
+				if (NS.CommFlare.CF.TeamUnits[player].rank >= 1) then
+					-- disable promote
+					NS.CommFlare.CF.AutoPromote = false
+				end
+			end
+		end
+
+		-- auto promote?
+		if (NS.CommFlare.CF.AutoPromote == true) then
+			-- promote
+			PromoteToAssistant(info.name)
+		end
+	end
+end
+
 -- count stuff in battlegrounds and promote to assists
 function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	-- initialize community stuff
@@ -1283,104 +1421,138 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			NS:Process_MemberGUID(info.guid, player)
 			local member = NS:Get_Community_Member(player)
 			if (member and member.clubs) then
-				-- mercenary?
-				if (mercenary == true) then
-					-- process all clubs
-					for k,v in pairs(member.clubs) do
-						-- mercenary counts setup?
-						if (not NS.CommFlare.CF.MercCounts[k]) then
-							-- initialize
-							NS.CommFlare.CF.MercCounts[k] = 0
+				-- same faction as player?
+				local community = false
+				if (NS.CommFlare.CF.PlayerInfo == info.faction) then
+					-- mercenary?
+					if (mercenary == true) then
+						-- process all clubs
+						for k,v in pairs(member.clubs) do
+							-- mercenary counts setup?
+							if (not NS.CommFlare.CF.MercCounts[k]) then
+								-- initialize
+								NS.CommFlare.CF.MercCounts[k] = 0
+							end
+
+							-- increase
+							NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+
+							-- mercenary names setup?
+							if (not NS.CommFlare.CF.MercNames[k]) then
+								-- initialize
+								NS.CommFlare.CF.MercNames[k] = {}
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.MercNames[k], player)
 						end
 
-						-- increase
-						NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+						-- update stuff
+						NS.CommFlare.CF.PlayerMercenary = true
+						tinsert(NS.CommFlare.CF.MercNamesList, player)
+						NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
+					else
+						-- process all clubs
+						for k,v in pairs(member.clubs) do
+							-- community counts setup?
+							if (not NS.CommFlare.CF.CommCounts[k]) then
+								-- initialize
+								NS.CommFlare.CF.CommCounts[k] = 0
+							end
 
-						-- mercenary names setup?
-						if (not NS.CommFlare.CF.MercNames[k]) then
-							-- initialize
-							NS.CommFlare.CF.MercNames[k] = {}
+							-- increase
+							NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+
+							-- community names setup?
+							if (not NS.CommFlare.CF.CommNames[k]) then
+								-- initialize
+								NS.CommFlare.CF.CommNames[k] = {}
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.CommNames[k], player)
 						end
 
-						-- insert
-						tinsert(NS.CommFlare.CF.MercNames[k], player)
+						-- update stuff
+						NS.CommFlare.CF.PlayerMercenary = false
+						tinsert(NS.CommFlare.CF.CommNamesList, player)
+						NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+
+						-- should promote?
+						if (bPromote == true) then
+							-- promote battleground player
+							NS:Promote_Battleground_Player(info, player)
+						end
 					end
-
-					-- update stuff
-					NS.CommFlare.CF.PlayerMercenary = true
-					tinsert(NS.CommFlare.CF.MercNamesList, player)
-					NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
 				else
-					-- process all clubs
-					for k,v in pairs(member.clubs) do
-						-- community counts setup?
-						if (not NS.CommFlare.CF.CommCounts[k]) then
-							-- initialize
-							NS.CommFlare.CF.CommCounts[k] = 0
+					-- mercenary?
+					if (mercenary == true) then
+						-- process all clubs
+						for k,v in pairs(member.clubs) do
+							-- mercenary counts setup?
+							if (not NS.CommFlare.CF.MercCounts[k]) then
+								-- initialize
+								NS.CommFlare.CF.MercCounts[k] = 0
+							end
+
+							-- increase
+							NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+
+							-- mercenary names setup?
+							if (not NS.CommFlare.CF.MercNames[k]) then
+								-- initialize
+								NS.CommFlare.CF.MercNames[k] = {}
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.MercNames[k], player)
 						end
 
-						-- increase
-						NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+						-- update stuff
+						NS.CommFlare.CF.PlayerMercenary = true
+						tinsert(NS.CommFlare.CF.MercNamesList, player)
+						NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
+					else
+						-- process all clubs
+						for k,v in pairs(member.clubs) do
+							-- community counts setup?
+							if (not NS.CommFlare.CF.CommCounts[k]) then
+								-- initialize
+								NS.CommFlare.CF.CommCounts[k] = 0
+							end
 
-						-- community names setup?
-						if (not NS.CommFlare.CF.CommNames[k]) then
-							-- initialize
-							NS.CommFlare.CF.CommNames[k] = {}
+							-- increase
+							NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+
+							-- community names setup?
+							if (not NS.CommFlare.CF.CommNames[k]) then
+								-- initialize
+								NS.CommFlare.CF.CommNames[k] = {}
+							end
+
+							-- insert
+							tinsert(NS.CommFlare.CF.CommNames[k], player)
 						end
 
-						-- insert
-						tinsert(NS.CommFlare.CF.CommNames[k], player)
+						-- update stuff
+						NS.CommFlare.CF.PlayerMercenary = false
+						tinsert(NS.CommFlare.CF.CommNamesList, player)
+						NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+
+						-- should promote?
+						if (bPromote == true) then
+							-- promote battleground player
+							NS:Promote_Battleground_Player(info, player)
+						end
 					end
-
-					-- update stuff
-					NS.CommFlare.CF.PlayerMercenary = false
-					tinsert(NS.CommFlare.CF.CommNamesList, player)
-					NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 				end
 
 				-- should log list / i.e. has shared community?
 				if (NS:Get_LogList_Status(player) == true) then
 					-- update
+					NS.CommFlare.CF.LogListPlayers[player] = true
 					tinsert(NS.CommFlare.CF.LogListNamesList, player)
 					NS.CommFlare.CF.LogListCount = NS.CommFlare.CF.LogListCount + 1
-
-					-- should promote?
-					if (bPromote == true) then
-						-- player has raid leader?
-						if (NS.CommFlare.CF.PlayerRank == 2) then
-							-- only allow leaders?
-							NS.CommFlare.CF.AutoPromote = false
-							if (NS.charDB.profile.communityAutoAssist == 2) then
-								-- player is community leader?
-								if (NS:Is_Community_Leader(player) == true) then
-									-- auto promote
-									NS.CommFlare.CF.AutoPromote = true
-								end
-							-- allow all members?
-							elseif (NS.charDB.profile.communityAutoAssist == 3) then
-								-- auto promote
-								NS.CommFlare.CF.AutoPromote = true
-							end
-
-							-- auto promote?
-							if (NS.CommFlare.CF.AutoPromote == true) then
-								-- found raid unit / rank?
-								if (NS.CommFlare.CF.TeamUnits[player] and NS.CommFlare.CF.TeamUnits[player].unit and NS.CommFlare.CF.TeamUnits[player].rank) then
-									-- already assist?
-									if (NS.CommFlare.CF.TeamUnits[player].rank >= 1) then
-										-- disable promote
-										NS.CommFlare.CF.AutoPromote = false
-									end
-								end
-							end
-
-							-- auto promote?
-							if (NS.CommFlare.CF.AutoPromote == true) then
-								-- promote
-								PromoteToAssistant(info.name)
-							end
-						end
-					end
 				end
 			end
 		end
@@ -1452,8 +1624,8 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	end
 end
 
--- log match list
-function NS:Log_Match_List(list)
+-- purge match list
+function NS:Purge_Match_List()
 	-- setup days purged
 	local days_purged = 7
 	if (NS.db.global.purgeLogTime == 2) then
@@ -1480,72 +1652,73 @@ function NS:Log_Match_List(list)
 			end
 		end
 	end
-
-	-- get MapID
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
-	if (NS.CommFlare.CF.MapID) then
-		-- get map info
-		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-	end
-
-	-- build entry
-	local player = NS:GetPlayerName("full")
-	local entry = {
-		["timestamp"] = timestamp,
-		["message"] = strformat(L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"], NS.CommFlare.CF.MatchStartDate, NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.RaidLeader, player, list),
-	}
-
-	-- insert
-	tinsert(NS.db.global.matchLogList, entry)
 end
 
--- match started, log roster
-function NS:Match_Started_Log_Roster()
-	-- has log list?
-	if (NS.CommFlare.CF.LogListCount > 0) then
-		-- already logged?
-		if (NS.CommFlare.CF.MatchStartLogged == true) then
-			-- valid start / end times?
-			if ((NS.CommFlare.CF.MatchEndTime > 0) and (NS.CommFlare.CF.MatchEndTime > NS.CommFlare.CF.MatchStartTime))then
-				-- calculate time
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.MatchEndTime - NS.CommFlare.CF.MatchStartTime
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
-				-- valid list?
-				local index = #NS.db.global.matchLogList
-				if (index and (index > 0)) then
-					-- save duration
-					NS.db.global.matchLogList[index].duration = strformat("%d minutes, %d seconds", NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
-				end
+-- log match roster
+function NS:Log_Match_Roster()
+	-- has log list players?
+	local count = 0
+	local list = nil
+	if (NS.CommFlare.CF.LogListPlayers and next(NS.CommFlare.CF.LogListPlayers)) then
+		-- build list
+		for k,v in pairs(NS.CommFlare.CF.LogListPlayers) do
+			-- empty?
+			if (list == nil) then
+				-- start
+				list = k
+			else
+				-- append
+				list = list .. ", " .. k
 			end
 
-			-- finished
-			NS.CommFlare.CF.MatchStartLogged = false
-			return
+			-- increase
+			count = count + 1
 		end
-
+	-- has log list names list?
+	elseif (NS.CommFlare.CF.LogListNamesList and next(NS.CommFlare.CF.LogListNamesList)) then
 		-- build log list
-		local list = nil
 		for k,v in pairs(NS.CommFlare.CF.LogListNamesList) do
-			-- list still empty? start it!
+			-- empty?
 			if (list == nil) then
 				list = v
 			else
 				list = list .. ", " .. v
 			end
+
+			-- increase
+			count = count + 1
 		end
+	end
 
-		-- found log list?
-		if (list ~= nil) then
-			-- has proper date?
-			if (NS.CommFlare.CF.MatchStartDate and (NS.CommFlare.CF.MatchStartDate ~= "")) then
-				-- log match list
-				NS:Log_Match_List(list)
-
-				-- logged
-				NS.CommFlare.CF.MatchStartLogged = true
+	-- found entries?
+	if (count > 0) then
+		-- valid start / end times?
+		if ((NS.CommFlare.CF.MatchStartTime > 0) and (NS.CommFlare.CF.MatchEndTime > 0) and (NS.CommFlare.CF.MatchEndTime > NS.CommFlare.CF.MatchStartTime)) then
+			-- get MapID
+			NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+			if (NS.CommFlare.CF.MapID) then
+				-- get map info
+				NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
 			end
+
+			-- calculate time
+			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.MatchEndTime - NS.CommFlare.CF.MatchStartTime
+			NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
+			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
+
+			-- build entry
+			local entry = {
+				["timestamp"] = time(),
+				["duration"] = strformat("%d minutes, %d seconds", tonumber(NS.CommFlare.CF.Timer.Minutes), tonumber(NS.CommFlare.CF.Timer.Seconds)),
+				["message"] = strformat(L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"],
+					tostring(NS.CommFlare.CF.MatchStartDate), tostring(NS.CommFlare.CF.MapInfo.name),
+					tostring(NS.CommFlare.CF.RaidLeader), tostring(NS.CommFlare.CF.PlayerFullName),
+					tostring(list)
+				),
+			}
+
+			-- insert
+			tinsert(NS.db.global.matchLogList, entry)
 		end
 	end
 end
@@ -1559,7 +1732,7 @@ function NS:Process_Pass_Leadership(sender)
 	end
 
 	-- setup player / sender
-	local player = NS:GetPlayerName("full")
+	local player = NS.CommFlare.CF.PlayerFullName
 	if (type(sender) == "number") then
 		-- get from battle net
 		sender = NS:GetBNetFriendName(sender)
@@ -1767,6 +1940,10 @@ function NS:Get_Battleground_Status()
 
 				-- alterac valley or korrak's revenge?
 				if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
+					-- issue capping gate request command
+					NS.CommFlare.CF.NeedAddonData = true
+					NS.CommFlare:SendCommMessage("Capping", "tr", "INSTANCE_CHAT")
+
 					-- set text to alterac valley status
 					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %s = %d/4; %s = %d/4; %d %s",
 						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
@@ -1791,6 +1968,10 @@ function NS:Get_Battleground_Status()
 						count, L["Community Members"])
 				-- battle for wintergrasp?
 				elseif (NS.CommFlare.CF.MapID == 1334) then
+					-- issue capping gate request command
+					NS.CommFlare.CF.NeedAddonData = true
+					NS.CommFlare:SendCommMessage("Capping", "twr", "INSTANCE_CHAT")
+
 					-- set text to wintergrasp status
 					text = strformat("%s (%s): %s; %s = %d %s, %d %s; %s %s; %s %s; %s: %d/3; %d %s",
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.WG.Type,
@@ -2409,8 +2590,12 @@ function NS:Update_Battlefield_Status(index)
 				-- update local group
 				NS.CommFlare.CF.LocalQueues[index].popped = time()
 				NS.CommFlare.CF.SocialQueues["local"].name = mapName
+				NS.CommFlare.CF.SocialQueues["local"].status = "popped"
 				NS.CommFlare.CF.SocialQueues["local"].popped = NS.CommFlare.CF.LocalQueues[index].popped
-				NS.CommFlare.CF.SocialQueues["local"].queues[index].popped = NS.CommFlare.CF.SocialQueues["local"].popped
+				if (NS.CommFlare.CF.SocialQueues["local"].queues and NS.CommFlare.CF.SocialQueues["local"].queues[index]) then
+					-- update queue
+					NS.CommFlare.CF.SocialQueues["local"].queues[index].popped = NS.CommFlare.CF.SocialQueues["local"].popped
+				end
 				NS:Update_Group("local")
 				NS:Process_Popped("local")
 
@@ -2804,8 +2989,8 @@ function NS:Update_Brawl_Status()
 
 					-- save stuff
 					NS.CommFlare.CF.LeftTime = 0
+					NS.CommFlare.CF.Expiration = 0
 					NS.CommFlare.CF.EnteredTime = time()
-					NS.CommFlare.CF.Expiration = GetBattlefieldPortExpiration(index)
 				-- rejected?
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
 					-- player is horde?

@@ -26,8 +26,11 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 	-- get player name
 	local player = UnitName("player")
 	if (player == sender) then
-		-- finished
-		return
+		-- debug mode disabled?
+		if (NS.db.global.debugMode == false) then
+			-- finished
+			return
+		end
 	end
 
 	-- verify prefix
@@ -99,17 +102,9 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 						hostile = true
 					end
 
-					-- initialize active timer
-					NS.CommFlare.CF.ActiveTimers[destGUID] = {
-						["timestamp"] = timestamp,
-						["guid"] = destGUID,
-						["name"] = destName,
-						["flags"] = destFlags,
-						["hostile"] = hostile,
-						["timer"] = {},
-					}
-
 					-- catapult?
+					local path = nil
+					local factionColor = nil
 					local respawn_time = 180
 					if (destName == L["Catapult"]) then
 						-- 1 minute
@@ -122,8 +117,7 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 							if (NS.CommFlare.CF.PlayerInfo and NS.CommFlare.CF.PlayerInfo.faction) then
 								-- player alliance?
 								local name = nil
-								local path = {136441}
-								local factionColor = nil
+								path = {136441}
 								if (NS.CommFlare.CF.PlayerInfo.faction == 1) then
 									-- hostile glaive?
 									if (hostile == true) then
@@ -164,6 +158,30 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 					elseif (destName == L["Demolisher"]) then
 						-- 5-minute
 						respawn_time = 300
+					end
+
+					-- initialize active timer
+					NS.CommFlare.CF.ActiveTimers[destGUID] = {
+						["timestamp"] = timestamp,
+						["guid"] = destGUID,
+						["name"] = destName,
+						["flags"] = destFlags,
+						["hostile"] = hostile,
+						["death_time"] = time(),
+						["respawn_time"] = respawn_time,
+						["timer"] = {},
+					}
+
+					-- has faction color?
+					if (factionColor) then
+						-- save faction color
+						NS.CommFlare.CF.ActiveTimers[destGUID].factionColor = factionColor
+					end
+
+					-- has path?
+					if (path) then
+						-- save path
+						NS.CommFlare.CF.ActiveTimers[destGUID].path = path
 					end
 
 					-- alert system enabled?

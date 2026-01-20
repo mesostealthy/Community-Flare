@@ -11,6 +11,7 @@ local CreateFromMixins                          = _G.CreateFromMixins
 local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                             = _G.DevTools_Dump
 local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
+local IsMouseButtonDown                         = _G.IsMouseButtonDown
 local PlayerLocation                            = _G.PlayerLocation
 local StaticPopup_Show                          = _G.StaticPopup_Show
 local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
@@ -24,6 +25,7 @@ local print                                     = _G.print
 local select                                    = _G.select
 local sort                                      = _G.sort
 local time                                      = _G.time
+local tonumber                                  = _G.tonumber
 local strformat                                 = _G.string.format
 local strlower                                  = _G.string.lower
 local strsplit                                  = _G.string.split
@@ -39,15 +41,94 @@ CF_PlayerListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_PlayerListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("%s %s", NS.CommFlare.Title, L["Player List Manager"])
+	local title = strformat("CF %s", L["Player List Manager"])
 	self.HeaderFrame.Title:SetText(title)
 
 	-- register left button for dragging
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
+	self:EnableKeyboard(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
+end
+
+-- on key down
+function CF_PlayerListFrameMixin:OnKeyDown(key)
+	-- propagate keyboard input enabled
+	self:SetPropagateKeyboardInput(true)
+
+	-- END?
+	if (key == "END") then
+		-- has scroll box?
+		local scrollBox = self.PlayerListFrame.PlayerList.ScrollBox
+		if (scrollBox) then
+			-- has scroll range?
+			local scrollRange = scrollBox:GetDerivedScrollRange()
+			if (scrollRange > 0) then
+				-- scroll to percentage
+				self:SetPropagateKeyboardInput(false)
+				scrollBox:SetScrollPercentage(1)
+				return
+			end
+		end
+	-- HOME?
+	elseif (key == "HOME") then
+		-- has scroll box?
+		local scrollBox = self.PlayerListFrame.PlayerList.ScrollBox
+		if (scrollBox) then
+			-- has scroll range?
+			local scrollRange = scrollBox:GetDerivedScrollRange()
+			if (scrollRange > 0) then
+				-- scroll to percentage
+				self:SetPropagateKeyboardInput(false)
+				scrollBox:SetScrollPercentage(0)
+				return
+			end
+		end
+	-- PAGEDOWN?
+	elseif (key == "PAGEDOWN") then
+		-- has scroll box?
+		local scrollBox = self.PlayerListFrame.PlayerList.ScrollBox
+		if (scrollBox) then
+			-- has scroll range?
+			local scrollRange = scrollBox:GetDerivedScrollRange()
+			if (scrollRange > 0) then
+				-- calculate offset
+				local offset = tonumber(scrollBox.scrollPercentage) + tonumber(scrollBox:GetVisibleExtentPercentage())
+				if (offset > 1) then
+					-- set max
+					offset = 1
+				end
+
+				-- scroll to percentage
+				self:SetPropagateKeyboardInput(false)
+				scrollBox:SetScrollPercentage(offset)
+				return
+			end
+		end
+	-- PAGEUP?
+	elseif (key == "PAGEUP") then
+		-- has scroll box?
+		local scrollBox = self.PlayerListFrame.PlayerList.ScrollBox
+		if (scrollBox) then
+			-- has scroll range?
+			local scrollRange = scrollBox:GetDerivedScrollRange()
+			if (scrollRange > 0) then
+				-- calculate offset
+				local offset = tonumber(scrollBox.scrollPercentage) - tonumber(scrollBox:GetVisibleExtentPercentage())
+				if (offset < 0) then
+					-- set min
+					offset = 0
+				end
+
+				-- scroll to percentage
+				self:SetPropagateKeyboardInput(false)
+				scrollBox:SetScrollPercentage(offset)
+				return
+			end
+		end
+	end
 end
 
 -- on show
@@ -66,6 +147,12 @@ function CF_PlayerListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+end
+
+-- update list
+function CF_PlayerListFrameMixin:UpdateList()
+	-- update
+	self.PlayerListFrame.PlayerList:UpdatePlayerList()
 end
 
 -- refresh list
@@ -179,13 +266,13 @@ function CF_PlayerListAddKosButtonMixin:OnClick(button)
 
 				-- not added to MemberGUIDs?
 				local player = strformat("%s-%s", name, realm)
-				if (NS.db and NS.db.global and NS.db.global.MemberGUIDs and not NS.db.global.MemberGUIDs[guid]) then
+				if (NS.db.global.MemberGUIDs and not NS.db.global.MemberGUIDs[guid]) then
 					-- add user to MemberGUIDs
 					NS.db.global.MemberGUIDs[guid] = player
 				end
 
 				-- add user to kos list
-				NS.CommFlare.CF.KosList[guid] = player
+				NS.db.global.KosList[guid] = player
 			end
 		end
 
@@ -270,19 +357,19 @@ function CF_PlayerListMixin:RefreshListDisplay()
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
 		self.ScrollBox:ForEachFrame(function(button, elementData)
 			-- update name frame
-			button:UpdateQueueFrame()
+			button:UpdatePlayerFrame()
 		end)
 	end
 end
 
--- update queue list
+-- update player list
 function CF_PlayerListMixin:UpdatePlayerList()
 	-- initialize
 	self.KosList = {}
 	self.PlayerList = {}
 
 	-- find count
-	if (NS.db and NS.db.global and NS.db.global.MemberGUIDs) then
+	if (NS.db.global.MemberGUIDs) then
 		-- process all
 		for k,v in pairs(NS.db.global.MemberGUIDs) do
 			-- has search text?
@@ -300,7 +387,7 @@ function CF_PlayerListMixin:UpdatePlayerList()
 			if (display == true) then
 				-- kos target?
 				local player = v .. "@" .. k
-				if (NS.CommFlare and NS.CommFlare.CF and NS.CommFlare.CF.KosList and NS.CommFlare.CF.KosList[k]) then
+				if (NS.db.global.KosList and NS.db.global.KosList[k]) then
 					-- insert
 					tinsert(self.KosList, player)
 				else
@@ -324,9 +411,9 @@ end
 function CF_PlayerListMixin:UpdateCount()
 	-- find kos count
 	local kosCount = 0
-	if (NS.CommFlare.CF.KosList) then
+	if (NS.db.global.KosList) then
 		-- process all
-		for k,v in pairs(NS.CommFlare.CF.KosList) do
+		for k,v in pairs(NS.db.global.KosList) do
 			-- increase
 			kosCount = kosCount + 1
 		end
@@ -334,7 +421,7 @@ function CF_PlayerListMixin:UpdateCount()
 
 	-- find player count
 	local playerCount = 0
-	if (NS.db and NS.db.global and NS.db.global.MemberGUIDs) then
+	if (NS.db.global.MemberGUIDs) then
 		-- process all
 		for k,v in pairs(NS.db.global.MemberGUIDs) do
 			-- increase
@@ -372,17 +459,41 @@ end
 
 -- on show
 function CF_PlayerListMixin:OnShow()
-	-- update queue list
+	-- update player list
 	self:UpdatePlayerList()
 end
 
 -- on update
+local scrollPercentage = nil
 function CF_PlayerListMixin:OnUpdate()
-	-- queue list dirty?
-	if (self:IsKosListDirty()) then
-		-- update queue list
+	-- player list dirty?
+	if (self:IsPlayerListDirty()) then
+		-- update player list
 		self:UpdatePlayerList()
-		self:ClearKosListDirty()
+		self:ClearPlayerListDirty()
+	else
+		-- no mouse buttons down?
+		if (IsMouseButtonDown() == false) then
+			-- updated
+			if (self.ScrollBar.scrollPercentage ~= scrollPercentage) then
+				-- updated
+				scrollPercentage = self.ScrollBar.scrollPercentage
+
+				-- get frames
+				local frames = self.ScrollBox:GetFrames()
+				for k,v in pairs(frames) do
+					-- verify member GUID
+					NS:Verify_MemberGUID(v.guid)
+				end
+			end
+		end
+	end
+
+	-- updated?
+	if (NS.CommFlare.CF.PlayerListUpdated == true) then
+		-- update list
+		NS.CommFlare.CF.PlayerListUpdated = false
+		CF_PlayerListFrame:UpdateList()
 	end
 end
 
@@ -398,22 +509,22 @@ function CF_PlayerListMixin:SetSelectedEntryForDropDown(entry)
 	self.selectedEntryForDropDown = entry
 end
 
--- mark queue list dirty
-function CF_PlayerListMixin:MarkKosListDirty()
-	-- mark queue list dirty
-	self.queueListDirty = true
+-- mark player list dirty
+function CF_PlayerListMixin:MarkPlayerListDirty()
+	-- mark player list dirty
+	self.playerListDirty = true
 end
 
--- is queue list dirty?
-function CF_PlayerListMixin:IsKosListDirty()
-	-- return queue list dirty
-	return self.queueListDirty
+-- is player list dirty?
+function CF_PlayerListMixin:IsPlayerListDirty()
+	-- return player list dirty
+	return self.playerListDirty
 end
 
--- clear queue list dirty
-function CF_PlayerListMixin:ClearKosListDirty()
-	-- clear queue list dirty
-	self.queueListDirty = nil
+-- clear player list dirty
+function CF_PlayerListMixin:ClearPlayerListDirty()
+	-- clear player list dirty
+	self.playerListDirty = nil
 end
 
 -- create table
@@ -433,95 +544,162 @@ function CF_PlayerListEntryMixin:OnClick(button)
 		print(strformat("%s: %s", L["GUID"], self.guid))
 
 		-- has member note?
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
+		if (NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
 			-- display member note
 			print(strformat("Note: %s", NS.db.global.MemberNotes[self.guid]))
 		end
 	-- right click?
 	elseif (button == "RightButton") then
 		-- toggle drop down menu
-		local queuesList = self:GetParentFrame()
-		queuesList:SetSelectedEntryForDropDown(self)
-		ToggleDropDownMenu(1, nil, queuesList.EntryDropDown, self, 0, 0)
+		local playersList = self:GetParentFrame()
+		playersList:SetSelectedEntryForDropDown(self)
+		ToggleDropDownMenu(1, nil, playersList.EntryDropDown, self, 0, 0)
 	end
 end
 
 -- on enter
 local show_tooltip = false
 function CF_PlayerListEntryMixin:OnEnter()
-	-- start tooltip
-	GameTooltip:SetOwner(self)
-	GameTooltip:AddLine(self.guid)
-
 	-- has member guid?
-	if (NS.db and NS.db.global and NS.db.global.MemberGUIDs) then
+	if (NS.db.global.MemberGUIDs) then
 		-- get player info by GUID
 		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(self.guid)
-		if (name and (name ~= "")) then
+		if (name) then
 			-- has realm?
 			local player = nil
-			if (not realm or (realm == "")) then
+			if ((name == "") and (realm == "")) then
+				-- character no longer exists?
+				if ((localizedClass == "Warrior") and (englishClass == "WARRIOR") and not localizedRace and (englishRace == "") and (sex == 1)) then
+					-- check for old member?
+					local old_player = NS.db.global.MemberGUIDs[self.guid]
+					if (NS.db.global.members[old_player]) then
+						-- delete
+						NS.db.global.members[old_player] = nil
+					end
+
+					-- check for old history?
+					if (NS.db.global.history[old_player]) then
+						-- delete
+						NS.db.global.members[old_player] = nil
+					end
+
+					-- has member note?
+					if (NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
+						-- delete
+						NS.db.global.MemberNotes[self.guid] = nil
+					end
+
+					-- kos target?
+					if (NS.db.global.KosList and NS.db.global.KosList[self.guid]) then
+						-- delete
+						NS.db.global.KosList[self.guid] = nil
+					end
+
+					-- refresh list
+					CF_PlayerListFrame:RefreshList()
+					return
+				else
+					-- use from MemberGUIDs
+					player = NS.db.global.MemberGUIDs[self.guid]
+				end
+			elseif (not realm or (realm == "")) then
 				-- use player realm
 				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
 			else
 				-- use proper realm
 				player = strformat("%s-%s", name, realm)
 			end
-
+	
 			-- sanity check
 			if (not player) then
 				-- finished
 				return
 			end
 
-			-- display stuff
-			GameTooltip:AddLine(strformat("Player: %s", player), 1, 1, 1)
-			GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
-			GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+			-- updated?
+			if (NS.db.global.MemberGUIDs[self.guid] and (NS.db.global.MemberGUIDs[self.guid] ~= player)) then
+				-- check for old member?
+				NS:Process_MemberGUID(self.guid, player)
 
-			-- create player location from guid
-			local playerLocation = PlayerLocation:CreateFromGUID(self.guid)
-			if (playerLocation) then
-				-- get race id
-				local raceID = PlayerInfoGetRace(playerLocation)
-				if (raceID) then
-					-- get faction
-					local factionInfo = C_CreatureInfo.GetFactionInfo(raceID)
-					if (factionInfo and factionInfo.name and (factionInfo.name ~= "")) then
-						-- display faction
-						GameTooltip:AddLine(strformat("Faction: %s", factionInfo.name), 1, 1, 1)
-					end
+				-- refresh list
+				CF_PlayerListFrame:RefreshList()
+				return
+			else
+				-- start tooltip
+				GameTooltip:SetOwner(self)
+				GameTooltip:AddLine(self.guid)
+
+				-- display stuff
+				GameTooltip:AddLine(strformat("Player: %s", player), 1, 1, 1)
+
+				-- has localized class?
+				if (localizedClass and (localizedClass ~= "")) then
+					-- add localized class
+					GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
 				end
-			end
 
-			-- has community member info?
-			local member = NS:Get_Community_Member(NS.db.global.MemberGUIDs[self.guid])
-			if (member and member.clubs) then
-				-- process all clubs
-				for k,v in pairs(member.clubs) do
-					-- has club info?
-					if (NS.db and NS.db.global and NS.db.global.clubs and NS.db.global.clubs[k]) then
-						-- guild?
-						local club = NS.db.global.clubs[k]
-						if (club.clubType == Enum.ClubType.Guild) then
-							-- display guild note
-							GameTooltip:AddLine(strformat("Guild Member: %s", club.name), 1, 1, 1)
-						else
-							-- display club note
-							GameTooltip:AddLine(strformat("Club Member: %s", club.name), 1, 1, 1)
+				-- has localized race?
+				if (localizedRace and (localizedRace ~= "")) then
+					-- add localized race
+					GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+				end
+
+				-- create player location from guid
+				local playerLocation = PlayerLocation:CreateFromGUID(self.guid)
+				if (playerLocation) then
+					-- get race id
+					local raceID = PlayerInfoGetRace(playerLocation)
+					if (raceID) then
+						-- get faction
+						local factionInfo = C_CreatureInfo.GetFactionInfo(raceID)
+						if (factionInfo and factionInfo.name and (factionInfo.name ~= "")) then
+							-- display faction
+							GameTooltip:AddLine(strformat("Faction: %s", factionInfo.name), 1, 1, 1)
 						end
 					end
 				end
-			end
 
-			-- has member note?
-			if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
-				-- display member note
-				GameTooltip:AddLine(strformat("Member Note: %s", NS.db.global.MemberNotes[self.guid]), 1, 1, 1)
+				-- has community member info?
+				local member = NS:Get_Community_Member(NS.db.global.MemberGUIDs[self.guid])
+				if (member and member.clubs) then
+					-- process all clubs
+					for k,v in pairs(member.clubs) do
+						-- has club info?
+						if (NS.db.global.clubs and NS.db.global.clubs[k]) then
+							-- guild?
+							local club = NS.db.global.clubs[k]
+							if (club.clubType == Enum.ClubType.Guild) then
+								-- display guild note
+								GameTooltip:AddLine(strformat("Guild Member: %s", club.name), 1, 1, 1)
+							else
+								-- display club note
+								GameTooltip:AddLine(strformat("Club Member: %s", club.name), 1, 1, 1)
+							end
+						end
+					end
+				end
+
+				-- has member note?
+				if (NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
+					-- display member note
+					GameTooltip:AddLine(strformat("Member Note: %s", NS.db.global.MemberNotes[self.guid]), 1, 1, 1)
+				end
+
+				-- show tooltip
+				show_tooltip = true
+				GameTooltip:Show()
 			end
 		else
+			-- start tooltip
+			GameTooltip:SetOwner(self)
+			GameTooltip:AddLine(self.guid)
+
 			-- display guild note
 			GameTooltip:AddLine(strformat("Querying Server ..."), 1, 1, 1)
+
+			-- show tooltip
+			show_tooltip = true
+			GameTooltip:Show()
 
 			-- refresh 1 second
 			TimerAfter(1, function()
@@ -533,10 +711,6 @@ function CF_PlayerListEntryMixin:OnEnter()
 			end)
 		end
 	end
-
-	-- show tooltip
-	show_tooltip = true
-	GameTooltip:Show()
 end
 
 -- on leave
@@ -546,57 +720,57 @@ function CF_PlayerListEntryMixin:OnLeave()
 	GameTooltip:Hide()
 end
 
--- set queue
-function CF_PlayerListEntryMixin:SetQueue(info)
-	-- has queue info?
+-- set player
+function CF_PlayerListEntryMixin:SetPlayer(info)
+	-- has player info?
 	if (info) then
-		-- save queue info / text
+		-- save player info / text
 		self.info = info
 		self.guid = info.guid
 		local text = strformat("%s", info.player)
-		self.QueueFrame.Name:SetText(text)
+		self.PlayerFrame.Name:SetText(text)
 
 		-- kos?
 		if (info.kos and (info.kos == true)) then
 			-- green
-			self.QueueFrame.Name:SetTextColor(0, 1, 0)
+			self.PlayerFrame.Name:SetTextColor(0, 1, 0)
 		else
 			-- white
-			self.QueueFrame.Name:SetTextColor(1, 1, 1)
+			self.PlayerFrame.Name:SetTextColor(1, 1, 1)
 		end
 	else
 		-- delete member info / text
 		self.info = nil
-		self.QueueFrame.Name:SetText(nil)
+		self.PlayerFrame.Name:SetText(nil)
 	end
 
 	-- update name frame
-	self:UpdateQueueFrame()
+	self:UpdatePlayerFrame()
 end
 
 -- init
 function CF_PlayerListEntryMixin:Init(elementData)
 	-- update name frame
-	self:UpdateQueueFrame()
+	self:UpdatePlayerFrame()
 
-	-- has queue info?
+	-- has player info?
 	if (elementData.info) then
-		-- set queue data
+		-- set player data
 		local info = elementData.info
 		self.guid = info.guid
-		self:SetQueue(info)
+		self:SetPlayer(info)
 	end
 end
 
 -- update name frame
-function CF_PlayerListEntryMixin:UpdateQueueFrame()
+function CF_PlayerListEntryMixin:UpdatePlayerFrame()
 	-- update name frame
-	local queueFrame = self.QueueFrame
-	queueFrame.Name:ClearAllPoints()
-	queueFrame.Name:SetPoint("LEFT", queueFrame, "LEFT", 0, 0)
-	queueFrame:ClearAllPoints()
-	queueFrame:SetPoint("LEFT", 4, 0)
-	queueFrame:SetWidth(130)
+	local playerFrame = self.PlayerFrame
+	playerFrame.Name:ClearAllPoints()
+	playerFrame.Name:SetPoint("LEFT", playerFrame, "LEFT", 0, 0)
+	playerFrame:ClearAllPoints()
+	playerFrame:SetPoint("LEFT", 4, 0)
+	playerFrame:SetWidth(130)
 end
 
 -- create add kos mixin
@@ -617,7 +791,7 @@ function UnitPopupCFAddKosButtonMixin:CanShow()
 		local info = dropdownMenu.info
 		if (info.guid) then
 			-- kos target?
-			if (NS.CommFlare.CF.KosList and NS.CommFlare.CF.KosList[info.guid]) then
+			if (NS.db.global.KosList and NS.db.global.KosList[info.guid]) then
 				-- hide
 				return false
 			end
@@ -640,17 +814,17 @@ function UnitPopupCFAddKosButtonMixin:OnClick()
 	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
 	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
 		-- kos list not created yet?
-		if (not NS.CommFlare.CF.KosList) then
-			-- create
-			NS.CommFlare.CF.KosList = {}
+		if (not NS.db.global.KosList) then
+			-- initialize
+			NS.db.global.KosList = {}
 		end
 
 		-- not already added?
 		local guid = dropdownMenu.info.guid
-		if (not NS.CommFlare.CF.KosList[guid]) then
+		if (not NS.db.global.KosList[guid]) then
 			-- add to kos list
 			player = dropdownMenu.info.player
-			NS.CommFlare.CF.KosList[guid] = player
+			NS.db.global.KosList[guid] = player
 		end
 
 		-- refresh list
@@ -676,7 +850,7 @@ function UnitPopupCFRemoveKosButtonMixin:CanShow()
 		local info = dropdownMenu.info
 		if (info.guid) then
 			-- kos target?
-			if (NS.CommFlare.CF.KosList and NS.CommFlare.CF.KosList[info.guid]) then
+			if (NS.db.global.KosList and NS.db.global.KosList[info.guid]) then
 				-- show
 				return true
 			end
@@ -699,16 +873,16 @@ function UnitPopupCFRemoveKosButtonMixin:OnClick()
 	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
 	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
 		-- kos list not created yet?
-		if (not NS.CommFlare.CF.KosList) then
+		if (not NS.db.global.KosList) then
 			-- create
-			NS.CommFlare.CF.KosList = {}
+			NS.db.global.KosList = {}
 		end
 
 		-- already added?
 		local guid = dropdownMenu.info.guid
-		if (NS.CommFlare.CF.KosList[guid]) then
+		if (NS.db.global.KosList[guid]) then
 			-- remove from kos list
-			NS.CommFlare.CF.KosList[guid] = nil
+			NS.db.global.KosList[guid] = nil
 		end
 
 		-- refresh list
@@ -737,21 +911,21 @@ function UnitPopupCFDeletePlayerButtonMixin:OnClick()
 	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
 	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
 		-- kos list not created yet?
-		if (not NS.CommFlare.CF.KosList) then
+		if (not NS.db.global.KosList) then
 			-- create
-			NS.CommFlare.CF.KosList = {}
+			NS.db.global.KosList = {}
 		end
 
 		-- already added?
 		local guid = dropdownMenu.info.guid
-		if (NS.CommFlare.CF.KosList[guid]) then
-			-- remove from kos list
-			NS.CommFlare.CF.KosList[guid] = nil
+		if (NS.db.global.KosList[guid]) then
+			-- delete
+			NS.db.global.KosList[guid] = nil
 		end
 
 		-- added to MemberGUIDs?
-		if (NS.db and NS.db.global and NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
-			-- delete user from MemberGUIDs
+		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
+			-- delete
 			NS.db.global.MemberGUIDs[guid] = nil
 		end
 
@@ -792,9 +966,9 @@ function UnitPopupCFSetPlayerNoteButtonMixin:OnClick()
 	end
 end
 
--- register drop down menu for queues
-UnitPopupMenuCFQueues = CreateFromMixins(UnitPopupTopLevelMenuMixin)
-UnitPopupManager:RegisterMenu("CF_QUEUES", UnitPopupMenuCFQueues)
+-- register drop down menu for players
+UnitPopupMenuCFPlayers = CreateFromMixins(UnitPopupTopLevelMenuMixin)
+UnitPopupManager:RegisterMenu("CF_PLAYERS", UnitPopupMenuCFPlayers)
 
 -- copy player name mixin
 UnitPopupCFCopyPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
@@ -820,11 +994,11 @@ function UnitPopupCFCopyPlayerNameMixin:OnClick()
 		local data = { 
 			guid = dropdownMenu.guid,
 			info = dropdownMenu.info,
-			player = dropdownMenu.info.player
+			player = dropdownMenu.info.player,
 		}
 
 		-- show set player note dialog
-		StaticPopup_Show("CommunityFlare_Copy_Player_Name_Dialog", dropdownMenu.info.player, nil, data)
+		StaticPopup_Show("CommunityFlare_Copy_Player_Name_Dialog", data.player, nil, data)
 	end
 end
 
@@ -887,7 +1061,7 @@ local function RefreshPlayerName(guid, old_player)
 		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
 			-- update player
 			NS.db.global.MemberGUIDs[guid] = player
-			NS.CommFlare.CF.KosList[guid] = player
+			NS.db.global.KosList[guid] = player
 			updated = true
 		end
 
@@ -929,7 +1103,7 @@ function UnitPopupCFRefreshPlayerNameMixin:OnClick()
 end
 
 -- get entries
-function UnitPopupMenuCFQueues:GetEntries()
+function UnitPopupMenuCFPlayers:GetEntries()
 	-- return menu buttons
 	return {
 		UnitPopupCFAddKosButtonMixin,
@@ -941,18 +1115,18 @@ function UnitPopupMenuCFQueues:GetEntries()
 	}
 end
 
--- queue list drop down initialize
+-- player list drop down initialize
 function CF_PlayerListEntryDropDown_Initialize(self, level)
 	-- no selected entry?
-	local queuesList = self:GetParent()
-	local selectedKosListEntry = queuesList:GetSelectedEntryForDropDown()
+	local playersList = self:GetParent()
+	local selectedKosListEntry = playersList:GetSelectedEntryForDropDown()
 	if (not selectedKosListEntry) then
 		-- finished
 		return
 	end
 
-	-- save queue stuff
-	self.parent = queuesList
+	-- save player stuff
+	self.parent = playersList
 	self.guid = selectedKosListEntry.guid
 	self.info = selectedKosListEntry.info
 
@@ -965,20 +1139,20 @@ function CF_PlayerListEntryDropDown_Initialize(self, level)
 
 	-- open popup menu
 	local contextData = { parent = self.parent, guid = self.guid, name = text, info = self.info }
-	UnitPopup_OpenMenu("CF_QUEUES", contextData)
+	UnitPopup_OpenMenu("CF_PLAYERS", contextData)
 end
 
--- queue list drop down on load
+-- player list drop down on load
 function CF_PlayerListEntryDropDown_OnLoad(self)
 	-- initialize drop down menu
 	UIDropDownMenu_Initialize(self, CF_PlayerListEntryDropDown_Initialize, "MENU")
 end
 
--- queue list drop down on hide
+-- player list drop down on hide
 function CF_PlayerListEntryDropDown_OnHide(self)
 	-- remove selected entry
-	local queuesList = self:GetParent()
-	queuesList:SetSelectedEntryForDropDown(nil)
+	local playersList = self:GetParent()
+	playersList:SetSelectedEntryForDropDown(nil)
 end
 
 -- search box on escape pressed
@@ -986,6 +1160,7 @@ function CF_PlayerListSearchBox_OnEscapePressed(self)
 	-- clear text
 	self:SetText("")
 	self:ClearFocus()
+	scrollPercentage = nil
 end
 
 -- search box on enter pressed
@@ -993,6 +1168,7 @@ function CF_PlayerListSearchBox_OnEnterPressed(self)
 	-- refresh list
 	self:ClearFocus()
 	CF_PlayerListFrame:RefreshList()
+	scrollPercentage = nil
 end
 
 -- search box on edited focus lost
@@ -1007,6 +1183,7 @@ function CF_PlayerListSearchBox_OnEditFocusLost(self)
 
 		-- refresh list
 		CF_PlayerListFrame:RefreshList()
+		scrollPercentage = nil
 	end
 end
 
@@ -1039,6 +1216,7 @@ function CF_PlayerListSearchBox_OnTextChanged(self)
 
 			-- refresh list
 			CF_PlayerListFrame:RefreshList()
+			scrollPercentage = nil
 		end
 
 		-- hide clear button

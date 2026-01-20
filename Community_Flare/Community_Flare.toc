@@ -1,7 +1,7 @@
-## Interface: 110207
+## Interface: 120001, 120000, 110207
 ## Title: Community Flare
-## Version: v1.34.001
-## X-Build: 134001
+## Version: v2.00.001
+## X-Build: 200001
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB
@@ -37,26 +37,35 @@ Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 Locales\enUS.lua
 Locales\frFR.lua
 
-Bootstrap.lua
-Constants.lua
-Config.lua
-Battlegrounds.lua
-Capping.lua
-CombatLog.lua
-Communication.lua
-Database.lua
-Debug.lua
-Events.lua
-History.lua
-Init.lua
-Menus.lua
-POIs.lua
-Quests.lua
-Social.lua
-Specialization.lua
-Vehicles.lua
-Vignettes.lua
+Core\Bootstrap.lua
+Core\Constants.lua
+Core\Config.lua
+Core\Communication.lua
+Core\Database.lua
+Core\Debug.lua
+Core\Events.lua
+Core\Hooks.lua
+Core\Init.lua
+Core\Menus.lua
+Core\SlashCmd.lua
+Core\Specialization.lua
+Core\StaticPopups.lua
+Core\Timers.lua
 
-UI\PlayerListFrame.xml
-UI\POIListFrame.xml
-UI\VignetteListFrame.xml
+Modules\Battlegrounds.lua
+Modules\BlockGameMenus.lua
+Modules\Capping.lua
+Modules\CombatLog.lua
+Modules\History.lua
+Modules\POIs.lua
+Modules\Quests.lua
+Modules\Social.lua
+Modules\TomTom.lua
+Modules\Vehicles.lua
+Modules\Vignettes.lua
+
+UI\CommunityList.xml
+UI\MemberList.xml
+UI\PlayerList.xml
+UI\POIList.xml
+UI\VignetteList.xml

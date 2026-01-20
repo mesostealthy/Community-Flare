@@ -5,44 +5,44 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local AddChatWindowChannel                      = _G.AddChatWindowChannel
-local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
-local Chat_GetCommunitiesChannelName            = _G.Chat_GetCommunitiesChannelName
-local CopyTable                                 = _G.CopyTable
-local GetChannelName                            = _G.GetChannelName
-local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
-local IsInGuild                                 = _G.IsInGuild
-local MergeTable                                = _G.MergeTable
-local UnitFactionGroup                          = _G.UnitFactionGroup
-local UnitName                                  = _G.UnitName
-local ClubAreMembersReady                       = _G.C_Club.AreMembersReady
-local ClubFocusMembers                          = _G.C_Club.FocusMembers
-local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
-local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
-local ClubGetStreamInfo                         = _G.C_Club.GetStreamInfo
-local ClubGetStreams                            = _G.C_Club.GetStreams
-local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
-local PvPIsArena                                = _G.C_PvP.IsArena
-local PvPIsInBrawl                              = _G.C_PvP.IsInBrawl
-local TimerAfter                                = _G.C_Timer.After
-local date                                      = _G.date
-local ipairs                                    = _G.ipairs
-local next                                      = _G.next
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local select                                    = _G.select
-local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local type                                      = _G.type
-local wipe                                      = _G.wipe
-local strformat                                 = _G.string.format
-local strgsub                                   = _G.string.gsub
-local strmatch                                  = _G.string.match
-local strsplit                                  = _G.string.split
-local tinsert                                   = _G.table.insert
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local AddChatWindowChannel                        = _G.AddChatWindowChannel
+local CopyTable                                   = _G.CopyTable
+local GetChannelName                              = _G.GetChannelName
+local GetCommunitiesChannel                       = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannel or _G.Chat_GetCommunitiesChannel
+local GetCommunitiesChannelName                   = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannelName or _G.Chat_GetCommunitiesChannelName
+local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
+local IsInGuild                                   = _G.IsInGuild
+local MergeTable                                  = _G.MergeTable
+local UnitFactionGroup                            = _G.UnitFactionGroup
+local UnitName                                    = _G.UnitName
+local ClubAreMembersReady                         = _G.C_Club.AreMembersReady
+local ClubFocusMembers                            = _G.C_Club.FocusMembers
+local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
+local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
+local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
+local ClubGetStreams                              = _G.C_Club.GetStreams
+local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
+local PvPIsArena                                  = _G.C_PvP.IsArena
+local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
+local TimerAfter                                  = _G.C_Timer.After
+local date                                        = _G.date
+local ipairs                                      = _G.ipairs
+local next                                        = _G.next
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local select                                      = _G.select
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local type                                        = _G.type
+local wipe                                        = _G.wipe
+local strformat                                   = _G.string.format
+local strgsub                                     = _G.string.gsub
+local strmatch                                    = _G.string.match
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- verify default community setup
 function NS:Verify_Default_Community_Setup()
@@ -334,7 +334,7 @@ function NS:Verify_Club_Streams(clubs)
 					-- general?
 					if (streamInfo.streamType == Enum.ClubStreamType.General) then
 						-- verify channel is added for proper reporting
-						local channel = Chat_GetCommunitiesChannel(clubId, v.streamId)
+						local channel = GetCommunitiesChannel(clubId, v.streamId)
 						if (not channel or (NS.charDB.profile.alwaysReaddChannels == true)) then
 							-- readd community chat window
 							NS:ReaddCommunityChatWindow(clubId, v.streamId)
@@ -343,7 +343,7 @@ function NS:Verify_Club_Streams(clubs)
 						-- AddChatWindowChannel available?
 						if (AddChatWindowChannel) then
 							-- add chat window to general
-							local channelName = Chat_GetCommunitiesChannelName(clubId, v.streamId)
+							local channelName = GetCommunitiesChannelName(clubId, v.streamId)
 							AddChatWindowChannel(1, channelName)
 						end
 					end
@@ -494,6 +494,57 @@ function NS:Process_MemberGUID(guid, player)
 	return false
 end
 
+-- verify member guid
+function NS:Verify_MemberGUID(guid)
+	-- cache player info
+	local name, realm = select(6, GetPlayerInfoByGUID(guid))
+	if (not name and not realm) then
+		-- refresh 1 second
+		TimerAfter(1, function()
+			-- call recursively
+			NS:Verify_MemberGUID(guid)
+		end)
+	elseif (name and (name ~= "")) then
+		-- no realm found?
+		local player = nil
+		if (not realm or (realm == "")) then
+			-- use player realm
+			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+		else
+			-- use proper realm
+			player = strformat("%s-%s", name, realm)
+		end
+
+		-- updated?
+		if (NS.db.global.MemberGUIDs[guid] and (NS.db.global.MemberGUIDs[guid] ~= player)) then
+			-- check for old member
+			local old_player = NS.db.global.MemberGUIDs[guid]
+			if (NS.db.global.members[old_player]) then
+				-- move member
+				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+				NS.db.global.members[old_player] = nil
+			end
+
+			-- check for old history
+			if (NS.db.global.history[old_player]) then
+				-- move history
+				NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+				NS.db.global.history[old_player] = nil
+			end
+
+			-- update member guid
+			NS.db.global.MemberGUIDs[guid] = player
+			NS.CommFlare.CF.PlayerListUpdated = true
+
+			-- updated
+			print(strformat(L["%s: Updated member %s to %s."], NS.CommFlare.Title, tostring(old_player), tostring(player)))
+			return true
+		end
+	end
+
+	-- no update
+	return false
+end
 
 -- get community member
 function NS:Get_Community_Member(name)
@@ -549,6 +600,18 @@ function NS:Get_LogList_Status(player)
 				-- success
 				return true
 			end
+
+			-- treat guild as community?
+			if (NS.charDB.profile.addGuildMembers == true) then
+				-- has guild id?
+				if (NS.CommFlare.CF.GuildID > 0) then
+					-- matches?
+					if (NS.CommFlare.CF.GuildID == k) then
+						-- success
+						return true
+					end
+				end
+			end
 		end
 	end
 
@@ -556,14 +619,11 @@ function NS:Get_LogList_Status(player)
 	return false
 end
 
--- clean up members
-function NS:Cleanup_Members()
-	-- initialize
-	NS.CommFlare.CF.KosList = NS.CommFlare.CF.KosList or {}
-	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
-
+-- clean up stuff
+function NS:Cleanup_Stuff()
 	-- process all
 	local count = 0
+	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- has extra?
 		local name, realm, extra = strsplit("-", v)
@@ -589,6 +649,21 @@ function NS:Cleanup_Members()
 
 		-- increase
 		count = count + 1
+	end
+
+	-- process all clubs
+	for k,v in pairs(NS.db.global.clubs) do
+		-- invalid faction?
+		if (v.faction and (v.faction == "nil")) then
+			-- delete
+			v.faction = nil
+		end
+
+		-- invalid short name?
+		if (v.shortName and (v.shortName == "nil")) then
+			-- delete
+			v.shortName = nil
+		end
 	end
 
 	-- process all members
@@ -720,16 +795,16 @@ function NS:Cleanup_Members()
 		end
 	end
 
-	-- process all kos list
-	for k,v in pairs(NS.CommFlare.CF.KosList) do
+	-- process all
+	for k,v in pairs(NS.db.global.KosList) do
 		-- has player?
 		if (v.player) then
 			-- no longer table
-			NS.CommFlare.CF.KosList[k] = v.player
+			NS.db.global.KosList[k] = v.player
 		end
 	end
 
-	-- process all member GUIDs
+	-- process all
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- not current?
 		if (NS.db.global.members[v] and NS.db.global.members[v].guid and (NS.db.global.members[v].guid ~= k)) then
@@ -738,9 +813,9 @@ function NS:Cleanup_Members()
 		end
 
 		-- updated KOS?
-		if (NS.CommFlare.CF.KosList[k] and (NS.CommFlare.CF.KosList[k] ~= v)) then
+		if (NS.db.global.KosList[k] and (NS.db.global.KosList[k] ~= v)) then
 			-- update player
-			NS.CommFlare.CF.KosList[k] = v
+			NS.db.global.KosList[k] = v
 		end
 	end
 end
@@ -1133,7 +1208,7 @@ function NS:Add_Member(clubId, info, rebuild)
 		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
 		if (not name or not realm) then
 			-- try again, 1 second later
-			TimerAfter(1, function(clubId, info, rebuild)
+			TimerAfter(1, function()
 				-- call recursively
 				NS:Add_Member(clubId, info, rebuild)
 			end)
@@ -1573,43 +1648,19 @@ function NS:Refresh_Club_Members()
 		return
 	end
 
-	-- setup days purged
-	local days_purged = 7
-	if (NS.db.global.purgeLogTime == 2) then
-		-- 14 days
-		days_purged = 14
-	elseif (NS.db.global.purgeLogTime == 3) then
-		-- 30 days
-		days_purged = 30
-	end
-
-	-- purge older
-	local timestamp = time()
-	for k,v in pairs(NS.db.global.matchLogList) do
-		-- older found?
-		if (not v.timestamp or (k > 1000000)) then
-			-- delete
-			NS.db.global.matchLogList[k] = nil
-		else
-			-- older than x days?
-			local older = v.timestamp + (days_purged * 86400)
-			if (timestamp > older) then
-				-- delete
-				NS.db.global.matchLogList[k] = nil
-			end
-		end
-	end
-
 	-- find player in database
-	local player = NS:GetPlayerName("full")
+	local player = NS.CommFlare.CF.PlayerFullName
 	local member = NS:Get_Community_Member(player)
 	if (not member or not member.clubs) then
 		-- finished
 		return
 	end
 
-	-- clean up members
-	NS:Cleanup_Members()
+	-- purge match list
+	NS:Purge_Match_List()
+
+	-- clean up stuff
+	NS:Cleanup_Stuff()
 
 	-- clean up history
 	NS:Cleanup_History()
@@ -2021,7 +2072,7 @@ function NS:Has_Shared_Community(sender)
 	end
 
 	-- find player in database
-	local player = NS:GetPlayerName("full")
+	local player = NS.CommFlare.CF.PlayerFullName
 	local member1 = NS:Get_Community_Member(player)
 	if (not member1 or not member1.clubs) then
 		-- failed
@@ -2090,7 +2141,7 @@ function NS:Find_Community_Member_By_GUID(guid)
 		return NS.db.global.members[player]
 	end
 
-	-- process all
+	-- process all members
 	for k,v in pairs(NS.db.global.members) do
 		-- matches?
 		if (v.guid == guid) then
@@ -2101,6 +2152,37 @@ function NS:Find_Community_Member_By_GUID(guid)
 
 	-- failed
 	return nil
+end
+
+-- purge database members
+function NS:Purge_Database_Members()
+	-- get enabled clubs
+	local clubs = NS:Get_Enabled_Clubs()
+	if (clubs) then
+		-- process all clubs
+		local count = 0
+		print(L["Pruning community database member list."])
+		for clubId,_ in pairs(clubs) do
+			-- process all members
+			for k,v in pairs(NS.db.global.members) do
+				-- has club?
+				if (v.clubs and v.clubs[clubId]) then
+					-- delete
+					v.clubs[clubId] = nil
+					count = count + 1
+				end
+			end
+		end
+
+		-- any pruned?
+		if (count > 0) then
+			-- rebuild database members
+			NS:Rebuild_Database_Members()
+		end
+	else
+		-- no subscribed clubs found
+		print(strformat(L["%s: No subscribed clubs found."], NS.CommFlare.Title))
+	end
 end
 
 -- is community member (modular)
@@ -2124,4 +2206,86 @@ function NS.CommFlare:Is_Community_Member(name)
 
 	-- failed
 	return nil
+end
+
+-- prune database
+function NS.CommFlare:Prune_Database()
+	-- process all
+	local count = 0
+	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- not community member?
+		if (not NS.db.global.members[v]) then
+			-- not KOS / no member note?
+			if (not NS.db.global.KosList[k] and not NS.db.global.MemberNotes[k]) then
+				-- has history?
+				if (NS.db.global.history[k]) then
+					-- delete
+					NS.db.global.history[k] = nil
+				end
+
+				-- delete
+				NS.db.global.MemberGUIDs[k] = nil
+
+				-- increase
+				count = count + 1
+			end
+		end
+	end
+
+	-- process all
+	local count = 0
+	local members = CopyTable(NS.db.global.members)
+	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- delete
+		members[v] = nil
+	end
+
+	-- process all
+	local count = 0
+	for k,v in pairs(members) do
+		-- has guid?
+		if (v.guid) then
+			-- get info
+			local name, realm = select(6, GetPlayerInfoByGUID(v.guid))
+			if (name and (name ~= "")) then
+				-- no realm?
+				if (not realm or (realm == "")) then
+					-- use player server
+					realm = NS.CommFlare.CF.PlayerServerName
+				end
+
+				-- build proper name
+				local player = name
+				if (not strmatch(player, "-")) then
+					-- add realm name
+					player = strformat("%s-%s", player, realm)
+				end
+
+				-- updated?
+				if (player ~= k) then
+					-- remove
+					NS.db.global.members[k] = nil
+
+					-- increase
+					count = count + 1
+				else
+					-- update MemberGUIDs
+					local old_player = NS.db.global.MemberGUIDs[v.guid]
+					NS.db.global.MemberGUIDs[v.guid] = player
+
+					-- has old member?
+					if (NS.db.global.members[old_player]) then
+						-- delete
+						NS.db.global.members[old_player] = nil
+
+						-- increase
+						count = count + 1
+					end
+				end
+			end
+		end
+	end
+
+	-- return count
+	return count
 end

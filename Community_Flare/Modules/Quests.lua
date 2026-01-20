@@ -5,9 +5,9 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local GetQuestLogRewardInfo                     = _G.GetQuestLogRewardInfo
-local print                                     = _G.print
+local _G                                          = _G
+local GetQuestLogRewardInfo                       = _G.GetQuestLogRewardInfo
+local print                                       = _G.print
 
 -- decor quests
 local decorQuests = {

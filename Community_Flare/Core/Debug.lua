@@ -5,19 +5,19 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local ChatEdit_SetLastActiveWindow              = _G.ChatEdit_SetLastActiveWindow
-local ChatFrame_ReceiveAllPrivateMessages       = _G.ChatFrame_ReceiveAllPrivateMessages
-local ChatFrame_RemoveAllChannels               = _G.ChatFrame_RemoveAllChannels
-local ChatFrame_RemoveAllMessageGroups          = _G.ChatFrame_RemoveAllMessageGroups
-local FCF_DockFrame                             = _G.FCF_DockFrame
-local FCF_FadeInChatFrame                       = _G.FCF_FadeInChatFrame
-local FCF_SetWindowName                         = _G.FCF_SetWindowName
-local FCFDock_GetChatFrames                     = _G.FCFDock_GetChatFrames
-local FCFDock_GetSelectedWindow                 = _G.FCFDock_GetSelectedWindow
-local GetChatWindowInfo                         = _G.GetChatWindowInfo
-local SetChatWindowLocked                       = _G.SetChatWindowLocked
-local SetChatWindowShown                        = _G.SetChatWindowShown
+local _G                                          = _G
+local FCF_DockFrame                               = _G.FCF_DockFrame
+local FCF_FadeInChatFrame                         = _G.FCF_FadeInChatFrame
+local FCF_SetWindowName                           = _G.FCF_SetWindowName
+local FCFDock_GetChatFrames                       = _G.FCFDock_GetChatFrames
+local FCFDock_GetSelectedWindow                   = _G.FCFDock_GetSelectedWindow
+local GetChatWindowInfo                           = _G.GetChatWindowInfo
+local ReceiveAllPrivateMessages                   = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_ReceiveAllPrivateMessages
+local RemoveAllChannels                           = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_RemoveAllChannels
+local RemoveAllMessageGroups                      = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_RemoveAllMessageGroups
+local SetChatWindowLocked                         = _G.SetChatWindowLocked
+local SetChatWindowShown                          = _G.SetChatWindowShown
+local SetLastActiveWindow                         = _G.ChatFrameUtil and _G.ChatFrameUtil.SetLastActiveWindow or _G.ChatEdit_SetLastActiveWindow
 
 -- local variables
 local debugTab = nil
@@ -69,9 +69,9 @@ function NS:Debug_Print(text)
 			debugFrame:Clear()
 
 			-- listen to standard messages
-			ChatFrame_RemoveAllMessageGroups(debugFrame)
-			ChatFrame_RemoveAllChannels(debugFrame)
-			ChatFrame_ReceiveAllPrivateMessages(debugFrame)
+			RemoveAllMessageGroups(debugFrame)
+			RemoveAllChannels(debugFrame)
+			ReceiveAllPrivateMessages(debugFrame)
 
 			-- clear editbox history
 			debugFrame.editBox:ClearHistory()
@@ -94,7 +94,7 @@ function NS:Debug_Print(text)
 			-- dock frame by default
 			FCF_DockFrame(debugFrame, (#FCFDock_GetChatFrames(GENERAL_CHAT_DOCK)+1), true)
 			FCF_FadeInChatFrame(FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK))
-			ChatEdit_SetLastActiveWindow(debugFrame.editBox)
+			SetLastActiveWindow(debugFrame.editBox)
 		end
 
 		-- found debug chat frame?

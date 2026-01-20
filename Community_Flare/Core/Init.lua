@@ -6,21 +6,19 @@ if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
+local AddNewCommunitiesChannel                    = _G.ChatFrameUtil.AddNewCommunitiesChannel
 local BNGetFriendAccountInfo                      = _G.C_BattleNet.GetFriendAccountInfo
 local BNGetFriendIndex                            = _G.BNGetFriendIndex
 local BNGetNumFriends                             = _G.BNGetNumFriends
 local BNSendWhisper                               = _G.C_BattleNet and _G.C_BattleNet.SendWhisper or _G.BNSendWhisper
-local Chat_GetCommunitiesChannelName              = _G.Chat_GetCommunitiesChannelName
-local ChatEdit_FocusActiveWindow                  = _G.ChatEdit_FocusActiveWindow
-local ChatFrameUtil_AddNewCommunitiesChannel      = _G.ChatFrameUtil.AddNewCommunitiesChannel
-local ChatFrameMixin_ContainsChannel              = _G.ChatFrameMixin.ContainsChannel
-local ChatFrameUtil_RemoveCommunitiesChannel      = _G.ChatFrameUtil.RemoveCommunitiesChannel
+local ContainsChannel                             = _G.ChatFrameMixin.ContainsChannel
 local CopyTable                                   = _G.CopyTable
 local FCF_IsChatWindowIndexReserved               = _G.FCF_IsChatWindowIndexReserved
 local FCF_IterateActiveChatWindows                = _G.FCF_IterateActiveChatWindows
 local GetBindingAction                            = _G.GetBindingAction
 local GetBindingKey                               = _G.GetBindingKey
 local GetChannelName                              = _G.GetChannelName
+local GetCommunitiesChannelName                   = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannelName or _G.Chat_GetCommunitiesChannelName
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
@@ -34,14 +32,13 @@ local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local RemoveCommunitiesChannel                    = _G.ChatFrameUtil.RemoveCommunitiesChannel
 local SaveBindings                                = _G.SaveBindings
 local SendChatMessage                             = _G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage or _G.SendChatMessage
 local SetBinding                                  = _G.SetBinding
 local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
-local StaticPopup_StandardEditBoxOnEscapePressed  = _G.StaticPopup_StandardEditBoxOnEscapePressed
-local UninviteUnit                                = _G.UninviteUnit
 local UnitExists                                  = _G.UnitExists
 local UnitFullName                                = _G.UnitFullName
 local UnitGUID                                    = _G.UnitGUID
@@ -57,15 +54,15 @@ local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInf
 local BattleNetGetFriendAccountInfo               = _G.C_BattleNet.GetFriendAccountInfo
 local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
 local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
+local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
+local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
 local ClubGetClubMembers                          = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                           = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
 local DelvesUIHasActiveDelve                      = _G.C_DelvesUI.HasActiveDelve
-local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
 local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                               = _G.C_Map.GetMapInfo
-local MapSetUserWaypoint                          = _G.C_Map.SetUserWaypoint
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                    = _G.C_PartyInfo.IsDelveComplete
 local PartyInfoIsDelveInProgress                  = _G.C_PartyInfo.IsDelveInProgress
@@ -76,12 +73,11 @@ local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
 local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
 local SocialQueueGetGroupForPlayer                = _G.C_SocialQueue.GetGroupForPlayer
-local SuperTrackSetSuperTrackedUserWaypoint       = _G.C_SuperTrack.SetSuperTrackedUserWaypoint
 local TimerAfter                                  = _G.C_Timer.After
+local TraitsGenerateImportString                  = _G.C_Traits.GenerateImportString
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
-local securecallfunction                          = _G.securecallfunction
 local select                                      = _G.select
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
@@ -545,7 +541,7 @@ function NS:IsInvisible()
 	end
 
 	-- process all clubs
-	local player = NS:GetPlayerName("short")
+	local player = UnitName("player")
 	local clubs = ClubGetSubscribedClubs()
 	for _,v in ipairs(clubs) do
 		-- community?
@@ -603,25 +599,24 @@ end
 -- load session variables
 function NS:LoadSession()
 	-- load global stuff
-	NS.CommFlare.CF.KosList = NS.db.global.KosList or {}
 	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
 	NS.CommFlare.CF.WarCrateLocations = NS.db.global.WarCrateLocations or {}
 
 	-- load profile stuff
-	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID
-	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus
+	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID or nil
+	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus or 0
+	NS.CommFlare.CF.ActiveTimers = NS.charDB.profile.ActiveTimers or {}
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
 	NS.CommFlare.CF.VehicleDeaths = NS.charDB.profile.VehicleDeaths or {}
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 
 	-- load match log stuff
-	NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount
-	NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime
-	NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate
-	NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime
-	NS.CommFlare.CF.MatchStartLogged = NS.charDB.profile.MatchStartLogged
-	NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives
-	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives
+	NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount or 0
+	NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
+	NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
+	NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
+	NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives or 0
+	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives or 0
 
 	-- load battleground specific data
 	NS.CommFlare.CF.AB = NS.charDB.profile.AB or {}
@@ -635,9 +630,9 @@ function NS:LoadSession()
 	NS.CommFlare.CF.SSH = NS.charDB.profile.SSH or {}
 	NS.CommFlare.CF.SSM = NS.charDB.profile.SSM or {}
 	NS.CommFlare.CF.SSvTM = NS.charDB.profile.SSvTM or {}
-	NS.CommFlare.CF.WG = NS.charDB.profile.WG or {}
 	NS.CommFlare.CF.TOK = NS.charDB.profile.TOK or {}
 	NS.CommFlare.CF.TWP = NS.charDB.profile.TWP or {}
+	NS.CommFlare.CF.WG = NS.charDB.profile.WG or {}
 	NS.CommFlare.CF.WSG = NS.charDB.profile.WSG or {}
 
 	-- get MapID
@@ -651,7 +646,6 @@ end
 -- save session variables
 function NS:SaveSession()
 	-- save global stuff
-	NS.db.global.KosList = NS.CommFlare.CF.KosList or {}
 	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 	NS.db.global.WarCrateLocations = NS.CommFlare.CF.WarCrateLocations or {}
 
@@ -659,6 +653,7 @@ function NS:SaveSession()
 	NS.charDB.profile.SavedTime = time()
 	NS.charDB.profile.PartyGUID = NS.CommFlare.CF.PartyGUID
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
+	NS.charDB.profile.ActiveTimers = NS.CommFlare.CF.ActiveTimers or {}
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
 	NS.charDB.profile.VehicleDeaths = NS.CommFlare.CF.VehicleDeaths or {}
 	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
@@ -683,32 +678,11 @@ function NS:SaveSession()
 		NS.charDB.profile.WSG = NS.CommFlare.CF.WSG or {}
 
 		-- save match log stuff
-		NS.charDB.profile.LogListCount = NS.CommFlare.CF.LogListCount
 		NS.charDB.profile.MatchEndTime = NS.CommFlare.CF.MatchEndTime
 		NS.charDB.profile.MatchStartDate = NS.CommFlare.CF.MatchStartDate
 		NS.charDB.profile.MatchStartTime = NS.CommFlare.CF.MatchStartTime
-		NS.charDB.profile.MatchStartLogged = NS.CommFlare.CF.MatchStartLogged
 		NS.charDB.profile.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives
 		NS.charDB.profile.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives
-	else
-		-- reset settings
-		NS.charDB.profile.AB = {}
-		NS.charDB.profile.ASH = {}
-		NS.charDB.profile.AV = {}
-		NS.charDB.profile.BFG = {}
-		NS.charDB.profile.IOC = {}
-		NS.charDB.profile.SSvTM = {}
-		NS.charDB.profile.WG = {}
-		NS.charDB.profile.WSG = {}
-
-		-- reset match log stuff
-		NS.charDB.profile.LogListCount = 0
-		NS.charDB.profile.MatchEndTime = 0
-		NS.charDB.profile.MatchStartDate = 0
-		NS.charDB.profile.MatchStartTime = 0
-		NS.charDB.profile.MatchStartLogged = false
-		NS.charDB.profile.NumAllyGlaives = 0
-		NS.charDB.profile.NumHordeGlaives = 0
 	end
 
 	-- debug mode?
@@ -782,7 +756,7 @@ function NS:AddCommunityChatWindow(clubId, streamId)
 	end
 
 	-- get channel chat name
-	local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+	local channelName = GetCommunitiesChannelName(clubId, streamId)
 	if (channelName and (channelName ~= "")) then
 		-- process active chat windows
 		FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
@@ -796,10 +770,10 @@ function NS:AddCommunityChatWindow(clubId, streamId)
 			local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
 			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
 				-- checked?
-				local isChecked = ChatFrameMixin_ContainsChannel(chatWindow, channelName)
+				local isChecked = ContainsChannel(chatWindow, channelName)
 				if (isChecked == true) then
 					-- remove communities channel from chat frame
-					ChatFrameUtil_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+					RemoveCommunitiesChannel(chatWindow, clubId, streamId)
 				end
 
 				-- has main community?
@@ -813,7 +787,7 @@ function NS:AddCommunityChatWindow(clubId, streamId)
 				end
 
 				-- add communities chat to chat frame
-				ChatFrameUtil_AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId, setEditBoxToChannel)
+				AddNewCommunitiesChannel(chatWindowIndex, clubId, streamId, setEditBoxToChannel)
 			end
 		end)
 	end
@@ -829,7 +803,7 @@ function NS:RemoveCommunityChatWindow(clubId, streamId)
 	end
 
 	-- get channel chat name
-	local channelName = Chat_GetCommunitiesChannelName(clubId, streamId)
+	local channelName = GetCommunitiesChannelName(clubId, streamId)
 	if (channelName and (channelName ~= "")) then
 		-- process active chat windows
 		FCF_IterateActiveChatWindows(function(chatWindow, chatWindowIndex)
@@ -843,10 +817,10 @@ function NS:RemoveCommunityChatWindow(clubId, streamId)
 			local isGuildStream = streamInfo.streamType == Enum.ClubStreamType.Guild or streamInfo.streamType == Enum.ClubStreamType.Officer
 			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
 				-- checked?
-				local isChecked = ChatFrameMixin_ContainsChannel(chatWindow, channelName)
+				local isChecked = ContainsChannel(chatWindow, channelName)
 				if (isChecked == true) then
 					-- remove communities channel from chat frame
-					ChatFrameUtil_RemoveCommunitiesChannel(chatWindow, clubId, streamId)
+					RemoveCommunitiesChannel(chatWindow, clubId, streamId)
 				end
 			end
 		end)
@@ -956,23 +930,48 @@ function NS:Enforce_PVP_Roles()
 
 	-- any roles forced?
 	if ((isTank == true) or (isHealer == true) or (isDPS == true)) then
-		-- get lfg role update
-		local isBGRoleCheck = select(6, GetLFGRoleUpdate())
-		if (isBGRoleCheck == true) then
-			-- set pvp roles
-			SetPVPRoles(isTank, isHealer, isDPS)
+		-- force enable roles
+		local isLeader = GetLFGRoles()
+		SetLFGRoles(isLeader, isTank, isHealer, isDPS)
+		SetPVPRoles(isTank, isHealer, isDPS)
+
+		-- lfg invite popup shown?
+		if (LFGInvitePopup:IsShown()) then
+			-- set checked boxes
+			LFGRole_SetChecked(LFGInvitePopupRoleButtonTank, isTank)
+			LFGRole_SetChecked(LFGInvitePopupRoleButtonHealer, isHealer)
+			LFGRole_SetChecked(LFGInvitePopupRoleButtonDPS, isDPS)
+			LFGInvitePopup_UpdateAcceptButton()
 		end
 
-		-- lfg invite popup show?
-		if (LFGInvitePopup:IsShown()) then
-			-- setup roles
-			local isLeader = GetLFGRoles()
-			SetLFGRoles(isLeader, isTank, isHealer, isDPS)
+		-- quick join role selection shown?
+		if (QuickJoinRoleSelectionFrame:IsShown()) then
+			-- is tank?
+			if (isTank == true) then
+				-- not checked?
+				if (QuickJoinRoleSelectionFrame.RoleButtonTank.CheckButton:GetChecked() ~= true) then
+					-- click button
+					QuickJoinRoleSelectionFrame.RoleButtonTank.CheckButton:Click()
+				end
+			end
 
-			-- set checked boxes
-			LFGRole_SetChecked(LFDQueueFrameRoleButtonTank, isTank)
-			LFGRole_SetChecked(LFDQueueFrameRoleButtonHealer, isHealer)
-			LFGRole_SetChecked(LFDQueueFrameRoleButtonDPS, isDPS)
+			-- is healer?
+			if (isHealer == true) then
+				-- not checked?
+				if (QuickJoinRoleSelectionFrame.RoleButtonHealer.CheckButton:GetChecked() ~= true) then
+					-- click button
+					QuickJoinRoleSelectionFrame.RoleButtonHealer.CheckButton:Click()
+				end
+			end
+
+			-- is dps?
+			if (isDPS == true) then
+				-- not checked?
+				if (QuickJoinRoleSelectionFrame.RoleButtonDPS.CheckButton:GetChecked() ~= true) then
+					-- click button
+					QuickJoinRoleSelectionFrame.RoleButtonDPS.CheckButton:Click()
+				end
+			end
 		end
 	end
 end
@@ -985,19 +984,6 @@ function NS:GetFullName(player)
 		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 	return player
-end
-
--- get proper player name by type
-function NS:GetPlayerName(type)
-	local name, realm = UnitFullName("player")
-	if (type == "full") then
-		-- no realm name?
-		if (not realm or (realm == "")) then
-			realm = NS.CommFlare.CF.PlayerServerName
-		end
-		return strformat("%s-%s", name, realm)
-	end
-	return name
 end
 
 -- is currently group leader?
@@ -1127,7 +1113,7 @@ function NS:GetPartyLeader()
 	end
 
 	-- solo atm
-	return NS:GetPlayerName("full")
+	return NS.CommFlare.CF.PlayerFullName
 end
 
 -- get party guid
@@ -1337,6 +1323,7 @@ function NS:PopupBox(dlg, ...)
 		-- show the popup box
 		local dialog = StaticPopup_Show(dlg, args)
 		if (dialog) then
+			-- save args
 			dialog.data = args
 		end
 	end
@@ -1351,21 +1338,21 @@ function NS:Process_Talents_Check(sender)
 	end
 
 	-- get active config id
-	local configID = C_ClassTalents.GetActiveConfigID()
+	local configID = ClassTalentsGetActiveConfigID()
 	if (configID) then
 		-- get current specialization info
 		local specID, specName = PlayerUtil.GetCurrentSpecID()
 		if (specID and specName) then
 			-- get hero spec id
 			local text = strformat("%s", specName)
-			local heroSpecID = C_ClassTalents.GetActiveHeroTalentSpec()
+			local heroSpecID = ClassTalentsGetActiveHeroTalentSpec()
 			if (heroSpecID and NS.CommFlare.HeroTalentSpecs[heroSpecID]) then
 				-- add hero talent
 				text = strformat("%s (%s)", text, NS.CommFlare.HeroTalentSpecs[heroSpecID])
 			end
 
 			-- get import string
-			local data = C_Traits.GenerateImportString(configID)
+			local data = TraitsGenerateImportString(configID)
 			if (data) then
 				-- finalize text
 				text = strformat("%s: %s", text, data)
@@ -1421,7 +1408,7 @@ function NS:Setup_Report_Channels()
 		for k,v in pairs(NS.charDB.profile.communityReportList) do
 			-- verify channel setup
 			local streamId = 1
-			local channelName = Chat_GetCommunitiesChannelName(k, streamId)
+			local channelName = GetCommunitiesChannelName(k, streamId)
 			local id, name = GetChannelName(channelName)
 			if ((id > 0) and (name ~= nil)) then
 				-- enable report channel
@@ -1489,7 +1476,7 @@ function NS:Rebuild_Database_Members()
 	local status = NS:Process_Club_Members()
 	if (status == true) then
 		-- display members found
-		print(NS:Total_Database_Members(nil))
+		print(NS:Total_Database_Members())
 
 		-- display leaders count
 		local count = 0
@@ -1588,111 +1575,6 @@ function NS:Queue_Check_Role_Chosen()
 	end
 end
 
--- remove tom tom way points
-function NS:TomTomRemoveWaypoints(title)
-	-- sanity check
-	if (not title) then
-		-- finished
-		return
-	end
-
-	-- has tom tom?
-	local TT = TomTom
-	if (TT and TT.RemoveWaypoint and TT.waypoints) then
-		-- process all waypoints
-		for mapID, entries in pairs(TT.waypoints) do
-			-- process zone waypoints
-			for _, waypoint in pairs(entries) do
-				-- title matches?
-				if (waypoint.title and (waypoint.title == title)) then
-					-- remove waypoint
-					securecallfunction(TT.RemoveWaypoint, TT, waypoint)
-				end
-			end
-		end
-	end
-end
-
--- add tom tom way point
-function NS:TomTomAddWaypoint(title, x, y)
-	-- sanity checks
-	if (not title or not x or not y) then
-		-- finished
-		return nil
-	end
-
-	-- has tom tom?
-	local TT = TomTom
-	if (TT and TT.AddWaypoint) then
-		-- setup options
-		local options =
-		{
-			desc = tostring(title),
-			title = tostring(title),
-			persistent = true,
-			minimap = true,
-			world = true,
-			callbacks = nil,
-			silent = true,
-			from = "CommFlare",
-		}
-
-		-- add way point
-		return securecallfunction(TT.AddWaypoint, TT, NS.CommFlare.CF.MapID, tonumber(x), tonumber(y), options)
-	else
-		-- get MapID
-		local mapID = MapGetBestMapForUnit("player")
-		if (mapID) then
-			-- can set user waypoint?
-			if (MapCanSetUserWaypointOnMap(mapID)) then
-				-- create position from x/y
-				local point = UiMapPoint.CreateFromCoordinates(mapID, tonumber(x), tonumber(y))
-
-				-- set user way point
-				MapSetUserWaypoint(point)
-
-				-- set super tracked
-				SuperTrackSetSuperTrackedUserWaypoint(true)
-			end
-		end
-	end
-
-	-- not enabled
-	return nil
-end
-
--- add tom tom way point
-function NS:TomTomAddWaypointByMapID(mapID, title, x, y)
-	-- sanity checks
-	if (not mapID or not title or not x or not y) then
-		-- finished
-		return nil
-	end
-
-	-- has tom tom?
-	local TT = TomTom
-	if (TT and TT.AddWaypoint) then
-		-- setup options
-		local options =
-		{
-			desc = tostring(title),
-			title = tostring(title),
-			persistent = true,
-			minimap = true,
-			world = true,
-			callbacks = nil,
-			silent = true,
-			from = "CommFlare",
-		}
-
-		-- add way point
-		return securecallfunction(TT.AddWaypoint, TT, mapID, tonumber(x), tonumber(y), options)
-	end
-
-	-- not enabled
-	return nil
-end
-
 -- verify ping status
 function NS:VerifyPingStatus()
 	-- already been restricted?
@@ -1710,7 +1592,7 @@ function NS:VerifyPingStatus()
 			-- check current ping status
 			if (status ~= NS.db.global.restrictPings) then
 				-- do you have lead?
-				local player = NS:GetPlayerName("full")
+				local player = NS.CommFlare.CF.PlayerFullName
 				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 				if (NS.CommFlare.CF.PlayerRank == 2) then
 					-- none?
@@ -2061,159 +1943,34 @@ function NS:RemoteRangeCheckSpell(classType, spellType, spellID)
 	end
 end
 
-------------------------------------------------------
--- Static Popup Dialog Boxes
-------------------------------------------------------
+-- cancel active timers
+function NS:Cancel_Active_Timers(name)
+	-- has active timers?
+	if (NS.CommFlare.CF.ActiveTimers and next(NS.CommFlare.CF.ActiveTimers)) then
+		-- process all timers
+		for k,v in pairs(NS.CommFlare.CF.ActiveTimers) do
+			-- no name?
+			local shouldCancel = false
+			if (not name) then
+				-- cancel
+				shouldCancel = true
+			-- name matches?
+			elseif (v.name == name) then
+				-- cancel
+				shouldCancel = true
+			end
 
--- copy player name dialog box 
-StaticPopupDialogs["CommunityFlare_Copy_Player_Name_Dialog"] = {
-	text = L["Copy Player Name for %s [Use Ctrl+c]:"],
-	button1 = ACCEPT,
-	button2 = CANCEL,
-	hasEditBox = 1,
-	maxLetters = 31,
-	editBoxWidth = 260,
-	OnAccept = function(dialog, data)
-		-- hide dialog
-		ChatEdit_FocusActiveWindow()
-		dialog:GetEditBox():SetText("")
-	end,
-	OnShow = function(dialog, data)
-		-- has player?
-		if (data.player and (data.player ~= "")) then
-			-- set current player
-			local editBox = dialog:GetEditBox()
-			editBox:SetText(data.player)
-			editBox:HighlightText()
-			editBox:SetFocus()
-		end
-	end,
-	EditBoxOnEnterPressed = function(editBox, data)
-		-- hide dialog
-		local dialog = editBox:GetParent();
-		dialog:Hide();
-	end,
-	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
-	timeout = 0,
-	exclusive = 1,
-	whileDead = true,
-	hideOnEscape = true
-}
+			-- should cancel?
+			if (shouldCancel == true) then
+				-- timer exists?
+				if (v.timer) then
+					-- cancel timer
+					v.timer:Cancel()
+				end
 
--- kick dialog box
-StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
-	text = L["Kick: %s?"],
-	button1 = L["Yes"],
-	button2 = L["No"],
-	OnAccept = function(dialog, player)
-		-- uninvite user
-		print(strformat("%s %s", L["Uninviting ..."], player))
-		UninviteUnit(player, L["AFK"])
-
-		-- community auto invite enabled?
-		local text = L["You've been removed from the party for being AFK."]
-		if (NS.charDB.profile.communityAutoInvite == true) then
-			-- update text for info about being reinvited
-			text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
-		end
-
-		-- send message
-		NS:SendMessage(player, text)
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
--- rebuild members dialog box
-StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
-	text = L["Are you sure you want to wipe the members database and totally rebuild from scratch?"],
-	button1 = L["Yes"],
-	button2 = L["No"],
-	OnAccept = function(dialog, data)
-		-- rebuild database
-		NS:Rebuild_Database_Members()
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
--- send community dialog box
-StaticPopupDialogs["CommunityFlare_Send_Community_Dialog"] = {
-	text = L["Send: %s?"],
-	button1 = L["Send"],
-	button2 = L["No"],
-	OnAccept = function(dialog, message)
-		-- setup report channels
-		local count = NS:Setup_Report_Channels()
-		if (count > 0) then
-			-- send report messages
-			NS:Send_Report_Messages(message)
-		end
-	end,
-	timeout = 0,
-	whileDead = true,
-	hideOnEscape = true,
-}
-
--- set player note dialog box 
-StaticPopupDialogs["CommunityFlare_Set_Player_Note_Dialog"] = {
-	text = L["Set Player Note for %s:"],
-	button1 = ACCEPT,
-	button2 = CANCEL,
-	hasEditBox = 1,
-	maxLetters = 128,
-	editBoxWidth = 260,
-	OnAccept = function(dialog, data)
-		-- member notes created?
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
-			-- invalid text?
-			local text = dialog:GetEditBox():GetText()
-			if (not text or (text == "")) then
-				-- delete note
-				NS.db.global.MemberNotes[data.guid] = nil
-			else
-				-- update member note
-				NS.db.global.MemberNotes[data.guid] = text
+				-- clear active timer
+				NS.CommFlare.CF.ActiveTimers[k] = nil
 			end
 		end
-	end,
-	OnShow = function(dialog, data)
-		-- has member note?
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes and NS.db.global.MemberNotes[data.guid]) then
-			-- set current note
-			local editBox = dialog:GetEditBox()
-			editBox:SetText(NS.db.global.MemberNotes[data.guid])
-			editBox:SetFocus()
-		end
-	end,
-	OnHide = function(dialog, data)
-		-- hide dialog
-		ChatEdit_FocusActiveWindow()
-		dialog:GetEditBox():SetText("")
-	end,
-	EditBoxOnEnterPressed = function(editBox, data)
-		-- member notes created?
-		local text = editBox:GetText()
-		if (NS.db and NS.db.global and NS.db.global.MemberNotes) then
-			-- invalid text?
-			if (not text or (text == "")) then
-				-- delete note
-				NS.db.global.MemberNotes[data.guid] = nil
-			else
-				-- update member note
-				NS.db.global.MemberNotes[data.guid] = text
-			end
-		end
-
-		-- hide dialog
-		local dialog = editBox:GetParent();
-		dialog:Hide();
-	end,
-	EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
-	timeout = 0,
-	exclusive = 1,
-	whileDead = true,
-	hideOnEscape = true
-}
+	end
+end

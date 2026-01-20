@@ -5,22 +5,22 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local Chat_GetCommunitiesChannel                = _G.Chat_GetCommunitiesChannel
-local StaticPopupDialogs                        = _G.StaticPopupDialogs
-local UnitGetAvailableRoles                     = _G.UnitGetAvailableRoles
-local ClubGetClubInfo                           = _G.C_Club.GetClubInfo
-local ClubGetGuildClubId                        = _G.C_Club.GetGuildClubId
-local ClubGetSubscribedClubs                    = _G.C_Club.GetSubscribedClubs
-local EquipmentSetCanUseEquipmentSets           = _G.C_EquipmentSet.CanUseEquipmentSets
-local EquipmentSetGetEquipmentSetIDs            = _G.C_EquipmentSet.GetEquipmentSetIDs
-local EquipmentSetGetEquipmentSetInfo           = _G.C_EquipmentSet.GetEquipmentSetInfo
-local ipairs                                    = _G.ipairs
-local next                                      = _G.next
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local strformat                                 = _G.string.format
-local tinsert                                   = _G.table.insert
+local _G                                          = _G
+local GetCommunitiesChannel                       = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannel or _G.Chat_GetCommunitiesChannel
+local StaticPopupDialogs                          = _G.StaticPopupDialogs
+local UnitGetAvailableRoles                       = _G.UnitGetAvailableRoles
+local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
+local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
+local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
+local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
+local EquipmentSetGetEquipmentSetIDs              = _G.C_EquipmentSet.GetEquipmentSetIDs
+local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
+local ipairs                                      = _G.ipairs
+local next                                        = _G.next
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local strformat                                   = _G.string.format
+local tinsert                                     = _G.table.insert
 
 -- local variables
 local settings_that_require_reload = {}
@@ -32,7 +32,6 @@ local GlobalDefaults = {
 		-- tables
 		clubs = {},
 		history = {},
-		KosList = {},
 		matchLogList = {},
 		MemberGUIDs = {},
 		MemberNotes = {},
@@ -42,6 +41,7 @@ local GlobalDefaults = {
 
 		-- booleans
 		alwaysRequestPartyLead = false,
+		blockGameTooltips = false,
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
 		debugMode = false,
@@ -68,7 +68,7 @@ local GlobalDefaults = {
 		uninvitePlayersAFK = 0,
 		warningLeavingBG = 2,
 		warningLowWarModeItemCount = 10,
-	},
+	}
 }
 
 -- character defaults
@@ -79,6 +79,7 @@ local CharDefaults = {
 		SavedTime = 0,
 
 		-- profile only options
+		addGuildMembers = false,
 		alwaysAutoQueue = false,
 		alwaysReaddChannels = false,
 		blockGameMenuHotKeys = false,
@@ -109,7 +110,7 @@ local CharDefaults = {
 		POIList = {},
 		Queues = {},
 		VignetteList = {},
-	},
+	}
 }
 
 -- add / remove guild
@@ -544,7 +545,7 @@ local function Community_List_Set_Item(info, key, value)
 			NS.charDB.profile.communityReportList[key] = value
 
 			-- verify channel is added for proper reporting
-			local channel, chatFrameID = Chat_GetCommunitiesChannel(key, 1)
+			local channel, chatFrameID = GetCommunitiesChannel(key, 1)
 			if (not channel or not chatFrameID) then
 				-- readd community chat window
 				NS:ReaddCommunityChatWindow(key, 1)
@@ -570,6 +571,12 @@ local function Total_Database_Members(info)
 
 	-- return count
 	return strformat(L["Database members found: %s"], count)
+end
+
+-- get total database members
+function NS:Total_Database_Members()
+	-- return total database members
+	return Total_Database_Members(nil)
 end
 
 -- refresh database
@@ -601,7 +608,19 @@ local function Refresh_Database_Members()
 	end
 end
 
--- player list manager database
+-- toggle community list manager
+local function Toggle_Community_List_Manager()
+	-- shown?
+	if (CF_CommunityListFrame:IsShown()) then
+		-- hide
+		CF_CommunityListFrame:Hide()
+	else
+		-- show
+		CF_CommunityListFrame:Show()
+	end
+end
+
+-- toggle player list manager
 local function Toggle_Player_List_Manager()
 	-- shown?
 	if (CF_PlayerListFrame:IsShown()) then
@@ -613,10 +632,44 @@ local function Toggle_Player_List_Manager()
 	end
 end
 
+-- rebuild members dialog box
+StaticPopupDialogs["CommunityFlare_Rebuild_Members_Dialog"] = {
+	text = L["Are you sure you want to wipe the members database and totally rebuild from scratch?"],
+	button1 = L["Yes"],
+	button2 = L["No"],
+	OnAccept = function(dialog, data)
+		-- rebuild database members
+		NS:Rebuild_Database_Members()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
 -- rebuild database members confirmation
 local function Rebuild_Database_Members_Confirmation()
 	-- ask first
 	NS:PopupBox("CommunityFlare_Rebuild_Members_Dialog")
+end
+
+-- purge members dialog box
+StaticPopupDialogs["CommunityFlare_Purge_Members_Dialog"] = {
+	text = L["Are you sure you want to purge the old members from the database?"],
+	button1 = L["Yes"],
+	button2 = L["No"],
+	OnAccept = function(dialog, data)
+		-- purge database members
+		NS:Purge_Database_Members()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+-- purge database members confirmation
+local function Purge_Database_Members_Confirmation()
+	-- ask first
+	NS:PopupBox("CommunityFlare_Purge_Members_Dialog")
 end
 
 -- reloadUI required dialog box
@@ -934,18 +987,9 @@ local BattlegroundGroup = {
 			get = function(info) return NS.db.global.pvpCombatLogging end,
 			set = function(info, value) NS.db.global.pvpCombatLogging = value end,
 		},
-		blockGameMenuHotKeys = {
-			type = "toggle",
-			order = 10,
-			name = L["Block game menu hotkeys inside PVP content?"],
-			desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
-			width = "full",
-			get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
-			set = Block_Game_Menu_Hot_Keys_Set,
-		},
 		rebindTargetKeys = {
 			type = "toggle",
-			order = 11,
+			order = 10,
 			name = L["Always target nearest/previous enemy players inside PVP content?"],
 			desc = L["This will automatically bind your tab and shift+tab keys to only target enemy players inside PVP content."],
 			width = "full",
@@ -954,7 +998,7 @@ local BattlegroundGroup = {
 		},
 		displayQueueEntryTimeLeft = {
 			type = "toggle",
-			order = 12,
+			order = 11,
 			name = L["Display how much time left for people in your group to enter the queue?"],
 			desc = L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."],
 			width = "full",
@@ -963,7 +1007,7 @@ local BattlegroundGroup = {
 		},
 		communityLogList = {
 			type = "multiselect",
-			order = 13,
+			order = 12,
 			name = L["Log roster list for matches from these communities?"],
 			desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
 			values = Setup_Community_List,
@@ -973,7 +1017,7 @@ local BattlegroundGroup = {
 		},
 		purgeLogTime = {
 			type = "select",
-			order = 14,
+			order = 13,
 			name = L["Purge logged roster matches timeframe?"],
 			desc = L["This is the amount of time before it starts purging logged roster list for matches."],
 			values = {
@@ -984,15 +1028,33 @@ local BattlegroundGroup = {
 			get = function(info) return NS.db.global.purgeLogTime end,
 			set = function(info, value) NS.db.global.purgeLogTime = value end,
 		},
+		blockGameMenuHotKeys = {
+			type = "toggle",
+			order = 14,
+			name = L["Block game menu hotkeys inside PVP content?"],
+			desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
+			width = "full",
+			get = function(info) return NS.charDB.profile.blockGameMenuHotKeys end,
+			set = Block_Game_Menu_Hot_Keys_Set,
+		},
+		blockGameTooltips = {
+			type = "toggle",
+			order = 15,
+			name = L["Block Tooltips inside PVP content?"],
+			desc = L["This will block Tooltips while in PVP content. (Hold Shift to override and show Tooltip.)"],
+			width = "full",
+			get = function(info) return NS.db.global.blockGameTooltips end,
+			set = function(info, value) NS.db.global.blockGameTooltips = value end,
+		},
 		ashranTitle = {
 			name = L["Ashran Options"],
 			type = "header",
-			order = 15,
+			order = 16,
 			width = "full",
 		},
 		ashranMageWarnAttacked = {
 			type = "select",
-			order = 16,
+			order = 17,
 			width = 1.20,
 			name = L["Notify you when your Mage is under attack?"],
 			desc = L["This will show a raid warning to you when your Mage is under attack in Ashran."],
@@ -1002,10 +1064,13 @@ local BattlegroundGroup = {
 			},
 			get = Ashran_Mage_Warning_Attack_Get,
 			set = Ashran_Mage_Warning_Attack_Set,
+			hidden = function()
+				return NS.CommFlare.isMidnight
+			end,
 		},
 		ashranMageWarnFreq = {
 			type = "select",
-			order = 17,
+			order = 18,
 			name = L["Frequency?"],
 			desc = L["This is the amount of time delayed between Mage attacks in Ashran."],
 			values = {
@@ -1016,10 +1081,13 @@ local BattlegroundGroup = {
 			disabled = Ashran_Mage_Warning_Frequency_Disabled,
 			get = function(info) return NS.db.global.ashranMageWarnFreq end,
 			set = function(info, value) NS.db.global.ashranMageWarnFreq = value end,
+			hidden = function()
+				return NS.CommFlare.isMidnight
+			end,
 		},
 		ashranAncientInfernoSpawned = {
 			type = "select",
-			order = 18,
+			order = 19,
 			name = L["Notify you when the Ancient Inferno has spawned?"],
 			desc = L["This will show a raid warning to you when the Ancient Inferno has spawned in Ashran."],
 			values = {
@@ -1034,12 +1102,12 @@ local BattlegroundGroup = {
 		iocTitle = {
 			name = L["Isle of Conquest Options"],
 			type = "header",
-			order = 19,
+			order = 20,
 			width = "full",
 		},
 		iocVehicleAlertSystem = {
 			type = "toggle",
-			order = 20,
+			order = 21,
 			name = L["Vehicle Alert System?"],
 			desc = L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."],
 			width = "full",
@@ -1112,9 +1180,16 @@ local CommunityGroup = {
 			desc = L["Use this to refresh the members database from currently selected communities."],
 			func = Refresh_Database_Members,
 		},
-		rebuildMembers = {
+		purgeMembers = {
 			type = "execute",
 			order = 8,
+			name = L["Purge Members?"],
+			desc = L["Use this to purge old members in database from currently selected communities."],
+			func = Purge_Database_Members_Confirmation,
+		},
+		rebuildMembers = {
+			type = "execute",
+			order = 9,
 			name = L["Rebuild Members?"],
 			desc = L["Use this to totally rebuild the members database from currently selected communities."],
 			func = Rebuild_Database_Members_Confirmation,
@@ -1130,7 +1205,7 @@ local CommunityGroup = {
 		},
 		communityRightClickMenu = {
 			type = "toggle",
-			order = 10,
+			order = 11,
 			name = L["Community Right Click Menu?"],
 			desc = L["Enable the right click menu for community member list?"],
 			width = "full",
@@ -1152,9 +1227,16 @@ local DatabaseGroup = {
 			order = 1,
 			width = "full",
 		},
-		playerListManager = {
+		communityListManager = {
 			type = "execute",
 			order = 2,
+			name = L["Community List Manager?"],
+			desc = L["Use this to manage the Clubs, Communites & Guilds in the database."],
+			func = Toggle_Community_List_Manager,
+		},
+		playerListManager = {
+			type = "execute",
+			order = 3,
 			name = L["Player List Manager?"],
 			desc = L["Use this to manage the Players and KOS in the Member GUIDs list."],
 			func = Toggle_Player_List_Manager,
@@ -1166,7 +1248,7 @@ local DatabaseGroup = {
 local DebugGroup = {
 	name = L["Debug Options"],
 	type = "group",
-	order = 9,
+	order = 20,
 	args = {
 		debugTitle = {
 			name = L["Debug Options"],
@@ -1199,7 +1281,7 @@ local DebugGroup = {
 local HousingGroup = {
 	name = L["Housing Options"],
 	type = "group",
-	order = 8,
+	order = 4,
 	args = {
 		worldTitle = {
 			name = L["Housing Options"],
@@ -1223,7 +1305,7 @@ local HousingGroup = {
 local InviteGroup = {
 	name = L["Invite Options"],
 	type = "group",
-	order = 4,
+	order = 5,
 	args = {
 		inviteTitle = {
 			name = L["Invite Options"],
@@ -1256,7 +1338,7 @@ local InviteGroup = {
 local PartyGroup = {
 	name = L["Party Options"],
 	type = "group",
-	order = 5,
+	order = 6,
 	args = {
 		partyTitle = {
 			name = L["Party Options"],
@@ -1316,7 +1398,7 @@ local PartyGroup = {
 local QueueGroup = {
 	name = L["Queue Options"],
 	type = "group",
-	order = 6,
+	order = 7,
 	args = {
 		queueTitle = {
 			name = L["Queue Options"],
@@ -1460,7 +1542,7 @@ local QueueGroup = {
 local ReportGroup = {
 	name = L["Report Options"],
 	type = "group",
-	order = 7,
+	order = 8,
 	args = {
 		generalTitle = {
 			name = L["Report Options"],
@@ -1494,7 +1576,7 @@ local ReportGroup = {
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 10,
+	order = 9,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1572,7 +1654,7 @@ function NS:CreateConfigOptions()
 			QueueGroup = QueueGroup,
 			ReportGroup = ReportGroup,
 			WorldGroup = WorldGroup,
-		}
+		},
 	}
 
 	-- initialize global / profile settings
@@ -1584,13 +1666,13 @@ function NS:CreateConfigOptions()
 	NS:MigrateSettings()
 
 	-- register options table
-	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare", OptionsTable)
-	NS.optionsFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare", NS.CommFlare.Title)
+	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare_Options", OptionsTable)
+	NS.optionsFrame, NS.optionsID = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare_Options", NS.CommFlare.Title)
 
 	-- register profiles table
 	NS.profiles = NS.Libs.AceDBOptions:GetOptionsTable(NS.charDB)
 	NS.Libs.AceConfig:RegisterOptionsTable("Community_Flare_Profiles", NS.profiles)
-	NS.profilesFrame = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare_Profiles", "Profiles", NS.CommFlare.Title)
+	NS.profilesFrame, NS.profilesID = NS.Libs.AceConfigDialog:AddToBlizOptions("Community_Flare_Profiles", "Profiles", NS.CommFlare.Title)
 
 	-- load previous session
 	NS:LoadSession()

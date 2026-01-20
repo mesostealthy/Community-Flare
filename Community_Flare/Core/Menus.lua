@@ -5,18 +5,18 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
-local IsInGroup                                 = _G.IsInGroup
-local IsInInstance                              = _G.IsInInstance
-local IsInRaid                                  = _G.IsInRaid
-local Menu_ModifyMenu                           = _G.Menu.ModifyMenu
-local date                                      = _G.date
-local print                                     = _G.print
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local type                                      = _G.type
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
+local IsInGroup                                   = _G.IsInGroup
+local IsInInstance                                = _G.IsInInstance
+local IsInRaid                                    = _G.IsInRaid
+local Menu_ModifyMenu                             = _G.Menu.ModifyMenu
+local date                                        = _G.date
+local print                                       = _G.print
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local type                                        = _G.type
+local strformat                                   = _G.string.format
 
 -- show applicant info
 function NS:Show_Applicant_Info(owner, rootDescription)
@@ -189,24 +189,31 @@ function NS:Request_Party_Leader(owner, rootDescription, contextData)
 end
 
 -- menus enabled?
+local applicants_menu = false
 local communities_menu = false
 local party_menu = false
 local raid_player = false
 
 -- setup context menus
 function NS:Setup_Context_Menus()
+	-- not already enabled?
+	if (applicants_menu == false) then
+		-- add club finder applicant context menu
+		Menu.ModifyMenu("MENU_CLUB_FINDER_APPLICANT", function(owner, rootDescription)
+			-- display context menu
+			rootDescription:CreateDivider()
+			rootDescription:CreateTitle(NS.CommFlare.Title)
+			rootDescription:CreateButton(L["Get Information?"], function() NS:Show_Applicant_Info(owner, rootDescription) end)
+		end)
+
+		-- enabled
+		applicants_menu = true
+	end
+
 	-- community right click menu enabled?
 	if (NS.charDB.profile.communityRightClickMenu == true) then
 		-- not already enabled?
 		if (communities_menu == false) then
-			-- add club finder applicant context menu
-			Menu.ModifyMenu("MENU_CLUB_FINDER_APPLICANT", function(owner, rootDescription)
-				-- display context menu
-				rootDescription:CreateDivider()
-				rootDescription:CreateTitle(NS.CommFlare.Title)
-				rootDescription:CreateButton(L["Get Information?"], function() NS:Show_Applicant_Info(owner, rootDescription) end)
-			end)
-
 			-- add community context menu
 			Menu.ModifyMenu("MENU_UNIT_COMMUNITIES_WOW_MEMBER", function(owner, rootDescription, contextData)
 				-- display context menu

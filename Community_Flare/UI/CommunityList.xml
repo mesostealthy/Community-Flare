@@ -1,10 +1,10 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
-	<Script file="POIListFrame.lua" />
-	<Button name="CF_POIListEntryTemplate" registerForClicks="LeftButtonUp, RightButtonUp" virtual="true" mixin="CF_POIListEntryMixin">
+	<Script file="CommunityList.lua" />
+	<Button name="CF_CommunityListEntryTemplate" registerForClicks="LeftButtonUp, RightButtonUp" virtual="true" mixin="CF_CommunityListEntryMixin">
 		<Size y="20" />
 		<Frames>
-			<Frame parentKey="QueueFrame">
+			<Frame parentKey="CommunityFrame">
 				<Size y="20" />
 				<Anchors>
 					<Anchor point="LEFT" x="4" y="0" />
@@ -31,10 +31,10 @@
 		</NormalTexture>
 		<HighlightTexture file="Interface\FriendsFrame\UI-FriendsFrame-HighlightBar" alphaMode="ADD" setAllPoints="true" />
 	</Button>
-	<Frame name="CF_POIListFrameTemplate" mixin="CF_POIListMixin" virtual="true">
+	<Frame name="CF_CommunityListFrameTemplate" mixin="CF_CommunityListMixin" virtual="true">
 		<Layers>
 			<Layer level="BORDER">
-				<FontString parentKey="POICount" inherits="GameFontNormalSmall">
+				<FontString parentKey="CommunityCount" inherits="GameFontNormalSmall">
 					<Anchors>
 						<Anchor point="RIGHT" relativePoint="RIGHT" x="-5" />
 						<Anchor point="TOP" relativePoint="TOP" y="15" />
@@ -63,6 +63,12 @@
 					</Layer>
 				</Layers>
 			</EventFrame>
+			<Frame parentKey="EntryDropDown" inherits="UIDropDownMenuTemplate">
+				<Scripts>
+					<OnLoad function="CF_CommunityListEntryDropDown_OnLoad"/>
+					<OnHide function="CF_CommunityListEntryDropDown_OnHide"/>
+				</Scripts>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad" />
@@ -70,9 +76,9 @@
 			<OnUpdate method="OnUpdate" />
 		</Scripts>
 	</Frame>
-	<Frame name="CF_POIListFrame" toplevel="true" parent="UIParent" movable="true" resizable="true" enableMouse="true" hidden="true" mixin="CF_POIListFrameMixin">
+	<Frame name="CF_CommunityListFrame" toplevel="true" parent="UIParent" movable="true" resizable="true" enableMouse="true" hidden="true" mixin="CF_CommunityListFrameMixin">
 		<Size>
-			<AbsDimension x="300" y="300" />
+			<AbsDimension x="300" y="430" />
 		</Size>
 		<Anchors>
 			<Anchor point="CENTER" />
@@ -132,7 +138,7 @@
 						</Texture>
 					</Layer>
 					<Layer>
-						<FontString parentKey="Title" font="GameFontHighlight" text="Community Flare POI List Manager">
+						<FontString parentKey="Title" font="GameFontHighlight" text="CF Community List Manager">
 							<FontHeight val="13" />
 							<Color r="1" g="1" b="1" a="1" />
 							<Anchors>
@@ -143,7 +149,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Button parentKey="RefreshButton" registerForClicks="AnyDown" mixin="CF_POIListRefreshButtonMixin">
+					<Button parentKey="RefreshButton" registerForClicks="AnyDown" mixin="CF_CommunityListRefreshButtonMixin">
 						<Size x="20" y="20" />
 						<Anchors>
 							<Anchor point="RIGHT" x="-28" />
@@ -157,7 +163,7 @@
 						<NormalTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" alpha="0.2" setAllPoints="true" />
 						<HighlightTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" setAllPoints="true" />
 					</Button>
-					<Button parentKey="CloseButton" inherits="UIPanelCloseButton" mixin="CF_POIListCloseButtonMixin">
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButton" mixin="CF_CommunityListCloseButtonMixin">
 						<Anchors>
 							<Anchor point="RIGHT" x="-1" />
 							<Anchor point="TOP" y="-1" />
@@ -170,7 +176,7 @@
 					</Button>
 				</Frames>
 			</Frame>
-			<Frame parentKey="POIListFrame">
+			<Frame parentKey="CommunityListFrame">
 				<Anchors>
 					<Anchor point="BOTTOM" y="19" />
 					<Anchor point="LEFT" x="2" />
@@ -219,7 +225,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="POIsHeader">
+					<Frame parentKey="CommunitiesHeader">
 						<Size>
 							<AbsDimension y="20" />
 						</Size>
@@ -234,7 +240,7 @@
 								</Texture>
 							</Layer>
 							<Layer>
-								<FontString name="$parentFontString" font="GameFontHighlight" text="POIs">
+								<FontString name="$parentFontString" font="GameFontHighlight" text="Name">
 									<FontHeight val="13" />
 									<Color r="1" g="1" b="1" a="1" />
 									<Anchors>
@@ -244,8 +250,24 @@
 								</FontString>
 							</Layer>
 						</Layers>
+						<Frames>
+							<EditBox parentKey="SearchBox" inherits="BagSearchBoxTemplate" letters="15">
+								<Size x="100" y="20"/>
+								<Anchors>
+									<Anchor point="RIGHT" x="-140" />
+									<Anchor point="TOP" y="0" />
+								</Anchors>
+								<Scripts>
+									<OnEscapePressed function="CF_CommunityListSearchBox_OnEscapePressed"/>
+									<OnEnterPressed function="CF_CommunityListSearchBox_OnEnterPressed"/>
+									<OnEditFocusLost function="CF_CommunityListSearchBox_OnEditFocusLost"/>
+									<OnEditFocusGained function="CF_CommunityListSearchBox_OnEditFocusGained"/>
+									<OnTextChanged function="CF_CommunityListSearchBox_OnTextChanged"/>
+								</Scripts>
+							</EditBox>
+						</Frames>
 					</Frame>
-					<Frame parentKey="POIList" inherits="CF_POIListFrameTemplate">
+					<Frame parentKey="CommunityList" inherits="CF_CommunityListFrameTemplate">
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" x="0" y="0" />
 							<Anchor point="TOPLEFT" x="0" y="-20" />
@@ -253,7 +275,7 @@
 					</Frame>
 				</Frames>
 			</Frame>
-			<Button parentKey="ResizeBottomLeftButton" registerForClicks="AnyDown" mixin="CF_POIListResizeBottomLeftButtonMixin">
+			<Button parentKey="ResizeBottomLeftButton" registerForClicks="AnyDown" mixin="CF_CommunityListResizeBottomLeftButtonMixin">
 				<Size x="15" y="15" />
 				<Anchors>
 					<Anchor point="LEFT" x="2" />
@@ -270,7 +292,7 @@
 					<OnMouseUp method="OnMouseUp" />
 				</Scripts>
 			</Button>
-			<Button parentKey="ResizeBottomRightButton" registerForClicks="AnyDown" mixin="CF_POIListResizeBottomRightButtonMixin">
+			<Button parentKey="ResizeBottomRightButton" registerForClicks="AnyDown" mixin="CF_CommunityListResizeBottomRightButtonMixin">
 				<Size x="15" y="15" />
 				<Anchors>
 					<Anchor point="RIGHT" x="-2" />
@@ -286,10 +308,10 @@
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad" />
+			<OnKeyDown method="OnKeyDown" />
 			<OnShow method="OnShow" />
 			<OnDragStart method="OnDragStart" />
 			<OnDragStop method="OnDragStop" />
-			<OnEvent method="OnEvent" />
 		</Scripts>
 	</Frame>
 </Ui>

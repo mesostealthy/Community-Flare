@@ -5,18 +5,18 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local IsAltKeyDown                              = _G.IsAltKeyDown
-local IsControlKeyDown                          = _G.IsControlKeyDown
-local IsInGroup                                 = _G.IsInGroup
-local IsShiftKeyDown                            = _G.IsShiftKeyDown
-local SendChatMessage                           = _G.SendChatMessage
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local type                                      = _G.type
-local unpack                                    = _G.unpack
-local strformat                                 = _G.string.format
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local IsAltKeyDown                                = _G.IsAltKeyDown
+local IsControlKeyDown                            = _G.IsControlKeyDown
+local IsInGroup                                   = _G.IsInGroup
+local IsShiftKeyDown                              = _G.IsShiftKeyDown
+local SendChatMessage                             = _G.SendChatMessage
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local type                                        = _G.type
+local unpack                                      = _G.unpack
+local strformat                                   = _G.string.format
+local tsort                                       = _G.table.sort
 
 -- list bars
 function NS:Capping_List_Bars()

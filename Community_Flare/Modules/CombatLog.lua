@@ -134,8 +134,10 @@ function NS:Process_IOC_Events()
 		end
 
 		-- catapult?
-		local should_log = false
+		local path = nil
+		local factionColor = nil
 		local respawn_time = 180
+		local should_log = false
 		if (destName == L["Catapult"]) then
 			-- log this
 			should_log = true
@@ -157,8 +159,7 @@ function NS:Process_IOC_Events()
 					if (NS.CommFlare.CF.PlayerInfo and NS.CommFlare.CF.PlayerInfo.faction) then
 						-- player alliance?
 						local name = nil
-						local path = {136441}
-						local factionColor = nil
+						path = {136441}
 						if (NS.CommFlare.CF.PlayerInfo.faction == 1) then
 							-- hostile glaive?
 							if (hostile == true) then
@@ -227,8 +228,22 @@ function NS:Process_IOC_Events()
 					["name"] = destName,
 					["flags"] = destFlags,
 					["hostile"] = hostile,
+					["death_time"] = time(),
+					["respawn_time"] = respawn_time,
 					["timer"] = {},
 				}
+
+				-- has faction color?
+				if (factionColor) then
+					-- save faction color
+					NS.CommFlare.CF.ActiveTimers[destGUID].factionColor = factionColor
+				end
+
+				-- has path?
+				if (path) then
+					-- save path
+					NS.CommFlare.CF.ActiveTimers[destGUID].path = path
+				end
 
 				-- alert system enabled?
 				if (NS.db.global.iocVehicleAlertSystem == true) then

@@ -75,7 +75,7 @@ function NS:VignetteCheckForAlerts(list)
 		return
 	end
 
-	--in instance?
+	-- in instance?
 	local inInstance, instanceType = IsInInstance()
 	if (inInstance == true) then
 		-- finished

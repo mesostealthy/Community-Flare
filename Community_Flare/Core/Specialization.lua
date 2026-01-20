@@ -5,14 +5,14 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local GetClassInfo                              = _G.GetClassInfo
-local GetNumClasses                             = _G.GetNumClasses
-local GetNumSpecializationsForClassID           = _G.C_SpecializationInfo and _G.C_SpecializationInfo.GetNumSpecializationsForClassID or _G.GetNumSpecializationsForClassID
-local GetSpecializationInfoForClassID           = _G.GetSpecializationInfoForClassID
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local GetClassInfo                                = _G.GetClassInfo
+local GetNumClasses                               = _G.GetNumClasses
+local GetNumSpecializationsForClassID             = _G.C_SpecializationInfo and _G.C_SpecializationInfo.GetNumSpecializationsForClassID or _G.GetNumSpecializationsForClassID
+local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local strformat                                   = _G.string.format
 
 -- build classes
 NS.CommFlare.Classes = {}
@@ -29,7 +29,7 @@ function NS:Build_Classes()
 
 		-- add class info
 		NS.CommFlare.Classes[className].classID = classID
-		NS.CommFlare.Classes[className].classname = className
+		NS.CommFlare.Classes[className].className = className
 		NS.CommFlare.Classes[className].classFile = classFile
 		NS.CommFlare.Classes[className].specs = {}
 

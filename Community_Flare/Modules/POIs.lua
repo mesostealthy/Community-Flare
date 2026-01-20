@@ -5,17 +5,17 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local CopyTable                                 = _G.CopyTable
-local AreaPoiInfoGetAreaPOIForMap               = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                             = _G.C_Map.GetMapInfo
-local print                                     = _G.print
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local type                                      = _G.type
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local CopyTable                                   = _G.CopyTable
+local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
+local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
+local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
+local MapGetMapInfo                               = _G.C_Map.GetMapInfo
+local print                                       = _G.print
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local type                                        = _G.type
+local strformat                                   = _G.string.format
 
 -- get current POI's
 function NS:Get_Current_POIs()
@@ -122,27 +122,6 @@ function NS:List_POIs()
 
 	-- display count
 	print(strformat(L["Count: %d"], count))
-end
-
--- cancel active timers
-function NS:Cancel_Active_Timers(name)
-	-- has active timers?
-	if (NS.CommFlare.CF.ActiveTimers and next(NS.CommFlare.CF.ActiveTimers)) then
-		-- process all timers
-		for k,v in pairs(NS.CommFlare.CF.ActiveTimers) do
-			-- name matches?
-			if (v.name == name) then
-				-- timer exists?
-				if (v.timer) then
-					-- cancel timer
-					v.timer:Cancel()
-				end
-
-				-- clear active timer
-				NS.CommFlare.CF.ActiveTimers[k] = nil
-			end
-		end
-	end
 end
 
 -- process IOC nodes capped

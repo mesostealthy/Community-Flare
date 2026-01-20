@@ -1,3 +1,7 @@
-v1.34.001:
--Block game menu hotkeys inside PVP content will now block the Housing Dashboard opening in PVP content.
--Add new Housing Options -> Mark treasure location for Decor Treasure Hunt Quest?
+v2.00.001:
+-New Command: /comf clm to open the Community List Manager. Right click to open Member List Manager.
+-New Battleground Setting: Disable Tooltips while inside PVP content. (Hold Shift to override to view them.)
+-Disabled anything that was using the COMBAT LOG or is blocked while inside PVP content for Midnight.
+-Bumped TOC to v12.0.0
+
+DOCUMENTATION TO BE UPDATED LATER!

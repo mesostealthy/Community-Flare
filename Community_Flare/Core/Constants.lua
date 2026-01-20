@@ -5,62 +5,61 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
+local _G                                          = _G
+local GetSpellName                                = _G.C_Spell.GetSpellName
+local pairs                                       = _G.pairs
+local tinsert                                     = _G.table.insert
 
 -- epic battlegrounds
-NS.CommFlare.EpicBattlegrounds = {
-	["Random Epic Battleground"] = { id = 1, prefix = "EPIC" },
-	["Alterac Valley"] = { id = 2, prefix = "AV" },
-	["Isle of Conquest"] = { id = 3, prefix = "IOC" },
-	["Battle for Wintergrasp"] = { id = 4, prefix = "WG" },
-	["Wintergrasp"] = { id = 4, prefix = "WG" },
-	["Ashran"] = { id = 5, prefix = "ASH" },
-	["Korrak's Revenge"] = { id = 6, prefix = "KR" },
-}
+NS.CommFlare.EpicBattlegrounds = {}
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Random Epic Battleground"], id = 1, prefix = "EPIC" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Alterac Valley"], id = 2, prefix = "AV" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Ashran"], id = 3, prefix = "ASH" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Battle for Wintergrasp"], id = 4, prefix = "WG" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Isle of Conquest"], id = 5, prefix = "IOC" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Korrak's Revenge"], id = 6, prefix = "KR" })
 
 -- random battlegrounds
-NS.CommFlare.RandomBattlegrounds = {
-	["Random Battleground"] = { id = 1, prefix = "RBG" },
-	["Warsong Gulch"] = { id = 2, prefix = "WSG" },
-	["Arathi Basin"] = { id = 3, prefix = "AB" },
-	["Deephaul Ravine"] = { id = 4, prefix = "DHR" },
-	["Eye of the Storm"] = { id = 5, prefix = "EOTS" },
-	["The Battle for Gilneas"] = { id = 6, prefix = "BFG" },
-	["Twin Peaks"] = { id = 7, prefix = "TWP" },
-	["Silvershard Mines"] = { id = 8, prefix = "SSM" },
-	["Temple of Kotmogu"] = { id = 9, prefix = "TOK" },
-	["Seething Shore"] = { id = 10, prefix = "SSH" },
-	["Deepwind Gorge"] = { id = 11, prefix = "DWG" },
-}
+NS.CommFlare.RandomBattlegrounds = {}
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = RANDOM_BATTLEGROUND, id = 1, prefix = "RBG" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Warsong Gulch"], id = 2, prefix = "WSG" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Arathi Basin"], id = 3, prefix = "AB" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Deephaul Ravine"], id = 4, prefix = "DHR" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Eye of the Storm"], id = 5, prefix = "EOTS" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["The Battle for Gilneas"], id = 6, prefix = "BFG" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Twin Peaks"], id = 7, prefix = "TWP" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Silvershard Mines"], id = 8, prefix = "SSM" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Temple of Kotmogu"], id = 9, prefix = "TOK" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Seething Shore"], id = 10, prefix = "SSH" })
+tinsert(NS.CommFlare.RandomBattlegrounds, { name = L["Deepwind Gorge"], id = 11, prefix = "DWG" })
 
 -- brawls
 NS.CommFlare.Brawls = {
-	["Brawl: Arathi Blizzard"] = { id = 1, prefix = "BLIZZ" },
+	-- player queued strings?
 	["Arathi Basin Winter"] = { id = 1, prefix = "BLIZZ" },
-	["Brawl: Classic Ashran"] = { id = 2, prefix = "CLASH" },
 	["Classic Ashran"] = { id = 2, prefix = "CLASH" },
-	["Brawl: Comp Stomp"] = { id = 3, prefix = "COMP" },
 	["Comp Stomp"] = { id = 3, prefix = "COMP" },
-	["Brawl: Cooking: Impossible"] = { id = 4, prefix = "COOK" },
 	["Cooking: Impossible"] = { id = 4, prefix = "COOK" },
-	["Brawl: Deep Six"] = { id = 5, prefix = "DEEP" },
 	["Deep Six"] = { id = 5, prefix = "DEEP" },
-	["Brawl: Deepwind Dunk"] = { id = 6, prefix = "DUNK" },
-	["Deepwind Dunk"] = { id = 6, prefix = "DUNK" },
-	["Brawl: Gravity Lapse"] = { id = 7, prefix = "GRAV" },
 	["Gravity Lapse"] = { id = 7, prefix = "GRAV" },
-	["Brawl: Packed House"] = { id = 8, prefix = "PACK" },
 	["Packed House"] = { id = 8, prefix = "PACK" },
 	["All Arenas"] = { id = 8, prefix = "PACK" },
-	["Brawl: Shado-Pan Showdown"] = { id = 9, prefix = "SHAD" },
 	["Shado-Pan Showdown"] = { id = 9, prefix = "SHAD" },
-	["Brawl: Southshore vs. Tarren Mill"] = { id = 10, prefix = "SSvTM" },
-	["Southshore vs. Tarren Mill"] = { id = 10, prefix = "SSvTM" },
-	["Brawl: Temple of Hotmogu"] = { id = 11, prefix = "BRTOH" },
 	["Temple of Hotmogu"] = { id = 11, prefix = "BRTOH" },
-	["Brawl: Warsong Scramble"] = { id = 12, prefix = "BRWSG" },
 	["Warsong Scramble"] = { id = 12, prefix = "BRWSG" },
 }
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Arathi Blizzard"], id = 1, prefix = "BLIZZ" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Classic Ashran"], id = 2, prefix = "CLASH" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Comp Stomp"], id = 3, prefix = "COMP" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Cooking: Impossible"], id = 4, prefix = "COOK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Deep Six"], id = 5, prefix = "DEEP" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Deepwind Dunk"], id = 6, prefix = "DUNK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Gravity Lapse"], id = 7, prefix = "GRAV" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Packed House"], id = 8, prefix = "PACK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Shado-Pan Showdown"], id = 9, prefix = "SHAD" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Southshore vs. Tarren Mill"], id = 10, prefix = "SSvTM" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Temple of Hotmogu"], id = 11, prefix = "BRTOH" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Warsong Scramble"], id = 12, prefix = "BRWSG" })
 
 -- hearth stone spells
 NS.CommFlare.HearthStoneSpells = {
@@ -266,3 +265,26 @@ NS.CommFlare.ReportTimesLeft = {
 	[45] = true,
 	[60] = true,
 }
+
+-- build spells
+function NS:Build_Spells()
+	-- process hearth stone spells
+	for k,v in pairs(NS.CommFlare.HearthStoneSpells) do
+		-- get name
+		local name = GetSpellName(k)
+		if (name) then
+			-- update name
+			NS.CommFlare.HearthStoneSpells[k] = name
+		end
+	end
+
+	-- process teleport spells
+	for k,v in pairs(NS.CommFlare.TeleportSpells) do
+		-- get name
+		local name = GetSpellName(k)
+		if (name) then
+			-- update name
+			NS.CommFlare.TeleportSpells[k] = name
+		end
+	end
+end
