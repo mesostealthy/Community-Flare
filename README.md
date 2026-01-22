@@ -20,6 +20,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v2.00.003:
+-BUGFIXES: Chat Message Filtering system disabled due to new Midnight restrictions!
+
 v2.00.002:
 -BUGFIXES: Fixed some LUA errors found for Midnight prepatch!
 
