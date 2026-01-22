@@ -60,6 +60,10 @@ tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Shado-Pan Showdown"], id = 9, pr
 tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Southshore vs. Tarren Mill"], id = 10, prefix = "SSvTM" })
 tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Temple of Hotmogu"], id = 11, prefix = "BRTOH" })
 tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Warsong Scramble"], id = 12, prefix = "BRWSG" })
+tinsert(NS.CommFlare.Brawls, { name = L["Random Training Grounds"], id = 13, prefix = "RTG" })
+tinsert(NS.CommFlare.Brawls, { name = "Arathi Basin Training Grounds", id = 14, prefix = "TGAB" })		-- TODO: localize
+tinsert(NS.CommFlare.Brawls, { name = "Silvershard Mines Training Grounds", id = 15, prefix = "TGSSM" })	-- TODO: localize
+tinsert(NS.CommFlare.Brawls, { name = "The Battle for Gilneas Training Grounds", id = 16, prefix = "TGBFG" })	-- TODO: localize
 
 -- hearth stone spells
 NS.CommFlare.HearthStoneSpells = {

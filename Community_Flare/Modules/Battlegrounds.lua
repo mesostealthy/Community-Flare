@@ -15,6 +15,7 @@ local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpirat
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetBattlefieldTimeWaited                    = _G.GetBattlefieldTimeWaited
 local GetDisplayedInviteType                      = _G.GetDisplayedInviteType
+local GetLFGDungeonInfo                           = _G.GetLFGDungeonInfo
 local GetLFGInfoServer                            = _G.GetLFGInfoServer
 local GetLFGQueueStats                            = _G.GetLFGQueueStats
 local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
@@ -44,6 +45,8 @@ local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEqui
 local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
 local EquipmentSetUseEquipmentSet                 = _G.C_EquipmentSet.UseEquipmentSet
 local ItemGetItemCount                            = _G.C_Item.GetItemCount
+local LFGInfo_GetAllEntriesForCategory            = _G.C_LFGInfo.GetAllEntriesForCategory
+local LFGInfo_HideNameFromUI                      = _G.C_LFGInfo.HideNameFromUI
 local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                               = _G.C_Map.GetMapInfo
 local PartyInfoIsPartyFull                        = _G.C_PartyInfo.IsPartyFull
@@ -2232,18 +2235,8 @@ function NS:Report_Joined_With_Estimated_Time(index)
 	-- brawl?
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	if (index == "Brawl") then
-		-- get brawl info
-		local brawlInfo
-		if (PvPIsInBrawl() == true) then
-			-- get active brawl info
-			brawlInfo = PvPGetActiveBrawlInfo()
-		else
-			-- get available brawl info
-			brawlInfo = PvPGetAvailableBrawlInfo()
-		end
-
 		-- is tracked pvp?
-		local mapName = brawlInfo.name
+		local mapName = NS.CommFlare.CF.LocalQueues[index].name
 		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
 		if (isTracked == true) then
 			-- get lfg queue stats
@@ -2786,18 +2779,42 @@ function NS:Update_Brawl_Status()
 	NS:Verify_Role_Counts()
 	local inParty, joined, queued, _, _, _, slotCount, category, leader, tank, healer, dps = GetLFGInfoServer(LE_LFG_CATEGORY_BATTLEFIELD)
 	if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
-		-- get brawl info
-		local brawlInfo
-		if (PvPIsInBrawl() == true) then
-			brawlInfo = PvPGetActiveBrawlInfo()
-		else
-			brawlInfo = PvPGetAvailableBrawlInfo()
+		-- found battlefield queue?
+		local mapName = nil
+		local mode, submode = GetLFGMode(LE_LFG_CATEGORY_BATTLEFIELD)
+		if (mode) then
+			-- process all
+			local entryIDs = LFGInfo_GetAllEntriesForCategory(LE_LFG_CATEGORY_BATTLEFIELD)
+			for _, entryID in ipairs(entryIDs) do
+				-- not hidden?
+				if not LFGInfo_HideNameFromUI(entryID) then
+					-- get lfg dungeon info
+					local instanceName = GetLFGDungeonInfo(entryID)
+					if (instanceName) then
+						-- update map name
+						mapName = instanceName
+					end
+				end
+			end
 		end
 
-		-- found brawl name
-		if (brawlInfo and brawlInfo.name and (brawlInfo.name ~= "")) then
+		-- map name not found yet?
+		if (not mapName) then
+			-- get brawl info
+			local brawlInfo
+			if (PvPIsInBrawl() == true) then
+				brawlInfo = PvPGetActiveBrawlInfo()
+			else
+				brawlInfo = PvPGetAvailableBrawlInfo()
+			end
+
+			-- use brawl name
+			mapName = brawlInfo.name
+		end
+
+		-- map name found now?
+		if (mapName) then
 			-- joined?
-			local mapName = brawlInfo.name
 			if (joined == true) then
 				-- queued?
 				if (queued == true) then

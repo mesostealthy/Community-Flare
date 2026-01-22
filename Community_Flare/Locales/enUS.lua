@@ -190,6 +190,7 @@ L["Eye of the Storm"] = true
 L["Isle of Conquest"] = true
 L["Korrak's Revenge"] = true
 L["Random Epic Battleground"] = true
+L["Random Training Grounds"] = true
 L["Seething Shore"] = true
 L["Silvershard Mines"] = true
 L["Temple of Kotmogu"] = true

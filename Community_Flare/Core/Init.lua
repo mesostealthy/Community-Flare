@@ -54,6 +54,7 @@ local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInf
 local BattleNetGetFriendAccountInfo               = _G.C_BattleNet.GetFriendAccountInfo
 local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
 local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
+local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
 local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
 local ClubGetClubMembers                          = _G.C_Club.GetClubMembers
@@ -694,6 +695,12 @@ end
 
 -- send to party, whisper, or Battle.NET message
 function NS:SendMessage(sender, msg)
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
+	end
+
 	-- party?
 	if (not sender) then
 		-- in local party?

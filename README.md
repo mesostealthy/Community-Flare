@@ -20,6 +20,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v2.00.002:
+-BUGFIXES: Fixed some LUA errors found for Midnight prepatch!
+
 v2.00.001:
 -New Command: /comf clm to open the Community List Manager. Right click to open Member List Manager.
 -New Battleground Setting: Disable Tooltips while inside PVP content. (Hold Shift to override to view them.)

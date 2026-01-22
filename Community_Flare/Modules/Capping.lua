@@ -10,7 +10,6 @@ local IsAltKeyDown                                = _G.IsAltKeyDown
 local IsControlKeyDown                            = _G.IsControlKeyDown
 local IsInGroup                                   = _G.IsInGroup
 local IsShiftKeyDown                              = _G.IsShiftKeyDown
-local SendChatMessage                             = _G.SendChatMessage
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local type                                        = _G.type
@@ -111,13 +110,13 @@ local function ReportBar(bar, channel)
 		local faction = colorid == "colorHorde" and _G.FACTION_HORDE or colorid == "colorAlliance" and _G.FACTION_ALLIANCE or ""
 		local timeLeft = bar.candyBarDuration:GetText()
 		if (not timeLeft:find("[:%.]")) then timeLeft = "0:" .. timeLeft end
-		SendChatMessage(strformat("Report: %s - %s %s", bar:GetLabel(), timeLeft, faction == "" and faction or "(" .. faction .. ")"), channel)
+		NS:SendMessage(channel, strformat("Report: %s - %s %s", bar:GetLabel(), timeLeft, faction == "" and faction or "(" .. faction .. ")"))
 	else
 		-- get custom message
 		local msg = custom(bar)
 		if (msg) then
 			-- send chat message
-			SendChatMessage(strformat("Report: %s", msg), channel)
+			NS:SendMessage(channel, strformat("Report: %s", msg))
 		end
 	end
 end

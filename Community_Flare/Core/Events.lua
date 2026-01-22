@@ -57,6 +57,7 @@ local AddOnsIsAddOnLoaded                         = _G.C_AddOns.IsAddOnLoaded
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
 local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
+local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
 local ClubAreMembersReady                         = _G.C_Club.AreMembersReady
 local ClubFinderReturnClubApplicantList           = _G.C_ClubFinder.ReturnClubApplicantList
@@ -198,6 +199,12 @@ end
 function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	local prefix, text, channel, sender, target, zoneChannelID, localID, name, instanceID = ...
 
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
+	end
+
 	-- sanity checks
 	if (not prefix or not text or not sender) then
 		-- finished
@@ -307,13 +314,10 @@ end
 function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- invalid sender id?
@@ -384,13 +388,10 @@ end
 function NS.CommFlare:CHAT_MSG_COMMUNITIES_CHANNEL(msg, ...)
 	local text, sender, _, _, _, _, _, _, channelBaseName, _, _, _, bnSenderID = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- has channel base name?
@@ -414,13 +415,10 @@ end
 function NS:Event_Chat_Message_Party(...)
 	local text, sender = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- skip messages from yourself
@@ -473,13 +471,10 @@ end
 function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 	local text, sender = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- ruffious?
@@ -531,13 +526,10 @@ end
 function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
 	local text, sender = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- no text?
@@ -626,13 +618,10 @@ end
 function NS.CommFlare:CHAT_MSG_RAID_WARNING(msg, ...)
 	local text, sender = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- found rdy crate warning?
@@ -646,13 +635,10 @@ end
 function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 	local text, sender = ...
 
-	-- midnight?
-	if (NS.CommFlare.isMidnight == true) then
-		-- has secret values?
-		if (issecretvalue(text) or issecretvalue(sender)) then
-			-- finished
-			return
-		end
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
 	end
 
 	-- version check?
@@ -1392,6 +1378,12 @@ function NS.CommFlare:LFG_PROPOSAL_SUCCEEDED(msg)
 		NS.CommFlare.CF.LocalQueues[index].status = "entered"
 		NS:Update_Brawl_Status()
 	end
+end
+
+-- process lfg queue status update
+function NS.CommFlare:LFG_QUEUE_STATUS_UPDATE(msg)
+	-- update brawl status
+	NS:Update_Brawl_Status()
 end
 
 -- process lfg role check role chosen
@@ -2656,30 +2648,33 @@ end
 function NS.CommFlare:UNIT_AURA(msg, ...)
 	local unitTarget, updateInfo = ...
 
-	-- check for player
-	if (unitTarget == "player") then
-		-- in battleground?
-		if (NS:IsInBattleground() == true) then
-			-- any added auras?
-			if (updateInfo.addedAuras) then
-				-- process all added auras
-				for k,v in ipairs(updateInfo.addedAuras) do
-					-- reported for inactive?
-					if (v.spellId == 94028) then
-						-- issue local raid warning (with raid warning audio sound)
-						FlashClientIcon()
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: REPORTED INACTIVE!\nGet into combat quickly!"])
-					-- mercenary contract?
-					elseif ((v.spellId == 193472) or (v.spellId == 193475)) then
-						-- are you in a party?
-						if (IsInGroup() and not IsInRaid()) then
-							-- send party message
-							NS:SendMessage(nil, strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
+	-- not midnight?
+	if (NS.CommFlare.isMidnight == false) then
+		-- check for player
+		if (unitTarget == "player") then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
+				-- any added auras?
+				if (updateInfo.addedAuras) then
+					-- process all added auras
+					for k,v in ipairs(updateInfo.addedAuras) do
+						-- reported for inactive?
+						if (v.spellId == 94028) then
+							-- issue local raid warning (with raid warning audio sound)
+							FlashClientIcon()
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: REPORTED INACTIVE!\nGet into combat quickly!"])
+						-- mercenary contract?
+						elseif ((v.spellId == 193472) or (v.spellId == 193475)) then
+							-- are you in a party?
+							if (IsInGroup() and not IsInRaid()) then
+								-- send party message
+								NS:SendMessage(nil, strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
+							end
+						-- shadow rift?
+						elseif (v.spellId == 353293) then
+							-- issue local raid warning (with raid warning audio sound)
+							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"])
 						end
-					-- shadow rift?
-					elseif (v.spellId == 353293) then
-						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"])
 					end
 				end
 			end
@@ -3040,6 +3035,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("LFG_PROPOSAL_FAILED")
 	self:RegisterEvent("LFG_PROPOSAL_SHOW")
 	self:RegisterEvent("LFG_PROPOSAL_SUCCEEDED")
+	self:RegisterEvent("LFG_QUEUE_STATUS_UPDATE")
 	self:RegisterEvent("LFG_ROLE_CHECK_ROLE_CHOSEN")
 	self:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 	self:RegisterEvent("LFG_UPDATE")
@@ -3115,6 +3111,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("LFG_PROPOSAL_FAILED")
 	self:UnregisterEvent("LFG_PROPOSAL_SHOW")
 	self:UnregisterEvent("LFG_PROPOSAL_SUCCEEDED")
+	self:UnregisterEvent("LFG_QUEUE_STATUS_UPDATE")
 	self:UnregisterEvent("LFG_ROLE_CHECK_ROLE_CHOSEN")
 	self:UnregisterEvent("LFG_ROLE_CHECK_SHOW")
 	self:UnregisterEvent("LFG_UPDATE")
