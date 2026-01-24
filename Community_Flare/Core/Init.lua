@@ -48,7 +48,6 @@ local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
 local UnitInParty                                 = _G.UnitInParty
 local UnitName                                    = _G.UnitName
 local UnitRealmRelationship                       = _G.UnitRealmRelationship
-local AuraUtilForEachAura                         = _G.AuraUtil.ForEachAura
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
 local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
 local BattleNetGetFriendAccountInfo               = _G.C_BattleNet.GetFriendAccountInfo
@@ -76,6 +75,7 @@ local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEna
 local SocialQueueGetGroupForPlayer                = _G.C_SocialQueue.GetGroupForPlayer
 local TimerAfter                                  = _G.C_Timer.After
 local TraitsGenerateImportString                  = _G.C_Traits.GenerateImportString
+local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
@@ -693,6 +693,18 @@ function NS:SaveSession()
 	end
 end
 
+-- send addon message
+function NS:SendAddonMessage(prefix, text, distribution, target)
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
+	end
+
+	-- send addon message
+	NS.CommFlare:SendCommMessage(prefix, text, distribution, target)
+end
+
 -- send to party, whisper, or Battle.NET message
 function NS:SendMessage(sender, msg)
 	-- in chat messaging lockdown?
@@ -1289,25 +1301,21 @@ end
 function NS:CheckForAura(unit, type, auraName)
 	-- save global variable if aura is active
 	NS.CommFlare.CF.HasAura = false
-	AuraUtilForEachAura(unit, type, nil, function(...)
-		-- this aura?
-		local name, icon, count, debuffType, duration, expirationTime = ...
-		if (name == auraName) then
-			-- not created?
-			if (not NS.CommFlare.CF.AuraData) then
-				-- initialize
-				NS.CommFlare.CF.AuraData = {}
-			end
-
-			-- found aura / save data
-			NS.CommFlare.CF.HasAura = true
-			NS.CommFlare.CF.AuraData.name = name
-			NS.CommFlare.CF.AuraData.duration = duration
-			NS.CommFlare.CF.AuraData.expirationTime = expirationTime
-			NS.CommFlare.CF.AuraData.timeLeft = expirationTime - GetTime()
-			return true
+	local info = UnitAuras_GetAuraDataBySpellName(unit, auraName, type)
+	if (info and info[1]) then
+		-- not created?
+		if (not NS.CommFlare.CF.AuraData) then
+			-- initialize
+			NS.CommFlare.CF.AuraData = {}
 		end
-	end)
+
+		-- found aura / save data
+		NS.CommFlare.CF.HasAura = true
+		NS.CommFlare.CF.AuraData.name = info[1].name
+		NS.CommFlare.CF.AuraData.duration = info[1].duration
+		NS.CommFlare.CF.AuraData.expirationTime = info[1].expirationTime
+		NS.CommFlare.CF.AuraData.timeLeft = info[1].expirationTime - GetTime()
+	end
 end
 
 -- popup box

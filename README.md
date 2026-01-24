@@ -20,6 +20,10 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v2.00.004:
+-BUGFIXES: Addon Messages are not sent during Chat Messaging Lockdowns anymore.
+-BUGFIXES: Changed Mercenary Contract check to new C_UnitAuras.
+
 v2.00.003:
 -BUGFIXES: Chat Message Filtering system disabled due to new Midnight restrictions!
 

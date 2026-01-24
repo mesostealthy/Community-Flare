@@ -319,10 +319,10 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 							local message = strformat("READY_CHECK:%s:%s", NS.CommFlare.Version, NS.CommFlare.Build)
 							if (IsInRaid()) then
 								-- send raid addon message
-								NS.CommFlare:SendCommMessage(ADDON_NAME, message, "RAID")
+								NS:SendAddonMessage(ADDON_NAME, message, "RAID")
 							else
 								-- send party addon message
-								NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+								NS:SendAddonMessage(ADDON_NAME, message, "PARTY")
 							end
 						end
 					end

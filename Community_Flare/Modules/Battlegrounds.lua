@@ -1945,7 +1945,7 @@ function NS:Get_Battleground_Status()
 				if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
 					-- issue capping gate request command
 					NS.CommFlare.CF.NeedAddonData = true
-					NS.CommFlare:SendCommMessage("Capping", "tr", "INSTANCE_CHAT")
+					NS:SendAddonMessage("Capping", "tr", "INSTANCE_CHAT")
 
 					-- set text to alterac valley status
 					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %s = %d/4; %s = %d/4; %d %s",
@@ -1973,7 +1973,7 @@ function NS:Get_Battleground_Status()
 				elseif (NS.CommFlare.CF.MapID == 1334) then
 					-- issue capping gate request command
 					NS.CommFlare.CF.NeedAddonData = true
-					NS.CommFlare:SendCommMessage("Capping", "twr", "INSTANCE_CHAT")
+					NS:SendAddonMessage("Capping", "twr", "INSTANCE_CHAT")
 
 					-- set text to wintergrasp status
 					text = strformat("%s (%s): %s; %s = %d %s, %d %s; %s %s; %s %s; %s: %d/3; %d %s",
@@ -1989,7 +1989,7 @@ function NS:Get_Battleground_Status()
 				elseif (NS.CommFlare.CF.MapID == 169) then
 					-- issue capping gate request command
 					NS.CommFlare.CF.NeedAddonData = true
-					NS.CommFlare:SendCommMessage("Capping", "gr", "INSTANCE_CHAT")
+					NS:SendAddonMessage("Capping", "gr", "INSTANCE_CHAT")
 
 					-- set text to isle of conquest status
 					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s: %d/3; %s = %s; %s: %d/3; %d %s",

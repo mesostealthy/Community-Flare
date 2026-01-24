@@ -1116,10 +1116,10 @@ function NS.CommFlare:GROUP_JOINED(msg, ...)
 						-- are you in a raid?
 						if (IsInRaid()) then
 							-- send addon message to raid
-							NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+							NS:SendAddonMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
 						else
 							-- send addon message to party
-							NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+							NS:SendAddonMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
 						end
 					end)
 				end
@@ -1273,7 +1273,7 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				end
 
 				-- send party addon message
-				NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+				NS:SendAddonMessage(ADDON_NAME, message, "PARTY")
 			end
 
 			-- check current players in home party
@@ -1986,10 +1986,10 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 				local inInstance, instanceType = IsInInstance()
 				if (inInstance) then
 					-- send addon message to battleground commander INSTANCE_CHAT
-					NS.CommFlare:SendCommMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
+					NS:SendAddonMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
 				else
 					-- send addon message to battleground commander RAID
-					NS.CommFlare:SendCommMessage("Bgc:syncData", syncData, "RAID")
+					NS:SendAddonMessage("Bgc:syncData", syncData, "RAID")
 				end
 			end
 		end
@@ -2212,10 +2212,10 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 						local inInstance, instanceType = IsInInstance()
 						if (inInstance) then
 							-- send addon message to battleground commander INSTANCE_CHAT
-							NS.CommFlare:SendCommMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
+							NS:SendAddonMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
 						else
 							-- send addon message to battleground commander RAID
-							NS.CommFlare:SendCommMessage("Bgc:syncData", syncData, "RAID")
+							NS:SendAddonMessage("Bgc:syncData", syncData, "RAID")
 						end
 					end
 				end
@@ -2406,7 +2406,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 			-- are you group leader?
 			if (NS:IsGroupLeader() == true) then
 				-- send raid addon message
-				NS.CommFlare:SendCommMessage(ADDON_NAME, "READY_CHECK", "RAID")
+				NS:SendAddonMessage(ADDON_NAME, "READY_CHECK", "RAID")
 			end
 
 			-- still has popped battleground?
@@ -2419,7 +2419,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 			-- are you group leader?
 			if (NS:IsGroupLeader() == true) then
 				-- send party addon message
-				NS.CommFlare:SendCommMessage(ADDON_NAME, "READY_CHECK", "PARTY")
+				NS:SendAddonMessage(ADDON_NAME, "READY_CHECK", "PARTY")
 			end
 
 			-- still has popped battleground?
@@ -2958,12 +2958,12 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 
 		-- send instance addon message
 		local message = strformat("!CommFlare@%s@VERSION_CHECK@%s", NS.CommFlare.Version, tostring(mainID))
-		NS.CommFlare:SendCommMessage(ADDON_NAME, message, "INSTANCE_CHAT")
+		NS:SendAddonMessage(ADDON_NAME, message, "INSTANCE_CHAT")
 
 		-- in a guild?
 		if (IsInGuild()) then
 			-- send guild addon message
-			NS.CommFlare:SendCommMessage(ADDON_NAME, message, "GUILD")
+			NS:SendAddonMessage(ADDON_NAME, message, "GUILD")
 		end
 
 		-- set version sent
@@ -2986,10 +2986,10 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 				local message = strformat("!CommFlare@%s@ZONE_CHANGED_NEW_AREA@%s:%s", NS.CommFlare.Version, tostring(mapID), tostring(mapName))
 				if (IsInRaid()) then
 					-- send raid addon message
-					NS.CommFlare:SendCommMessage(ADDON_NAME, message, "RAID")
+					NS:SendAddonMessage(ADDON_NAME, message, "RAID")
 				else
 					-- send party addon message
-					NS.CommFlare:SendCommMessage(ADDON_NAME, message, "PARTY")
+					NS:SendAddonMessage(ADDON_NAME, message, "PARTY")
 				end
 			end
 		end

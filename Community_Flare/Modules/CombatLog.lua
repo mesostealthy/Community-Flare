@@ -89,7 +89,7 @@ function NS:Process_Ashran_Events()
 						if (npc_name and (npc_name ~= "")) then
 							-- send instance addon message
 							local message = strformat("!CommFlare@%s@BOSS_ATTACKED@%s", NS.CommFlare.Version, npc_name)
-							NS.CommFlare:SendCommMessage(ADDON_NAME, message, "INSTANCE_CHAT")
+							NS:SendAddonMessage(ADDON_NAME, message, "INSTANCE_CHAT")
 						end
 
 						-- issue warning
@@ -212,7 +212,7 @@ function NS:Process_IOC_Events()
 
 				-- send instance addon message
 				local message = strformat("!CommFlare@%s@VEHICLE_DEAD@%s,%s,%s,%s", NS.CommFlare.Version, tostring(timestamp), tostring(destGUID), tostring(destName), tostring(destFlags))
-				NS.CommFlare:SendCommMessage(ADDON_NAME, message, "INSTANCE_CHAT")
+				NS:SendAddonMessage(ADDON_NAME, message, "INSTANCE_CHAT")
 
 				-- is hostile?
 				local hostile = false

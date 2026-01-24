@@ -176,15 +176,15 @@ function NS:Request_Party_Leader(owner, rootDescription, contextData)
 		local inInstance, instanceType = IsInInstance()
 		if (inInstance) then
 			-- send addon message to raid
-			NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "INSTANCE_CHAT")
+			NS:SendAddonMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "INSTANCE_CHAT")
 		else
 			-- send addon message to raid
-			NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
+			NS:SendAddonMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "RAID")
 		end
 	-- local party?
 	elseif (IsInGroup(LE_PARTY_CATEGORY_HOME)) then
 		-- send addon message to party
-		NS.CommFlare:SendCommMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
+		NS:SendAddonMessage(ADDON_NAME, "REQUEST_PARTY_LEAD", "PARTY")
 	end
 end
 
