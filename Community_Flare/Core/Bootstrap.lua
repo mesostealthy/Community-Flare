@@ -116,6 +116,7 @@ NS.CommFlare.CF = {
 	PreviousCount = 0,
 	RegenOptions = 0,
 	QuestID = 0,
+	ScoreRequested = 0,
 	StreamsRetryCount = 0,
 	SavedTime = 0,
 

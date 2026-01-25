@@ -20,15 +20,19 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v2.00.005:
+-BUGFIX: Disabled Always remove, then re-add community channels to general? (Caused LUA ERRORS!)
+-BUGFIX: Properly shows Community Members upon Gates opening for PvP Content.
+
 v2.00.004:
--BUGFIXES: Addon Messages are not sent during Chat Messaging Lockdowns anymore.
--BUGFIXES: Changed Mercenary Contract check to new C_UnitAuras.
+-BUGFIX: Addon Messages are not sent during Chat Messaging Lockdowns anymore.
+-BUGFIX: Changed Mercenary Contract check to new C_UnitAuras.
 
 v2.00.003:
--BUGFIXES: Chat Message Filtering system disabled due to new Midnight restrictions!
+-BUGFIX: Chat Message Filtering system disabled due to new Midnight restrictions!
 
 v2.00.002:
--BUGFIXES: Fixed some LUA errors found for Midnight prepatch!
+-BUGFIX: Fixed some LUA errors found for Midnight prepatch!
 
 v2.00.001:
 -New Command: /comf clm to open the Community List Manager. Right click to open Member List Manager.

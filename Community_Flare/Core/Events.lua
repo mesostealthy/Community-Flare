@@ -356,7 +356,7 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = bnSenderID
 				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction(-1)
+				SetBattlefieldScoreFaction()
 				RequestBattlefieldScoreData()
 
 				-- delay 0.5 seconds
@@ -449,7 +449,7 @@ function NS:Event_Chat_Message_Party(...)
 						-- request battlefield score
 						NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 						NS.CommFlare.CF.WaitForUpdate["party"] = true
-						SetBattlefieldScoreFaction(-1)
+						SetBattlefieldScoreFaction()
 						RequestBattlefieldScoreData()
 
 						-- delay 0.5 seconds
@@ -661,7 +661,7 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = sender
 				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction(-1)
+				SetBattlefieldScoreFaction()
 				RequestBattlefieldScoreData()
 
 				-- delay 0.5 seconds
@@ -1828,10 +1828,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			NS:Refresh_Active_Timers()
 		end
 
-		-- verify club streams
-		NS.CommFlare.CF.StreamsRetryCount = 0
-		local clubs = NS:Get_Enabled_Clubs()
-		NS:Verify_Club_Streams(clubs)
+		-- TODO: verify club streams
+		--NS.CommFlare.CF.StreamsRetryCount = 0
+		--local clubs = NS:Get_Enabled_Clubs()
+		--NS:Verify_Club_Streams(clubs)
 
 		-- update pois
 		NS:UpdatePOIs()
@@ -1930,6 +1930,11 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	if (PvPGetActiveMatchDuration() > 0) then
 		-- match started
 		NS.CommFlare.CF.MatchStatus = 2
+
+		-- reload variables
+		NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
+		NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
+		NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
 	end
 
 	-- display queue entry time left enabled?
@@ -2037,26 +2042,15 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	local status = NS:Get_Current_Battleground_Status()
 	if (status == true) then
 		-- in battleground?
-		local timer = 0.0
 		if (NS:IsInBattleground() == true) then
 			-- battlefield score needs updating?
 			if (PVPMatchScoreboard.selectedTab ~= 1) then
 				-- request battlefield score
-				SetBattlefieldScoreFaction(-1)
+				NS.CommFlare.CF.ScoreRequested = 2
+				SetBattlefieldScoreFaction()
 				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
 			end
 		end
-
-		-- start processing
-		TimerAfter(timer, function()
-			-- update battleground / member / roster stuff
-			NS:Update_Battleground_Stuff(true, false)
-			NS:Update_Member_Statistics("completed")
-			NS:Log_Match_Roster()
-		end)
 	end
 
 	-- use proper count
@@ -2182,24 +2176,6 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			NS.CommFlare.CF.MatchStartDate = date()
 			NS.CommFlare.CF.MatchStartTime = time()
 
-			-- battlefield score needs updating?
-			local timer = 0.0
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				SetBattlefieldScoreFaction(-1)
-				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
-			end
-
-			-- start processing
-			TimerAfter(timer, function()
-				-- update battleground / member / roster stuff
-				NS:Update_Battleground_Stuff(true, true)
-				NS:Update_Member_Statistics("started")
-			end)
-
 			-- are you in a raid?
 			if (IsInRaid()) then
 				-- are you not raid leader?
@@ -2219,6 +2195,14 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 						end
 					end
 				end
+			end
+
+			-- battlefield score needs updating?
+			if (PVPMatchScoreboard.selectedTab ~= 1) then
+				-- request battlefield score
+				NS.CommFlare.CF.ScoreRequested = 1
+				SetBattlefieldScoreFaction()
+				RequestBattlefieldScoreData()
 			end
 		end
 	end
@@ -2758,6 +2742,21 @@ end
 
 -- process update battlefield score
 function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
+	-- match just started?
+	if (NS.CommFlare.CF.ScoreRequested == 1) then
+		-- update battleground / member / roster stuff
+		NS.CommFlare.CF.ScoreRequested = 0
+		NS:Update_Battleground_Stuff(true, true)
+		NS:Update_Member_Statistics("started")
+	-- match just ended?
+	elseif (NS.CommFlare.CF.ScoreRequested == 2) then
+		-- update battleground / member / roster stuff
+		NS.CommFlare.CF.ScoreRequested = 0
+		NS:Update_Battleground_Stuff(true, false)
+		NS:Update_Member_Statistics("completed")
+		NS:Log_Match_Roster()
+	end
+
 	-- inactive?
 	if (NS.CommFlare.CF.WaitForUpdate["inactive"] == true) then
 		-- check for inactive players

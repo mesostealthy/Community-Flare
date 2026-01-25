@@ -376,6 +376,8 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.LastBossRW = 0
 	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
+	NS.CommFlare.CF.MatchEndTime = 0
+	NS.CommFlare.CF.MatchStartDate = ""
 	NS.CommFlare.CF.MatchStartTime = 0
 	NS.CommFlare.CF.MatchStatus = 1
 	NS.CommFlare.CF.NumAllyGlaives = 0

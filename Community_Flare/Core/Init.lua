@@ -706,7 +706,7 @@ function NS:SendAddonMessage(prefix, text, distribution, target)
 end
 
 -- send to party, whisper, or Battle.NET message
-function NS:SendMessage(sender, msg)
+function NS:SendMessage(sender, msg, channel)
 	-- in chat messaging lockdown?
 	if (ChatInfoInChatMessagingLockdown()) then
 		-- finished
@@ -722,8 +722,12 @@ function NS:SendMessage(sender, msg)
 		end
 	-- string?
 	elseif (type(sender) == "string") then
+		-- channel?
+		if (sender == "CHANNEL") then
+			-- send to channel (hardware click required)
+			SendChatMessage(msg, "CHANNEL", nil, channel)
 		-- guild?
-		if (sender == "GUILD") then
+		elseif (sender == "GUILD") then
 			-- in guild?
 			if (IsInGuild()) then
 				-- send to guild
@@ -869,27 +873,6 @@ function NS:ReaddCommunityChatWindow(clubId, streamId)
 	-- add community chat window
 	NS:AddCommunityChatWindow(clubId, streamId)
 	return true
-end
-
--- re-add community channels on initial load
-function NS:ReaddChannelsInitialLoad()
-	-- has main community?
-	if (NS.charDB.profile.communityMain > 1) then
-		-- readd community chat window
-		NS:ReaddCommunityChatWindow(NS.charDB.profile.communityMain, 1)
-	end
-
-	-- has other communities?
-	if (next(NS.charDB.profile.communityList)) then
-		-- process all
-		for k,v in pairs(NS.charDB.profile.communityList) do
-			-- only process true
-			if (v == true) then
-				-- readd community chat window
-				NS:ReaddCommunityChatWindow(k, 1)
-			end
-		end
-	end
 end
 
 -- is specialization healer?
@@ -1465,7 +1448,7 @@ function NS:Send_Report_Messages(message)
 			-- process all
 			for k,v in pairs(NS.CommFlare.CF.ReportChannels) do
 				-- send channel messsage (hardware click acquired)
-				SendChatMessage(message, "CHANNEL", nil, v)
+				NS:SendMessage("CHANNEL", message, v)
 			end
 
 			-- treat guild as community?
