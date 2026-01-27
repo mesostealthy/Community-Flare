@@ -20,6 +20,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
+v2.00.006:
+-BUGFIX: Actually FIXES the Community Member list upon Gates opening for PvP Content!
+
 v2.00.005:
 -BUGFIX: Disabled Always remove, then re-add community channels to general? (Caused LUA ERRORS!)
 -BUGFIX: Properly shows Community Members upon Gates opening for PvP Content.

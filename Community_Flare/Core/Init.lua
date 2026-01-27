@@ -1636,21 +1636,6 @@ function NS:Run_Performance_Tests()
 	end
 end
 
--- build battle ground commander sync data
-function NS:Build_Battleground_Commander_Sync_Data()
-	-- build sync data
-	local syncData = {
-		addonVersion = NS.CommFlare.Version,
-		remainingMercenary = -1,
-		remainingDeserter = -1,
-		autoAcceptRole = true,
-		wantLead = true,
-	}
-
-	-- return string
-	return NS:TableToString("LibCompressHuffman", syncData)
-end
-
 -- enforce binding rules
 function NS:Enforce_Binding_Rules()
 	-- get current binding set

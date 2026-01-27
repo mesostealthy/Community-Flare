@@ -1622,6 +1622,19 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 	end
 end
 
+-- process party kill
+function NS.CommFlare:PARTY_KILL(msg, ...)
+	local attackerGUID, targetGUID = ...
+
+	-- get player info
+	local attackerName, attackerRealm = select(6, GetPlayerInfoByGUID(attackerGUID))
+	local targetName, targetRealm = select(6, GetPlayerInfoByGUID(targetGUID))
+	if (attackerName and targetName) then
+		-- display debug info
+		--print("PARTY_KILL: " .. attackerName .. " (" .. attackerGUID .. ") killed " .. targetName .. "(" .. targetGUID .. ")")
+	end
+end
+
 -- process party leader changed
 function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 	-- update leader GUID
@@ -1694,7 +1707,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		end
 	end
 
-	-- setup stuff
+	-- setup player
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
@@ -1979,27 +1992,6 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 		end
 	end
 
-	-- are you in a raid?
-	if (IsInRaid()) then
-		-- are you not raid leader?
-		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-		if (NS.CommFlare.CF.PlayerRank ~= 2) then
-			-- build battleground commander sync data
-			local syncData = NS:Build_Battleground_Commander_Sync_Data()
-			if (syncData) then
-				-- in instance?
-				local inInstance, instanceType = IsInInstance()
-				if (inInstance) then
-					-- send addon message to battleground commander INSTANCE_CHAT
-					NS:SendAddonMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
-				else
-					-- send addon message to battleground commander RAID
-					NS:SendAddonMessage("Bgc:syncData", syncData, "RAID")
-				end
-			end
-		end
-	end
-
 	-- block game menu hot keys enabled?
 	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
 		-- enable block game menu hooks
@@ -2035,7 +2027,6 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	NS.CommFlare.CF.MatchEndDate = date()
 	NS.CommFlare.CF.MatchEndTime = time()
 	NS.CommFlare.CF.Winner = GetBattlefieldWinner()
-	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 
 	-- update battleground status
@@ -2043,13 +2034,10 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	if (status == true) then
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				NS.CommFlare.CF.ScoreRequested = 2
-				SetBattlefieldScoreFaction()
-				RequestBattlefieldScoreData()
-			end
+			-- request battlefield score
+			NS.CommFlare.CF.ScoreRequested = 2
+			SetBattlefieldScoreFaction()
+			RequestBattlefieldScoreData()
 		end
 	end
 
@@ -2176,34 +2164,10 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			NS.CommFlare.CF.MatchStartDate = date()
 			NS.CommFlare.CF.MatchStartTime = time()
 
-			-- are you in a raid?
-			if (IsInRaid()) then
-				-- are you not raid leader?
-				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-				if (NS.CommFlare.CF.PlayerRank ~= 2) then
-					-- build battleground commander sync data
-					local syncData = NS:Build_Battleground_Commander_Sync_Data()
-					if (syncData) then
-						-- in instance?
-						local inInstance, instanceType = IsInInstance()
-						if (inInstance) then
-							-- send addon message to battleground commander INSTANCE_CHAT
-							NS:SendAddonMessage("Bgc:syncData", syncData, "INSTANCE_CHAT")
-						else
-							-- send addon message to battleground commander RAID
-							NS:SendAddonMessage("Bgc:syncData", syncData, "RAID")
-						end
-					end
-				end
-			end
-
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				NS.CommFlare.CF.ScoreRequested = 1
-				SetBattlefieldScoreFaction()
-				RequestBattlefieldScoreData()
-			end
+			-- request battlefield score
+			NS.CommFlare.CF.ScoreRequested = 1
+			SetBattlefieldScoreFaction()
+			RequestBattlefieldScoreData()
 		end
 	end
 end
@@ -2666,6 +2630,18 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 	end
 end
 
+-- process unit died
+function NS.CommFlare:UNIT_DIED(msg, ...)
+	local unitGUID = ...
+
+	-- get player info
+	local name, realm = select(6, GetPlayerInfoByGUID(unitGUID))
+	if (name) then
+		-- display debug info
+		--print("UNIT_DIED: " .. name .. "(" .. unitGUID .. ")")
+	end
+end
+
 -- process unit entered vehicle
 function NS.CommFlare:UNIT_ENTERED_VEHICLE(msg, ...)
 	local unitTarget, showVehicleFrame, isControlSeat, vehicleUIIndicatorID, vehicleGUID, mayChooseExit, hasPitch = ...
@@ -2823,8 +2799,11 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 				-- force name-realm format
 				local player = info.name
 				if (not strmatch(player, "-")) then
-					-- add realm name
-					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+					-- player is NOT AI?
+					if (info.honorLevel > 0) then
+						-- add realm name
+						player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+					end
 				end
 
 				-- add roster
@@ -2832,17 +2811,20 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 
 				-- has guid?
 				if (info.guid) then
-					-- process member guid
-					local guid = info.guid
-					NS:Process_MemberGUID(guid, player)
+					-- player is NOT AI?
+					if (info.honorLevel > 0) then
+						-- process member guid
+						local guid = info.guid
+						NS:Process_MemberGUID(guid, player)
 
-					-- KOS target?
-					if (NS.db.global.KosList[guid]) then
-						-- not already alerted?
-						if (not NS.CommFlare.CF.KosAlerted[guid]) then
-							-- insert
-							NS.CommFlare.CF.KosAlerted[guid] = player
-							tinsert(kosAlerts, player)
+						-- KOS target?
+						if (NS.db.global.KosList[guid]) then
+							-- not already alerted?
+							if (not NS.CommFlare.CF.KosAlerted[guid]) then
+								-- insert
+								NS.CommFlare.CF.KosAlerted[guid] = player
+								tinsert(kosAlerts, player)
+							end
 						end
 					end
 				end
@@ -3041,6 +3023,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	self:RegisterEvent("NOTIFY_PVP_AFK_RESULT")
 	self:RegisterEvent("PARTY_INVITE_REQUEST")
+	self:RegisterEvent("PARTY_KILL")
 	self:RegisterEvent("PARTY_LEADER_CHANGED")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("PLAYER_LOGIN")
@@ -3060,6 +3043,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("SOCIAL_QUEUE_UPDATE")
 	self:RegisterEvent("UI_INFO_MESSAGE")
 	self:RegisterEvent("UNIT_AURA")
+	self:RegisterEvent("UNIT_DIED")
 	self:RegisterEvent("UNIT_ENTERED_VEHICLE")
 	self:RegisterEvent("UNIT_EXITED_VEHICLE")
 	self:RegisterEvent("UNIT_SPELLCAST_START")
@@ -3117,6 +3101,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
 	self:UnregisterEvent("NOTIFY_PVP_AFK_RESULT")
 	self:UnregisterEvent("PARTY_INVITE_REQUEST")
+	self:UnregisterEvent("PARTY_KILL")
 	self:UnregisterEvent("PARTY_LEADER_CHANGED")
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	self:UnregisterEvent("PLAYER_LOGIN")
@@ -3136,6 +3121,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("SOCIAL_QUEUE_UPDATE")
 	self:UnregisterEvent("UI_INFO_MESSAGE")
 	self:UnregisterEvent("UNIT_AURA")
+	self:UnregisterEvent("UNIT_DIED")
 	self:UnregisterEvent("UNIT_ENTERED_VEHICLE")
 	self:UnregisterEvent("UNIT_EXITED_VEHICLE")
 	self:UnregisterEvent("UNIT_SPELLCAST_START")

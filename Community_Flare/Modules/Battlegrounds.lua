@@ -386,8 +386,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.Reloaded = false
 
-	-- get player info
-	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
+	-- get player score info
 	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 
 	-- always reset ashran stuff
@@ -1304,7 +1303,6 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	}
 
 	-- get player stuff
-	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 
@@ -1340,8 +1338,11 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			-- force name-realm format
 			local player = info.name
 			if (not strmatch(player, "-")) then
-				-- add realm name
-				player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+				-- player is NOT AI?
+				if (info.honorLevel > 0) then
+					-- add realm name
+					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+				end
 			end
 
 			-- has talent specialization?
@@ -1422,142 +1423,145 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				end
 			end
 
-			-- get community member
-			NS:Process_MemberGUID(info.guid, player)
-			local member = NS:Get_Community_Member(player)
-			if (member and member.clubs) then
-				-- same faction as player?
-				local community = false
-				if (NS.CommFlare.CF.PlayerInfo == info.faction) then
-					-- mercenary?
-					if (mercenary == true) then
-						-- process all clubs
-						for k,v in pairs(member.clubs) do
-							-- mercenary counts setup?
-							if (not NS.CommFlare.CF.MercCounts[k]) then
-								-- initialize
-								NS.CommFlare.CF.MercCounts[k] = 0
+			-- player is NOT AI?
+			if (info.honorLevel > 0) then
+				-- get community member
+				NS:Process_MemberGUID(info.guid, player)
+				local member = NS:Get_Community_Member(player)
+				if (member and member.clubs) then
+					-- same faction as player?
+					local community = false
+					if (NS.CommFlare.CF.PlayerInfo == info.faction) then
+						-- mercenary?
+						if (mercenary == true) then
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- mercenary counts setup?
+								if (not NS.CommFlare.CF.MercCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercCounts[k] = 0
+								end
+
+								-- increase
+								NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+
+								-- mercenary names setup?
+								if (not NS.CommFlare.CF.MercNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.MercNames[k], player)
 							end
 
-							-- increase
-							NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = true
+							tinsert(NS.CommFlare.CF.MercNamesList, player)
+							NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
+						else
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- community counts setup?
+								if (not NS.CommFlare.CF.CommCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommCounts[k] = 0
+								end
 
-							-- mercenary names setup?
-							if (not NS.CommFlare.CF.MercNames[k]) then
-								-- initialize
-								NS.CommFlare.CF.MercNames[k] = {}
+								-- increase
+								NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+
+								-- community names setup?
+								if (not NS.CommFlare.CF.CommNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.CommNames[k], player)
 							end
 
-							-- insert
-							tinsert(NS.CommFlare.CF.MercNames[k], player)
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = false
+							tinsert(NS.CommFlare.CF.CommNamesList, player)
+							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+
+							-- should promote?
+							if (bPromote == true) then
+								-- promote battleground player
+								NS:Promote_Battleground_Player(info, player)
+							end
 						end
-
-						-- update stuff
-						NS.CommFlare.CF.PlayerMercenary = true
-						tinsert(NS.CommFlare.CF.MercNamesList, player)
-						NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
 					else
-						-- process all clubs
-						for k,v in pairs(member.clubs) do
-							-- community counts setup?
-							if (not NS.CommFlare.CF.CommCounts[k]) then
-								-- initialize
-								NS.CommFlare.CF.CommCounts[k] = 0
+						-- mercenary?
+						if (mercenary == true) then
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- mercenary counts setup?
+								if (not NS.CommFlare.CF.MercCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercCounts[k] = 0
+								end
+
+								-- increase
+								NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+
+								-- mercenary names setup?
+								if (not NS.CommFlare.CF.MercNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.MercNames[k], player)
 							end
 
-							-- increase
-							NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = true
+							tinsert(NS.CommFlare.CF.MercNamesList, player)
+							NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
+						else
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- community counts setup?
+								if (not NS.CommFlare.CF.CommCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommCounts[k] = 0
+								end
 
-							-- community names setup?
-							if (not NS.CommFlare.CF.CommNames[k]) then
-								-- initialize
-								NS.CommFlare.CF.CommNames[k] = {}
+								-- increase
+								NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+
+								-- community names setup?
+								if (not NS.CommFlare.CF.CommNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.CommNames[k], player)
 							end
 
-							-- insert
-							tinsert(NS.CommFlare.CF.CommNames[k], player)
-						end
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = false
+							tinsert(NS.CommFlare.CF.CommNamesList, player)
+							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 
-						-- update stuff
-						NS.CommFlare.CF.PlayerMercenary = false
-						tinsert(NS.CommFlare.CF.CommNamesList, player)
-						NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
-
-						-- should promote?
-						if (bPromote == true) then
-							-- promote battleground player
-							NS:Promote_Battleground_Player(info, player)
+							-- should promote?
+							if (bPromote == true) then
+								-- promote battleground player
+								NS:Promote_Battleground_Player(info, player)
+							end
 						end
 					end
-				else
-					-- mercenary?
-					if (mercenary == true) then
-						-- process all clubs
-						for k,v in pairs(member.clubs) do
-							-- mercenary counts setup?
-							if (not NS.CommFlare.CF.MercCounts[k]) then
-								-- initialize
-								NS.CommFlare.CF.MercCounts[k] = 0
-							end
 
-							-- increase
-							NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
-
-							-- mercenary names setup?
-							if (not NS.CommFlare.CF.MercNames[k]) then
-								-- initialize
-								NS.CommFlare.CF.MercNames[k] = {}
-							end
-
-							-- insert
-							tinsert(NS.CommFlare.CF.MercNames[k], player)
-						end
-
-						-- update stuff
-						NS.CommFlare.CF.PlayerMercenary = true
-						tinsert(NS.CommFlare.CF.MercNamesList, player)
-						NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
-					else
-						-- process all clubs
-						for k,v in pairs(member.clubs) do
-							-- community counts setup?
-							if (not NS.CommFlare.CF.CommCounts[k]) then
-								-- initialize
-								NS.CommFlare.CF.CommCounts[k] = 0
-							end
-
-							-- increase
-							NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
-
-							-- community names setup?
-							if (not NS.CommFlare.CF.CommNames[k]) then
-								-- initialize
-								NS.CommFlare.CF.CommNames[k] = {}
-							end
-
-							-- insert
-							tinsert(NS.CommFlare.CF.CommNames[k], player)
-						end
-
-						-- update stuff
-						NS.CommFlare.CF.PlayerMercenary = false
-						tinsert(NS.CommFlare.CF.CommNamesList, player)
-						NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
-
-						-- should promote?
-						if (bPromote == true) then
-							-- promote battleground player
-							NS:Promote_Battleground_Player(info, player)
-						end
+					-- should log list / i.e. has shared community?
+					if (NS:Get_LogList_Status(player) == true) then
+						-- update
+						NS.CommFlare.CF.LogListPlayers[player] = true
+						tinsert(NS.CommFlare.CF.LogListNamesList, player)
+						NS.CommFlare.CF.LogListCount = NS.CommFlare.CF.LogListCount + 1
 					end
-				end
-
-				-- should log list / i.e. has shared community?
-				if (NS:Get_LogList_Status(player) == true) then
-					-- update
-					NS.CommFlare.CF.LogListPlayers[player] = true
-					tinsert(NS.CommFlare.CF.LogListNamesList, player)
-					NS.CommFlare.CF.LogListCount = NS.CommFlare.CF.LogListCount + 1
 				end
 			end
 		end
@@ -2235,7 +2239,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 	end
 
 	-- brawl?
-	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	if (index == "Brawl") then
 		-- is tracked pvp?
 		local mapName = NS.CommFlare.CF.LocalQueues[index].name
@@ -2254,7 +2257,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 				if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 					-- horde
 					faction = L["Horde"]
@@ -2318,7 +2320,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 				if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 					-- horde
 					faction = L["Horde"]
@@ -2364,7 +2365,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 				if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 					-- horde
 					faction = L["Horde"]
@@ -2603,7 +2603,6 @@ function NS:Update_Battlefield_Status(index)
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 							if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 								-- horde
 								faction = L["Horde"]
@@ -2666,7 +2665,6 @@ function NS:Update_Battlefield_Status(index)
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 							if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 								-- horde
 								faction = L["Horde"]
@@ -2703,7 +2701,6 @@ function NS:Update_Battlefield_Status(index)
 				elseif (NS.CommFlare.CF.LocalQueues[index].popped > 0) then
 					-- player is horde?
 					local faction = L["N/A"]
-					NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 					if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 						-- horde
 						faction = L["Horde"]
@@ -2932,7 +2929,6 @@ function NS:Update_Brawl_Status()
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 							if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 								-- horde
 								faction = L["Horde"]
@@ -2966,7 +2962,6 @@ function NS:Update_Brawl_Status()
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 							if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 								-- horde
 								faction = L["Horde"]
@@ -3014,7 +3009,6 @@ function NS:Update_Brawl_Status()
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
 					-- player is horde?
 					local faction = L["N/A"]
-					NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 					if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 						-- horde
 						faction = L["Horde"]
@@ -3153,7 +3147,6 @@ function NS:Get_Current_Queues_Text()
 	if (text and (text ~= "")) then
 		-- player is horde?
 		local faction = L["N/A"]
-		NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 		if (NS.CommFlare.CF.PlayerFaction == L["Horde"]) then
 			-- horde
 			faction = L["Horde"]
