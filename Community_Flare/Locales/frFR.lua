@@ -76,12 +76,15 @@ L["Disabled"] = "Désactivé"
 L["Display community member names when running /comf command?"] = "Afficher les noms des membres de la communauté lors de l'exécution de la commande /comf ?"
 L["Display how much time left for people in your group to enter the queue?"] = "Afficher le temps restant aux personnes de votre groupe pour entrer dans la file d'attente ?"
 L["Display notification for popped groups?"] = "Afficher une notification pour les groupes déclenchés ?"
+L["Enable Ashran Notifications?"] = true -- TODO
 L["Enable debug mode to help debug issues?"] = "Activer le mode débogage pour aider à résoudre les problèmes ?"
 L["Enable debug print chat window to log debug events?"] = "Activer la fenêtre de discussion d’impression de débogage pour enregistrer les événements de débogage ?"
 L["Enable the right click menu for community member list?"] = "Activer le menu contextuel pour la liste des membres de la communauté ?"
 L["Fast (360)"] = "Rapidement (360)"
 L["Frequency?"] = "Fréquence?"
 L["Guild Members?"] = "Membres de la guilde ?"
+L["Hide the Cooldown Manager while inside Vehicles in PvP Content?"] = "Masquer le gestionnaire de temps de recharge lorsque l'on se trouve dans des véhicules en mode PvP ?"
+L["Hide the Primary & Second Resource Bars while inside Vehicles in PvP Content?"] = "Masquer les barres de ressources principales et secondaires lorsque l'on se trouve à l'intérieur de véhicules dans le contenu PvP ?"
 L["Housing Options"] = "Options de logement"
 L["Instance Chat Warning"] = "Avertissement de discussion d'instance"
 L["Invite Options"] = "Options d'invitation"
@@ -140,6 +143,8 @@ L["This will block players from using the /ping system if they do not have raid 
 L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"] = "Ceci bloquera l'affichage des menus de jeu en utilisant les raccourcis clavier à l'intérieur d'une arène ou d'un champ de bataille. (Pour bloquer pendant l'enregistrement de vidéos, par exemple.)"
 L["This will display a notification in your General chat window when groups pop."] = "Ceci affichera une notification dans votre fenêtre de discussion générale lorsque les groupes reçoivent une fenêtre pour un match."
 L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."] = "Cela effectuera différentes actions pour aider à déboguer les bogues dans l'extension afin d'aider MESO à corriger les problèmes."
+L["This will hide the Cooldown Manager while inside vehicles in PvP Content."] = "Cela masquera le gestionnaire de temps de recharge lorsque vous êtes à l'intérieur de véhicules dans les modes PvP."
+L["This will hide the Primary & Second Resource Bars while inside vehicles in PvP Content."] = "Cela masquera les barres de ressources principales et secondaires lorsque vous serez à l'intérieur de véhicules dans les modes PvP."
 L["This will log some debug event messages into a debug window to help MESO fix bugs."] = "Cela enregistrera certains messages d'événements de débogage dans une fenêtre de débogage pour aider MESO à corriger les bogues."
 L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."] = "Cela affichera périodiquement un message indiquant combien de secondes il reste aux joueurs de votre groupe pour entrer dans le match, lors de leur entrée dans le match."
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = "Ceci fournira un message contextuel rapide pour envoyer votre statut de file d'attente dans le chat de la Communauté."
@@ -152,6 +157,7 @@ L["This will show a raid warning to you when the Ancient Inferno has spawned in 
 L["This will show a raid warning to you when you are given leadership of your party."] = "Ceci affichera un avertissement de raid lorsque vous obtenez le leadership de votre groupe."
 L["This will show a raid warning to you when your Mage is under attack in Ashran."] = "Cela vous affichera un avertissement de raid lorsque votre mage sera attaqué à Ashran."
 L["This will show you a message when a party member changes zones."] = "Cela vous montrera un message lorsqu'un membre du groupe change de zone."
+L["This will show you warning messages for critical events around Ashran."] = true -- TODO
 L["This will treat your Guild Members as Community Members."] = "Cela traitera les membres de votre guilde comme des membres de la communauté."
 L["Uninvite any players that are AFK?"] = "Retirez tous les joueurs qui sont LDC ?"
 L["Use this to manage the Clubs, Communites & Guilds in the database."] = "Utilisez cette fonction pour gérer les clubs, les communautés et les guildes dans la base de données."
@@ -160,6 +166,7 @@ L["Use this to purge old members in database from currently selected communities
 L["Use this to refresh the members database from currently selected communities."] = "Utilisez ceci pour rafraîchir la base de données des membres des communautés actuellement sélectionnées."
 L["Use this to totally rebuild the members database from currently selected communities."] = "Utilisez ceci pour reconstruire entièrement la base de données des membres des communautés actuellement sélectionnées."
 L["Vehicle Alert System?"] = "Système d'alerte du véhicule ?"
+L["Vehicle Options"] = "Options du véhicule"
 L["Warn before hearth stoning or teleporting inside a battleground?"] = "Prévenir avant d'utiliser la pierre de foyer ou de se téléporter à l'intérieur d'un champ de bataille ?"
 L["Warn if/when queues become paused?"] = "Prévenir si/quand les files d'attente sont mises en pause ?"
 L["Warn when Honor capped or close to it?"] = "Avertir lorsque Honor est plafonné ou proche ?"
@@ -234,7 +241,6 @@ L["Ancient Inferno has spawned at the Ring of Conquest!"] = "Ancient Inferno est
 L["Are you really sure you want to hearthstone?"] = "Êtes-vous vraiment sûr(e) de vouloir utiliser la pierre de foyer ?"
 L["Are you really sure you want to teleport?"] = "Êtes-vous vraiment sûr(e) de vouloir téléporter ?"
 L["Auto declined quest from"] = "Quête automatiquement refusée de la part de"
-L["Captain Galvangar"] = "Capitaine Galvangar"
 L["Community Members"] = "Membre de la communauté"
 L["Deserter"] = "Déserteur"
 L["Epic battleground has completed with a"] = "Champs de bataille épique a complété avec un"
@@ -256,7 +262,6 @@ L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"] = "AVERTISSE
 L["War Supply Crate is flying in now!"] = "La caisse de ravitaillement de guerre arrive maintenant!"
 L["YOU ARE CURRENTLY THE NEW GROUP LEADER"] = "VOUS ÊTES MAINTENANT LE NOUVEAU CHEF DU GROUPE"
 L["has requested to join your group"] = "A demandé de se joindre à votre groupe d'instance"
-L["jeron emberfall has been slain"] = "Jeron Chûtepierre a été vaincu"
 L["joined the queue for"] = "rejoint la file d’attente pour"
 L["loss"] = "Perte"
 L["minutes"] = "Minutes"
@@ -355,6 +360,13 @@ L["Uninviting ..."] = "Désinvitation ..."
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = "Chuchotez-moi INV et si il y a une place disponible, vous serez rajouté à nouveau au groupe."
 L["You've been removed from the party for being AFK."] = "Vous avez été retiré du groupe pour être LDC."
 
+-- Ashran.lua
+L["%s has been killed."] = "%s a été tué."
+L["%s has spawned."] = "%s est apparu."
+L["Ancient Inferno"] = "Inferno ancien"
+L["Narduke"] = "Narduc"
+L["Rylai Crestfall"] = "Rylai Laffliction"
+
 -- Battlegrounds.lua
 L["%s has been queued for %d %s and %d %s for %s."] = "%s a été mis en file d'attente pour %d %s et %d %s pour %s."
 L["%s: %d seconds remaining for players to take the queue."] = "%s : %d secondes restantes pour que les joueurs prennent la file d'attente."
@@ -378,7 +390,6 @@ L["Front"] = "En avant"
 L["Gates Destroyed"] = "Barrière détruite"
 L["IBT"] = "IBT"
 L["IWB"] = "IWB"
-L["Jeron"] = "Jeron"
 L["Joined Queue for"] = "Rejoint la file d'attente pour"
 L["Just entered match. Gates not opened yet!"] = "Je viens d'entrer dans un match. Les portes ne sont pas encore ouvertes."
 L["Left Queue for Popped"] = "File d'attente de gauche pour sauté"
@@ -408,12 +419,11 @@ L["Towers Left"] = "Tours restantes"
 L["Up"] = "En haut"
 L["WARNING: Close to Honor capped! Please spend some!"] = "ATTENTION : Près de l'honneur plafonné ! Veuillez en dépenser !"
 L["WARNING: Honor capped! Please spend some!"] = "ATTENTION : Honneur plafonné ! Merci d'en dépenser !"
-L["WARNING: Low or out of War Mode PVP Items! Go get some!"] = "ATTENTION : Objets JcJ en faible quantité ou hors mode Guerre ! Allez en chercher !"
+L["WARNING: Low or out of War Mode PVP Items! Go get some!"] = "ATTENTION : Objets PvP en faible quantité ou hors mode Guerre ! Allez en chercher !"
 L["West"] = "à l'ouest"
 
 -- CombatLog.lua
 L["High Warlord Volrath"] = "Grand seigneur de guerre Wôlrath"
-L["Jeron Emberfall"] = "Jeron Chûtepierre"
 L["Siege Engine"] = "Engin de siège"
 
 -- POIs.lua
@@ -434,16 +444,19 @@ L["War Supply Crate has fully dropped to the ground!"] = "La caisse de ravitaill
 L["War Supply Crate is dropping in now!"] = "La Caisse de ravitaillement de guerre arrive maintenant !"
 
 -- CommunityList.lua
+L["%d Communities"] = "%d communautés"
 L["Community List Manager"] = "Gestionnaire de listes communautaires"
 L["Delete Community"] = "Supprimer la communauté"
 L["Set Community Note"] = "Définir la note de la communauté"
 L["View Member List"] = "Afficher la liste des membres"
 
 -- MemberList.lua
+L["%d Members"] = "%d membres"
 L["Delete Member"] = "Delete Player"
 L["Set Member Note"] = "Définir la note du membre"
 
 -- PlayerList.lua
+L["%d KOS, %d Players"] = "%d éliminations, %d joueurs"
 L["Add KOS"] = "Ajouter KOS"
 L["Copy Player Name"] = "Copier le nom du joueur"
 L["Delete Player"] = "Supprimer le joueur"
@@ -454,6 +467,7 @@ L["Remove KOS"] = "Supprimer KOS"
 L["Set Player Note"] = "Définir la note du joueur"
 
 -- POIList.lua
+L["%d POIs"] = "%d points d'intérêt"
 L["Area POI"] = "POI de zone"
 L["Description"] = "Description"
 L["ID"] = "IDENTIFIANT"
@@ -461,6 +475,11 @@ L["Name"] = "Nom"
 L["POI List Manager"] = "Gestionnaire de listes de points d'intérêt"
 L["Position"] = "Position"
 
+-- VehicleList.lua
+L["%d Vehicles"] = "%d véhicules"
+L["Vehicle List Manager"] = "Gestionnaire de liste de véhicules"
+
 -- VignetteList.lua
+L["%d Vignettes"] = "%d Vignettes"
 L["Vignette"] = "Vignette"
 L["Vignette List Manager"] = "Gestionnaire de listes de vignettes"

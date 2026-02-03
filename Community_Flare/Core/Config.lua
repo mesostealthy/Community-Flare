@@ -44,6 +44,7 @@ local GlobalDefaults = {
 		blockGameTooltips = false,
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
+		cdmHideInVehiclesPvP = true,
 		debugMode = false,
 		debugPrint = false,
 		displayPoppedGroups = false,
@@ -58,9 +59,7 @@ local GlobalDefaults = {
 
 		-- numbers
 		adjustVehicleTurnSpeed = 0,
-		ashranAncientInfernoSpawned = 1,
-		ashranMageWarnAttacked = 1,
-		ashranMageWarnFreq = 2,
+		ashranNotifications = 1,
 		blockSharedQuests = 2,
 		partyLeaderNotify = 2,
 		purgeLogTime = 2,
@@ -107,9 +106,7 @@ local CharDefaults = {
 		-- tables
 		communityLeadersList = {},
 		communityLogList = {},
-		POIList = {},
 		Queues = {},
-		VignetteList = {},
 	}
 }
 
@@ -734,42 +731,6 @@ local function Block_Game_Menu_Hot_Keys_Set(info, value)
 	end
 end
 
--- get ashran mage warning attack
-local function Ashran_Mage_Warning_Attack_Get(info)
-	-- outdated value?
-	if ((NS.db.global.ashranMageWarnAttacked < 1) or (NS.db.global.ashranMageWarnAttacked > 2)) then
-		-- force default
-		NS.db.global.ashranMageWarnAttacked = GlobalDefaults.global.ashranMageWarnAttacked
-	end
-
-	-- return value
-	return NS.db.global.ashranMageWarnAttacked
-end
-
--- set ashran mage warning attack
-local function Ashran_Mage_Warning_Attack_Set(info, value)
-	-- outdated value?
-	if ((value < 1) or (value > 2)) then
-		-- force default
-		value = GlobalDefaults.global.ashranMageWarnAttacked
-	end
-
-	-- save value
-	NS.db.global.ashranMageWarnAttacked = value
-end
-
--- is disabled?
-local function Ashran_Mage_Warning_Frequency_Disabled()
-	-- disabled?
-	if (NS.db.global.ashranMageWarnAttacked == 1) then
-		-- disabled
-		return true
-	else
-		-- enabled
-		return false
-	end
-end
-
 -- is tank role available?
 local function Check_Tank_Available()
 	-- get available roles
@@ -919,23 +880,9 @@ local BattlegroundGroup = {
 			get = function(info) return NS.db.global.blockSharedQuests end,
 			set = function(info, value) NS.db.global.blockSharedQuests = value end,
 		},
-		adjustVehicleTurnSpeed = {
-			type = "select",
-			order = 4,
-			name = L["Adjust vehicle turn speed?"],
-			desc = L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."],
-			values = {
-				[0] = L["Disabled"],
-				[1] = L["Default (180)"],
-				[2] = L["Fast (360)"],
-				[3] = L["Max (540)"],
-			},
-			get = function(info) return NS.db.global.adjustVehicleTurnSpeed end,
-			set = function(info, value) NS.db.global.adjustVehicleTurnSpeed = value end,
-		},
 		restrictPings = {
 			type = "select",
-			order = 5,
+			order = 4,
 			name = L["Restrict /ping system to?"],
 			desc = L["This will block players from using the /ping system if they do not have raid assist or raid lead."],
 			values = {
@@ -949,7 +896,7 @@ local BattlegroundGroup = {
 		},
 		warningLeavingBG = {
 			type = "select",
-			order = 6,
+			order = 5,
 			name = L["Warn before hearth stoning or teleporting inside a battleground?"],
 			desc = L["Performs an action if you are about to hearth stone or teleport out of an active battleground."],
 			values = {
@@ -962,7 +909,7 @@ local BattlegroundGroup = {
 		},
 		communityAutoPassLead = {
 			type = "toggle",
-			order = 7,
+			order = 6,
 			name = L["Always pass Raid Leadership to Community Leaders?"],
 			desc = L["This will automatically pass Raid Leadership inside Battlegrounds to Community Leaders by priority levels."],
 			width = "full",
@@ -971,7 +918,7 @@ local BattlegroundGroup = {
 		},
 		communityDisplayNames = {
 			type = "toggle",
-			order = 8,
+			order = 7,
 			name = L["Display community member names when running /comf command?"],
 			desc = L["This will automatically display all community members found in the battleground when the /comf command is run."],
 			width = "full",
@@ -980,7 +927,7 @@ local BattlegroundGroup = {
 		},
 		pvpCombatLogging = {
 			type = "toggle",
-			order = 9,
+			order = 8,
 			name = L["Always save Combat Log inside PVP content?"],
 			desc = L["This will automatically enable the combat logging to WowCombatLog while inside an arena or battleground."],
 			width = "full",
@@ -989,7 +936,7 @@ local BattlegroundGroup = {
 		},
 		rebindTargetKeys = {
 			type = "toggle",
-			order = 10,
+			order = 9,
 			name = L["Always target nearest/previous enemy players inside PVP content?"],
 			desc = L["This will automatically bind your tab and shift+tab keys to only target enemy players inside PVP content."],
 			width = "full",
@@ -998,7 +945,7 @@ local BattlegroundGroup = {
 		},
 		displayQueueEntryTimeLeft = {
 			type = "toggle",
-			order = 11,
+			order = 10,
 			name = L["Display how much time left for people in your group to enter the queue?"],
 			desc = L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."],
 			width = "full",
@@ -1007,7 +954,7 @@ local BattlegroundGroup = {
 		},
 		communityLogList = {
 			type = "multiselect",
-			order = 12,
+			order = 11,
 			name = L["Log roster list for matches from these communities?"],
 			desc = L["Choose the communities that you want to save a roster list upon the gate opening in battlegrounds."],
 			values = Setup_Community_List,
@@ -1017,7 +964,7 @@ local BattlegroundGroup = {
 		},
 		purgeLogTime = {
 			type = "select",
-			order = 13,
+			order = 12,
 			name = L["Purge logged roster matches timeframe?"],
 			desc = L["This is the amount of time before it starts purging logged roster list for matches."],
 			values = {
@@ -1030,7 +977,7 @@ local BattlegroundGroup = {
 		},
 		blockGameMenuHotKeys = {
 			type = "toggle",
-			order = 14,
+			order = 13,
 			name = L["Block game menu hotkeys inside PVP content?"],
 			desc = L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"],
 			width = "full",
@@ -1039,7 +986,7 @@ local BattlegroundGroup = {
 		},
 		blockGameTooltips = {
 			type = "toggle",
-			order = 15,
+			order = 14,
 			name = L["Block Tooltips inside PVP content?"],
 			desc = L["This will block Tooltips while in PVP content. (Hold Shift to override and show Tooltip.)"],
 			width = "full",
@@ -1049,72 +996,36 @@ local BattlegroundGroup = {
 		ashranTitle = {
 			name = L["Ashran Options"],
 			type = "header",
-			order = 16,
+			order = 15,
 			width = "full",
 		},
-		ashranMageWarnAttacked = {
+		ashranNotifications = {
 			type = "select",
-			order = 17,
-			width = 1.20,
-			name = L["Notify you when your Mage is under attack?"],
-			desc = L["This will show a raid warning to you when your Mage is under attack in Ashran."],
+			order = 16,
+			name = L["Enable Ashran Notifications?"],
+			desc = L["This will show you warning messages for critical events around Ashran."],
 			values = {
 				[1] = L["None"],
 				[2] = L["Local Warning Only"],
 			},
-			get = Ashran_Mage_Warning_Attack_Get,
-			set = Ashran_Mage_Warning_Attack_Set,
-			hidden = function()
-				return NS.CommFlare.isMidnight
-			end,
-		},
-		ashranMageWarnFreq = {
-			type = "select",
-			order = 18,
-			name = L["Frequency?"],
-			desc = L["This is the amount of time delayed between Mage attacks in Ashran."],
-			values = {
-				[1] = L["15 Seconds"],
-				[2] = L["30 Seconds"],
-				[3] = L["60 Seconds"],
-			},
-			disabled = Ashran_Mage_Warning_Frequency_Disabled,
-			get = function(info) return NS.db.global.ashranMageWarnFreq end,
-			set = function(info, value) NS.db.global.ashranMageWarnFreq = value end,
-			hidden = function()
-				return NS.CommFlare.isMidnight
-			end,
-		},
-		ashranAncientInfernoSpawned = {
-			type = "select",
-			order = 19,
-			name = L["Notify you when the Ancient Inferno has spawned?"],
-			desc = L["This will show a raid warning to you when the Ancient Inferno has spawned in Ashran."],
-			values = {
-				[1] = L["None"],
-				[2] = L["Raid Warning"],
-				[3] = L["Local Warning Only"],
-				[4] = L["Instance Chat Warning"],
-			},
-			get = function(info) return NS.db.global.ashranAncientInfernoSpawned end,
-			set = function(info, value) NS.db.global.ashranAncientInfernoSpawned = value end,
+			get = function(info) return NS.db.global.ashranNotifications end,
+			set = function(info, value) NS.db.global.ashranNotifications = value end,
 		},
 		iocTitle = {
 			name = L["Isle of Conquest Options"],
 			type = "header",
-			order = 20,
+			order = 17,
 			width = "full",
 		},
 		iocVehicleAlertSystem = {
 			type = "toggle",
-			order = 21,
+			order = 18,
 			name = L["Vehicle Alert System?"],
 			desc = L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."],
 			width = "full",
 			get = function(info) return NS.db.global.iocVehicleAlertSystem end,
 			set = function(info, value) NS.db.global.iocVehicleAlertSystem = value end,
 		},
-
 	}
 }
 
@@ -1582,11 +1493,58 @@ local ReportGroup = {
 	}
 }
 
+-- vehicle group
+local VehicleGroup = {
+	name = L["Vehicle Options"],
+	type = "group",
+	order = 9,
+	args = {
+		generalTitle = {
+			name = L["Vehicle Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		adjustVehicleTurnSpeed = {
+			type = "select",
+			order = 2,
+			name = L["Adjust vehicle turn speed?"],
+			desc = L["This will adjust your turn speed while inside of a vehicle to make them turn faster during a battleground."],
+			values = {
+				[0] = L["Disabled"],
+				[1] = L["Default (180)"],
+				[2] = L["Fast (360)"],
+				[3] = L["Max (540)"],
+			},
+			get = function(info) return NS.db.global.adjustVehicleTurnSpeed end,
+			set = function(info, value) NS.db.global.adjustVehicleTurnSpeed = value end,
+		},
+		cdmHideInVehiclesPvP = {
+			type = "toggle",
+			order = 3,
+			name = L["Hide the Cooldown Manager while inside Vehicles in PvP Content?"],
+			desc = L["This will hide the Cooldown Manager while inside vehicles in PvP Content."],
+			width = "full",
+			get = function(info) return NS.db.global.cdmHideInVehiclesPvP end,
+			set = function(info, value) NS.db.global.cdmHideInVehiclesPvP = value end,
+		},
+		--[[resourcesHideInVehiclesPvP = {
+			type = "toggle",
+			order = 4,
+			name = L["Hide the Primary & Second Resource Bars while inside Vehicles in PvP Content?"],
+			desc = L["This will hide the Primary & Second Resource Bars while inside vehicles in PvP Content."],
+			width = "full",
+			get = function(info) return NS.db.global.resourcesHideInVehiclesPvP end,
+			set = function(info, value) NS.db.global.resourcesHideInVehiclesPvP = value end,
+		},]]--
+	}
+}
+
 -- world group
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 9,
+	order = 10,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1663,6 +1621,7 @@ function NS:CreateConfigOptions()
 			PartyGroup = PartyGroup,
 			QueueGroup = QueueGroup,
 			ReportGroup = ReportGroup,
+			VehicleGroup = VehicleGroup,
 			WorldGroup = WorldGroup,
 		},
 	}

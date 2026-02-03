@@ -55,6 +55,7 @@ local UnitInRaid                                  = _G.UnitInRaid
 local UnitName                                    = _G.UnitName
 local AddOnsIsAddOnLoaded                         = _G.C_AddOns.IsAddOnLoaded
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
+local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
 local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
@@ -71,11 +72,13 @@ local EquipmentSetUseEquipmentSet                 = _G.C_EquipmentSet.UseEquipme
 local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                               = _G.C_Map.GetMapInfo
 local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
+local MinimapGetPOITextureCoords                  = _G.C_Minimap.GetPOITextureCoords
 local PartyInfoGetInviteReferralInfo              = _G.C_PartyInfo.GetInviteReferralInfo
 local PartyInfoIsPartyFull                        = _G.C_PartyInfo.IsPartyFull
 local PartyInfoLeaveParty                         = _G.C_PartyInfo.LeaveParty
 local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
+local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
 local PvPGetCustomVictoryStatID                   = _G.C_PvP.GetCustomVictoryStatID
 local PvPGetScoreInfo                             = _G.C_PvP.GetScoreInfo
 local PvPGetScoreInfoByPlayerGuid                 = _G.C_PvP.GetScoreInfoByPlayerGuid
@@ -133,64 +136,16 @@ end
 
 -- process area pois updated
 function NS.CommFlare:AREA_POIS_UPDATED(msg)
-	-- update pois
-	NS:UpdatePOIs()
-
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
-		-- get best map for player
-		local mapID = MapGetBestMapForUnit("player")
-		if (mapID and (mapID > 0)) then
-			-- ashran?
-			if (mapID == 1478) then
-				-- check for ancient inferno
-				local info = AreaPoiInfoGetAreaPOIInfo(mapID, 6493)
-				if (info) then
-					-- not previously up?
-					local issue_warning = false
-					if (NS.CommFlare.CF.AncientInferno == 0) then
-						-- should warn
-						NS.CommFlare.CF.AncientInferno = time()
-						issue_warning = true
-					else
-						-- has been 30 minutes?
-						local diff = time() - NS.CommFlare.CF.AncientInferno
-						if (diff >= 1795) then
-							-- should warn
-							NS.CommFlare.CF.AncientInferno = time()
-							issue_warning = true
-						end
-					end
-
-					-- should issue warning?
-					if (issue_warning == true) then
-						-- raid warning?
-						local player = NS.CommFlare.CF.PlayerFullName
-						NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-						if (NS.db.global.ashranAncientInfernoSpawned == 2) then
-							-- do you have lead?
-							if (NS.CommFlare.CF.PlayerRank == 2) then
-								-- issue global raid warning
-								NS:SendMessage("RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
-							else
-								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
-							end
-						-- local warning only?
-						elseif (NS.db.global.ashranAncientInfernoSpawned == 3) then
-							-- issue local raid warning (with raid warning audio sound)
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Ancient Inferno has spawned at the Ring of Conquest!"])
-						-- instance chat warning?
-						elseif (NS.db.global.ashranAncientInfernoSpawned == 4) then
-							-- do you have lead?
-							if (NS.CommFlare.CF.PlayerRank == 2) then
-								-- issue global raid warning
-								NS:SendMessage("INSTANCE_CHAT", L["Ancient Inferno has spawned at the Ring of Conquest!"])
-							end
-						end
-					end
-				end
-			end
+		-- isle of conquest?
+		if (NS.CommFlare.CF.MapID == 169) then
+			-- process isle of conquest POIs
+			NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
+		-- ashran?
+		elseif (NS.CommFlare.CF.MapID == 1478) then
+			-- process ashran POIs
+			NS:Process_Ashran_POIs(NS.CommFlare.CF.MapID)
 		end
 	end
 end
@@ -228,83 +183,6 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 						NS:PromoteToRaidLeader(sender)
 					end
 				end
-			end
-		end
-	else
-		-- does not need addon data
-		if (NS.CommFlare.CF.NeedAddonData ~= true) then
-			-- finished
-			return
-		end
-
-		-- capping?
-		if (prefix == "Capping") then
-			-- alterac valley or korrak's revenge?
-			if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
-				-- skip these messages
-				if (text == "tr") then
-					-- finished
-					return
-				end
-
-				-- finished
-				NS.CommFlare.CF.NeedAddonData = false
-			-- isle of conquest?
-			elseif (NS.CommFlare.CF.MapID == 169) then
-				-- skip these messages
-				if ((text == "gr") or (text == "rb") or (text == "rbh")) then
-					-- finished
-					return
-				end
-
-				-- process data
-				local baseGateHealth = 2400000
-				local h1, h1hp, h2, h2hp, h3, h3hp, a1, a1hp, a2, a2hp, a3, a3hp = strsplit(":", text)
-				local hGate1, hGate2, hGate3, aGate1, aGate2, aGate3 = tonumber(h1hp), tonumber(h2hp), tonumber(h3hp), tonumber(a1hp), tonumber(a2hp), tonumber(a3hp)
-				if (hGate1 and hGate2 and hGate3 and aGate1 and aGate2 and aGate3) then
-					-- find lowest gates
-					local allyLowest = mmin(aGate1, aGate2, aGate3) / baseGateHealth * 100
-					local hordeLowest = mmin(hGate1, hGate2, hGate3) / baseGateHealth * 100
-
-					-- report to anyone?
-					local message = strformat(L["%s: Alliance Gate = %.1f, Horde Gate = %.1f"], L["Isle of Conquest"], allyLowest, hordeLowest)
-					if (NS.CommFlare.CF.StatusCheck and next(NS.CommFlare.CF.StatusCheck)) then
-						-- process all
-						local timer = 0.0
-						for k,v in pairs(NS.CommFlare.CF.StatusCheck) do
-							-- send replies staggered
-							TimerAfter(timer, function()
-								-- send message
-								NS:SendMessage(k, message)
-							end)
-
-							-- next
-							timer = timer + 0.2
-						end
-					end
-				end
-
-				-- finished
-				NS.CommFlare.CF.NeedAddonData = false
-			-- wintergrasp?
-			elseif (NS.CommFlare.CF.MapID == 1334) then
-				-- skip these messages
-				if (text == "twr") then
-					-- finished
-					return
-				end
-
-				-- process data
-				local attackerTowerHealth, mainEntranceHealth, wallHealth, defenseTowerHealth = 130000, 91000, 240000, 80000
-				local west, westRawHp, mid, midRawHp, east, eastRawHp, ne, neRawHp, se, seRawHp, sw, swRawHp, nw, nwRawHp = strsplit(":", text)
-				if (west ~= "z") then
-				else
-					-- split towers
-					local towers = {strsplit("~", westRawHp)}
-				end
-
-				-- finished
-				NS.CommFlare.CF.NeedAddonData = false
 			end
 		end
 	end
@@ -411,6 +289,58 @@ function NS.CommFlare:CHAT_MSG_COMMUNITIES_CHANNEL(msg, ...)
 	end
 end
 
+-- process chat monster say message
+function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
+	local text, sender = ...
+
+	-- in chat messaging lockdown?
+	if (ChatInfoInChatMessagingLockdown()) then
+		-- finished
+		return
+	end
+
+	-- ruffious?
+	if (sender == "Ruffious") then
+		-- notify when war crate is inbound?
+		if (NS.db.global.notifyWarCrateInbound == true) then
+			-- war mode enabled?
+			if (PvPIsWarModeFeatureEnabled() == true) then
+				-- crate incoming message?
+				local incoming = false
+				if (text:find("cache of resources nearby")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("that means treasure hunters")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("valuable resources in the area")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("valuables waiting to be won")) then
+					-- incoming
+					incoming = true
+				end
+
+				-- incoming?
+				if (incoming == true) then
+					-- needs to issue raid warning?
+					if (NS.CommFlare.CF.LastRaidWarning == 0) then
+						-- update last raid warning
+						NS.CommFlare.CF.LastRaidWarning = time()
+						TimerAfter(150, function()
+							-- clear last raid warning
+							NS.CommFlare.CF.LastRaidWarning = 0
+						end)
+
+						-- issue local raid warning (with raid warning audio sound)
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
+					end
+				end
+			end
+		end
+	end
+end
+
 -- handle chat party message events
 function NS:Event_Chat_Message_Party(...)
 	local text, sender = ...
@@ -467,141 +397,6 @@ function NS:Event_Chat_Message_Party(...)
 	end
 end
 
--- process chat monster say message
-function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
-	local text, sender = ...
-
-	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
-		-- finished
-		return
-	end
-
-	-- ruffious?
-	if (sender == "Ruffious") then
-		-- notify when war crate is inbound?
-		if (NS.db.global.notifyWarCrateInbound == true) then
-			-- zRdyCrate not running?
-			if (not NS.CommFlare.CF.RdyCrate) then
-				-- war mode enabled?
-				if (PvPIsWarModeFeatureEnabled() == true) then
-					-- crate incoming message?
-					local incoming = false
-					if (text:find("cache of resources nearby")) then
-						-- incoming
-						incoming = true
-					elseif (text:find("that means treasure hunters")) then
-						-- incoming
-						incoming = true
-					elseif (text:find("valuable resources in the area")) then
-						-- incoming
-						incoming = true
-					elseif (text:find("valuables waiting to be won")) then
-						-- incoming
-						incoming = true
-					end
-
-					-- incoming?
-					if (incoming == true) then
-						-- needs to issue raid warning?
-						if (NS.CommFlare.CF.LastRaidWarning == 0) then
-							-- update last raid warning
-							NS.CommFlare.CF.LastRaidWarning = time()
-							TimerAfter(150, function()
-								-- clear last raid warning
-								NS.CommFlare.CF.LastRaidWarning = 0
-							end)
-
-							-- issue local raid warning (with raid warning audio sound)
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
--- process chat monster yell message
-function NS.CommFlare:CHAT_MSG_MONSTER_YELL(msg, ...)
-	local text, sender = ...
-
-	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
-		-- finished
-		return
-	end
-
-	-- no text?
-	if (not text or (text == "")) then
-		-- failed
-		return
-	end
-
-	-- is not in epic battleground?
-	if (NS:IsInEpicBG() ~= true) then
-		-- finished
-		return
-	end
-
-	-- Ashran, jeron killed?
-	local lower = strlower(text)
-	if (lower:find(L["jeron emberfall has been slain"])) then
-		-- jeron emberfall killed
-		NS.CommFlare.CF.ASH.Jeron = L["Killed"]
-	-- Ashran, rylai killed?
-	elseif (lower:find(L["rylai crestfall has been slain"])) then
-		-- rylai crestfall killed
-		NS.CommFlare.CF.ASH.Rylai = L["Killed"]
-	end
-
-	-- use player guid
-	local faction = nil
-	local guid = UnitGUID("player")
-	if (guid) then
-		-- get player score info by guid
-		local info = PvPGetScoreInfoByPlayerGuid(guid)
-		if (info and info.faction) then
-			-- alliance faction?
-			if (info.faction == Enum.PvPFaction.Alliance) then
-				-- set alliance
-				faction = L["Alliance"]
-			elseif (info.faction == Enum.PvPFaction.Horde) then
-				-- set horde
-				faction = L["Horde"]
-			end
-		end
-	end
-
-	-- faction not found?
-	if (not faction) then
-		-- use player faction
-		faction = UnitFactionGroup("player")
-	end
-
-	-- horde faction?
-	if (faction == L["Horde"]) then
-		-- captain galvangar?
-		if (sender == L["Captain Galvangar"]) then
-			-- engaged?
-			if (lower:find(L["your kind has no place in alterac valley"])) then
-				-- needs to issue raid warning?
-				if (NS.CommFlare.CF.LastBossRW == 0) then
-					-- update last raid warning
-					NS.CommFlare.CF.LastBossRW = time()
-					TimerAfter(15, function()
-						-- clear last raid warning
-						NS.CommFlare.CF.LastBossRW = 0
-					end)
-
-					-- issue local raid warning (with raid warning audio sound)
-					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat(L["%s is under attack!"], sender))
-				end
-			end
-		end
-	end
-end
-
 -- process chat party message
 function NS.CommFlare:CHAT_MSG_PARTY(msg, ...)
 	-- process chat message party event
@@ -612,23 +407,6 @@ end
 function NS.CommFlare:CHAT_MSG_PARTY_LEADER(msg, ...)
 	-- process chat message party event
 	NS:Event_Chat_Message_Party(...)
-end
-
--- process chat msg raid warning
-function NS.CommFlare:CHAT_MSG_RAID_WARNING(msg, ...)
-	local text, sender = ...
-
-	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
-		-- finished
-		return
-	end
-
-	-- found rdy crate warning?
-	if (text:find("Rdy War Crate") or text:find("Rdy Warning") or text:find("Next Crate")) then
-		-- assume rdy war crate tracker being used
-		NS.CommFlare.CF.RdyCrate = true
-	end
 end
 
 -- process chat whisper message
@@ -887,16 +665,11 @@ function NS.CommFlare:CLUB_STREAMS_LOADED(msg, ...)
 	end
 end
 
--- process combat log event unfiltered
-function NS.CommFlare:COMBAT_LOG_EVENT_UNFILTERED(msg)
-	-- process combat log event
-	NS:Process_Combat_Log_Event_Unfiltered()
-end
-
 -- process currency display update
 function NS.CommFlare:CURRENCY_DISPLAY_UPDATE(msg, ...)
-	-- conquest?
 	local currencyType, quantity, quantityChange, quantityGainSource, destroyReason = ...
+
+	-- conquest?
 	if (currencyType == 1602) then
 		-- notify when war crate is inbound?
 		if (NS.db.global.notifyWarCrateInbound == true) then
@@ -1389,7 +1162,6 @@ end
 -- process lfg role check role chosen
 function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 	local name, isTank, isHealer, isDamage = ...
-	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
 
 	-- build proper name
 	local player = name
@@ -1413,6 +1185,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 	end
 
 	-- is battleground queue?
+	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
 	if (bgQueue) then
 		-- is tracked pvp?
 		local mapName = GetLFGRoleUpdateBattlegroundInfo()
@@ -1448,9 +1221,9 @@ end
 -- process lfg role check show
 function NS.CommFlare:LFG_ROLE_CHECK_SHOW(msg, ...)
 	local isRequeue = ...
-	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
 
 	-- is battleground queue?
+	local inProgress, slots, members, category, lfgID, bgQueue = GetLFGRoleUpdate()
 	if (bgQueue) then
 		-- is tracked pvp?
 		local mapName = GetLFGRoleUpdateBattlegroundInfo()
@@ -1626,12 +1399,40 @@ end
 function NS.CommFlare:PARTY_KILL(msg, ...)
 	local attackerGUID, targetGUID = ...
 
-	-- get player info
+	-- has attacker name?
+	local message = nil
 	local attackerName, attackerRealm = select(6, GetPlayerInfoByGUID(attackerGUID))
 	local targetName, targetRealm = select(6, GetPlayerInfoByGUID(targetGUID))
-	if (attackerName and targetName) then
-		-- display debug info
-		--print("PARTY_KILL: " .. attackerName .. " (" .. attackerGUID .. ") killed " .. targetName .. "(" .. targetGUID .. ")")
+	if (attackerName) then
+		-- debug print enabled?
+		if (NS.db.global.debugPrint == true) then
+			-- has target name?
+			if (targetName) then
+				-- build message
+				message = NS.CommFlare.Title .. ": PARTY_KILL; Player " .. attackerName .. " (" .. attackerGUID .. ") killed Player " .. targetName .. "(" .. targetGUID .. ")"
+			else
+				-- build message
+				message = NS.CommFlare.Title .. ": PARTY_KILL; Player " .. attackerName .. " (" .. attackerGUID .. ") killed Non-Player (" .. targetGUID .. ")"
+			end
+		end
+	else
+		-- debug print enabled?
+		if (NS.db.global.debugPrint == true) then
+			-- has target name?
+			if (targetName) then
+				-- build message
+				message = NS.CommFlare.Title .. ": PARTY_KILL; Non-Player (" .. attackerGUID .. ") killed Player " .. targetName .. "(" .. targetGUID .. ")"
+			else
+				-- build message
+				message = NS.CommFlare.Title .. ": PARTY_KILL; Non-Player (" .. attackerGUID .. ") killed Non-Player (" .. targetGUID .. ")"
+			end
+		end		
+	end
+
+	-- has message?
+	if (message) then
+		-- debug print
+		NS:Debug_Print(message)
 	end
 end
 
@@ -1708,6 +1509,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	end
 
 	-- setup player
+	NS.faction = (UnitFactionGroup("player") == "Horde") and 0 or 1
 	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
@@ -1717,17 +1519,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 	-- add get range check spell/s
 	NS:AddRangeCheckSpell("DEATHKNIGHT", "Friend", 410358)
-
-	-- zRdyCrate loaded?
-	NS.CommFlare.CF.RdyCrate = nil
-	if ((AddOnsIsAddOnLoaded("RCT") == true) or (AddOnsIsAddOnLoaded("zRdyCrate") == true)) then
-		-- setup stuff
-		NS.CommFlare.CF.zRdyCrate = LibStub("AceAddon-3.0"):GetAddon("RdysCrateTracker")
-		if (NS.CommFlare.CF.zRdyCrate) then
-			-- assume rdy war crate tracker being used
-			NS.CommFlare.CF.RdyCrate = true
-		end
-	end
 
 	-- initial login or reloading?
 	if ((isInitialLogin == true) or (isReloadingUi == true)) then
@@ -1774,6 +1565,17 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 						-- match started
 						NS.CommFlare.CF.MatchStatus = 2
 					end
+				end
+
+				-- isle of conquest?
+				if (NS.CommFlare.CF.MapID == 169) then
+					-- process isle of conquest stuff
+					NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
+				-- ashran?
+				elseif (NS.CommFlare.CF.MapID == 1478) then
+					-- process ashran stuff
+					NS:Process_Ashran_POIs(NS.CommFlare.CF.MapID)
+					NS:Process_Ashran_Vignettes(NS.CommFlare.CF.MapID)
 				end
 			end
 		end
@@ -1845,12 +1647,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		--NS.CommFlare.CF.StreamsRetryCount = 0
 		--local clubs = NS:Get_Enabled_Clubs()
 		--NS:Verify_Club_Streams(clubs)
-
-		-- update pois
-		NS:UpdatePOIs()
-
-		-- update vignette's
-		NS:UpdateVignettes()
 	else
 		-- match is active state?
 		if (PvPGetActiveMatchDuration() > 0) then
@@ -2019,8 +1815,6 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 
 	-- match finished
 	NS.CommFlare.CF.LeftTime = 0
-	NS.CommFlare.CF.LastBossRW = 0
-	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.EnteredTime = 0
 	NS.CommFlare.CF.MatchStatus = 3
 	NS.CommFlare.CF.PassLeadWarning = 0
@@ -2056,21 +1850,6 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	if (NS.CommFlare.CF.MapID) then
 		-- get map info
 		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
-		if (NS.CommFlare.CF.MapInfo and NS.CommFlare.CF.MapInfo.name) then
-			-- tracked pvp?
-			local mapName = NS.CommFlare.CF.MapInfo.name
-			local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-			if (isTracked == true) then
-				-- won the match?
-				if (NS.CommFlare.CF.PlayerInfo.faction == NS.CommFlare.CF.Winner) then
-					-- victory
-					status = "Victory"
-				else
-					-- victory
-					status = "Loss"
-				end
-			end
-		end
 	end
 
 	-- has active timers?
@@ -2124,6 +1903,12 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	if (NS.db.global.pvpCombatLogging == true) then
 		-- reset combat logging
 		LoggingCombat(NS.CommFlare.CF.PvpLoggingCombat)
+	end
+
+	-- inside vehicle?
+	if (UnitInVehicle("player")) then
+		-- show stuff in vehicles
+		NS:ShowStuffInVehicles("all")
 	end
 end
 
@@ -2484,6 +2269,8 @@ end
 -- process ready check finished
 function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 	local preempted = ...
+
+	-- preempted?
 	if (preempted == true) then
 		-- clear ready check
 		NS.CommFlare.CF.ReadyCheck = {}
@@ -2634,11 +2421,17 @@ end
 function NS.CommFlare:UNIT_DIED(msg, ...)
 	local unitGUID = ...
 
-	-- get player info
-	local name, realm = select(6, GetPlayerInfoByGUID(unitGUID))
-	if (name) then
-		-- display debug info
-		--print("UNIT_DIED: " .. name .. "(" .. unitGUID .. ")")
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- isle of conquest?
+		if (NS.CommFlare.CF.MapID == 169) then
+			-- non-player?
+			local name = select(6, GetPlayerInfoByGUID(unitGUID))
+			if (not name) then
+				-- process IOC vehicles
+				NS:Process_IsleOfConquest_Vehicles(NS.CommFlare.CF.MapID)
+			end
+		end
 	end
 end
 
@@ -2662,6 +2455,9 @@ function NS.CommFlare:UNIT_ENTERED_VEHICLE(msg, ...)
 			-- set new speed
 			local speed = NS.db.global.adjustVehicleTurnSpeed * 180
 			SetCVar("TurnSpeed", speed)
+
+			-- hide stuff in vehicles
+			NS:HideStuffInVehicles("all")
 		end
 	end
 end
@@ -2682,6 +2478,9 @@ function NS.CommFlare:UNIT_EXITED_VEHICLE(msg, ...)
 
 			-- set default or previous speed
 			SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
+
+			-- show stuff in vehicles
+			NS:ShowStuffInVehicles("all")
 		end
 	end
 end
@@ -2860,8 +2659,9 @@ end
 
 -- process update battlefield status
 function NS.CommFlare:UPDATE_BATTLEFIELD_STATUS(msg, ...)
-	-- sanity check
 	local index = ...
+
+	-- sanity check
 	if (not index or (index < 1) or (index > GetMaxBattlefieldID())) then
 		-- finished
 		return
@@ -2871,15 +2671,44 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_STATUS(msg, ...)
 	NS:Update_Battlefield_Status(index)
 end
 
+-- process update ui widget
+function NS.CommFlare:UPDATE_UI_WIDGET(msg, ...)
+	local widgetInfo = ...
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- get widget type info
+		local data = NS:GetWidgetData(widgetInfo)
+		if (data) then
+			-- update data
+			NS.CommFlare.CF.ActiveWidgets[widgetInfo.widgetID] = data
+		end
+
+		-- alterac valley
+		if (NS.CommFlare.CF.MapID == 91) then
+			-- process alterac valley widget
+			NS:Process_AlteracValley_Widget(widgetInfo)
+		-- isle of conquest?
+		elseif (NS.CommFlare.CF.MapID == 169) then
+			-- process isle of conquest widget
+			NS:Process_IsleOfConquest_Widget(widgetInfo)
+		end
+	end
+end
+
 -- process vignettes updated
 function NS.CommFlare:VIGNETTES_UPDATED(msg)
-	-- update vignette's
-	NS:UpdateVignettes()
-
-	-- not in instance?
+	-- in instance?
 	local inInstance, instanceType = IsInInstance()
 	if (inInstance == true) then
-		-- TODO: Extra stuff for Battlegrounds?
+		-- in battleground?
+		if (NS:IsInBattleground() == true) then
+			-- ashran?
+			if (NS.CommFlare.CF.MapID == 1478) then
+				-- process ashran stuff
+				NS:Process_Ashran_Vignettes(NS.CommFlare.CF.MapID)
+			end
+		end
 	else
 		-- notify when war crate is inbound?
 		if (NS.db.global.notifyWarCrateInbound == true) then
@@ -2888,11 +2717,8 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 				-- get current vignettes
 				local list = NS:Get_Current_Vignettes()
 				if (list) then
-					-- zRdyCrate not running?
-					if (not NS.CommFlare.CF.RdyCrate) then
-						-- check for alerts
-						NS:VignetteCheckForAlerts(list)
-					end
+					-- check for alerts
+					NS:VignetteCheckForAlerts(list)
 				end
 			end
 		end
@@ -2909,7 +2735,6 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 	end
 
 	-- get map info
-	local mapID = NS.CommFlare.CF.MapID
 	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
@@ -2964,7 +2789,7 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 				end)
 
 				-- are you in a raid?
-				local message = strformat("!CommFlare@%s@ZONE_CHANGED_NEW_AREA@%s:%s", NS.CommFlare.Version, tostring(mapID), tostring(mapName))
+				local message = strformat("!CommFlare@%s@ZONE_CHANGED_NEW_AREA@%s:%s", NS.CommFlare.Version, tostring(NS.CommFlare.CF.MapID), tostring(mapName))
 				if (IsInRaid()) then
 					-- send raid addon message
 					NS:SendAddonMessage(ADDON_NAME, message, "RAID")
@@ -2991,10 +2816,8 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
 	self:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
-	self:RegisterEvent("CHAT_MSG_MONSTER_YELL")
 	self:RegisterEvent("CHAT_MSG_PARTY")
 	self:RegisterEvent("CHAT_MSG_PARTY_LEADER")
-	self:RegisterEvent("CHAT_MSG_RAID_WARNING")
 	self:RegisterEvent("CHAT_MSG_WHISPER")
 	self:RegisterEvent("CLUB_ADDED")
 	self:RegisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
@@ -3049,14 +2872,9 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_START")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
+	self:RegisterEvent("UPDATE_UI_WIDGET")
 	self:RegisterEvent("VIGNETTES_UPDATED")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-
-	-- not midnight?
-	if (NS.CommFlare.isMidnight == false) then
-		-- before addon apocalypse
-		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	end
 end
 
 -- disabled
@@ -3069,10 +2887,8 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CHAT_MSG_BN_WHISPER")
 	self:UnregisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_SAY")
-	self:UnregisterEvent("CHAT_MSG_MONSTER_YELL")
 	self:UnregisterEvent("CHAT_MSG_PARTY")
 	self:UnregisterEvent("CHAT_MSG_PARTY_LEADER")
-	self:UnregisterEvent("CHAT_MSG_RAID_WARNING")
 	self:UnregisterEvent("CHAT_MSG_WHISPER")
 	self:UnregisterEvent("CLUB_ADDED")
 	self:UnregisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
@@ -3127,14 +2943,9 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("UNIT_SPELLCAST_START")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_STATUS")
+	self:UnregisterEvent("UPDATE_UI_WIDGET")
 	self:UnregisterEvent("VIGNETTES_UPDATED")
 	self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
-
-	-- not midnight?
-	if (NS.CommFlare.isMidnight == false) then
-		-- before addon apocalypse
-		self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-	end
 end
 
 -- communication received
@@ -3149,7 +2960,5 @@ local function Community_Flare_OnCommReceived(prefix, message, distribution, sen
 	NS:Process_OnCommReceived(prefix, message, distribution, sender)
 end
 
--- register addon communications
+-- register addon communication
 NS.CommFlare:RegisterComm(ADDON_NAME, Community_Flare_OnCommReceived)
-NS.CommFlare:RegisterComm("Capping", Community_Flare_OnCommReceived)
-NS.CommFlare:RegisterComm("zRdyCrate", Community_Flare_OnCommReceived)

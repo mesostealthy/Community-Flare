@@ -63,12 +63,6 @@
 					</Layer>
 				</Layers>
 			</EventFrame>
-			<Frame parentKey="EntryDropDown" inherits="UIDropDownMenuTemplate">
-				<Scripts>
-					<OnLoad function="CF_PlayerListEntryDropDown_OnLoad"/>
-					<OnHide function="CF_PlayerListEntryDropDown_OnHide"/>
-				</Scripts>
-			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad" />

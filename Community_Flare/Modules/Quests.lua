@@ -129,7 +129,6 @@ function NS:ProcessAcceptedQuest(questID)
 				local name = GetQuestLogRewardInfo(1, questID)
 				if (name) then
 					-- add waypoint
-					print("Found:", name)
 					NS:TomTomAddWaypoint(name, info.x, info.y)
 				end
 			end

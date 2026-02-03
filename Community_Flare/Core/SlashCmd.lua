@@ -58,7 +58,6 @@ local function Community_Flare_Slash_Command(input)
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then
 			-- expose local tables for debug purposes
-			CommFlare_NS = NS
 			CommFlare_DB = NS.db
 			CommFlare_CF = NS.CommFlare.CF
 			CommFlare_LocalQueues = NS.CommFlare.CF.LocalQueues
@@ -191,8 +190,20 @@ local function Community_Flare_Slash_Command(input)
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["CPU Usage"], GetAddOnCPUUsage(ADDON_NAME)))
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["Memory Usage"], GetAddOnMemoryUsage(ADDON_NAME)))
 	elseif (lower == "vehicles") then
-		-- list all vehicles
-		NS:List_Vehicles()
+		-- shown?
+		if (CF_VehicleListFrame:IsShown()) then
+			-- hide
+			CF_VehicleListFrame:Hide()
+		else
+			-- debug print enabled?
+			if (NS.db.global.debugPrint == true) then
+				-- list vehicles
+				NS:List_Vehicles()
+			end
+
+			-- show
+			CF_VehicleListFrame:Show()
+		end
 	elseif (lower == "vignettes") then
 		-- shown?
 		if (CF_VignetteListFrame:IsShown()) then

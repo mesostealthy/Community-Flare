@@ -14,8 +14,6 @@ local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                         = _G.IsMouseButtonDown
 local PlayerLocation                            = _G.PlayerLocation
 local StaticPopup_Show                          = _G.StaticPopup_Show
-local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
-local UIDropDownMenu_Initialize                 = _G.UIDropDownMenu_Initialize
 local PlayerInfoGetRace                         = _G.C_PlayerInfo.GetRace
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
@@ -351,7 +349,7 @@ function CF_PlayerListMixin:RefreshListDisplay()
 		end
 
 		-- update counts
-		self.PlayerCount:SetText(strformat("%d KOS, %d Players", #self.KosList, #self.PlayerList))
+		self.PlayerCount:SetText(strformat(L["%d KOS, %d Players"], #self.KosList, #self.PlayerList))
 
 		-- update scroll box
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
@@ -551,9 +549,29 @@ function CF_PlayerListEntryMixin:OnClick(button)
 	-- right click?
 	elseif (button == "RightButton") then
 		-- toggle drop down menu
-		local playersList = self:GetParentFrame()
-		playersList:SetSelectedEntryForDropDown(self)
-		ToggleDropDownMenu(1, nil, playersList.EntryDropDown, self, 0, 0)
+		--local playersList = self:GetParentFrame()
+		--playersList:SetSelectedEntryForDropDown(self)
+		--ToggleDropDownMenu(1, nil, playersList.EntryDropDown, self, 0, 0)
+
+
+		-- has player?
+		local text = "Player"
+		if (self.info.player and (self.info.player ~= "")) then
+			-- save player
+			text = self.info.player
+		end
+
+		-- setup context data
+		local parent = self:GetParentFrame()
+		local contextData = {
+			name = text,
+			guid = self.guid,
+			info = self.info,
+			parent = parent,
+		}
+
+		-- open menu
+		UnitPopup_OpenMenu("CF_PLAYER_LIST", contextData)
 	end
 end
 
@@ -783,12 +801,11 @@ function UnitPopupCFAddKosButtonMixin:GetParentFrame()
 end
 
 -- can show add kos?
-function UnitPopupCFAddKosButtonMixin:CanShow()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFAddKosButtonMixin:CanShow(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- found guid?
-		local info = dropdownMenu.info
+		local info = contextData.info
 		if (info.guid) then
 			-- kos target?
 			if (NS.db.global.KosList and NS.db.global.KosList[info.guid]) then
@@ -809,10 +826,9 @@ function UnitPopupCFAddKosButtonMixin:GetText()
 end
 
 -- add kos on click
-function UnitPopupCFAddKosButtonMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFAddKosButtonMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- kos list not created yet?
 		if (not NS.db.global.KosList) then
 			-- initialize
@@ -820,10 +836,10 @@ function UnitPopupCFAddKosButtonMixin:OnClick()
 		end
 
 		-- not already added?
-		local guid = dropdownMenu.info.guid
+		local guid = contextData.info.guid
 		if (not NS.db.global.KosList[guid]) then
 			-- add to kos list
-			player = dropdownMenu.info.player
+			player = contextData.info.player
 			NS.db.global.KosList[guid] = player
 		end
 
@@ -842,12 +858,11 @@ function UnitPopupCFRemoveKosButtonMixin:GetParentFrame()
 end
 
 -- can show remove kos?
-function UnitPopupCFRemoveKosButtonMixin:CanShow()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFRemoveKosButtonMixin:CanShow(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- found guid?
-		local info = dropdownMenu.info
+		local info = contextData.info
 		if (info.guid) then
 			-- kos target?
 			if (NS.db.global.KosList and NS.db.global.KosList[info.guid]) then
@@ -868,10 +883,9 @@ function UnitPopupCFRemoveKosButtonMixin:GetText()
 end
 
 -- remove kos on click
-function UnitPopupCFRemoveKosButtonMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFRemoveKosButtonMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- kos list not created yet?
 		if (not NS.db.global.KosList) then
 			-- create
@@ -879,7 +893,7 @@ function UnitPopupCFRemoveKosButtonMixin:OnClick()
 		end
 
 		-- already added?
-		local guid = dropdownMenu.info.guid
+		local guid = contextData.info.guid
 		if (NS.db.global.KosList[guid]) then
 			-- remove from kos list
 			NS.db.global.KosList[guid] = nil
@@ -906,10 +920,9 @@ function UnitPopupCFDeletePlayerButtonMixin:GetText()
 end
 
 -- delete player on click
-function UnitPopupCFDeletePlayerButtonMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFDeletePlayerButtonMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- kos list not created yet?
 		if (not NS.db.global.KosList) then
 			-- create
@@ -917,7 +930,7 @@ function UnitPopupCFDeletePlayerButtonMixin:OnClick()
 		end
 
 		-- already added?
-		local guid = dropdownMenu.info.guid
+		local guid = contextData.info.guid
 		if (NS.db.global.KosList[guid]) then
 			-- delete
 			NS.db.global.KosList[guid] = nil
@@ -950,25 +963,24 @@ function UnitPopupCFSetPlayerNoteButtonMixin:GetText()
 end
 
 -- set player note on click
-function UnitPopupCFSetPlayerNoteButtonMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFSetPlayerNoteButtonMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			guid = dropdownMenu.guid,
-			info = dropdownMenu.info,
-			player = dropdownMenu.info.player
+			guid = contextData.guid,
+			info = contextData.info,
+			player = contextData.info.player
 		}
 
 		-- show set player note dialog
-		StaticPopup_Show("CommunityFlare_Set_Player_Note_Dialog", dropdownMenu.info.player, nil, data)
+		StaticPopup_Show("CommunityFlare_Set_Player_Note_Dialog", data.player, nil, data)
 	end
 end
 
 -- register drop down menu for players
 UnitPopupMenuCFPlayers = CreateFromMixins(UnitPopupTopLevelMenuMixin)
-UnitPopupManager:RegisterMenu("CF_PLAYERS", UnitPopupMenuCFPlayers)
+UnitPopupManager:RegisterMenu("CF_PLAYER_LIST", UnitPopupMenuCFPlayers)
 
 -- copy player name mixin
 UnitPopupCFCopyPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
@@ -986,15 +998,14 @@ function UnitPopupCFCopyPlayerNameMixin:GetText()
 end
 
 -- copy player note on click
-function UnitPopupCFCopyPlayerNameMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFCopyPlayerNameMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			guid = dropdownMenu.guid,
-			info = dropdownMenu.info,
-			player = dropdownMenu.info.player,
+			guid = contextData.guid,
+			info = contextData.info,
+			player = contextData.info.player,
 		}
 
 		-- show set player note dialog
@@ -1090,14 +1101,13 @@ local function RefreshPlayerName(guid, old_player)
 end
 
 -- copy player note on click
-function UnitPopupCFRefreshPlayerNameMixin:OnClick()
-	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.guid and dropdownMenu.info) then
+function UnitPopupCFRefreshPlayerNameMixin:OnClick(contextData)
+	-- has context data?
+	if (contextData and contextData.info) then
 		-- refresh player name
 		refresh_retries = 0
-		local guid = dropdownMenu.guid
-		local player = dropdownMenu.info.player
+		local guid = contextData.guid
+		local player = contextData.info.player
 		RefreshPlayerName(guid, player)
 	end
 end
@@ -1113,46 +1123,6 @@ function UnitPopupMenuCFPlayers:GetEntries()
 		UnitPopupCFCopyPlayerNameMixin,
 		UnitPopupCFRefreshPlayerNameMixin,
 	}
-end
-
--- player list drop down initialize
-function CF_PlayerListEntryDropDown_Initialize(self, level)
-	-- no selected entry?
-	local playersList = self:GetParent()
-	local selectedKosListEntry = playersList:GetSelectedEntryForDropDown()
-	if (not selectedKosListEntry) then
-		-- finished
-		return
-	end
-
-	-- save player stuff
-	self.parent = playersList
-	self.guid = selectedKosListEntry.guid
-	self.info = selectedKosListEntry.info
-
-	-- has player?
-	local text = "Player"
-	if (self.info.player and (self.info.player ~= "")) then
-		-- save player
-		text = self.info.player
-	end
-
-	-- open popup menu
-	local contextData = { parent = self.parent, guid = self.guid, name = text, info = self.info }
-	UnitPopup_OpenMenu("CF_PLAYERS", contextData)
-end
-
--- player list drop down on load
-function CF_PlayerListEntryDropDown_OnLoad(self)
-	-- initialize drop down menu
-	UIDropDownMenu_Initialize(self, CF_PlayerListEntryDropDown_Initialize, "MENU")
-end
-
--- player list drop down on hide
-function CF_PlayerListEntryDropDown_OnHide(self)
-	-- remove selected entry
-	local playersList = self:GetParent()
-	playersList:SetSelectedEntryForDropDown(nil)
 end
 
 -- search box on escape pressed

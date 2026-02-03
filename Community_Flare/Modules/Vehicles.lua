@@ -5,14 +5,14 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local CopyTable                                 = _G.CopyTable
-local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
-local PvPGetBattlefieldVehicles                 = _G.C_PvP.GetBattlefieldVehicles
-local print                                     = _G.print
-local tostring                                  = _G.tostring
-local type                                      = _G.type
-local strformat                                 = _G.string.format
+local _G                                          = _G
+local CopyTable                                   = _G.CopyTable
+local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
+local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
+local print                                       = _G.print
+local tostring                                    = _G.tostring
+local type                                        = _G.type
+local strformat                                   = _G.string.format
 
 -- get current vehicles
 function NS:Get_Current_Vehicles()

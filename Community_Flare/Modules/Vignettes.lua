@@ -69,12 +69,6 @@ end
 
 -- vignette check for alerts
 function NS:VignetteCheckForAlerts(list)
-	-- rdy war crate tracker being used?
-	if (NS.CommFlare.CF.RdyCrate) then
-		-- finished
-		return
-	end
-
 	-- in instance?
 	local inInstance, instanceType = IsInInstance()
 	if (inInstance == true) then
@@ -316,73 +310,4 @@ function NS:List_Vignettes()
 
 	-- display count
 	print(strformat(L["Count: %d"], count))
-end
-
--- update vignette's
-function NS:UpdateVignettes()
-	-- get map id
-	local mapID = MapGetBestMapForUnit("player")
-	if (not mapID) then
-		-- not found
-		return false
-	end
-
-	-- get vignettes
-	local guids = VignetteInfoGetVignettes()
-	if (not guids) then
-		-- not found
-		return false
-	end
-
-	-- process all
-	local count = 0
-	local list = {}
-	for i=1, #guids do
-		-- get vignette info
-		local id = tostring(guids[i])
-		local info = VignetteInfoGetVignetteInfo(id)
-		if (not info) then
-			-- removed
-			NS.CommFlare.CF.VignetteList[id] = nil
-		else
-			-- get name
-			list[id] = true
-			local name = tostring(info.name)
-			if ((name == nil) or (name == "")) then
-				-- use atlasName
-				name = tostring(info.atlasName)
-			end
-
-			-- vignette not added yet?
-			if (not NS.CommFlare.CF.VignetteList[id]) then
-				-- add vignette
-				NS.CommFlare.CF.VignetteList[id] = CopyTable(info)
-				count = count + 1
-			else
-				-- check for table updates
-				count = count + NS:CheckForTableUpdates("VIGNETTE", name, info, NS.CommFlare.CF.VignetteList[id], nil)
-			end
-		end
-	end
-
-	-- check for deleted
-	for k,info in pairs(NS.CommFlare.CF.VignetteList) do
-		-- not in list?
-		local id = tostring(k)
-		if (not list[id]) then
-			-- get name
-			local name = tostring(info.name)
-			if ((name == nil) or (name == "")) then
-				-- use atlasName
-				name = tostring(info.atlasName)
-			end
-
-			-- delete vignette
-			NS.CommFlare.CF.VignetteList[id] = nil
-			count = count + 1
-		end
-	end
-
-	-- success
-	return true
 end

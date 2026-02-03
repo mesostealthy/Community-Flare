@@ -10,9 +10,8 @@ local CreateDataProvider                        = _G.CreateDataProvider
 local CreateFromMixins                          = _G.CreateFromMixins
 local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                             = _G.DevTools_Dump
-local AreaPoiInfoGetAreaPOIForMap               = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
+local PvPGetBattlefieldVehicles                 = _G.C_PvP.GetBattlefieldVehicles
 local date                                      = _G.date
 local ipairs                                    = _G.ipairs
 local pairs                                     = _G.pairs
@@ -20,8 +19,6 @@ local print                                     = _G.print
 local select                                    = _G.select
 local sort                                      = _G.sort
 local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
 local strformat                                 = _G.string.format
 local strlower                                  = _G.string.lower
 local strsplit                                  = _G.string.split
@@ -32,70 +29,70 @@ local tsort                                     = _G.table.sort
 local searchText = ""
 
 -- create mixin
-CF_POIListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
+CF_VehicleListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 
 -- on load
-function CF_POIListFrameMixin:OnLoad()
+function CF_VehicleListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", L["POI List Manager"])
+	local title = strformat("CF %s", L["Vehicle List Manager"])
 	self.HeaderFrame.Title:SetText(title)
 
 	-- register stuff
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
-	self:RegisterEvent("AREA_POIS_UPDATED")
+	self:RegisterEvent("PVP_VEHICLE_INFO_UPDATED")
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
 end
 
 -- on show
-function CF_POIListFrameMixin:OnShow()
+function CF_VehicleListFrameMixin:OnShow()
 	-- refresh list
 	self:RefreshList()
 end
 
 -- on drag start
-function CF_POIListFrameMixin:OnDragStart()
+function CF_VehicleListFrameMixin:OnDragStart()
 	-- start moving
 	self:StartMoving()
 	self.moving = true
 end
 
 -- on drag stop
-function CF_POIListFrameMixin:OnDragStop()
+function CF_VehicleListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
 end
 
 -- on event
-function CF_POIListFrameMixin:OnEvent(event, ...)
-	-- area pois updated?
-	if (event == "AREA_POIS_UPDATED") then
+function CF_VehicleListFrameMixin:OnEvent(event, ...)
+	-- pvp vehicle info updated?
+	if (event == "PVP_VEHICLE_INFO_UPDATED") then
 		-- refresh list
 		self:RefreshList()
 	end
 end
 
 -- refresh list
-function CF_POIListFrameMixin:RefreshList()
+function CF_VehicleListFrameMixin:RefreshList()
 	-- update / refresh
-	self.POIListFrame.POIList:UpdatePOIList()
-	self.POIListFrame.POIList:RefreshListDisplay()
+	self.VehicleListFrame.VehicleList:UpdateVehicleList()
+	self.VehicleListFrame.VehicleList:RefreshListDisplay()
 end
 
 -- create table
-CF_POIListCloseButtonMixin = {}
+CF_VehicleListCloseButtonMixin = {}
 
 -- get parent frame
-function CF_POIListCloseButtonMixin:GetParentFrame()
+function CF_VehicleListCloseButtonMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent()
 end
 
 -- close button on click
-function CF_POIListCloseButtonMixin:OnClick(button)
+function CF_VehicleListCloseButtonMixin:OnClick(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- found parent frame?
@@ -111,7 +108,7 @@ function CF_POIListCloseButtonMixin:OnClick(button)
 end
 
 -- close button on enter
-function CF_POIListCloseButtonMixin:OnEnter()
+function CF_VehicleListCloseButtonMixin:OnEnter()
 	-- show tooltip
 	GameTooltip:SetOwner(self)
 	GameTooltip:AddLine("Close")
@@ -120,22 +117,22 @@ function CF_POIListCloseButtonMixin:OnEnter()
 end
 
 -- close button on leave
-function CF_POIListCloseButtonMixin:OnLeave()
+function CF_VehicleListCloseButtonMixin:OnLeave()
 	-- hide tooltip
 	GameTooltip:Hide()
 end
 
 -- create table
-CF_POIListRefreshButtonMixin = {}
+CF_VehicleListRefreshButtonMixin = {}
 
 -- get parent frame
-function CF_POIListRefreshButtonMixin:GetParentFrame()
+function CF_VehicleListRefreshButtonMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent()
 end
 
 -- refresh button on click
-function CF_POIListRefreshButtonMixin:OnClick(button)
+function CF_VehicleListRefreshButtonMixin:OnClick(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- found parent frame?
@@ -148,50 +145,50 @@ function CF_POIListRefreshButtonMixin:OnClick(button)
 end
 
 -- refresh button on enter
-function CF_POIListRefreshButtonMixin:OnEnter()
+function CF_VehicleListRefreshButtonMixin:OnEnter()
 	-- show tooltip
 	GameTooltip:SetOwner(self)
 	GameTooltip:AddLine("Refresh")
-	GameTooltip:AddLine("-Left Click: Refresh All POIs", 1, 1, 1)
+	GameTooltip:AddLine("-Left Click: Refresh All Vehicles", 1, 1, 1)
 	GameTooltip:Show()
 end
 
 -- refresh button on leave
-function CF_POIListRefreshButtonMixin:OnLeave()
+function CF_VehicleListRefreshButtonMixin:OnLeave()
 	-- hide tooltip
 	GameTooltip:Hide()
 end
 
 -- create table
-CF_POIListMixin = {}
+CF_VehicleListMixin = {}
 
 -- get parent frame
-function CF_POIListMixin:GetParentFrame()
+function CF_VehicleListMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent()
 end
 
 -- refresh list display
-function CF_POIListMixin:RefreshListDisplay()
+function CF_VehicleListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
 	if (frame:IsShown() == true) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
-		-- has poi list?
-		if (self.POIList and (#self.POIList > 0)) then
+		-- has vehicle list?
+		if (self.VehicleList and (#self.VehicleList > 0)) then
 			-- process names
-			for k,v in pairs(self.POINames) do
+			for k,v in pairs(self.VehicleNames) do
 				local name, id = strsplit("@", v)
 				id = tonumber(id)
-				local info = { id = id, name = name, data = self.POIList[id] }
+				local info = { id = id, name = name, data = self.VehicleList[id] }
 				dataProvider:Insert({info=info})
 			end
 		end
 
 		-- update count
-		self.POICount:SetText(strformat(L["%d POIs"], #self.POIList))
+		self.VehicleCount:SetText(strformat(L["%d Vehicles"], #self.VehicleList))
 
 		-- update scroll box
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
@@ -203,48 +200,33 @@ function CF_POIListMixin:RefreshListDisplay()
 end
 
 -- update queue list
-function CF_POIListMixin:UpdatePOIList()
+function CF_VehicleListMixin:UpdateVehicleList()
 	-- initialize
-	self.POIList = {}
-	self.POINames = {}
+	self.VehicleList = {}
+	self.VehicleNames = {}
 
 	-- get map id
 	local mapID = MapGetBestMapForUnit("player")
 	if (mapID) then
-		-- get pois for map
-		local pois = AreaPoiInfoGetAreaPOIForMap(mapID)
-		if (pois and (#pois > 0)) then
-			-- process pois
+		-- process any vehicles
+		local list = PvPGetBattlefieldVehicles(mapID)
+		if (list and (#list > 0)) then
+			-- process list
 			local count = 0
-			for _,v in ipairs(pois) do
-				-- get area poi info
-				local info = AreaPoiInfoGetAreaPOIInfo(mapID, v)
-				if (info and info.areaPoiID) then
-					-- has position?
-					if (info.position) then
-						-- validate position
-						local x, y = info.position:GetXY()
-						if (x and y) then
-							-- add position
-							info.x = x
-							info.y = y
-						end
-					end
+			for _,info in pairs(list) do
+				-- get name
+				count = count + 1
+				local name = tostring(info.name)
+				if (not name or (name == "")) then name = tostring(info.atlas) end
+				name = strformat("%s@%d", name, count)
 
-					-- get name
-					count = count + 1
-					local name = tostring(info.name)
-					if (not name or (name == "")) then name = tostring(info.atlasName) end
-					name = strformat("%s@%d", name, count)
-
-					-- add to list
-					tinsert(self.POINames, name)
-					tinsert(self.POIList, info)
-				end
+				-- add to list
+				tinsert(self.VehicleNames, name)
+				tinsert(self.VehicleList, info)
 			end
 
 			-- sort
-			tsort(self.POINames)
+			tsort(self.VehicleNames)
 		end
 	end
 
@@ -254,22 +236,22 @@ function CF_POIListMixin:UpdatePOIList()
 end
 
 -- update count
-function CF_POIListMixin:UpdateCount()
+function CF_VehicleListMixin:UpdateCount()
 	-- update count
-	self.POICount:SetText(strformat("%d POIs", #self.POIList))
+	self.VehicleCount:SetText(strformat("%d Vehicles", #self.VehicleList))
 end
 
 -- update
-function CF_POIListMixin:Update()
+function CF_VehicleListMixin:Update()
 	-- refresh list display
 	self:RefreshListDisplay()
 end
 
 -- on load
-function CF_POIListMixin:OnLoad()
+function CF_VehicleListMixin:OnLoad()
 	-- setup the scroll box
 	local view = CreateScrollBoxListLinearView()
-	view:SetElementInitializer("CF_POIListEntryTemplate", function(button, elementData)
+	view:SetElementInitializer("CF_VehicleListEntryTemplate", function(button, elementData)
 		-- initialize
 		button:Init(elementData)
 	end)
@@ -284,44 +266,45 @@ function CF_POIListMixin:OnLoad()
 end
 
 -- on show
-function CF_POIListMixin:OnShow()
+function CF_VehicleListMixin:OnShow()
 	-- update queue list
-	self:UpdatePOIList()
+	self:UpdateVehicleList()
 end
 
 -- on update
-function CF_POIListMixin:OnUpdate()
+function CF_VehicleListMixin:OnUpdate()
 end
 
 -- get selected entry for drop down
-function CF_POIListMixin:GetSelectedEntryForDropDown()
+function CF_VehicleListMixin:GetSelectedEntryForDropDown()
 	-- return selected entry
 	return self.selectedEntryForDropDown
 end
 
 -- set selected entry for drop down
-function CF_POIListMixin:SetSelectedEntryForDropDown(entry)
+function CF_VehicleListMixin:SetSelectedEntryForDropDown(entry)
 	-- save selected entry
 	self.selectedEntryForDropDown = entry
 end
 
 -- create table
-CF_POIListEntryMixin = {}
+CF_VehicleListEntryMixin = {}
 
 -- get parent frame
-function CF_POIListEntryMixin:GetParentFrame()
+function CF_VehicleListEntryMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent():GetParent()
 end
 
 -- on click
-function CF_POIListEntryMixin:OnClick(button)
+function CF_VehicleListEntryMixin:OnClick(button)
 	-- left button?
+	local info = self.info.data
 	if (button == "LeftButton") then
-		-- display info
-		local info = self.info.data
-		print(strformat("%s: %s", L["Name"], self.info.name))
-		print(strformat("%s %s: ", L["Area POI"], L["ID"], info.areaPoiID))
+		-- add header
+		local name = info.name
+		if (not name or (name == "")) then name = tostring(info.atlas) end
+		print(strformat("%s: %s", L["Name"], name))
 		if (info.description and (info.description ~= "")) then
 			-- display description
 			print(strformat("%s: %s", L["Description"], info.description))
@@ -331,41 +314,20 @@ function CF_POIListEntryMixin:OnClick(button)
 end
 
 -- on enter
-function CF_POIListEntryMixin:OnEnter()
+function CF_VehicleListEntryMixin:OnEnter()
 	-- start tooltip
 	local info = self.info.data
 	GameTooltip:SetOwner(self)
 
 	-- add header
 	local name = info.name
-	if (not name or (name == "")) then name = tostring(info.atlasName) end
+	if (not name or (name == "")) then name = tostring(info.atlas) end
 	GameTooltip:AddLine(name)
 
-	-- add area poi ID
-	GameTooltip:AddLine(strformat("Area POI ID: %d", tonumber(info.areaPoiID)), 1, 1, 1)
-
 	-- has position?
-	if (info.position and info.position.x and info.position.y) then
+	if (info.x and info.y) then
 		-- add position
-		GameTooltip:AddLine(strformat("Position: %s, %s", tostring(info.position.x), tostring(info.position.y)), 1, 1, 1)
-	end
-
-	-- has description?
-	if (info.description and (info.description ~= "")) then
-		-- add description
-		GameTooltip:AddLine(strformat("Description: %s", tostring(info.description)), 1, 1, 1)
-	end
-
-	-- has textureIndex?
-	if (info.textureIndex) then
-		-- add texture index
-		GameTooltip:AddLine(strformat("Texture Index: %d", tonumber(info.textureIndex)), 1, 1, 1)
-	end
-
-	-- has factionID?
-	if (info.factionID) then
-		-- add faction id
-		GameTooltip:AddLine(strformat("Faction ID: %d", tonumber(info.factionID)), 1, 1, 1)
+		GameTooltip:AddLine(strformat("Position: %s, %s", tostring(info.x), tostring(info.y)), 1, 1, 1)
 	end
 
 	-- show tooltip
@@ -373,18 +335,17 @@ function CF_POIListEntryMixin:OnEnter()
 end
 
 -- on leave
-function CF_POIListEntryMixin:OnLeave()
+function CF_VehicleListEntryMixin:OnLeave()
 	-- hide tooltip
 	GameTooltip:Hide()
 end
 
 -- set queue
-function CF_POIListEntryMixin:SetQueue(info)
+function CF_VehicleListEntryMixin:SetQueue(info)
 	-- has queue info?
 	if (info) then
 		-- save queue info / text
 		self.info = info
-		self.guid = info.guid
 		local text = strformat("%s", info.name)
 		self.QueueFrame.Name:SetText(text)
 
@@ -401,7 +362,7 @@ function CF_POIListEntryMixin:SetQueue(info)
 end
 
 -- init
-function CF_POIListEntryMixin:Init(elementData)
+function CF_VehicleListEntryMixin:Init(elementData)
 	-- update frame
 	self:UpdateFrame()
 
@@ -409,13 +370,12 @@ function CF_POIListEntryMixin:Init(elementData)
 	if (elementData.info) then
 		-- set queue data
 		local info = elementData.info
-		self.guid = info.guid
 		self:SetQueue(info)
 	end
 end
 
 -- update frame
-function CF_POIListEntryMixin:UpdateFrame()
+function CF_VehicleListEntryMixin:UpdateFrame()
 	-- update frame
 	local queueFrame = self.QueueFrame
 	queueFrame.Name:ClearAllPoints()
@@ -426,43 +386,43 @@ function CF_POIListEntryMixin:UpdateFrame()
 end
 
 -- create table
-CF_POIListResizeBottomLeftButtonMixin = {}
+CF_VehicleListResizeBottomLeftButtonMixin = {}
 
 -- on mouse down
-function CF_POIListResizeBottomLeftButtonMixin:OnMouseDown(button)
+function CF_VehicleListResizeBottomLeftButtonMixin:OnMouseDown(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- start sizing
-		CF_POIListFrame:StartSizing("BOTTOMLEFT")
+		CF_VehicleListFrame:StartSizing("BOTTOMLEFT")
 	end
 end
 
 -- on mouse up
-function CF_POIListResizeBottomLeftButtonMixin:OnMouseUp(button)
+function CF_VehicleListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- stop sizing
-		CF_POIListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+		CF_VehicleListFrame:StopMovingOrSizing("BOTTOMRIGHT")
 	end
 end
 
 -- create table
-CF_POIListResizeBottomRightButtonMixin = {}
+CF_VehicleListResizeBottomRightButtonMixin = {}
 
 -- on mouse down
-function CF_POIListResizeBottomRightButtonMixin:OnMouseDown(button)
+function CF_VehicleListResizeBottomRightButtonMixin:OnMouseDown(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- start sizing
-		CF_POIListFrame:StartSizing("BOTTOMRIGHT")
+		CF_VehicleListFrame:StartSizing("BOTTOMRIGHT")
 	end
 end
 
 -- on mouse up
-function CF_POIListResizeBottomRightButtonMixin:OnMouseUp(button)
+function CF_VehicleListResizeBottomRightButtonMixin:OnMouseUp(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- stop sizing
-		CF_POIListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+		CF_VehicleListFrame:StopMovingOrSizing("BOTTOMRIGHT")
 	end
 end

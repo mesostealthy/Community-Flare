@@ -373,9 +373,8 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.MapInfo = {}
 	NS.CommFlare.CF.RosterList = {}
 	NS.CommFlare.CF.VehicleDeaths = {}
-	NS.CommFlare.CF.LastBossRW = 0
-	NS.CommFlare.CF.LastMageRW = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
+	NS.CommFlare.CF.MatchEndDate = ""
 	NS.CommFlare.CF.MatchEndTime = 0
 	NS.CommFlare.CF.MatchStartDate = ""
 	NS.CommFlare.CF.MatchStartTime = 0
@@ -389,16 +388,25 @@ function NS:Initialize_Battleground_Status()
 	-- get player score info
 	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 
-	-- always reset ashran stuff
-	NS.CommFlare.CF.AncientInferno = 0
-	NS.CommFlare.CF.ASH.Jeron = L["Up"]
-	NS.CommFlare.CF.ASH.Rylai = L["Up"]
-
 	-- get MapID
 	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
 	if (NS.CommFlare.CF.MapID) then
 		-- get map info
 		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+
+		-- alterac valley?
+		if (NS.CommFlare.CF.MapID == 91) then
+			-- initialize
+			NS:AV_Initialize()
+		-- isle of conquest?
+		elseif (NS.CommFlare.CF.MapID == 169) then
+			-- initialize
+			NS:IOC_Initialize()
+		-- ashran?
+		elseif (NS.CommFlare.CF.MapID == 1478) then
+			-- initialize
+			NS:Ashran_Initialize()
+		end
 	end
 end
 
@@ -587,17 +595,8 @@ function NS:Get_Current_Battleground_Status()
 	-- ashran?
 	elseif (NS.CommFlare.CF.MapID == 1478) then
 		-- initialize
-		if (not NS.CommFlare.CF.ASH) then
-			NS.CommFlare.CF.ASH = { Jeron = L["Up"], Rylal = L["Up"] }
-		end
+		NS.CommFlare.CF.ASH = NS.CommFlare.CF.ASH or {}
 		NS.CommFlare.CF.ASH.Scores = { Alliance = L["N/A"], Horde = L["N/A"] }
-
-		-- reloaded?
-		if (NS.CommFlare.CF.Reloaded == true) then
-			-- match maybe reloaded, use saved session
-			NS.CommFlare.CF.ASH.Jeron = NS.charDB.profile.ASH.Jeron
-			NS.CommFlare.CF.ASH.Rylai = NS.charDB.profile.ASH.Rylai
-		end
 
 		-- 1997 = widgetID for Score Remaining
 		NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1997)
@@ -681,7 +680,7 @@ function NS:Get_Current_Battleground_Status()
 	-- isle of conquest?
 	elseif (NS.CommFlare.CF.MapID == 169) then
 		-- initialize settings
-		NS.CommFlare.CF.IOC = {}
+		NS.CommFlare.CF.IOC = NS.CommFlare.CF.IOC or {}
 		NS.CommFlare.CF.IOC.Counts = { Alliance = 0, Horde = 0 }
 		NS.CommFlare.CF.IOC.Scores = { Alliance = L["N/A"], Horde = L["N/A"] }
 
@@ -1302,10 +1301,6 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 		HealingDone = 0,
 	}
 
-	-- get player stuff
-	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
-	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
-
 	-- process all raid members
 	NS.CommFlare.CF.TeamUnits = {}
 	NS.CommFlare.CF.RaidLeader = L["N/A"]
@@ -1330,6 +1325,10 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			NS.CommFlare.CF.TeamUnits[player] = { ["unit"] = unit, ["rank"] = rank }
 		end
 	end
+
+	-- get player stuff
+	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 
 	-- process all scores
 	for i=1, GetNumBattlefieldScores() do
@@ -1431,7 +1430,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				if (member and member.clubs) then
 					-- same faction as player?
 					local community = false
-					if (NS.CommFlare.CF.PlayerInfo == info.faction) then
+					if (NS.CommFlare.CF.PlayerInfo.faction == info.faction) then
 						-- mercenary?
 						if (mercenary == true) then
 							-- process all clubs
@@ -1938,7 +1937,6 @@ function NS:Get_Battleground_Status()
 			end
 
 			-- has match started yet?
-			NS.CommFlare.CF.NeedAddonData = false
 			local duration = PvPGetActiveMatchDuration()
 			if (duration > 0) then
 				-- calculate time elapsed
@@ -1949,10 +1947,6 @@ function NS:Get_Battleground_Status()
 
 				-- alterac valley or korrak's revenge?
 				if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
-					-- issue capping gate request command
-					NS.CommFlare.CF.NeedAddonData = true
-					NS:SendAddonMessage("Capping", "tr", "INSTANCE_CHAT")
-
 					-- set text to alterac valley status
 					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %s = %d/4; %s = %d/4; %d %s",
 						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
@@ -1966,21 +1960,15 @@ function NS:Get_Battleground_Status()
 				-- ashran?
 				elseif (NS.CommFlare.CF.MapID == 1478) then
 					-- set text to ashran status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %s = %s; %s = %s; %d %s",
+					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
 						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
 						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
 						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
 						L["Alliance"], NS.CommFlare.CF.ASH.Scores.Alliance,
 						L["Horde"], NS.CommFlare.CF.ASH.Scores.Horde,
-						L["Jeron"], NS.CommFlare.CF.ASH.Jeron,
-						L["Rylai"], NS.CommFlare.CF.ASH.Rylai,
 						count, L["Community Members"])
 				-- battle for wintergrasp?
 				elseif (NS.CommFlare.CF.MapID == 1334) then
-					-- issue capping gate request command
-					NS.CommFlare.CF.NeedAddonData = true
-					NS:SendAddonMessage("Capping", "twr", "INSTANCE_CHAT")
-
 					-- set text to wintergrasp status
 					text = strformat("%s (%s): %s; %s = %d %s, %d %s; %s %s; %s %s; %s: %d/3; %d %s",
 						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.WG.Type,
@@ -1993,10 +1981,6 @@ function NS:Get_Battleground_Status()
 						count, L["Community Members"])
 				-- isle of conquest?
 				elseif (NS.CommFlare.CF.MapID == 169) then
-					-- issue capping gate request command
-					NS.CommFlare.CF.NeedAddonData = true
-					NS:SendAddonMessage("Capping", "gr", "INSTANCE_CHAT")
-
 					-- set text to isle of conquest status
 					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s: %d/3; %s = %s; %s: %d/3; %d %s",
 						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],

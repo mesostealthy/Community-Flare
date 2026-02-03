@@ -60,6 +60,8 @@ local ClubGetClubMembers                          = _G.C_Club.GetClubMembers
 local ClubGetMemberInfo                           = _G.C_Club.GetMemberInfo
 local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
 local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
+local CVarGetCVar                                 = _G.C_CVar.GetCVar
+local CVarSetCVar                                 = _G.C_CVar.SetCVar
 local DelvesUIHasActiveDelve                      = _G.C_DelvesUI.HasActiveDelve
 local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
 local MapGetMapInfo                               = _G.C_Map.GetMapInfo
@@ -93,7 +95,7 @@ local strsplit                                    = _G.string.split
 local strsub                                      = _G.string.sub
 local tinsert                                     = _G.table.insert
 
--- global function (send variables to other addons)
+-- global: Get Variables (only Version atm)
 function CommunityFlare_GetVar(name)
 	-- not loaded?
 	if (not NS.CommFlare or not NS.db) then
@@ -108,6 +110,40 @@ function CommunityFlare_GetVar(name)
 	end
 
 	-- nothing
+	return nil
+end
+
+-- global: get main assist
+function CommunityFlare_GetMainAssist()
+	-- in raid?
+	if (IsInRaid()) then
+		-- process all
+		for i=1, MAX_RAID_MEMBERS do
+			-- get role
+			local name, _, _, _, _, _, _, _, _, role = select(10, GetRaidRosterInfo(i))
+			if ((role == "mainassist") or (role == "MAINASSIST")) then
+				-- return name
+				return name
+			end
+		end
+	end
+	return nil
+end
+
+-- global: get main tank
+function CommunityFlare_GetMainTank()
+	-- in raid?
+	if (IsInRaid()) then
+		-- process all
+		for i=1, MAX_RAID_MEMBERS do
+			-- get role
+			local name, _, _, _, _, _, _, _, _, role = select(10, GetRaidRosterInfo(i))
+			if ((role == "maintank") or (role == "MAINTANK")) then
+				-- return name
+				return name
+			end
+		end
+	end
 	return nil
 end
 
@@ -1953,6 +1989,37 @@ function NS:Cancel_Active_Timers(name)
 
 				-- clear active timer
 				NS.CommFlare.CF.ActiveTimers[k] = nil
+			end
+		end
+	end
+end
+
+-- hide stuff in vehicles
+function NS:HideStuffInVehicles(type)
+	-- all or cdm?
+	if ((type == "all") or (type == "cdm")) then
+		-- hide CDM while inside vehicles?
+		if (NS.db.global.cdmHideInVehiclesPvP == true) then
+			-- cooldown manager enabled?
+			NS.CommFlare.CF.CDMEnabled = CVarGetCVar("cooldownViewerEnabled")
+			if (NS.CommFlare.CF.CDMEnabled) then
+				-- disable cooldown manager
+				CVarSetCVar("cooldownViewerEnabled", 0)
+			end
+		end
+	end
+end
+
+-- show stuff in vehicles
+function NS:ShowStuffInVehicles(type)
+	-- all or cdm?
+	if ((type == "all") or (type == "cdm")) then
+		-- hide CDM while inside vehicles?
+		if (NS.db.global.cdmHideInVehiclesPvP == true) then
+			-- cooldown manager enabled?
+			if (NS.CommFlare.CF.CDMEnabled) then
+				-- enable cooldown manager
+				CVarSetCVar("cooldownViewerEnabled", 1)
 			end
 		end
 	end

@@ -625,9 +625,29 @@ function NS:Cleanup_Stuff()
 	local count = 0
 	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
+		-- invalid key?
+		local parts = { strsplit("-", k) }
+		if (space or (#parts > 3)) then
+			-- check for old member?
+			if (NS.db.global.members[v]) then
+				-- delete member
+				NS.db.global.members[v] = nil
+			end
+
+			-- check for old history?
+			if (NS.db.global.history[v]) then
+				-- delete history
+				NS.db.global.history[v] = nil
+			end
+
+			-- delete member guid
+			NS.db.global.MemberGUIDs[k] = nil
+		end
+
 		-- has extra?
 		local name, realm, extra = strsplit("-", v)
-		if (extra) then
+		local space = strmatch(v, " ")
+		if (extra or space) then
 			-- update member guid
 			local player = strformat("%s-%s", name, realm)
 			NS.db.global.MemberGUIDs[k] = player

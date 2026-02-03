@@ -227,15 +227,6 @@ function NS:Capping_Add_New_Bar(name, remaining, colorid, icon, priority, maxBar
 		bar:SetTimeVisibility(timeText)
 		bar:SetFill(fill)
 
-		-- find font
-		local fonts = GetFonts()
-		for k,v in ipairs(fonts) do
-			-- matches?
-			if (v:find("Friz Quadrata TT")) then
-				print("Found: ", v)
-			end
-		end
-
 		-- get font settings
 		local flags = nil
 		local fontSize = CappingFrame.db.profile.fontSize or 10

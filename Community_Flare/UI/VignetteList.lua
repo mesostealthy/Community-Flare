@@ -50,6 +50,8 @@ end
 
 -- on show
 function CF_VignetteListFrameMixin:OnShow()
+	-- refresh list
+	self:RefreshList()
 end
 
 -- on drag start
@@ -188,7 +190,7 @@ function CF_VignetteListMixin:RefreshListDisplay()
 		end
 
 		-- update count
-		self.VignetteCount:SetText(strformat("%d Vignettes", #self.VignetteList))
+		self.VignetteCount:SetText(strformat(L["%d Vignettes"], #self.VignetteList))
 
 		-- update scroll box
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)

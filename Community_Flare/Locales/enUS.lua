@@ -75,12 +75,15 @@ L["Disabled"] = true
 L["Display community member names when running /comf command?"] = true
 L["Display how much time left for people in your group to enter the queue?"] = true
 L["Display notification for popped groups?"] = true
+L["Enable Ashran Notifications?"] = true
 L["Enable debug mode to help debug issues?"] = true
 L["Enable debug print chat window to log debug events?"] = true
 L["Enable the right click menu for community member list?"] = true
 L["Fast (360)"] = true
 L["Frequency?"] = true
 L["Guild Members?"] = true
+L["Hide the Cooldown Manager while inside Vehicles in PvP Content?"] = true
+L["Hide the Primary & Second Resource Bars while inside Vehicles in PvP Content?"] = true
 L["Housing Options"] = true
 L["Instance Chat Warning"] = true
 L["Invite Options"] = true
@@ -139,6 +142,8 @@ L["This will block players from using the /ping system if they do not have raid 
 L["This will block the game menus from coming up inside an arena or battleground from pressing their hot keys. (To block during recording videos for example.)"] = true
 L["This will display a notification in your General chat window when groups pop."] = true
 L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."] = true
+L["This will hide the Cooldown Manager while inside vehicles in PvP Content."] = true
+L["This will hide the Primary & Second Resource Bars while inside vehicles in PvP Content."] = true
 L["This will log some debug event messages into a debug window to help MESO fix bugs."] = true
 L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."] = true
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = true
@@ -151,6 +156,7 @@ L["This will show a raid warning to you when the Ancient Inferno has spawned in 
 L["This will show a raid warning to you when you are given leadership of your party."] = true
 L["This will show a raid warning to you when your Mage is under attack in Ashran."] = true
 L["This will show you a message when a party member changes zones."] = true
+L["This will show you warning messages for critical events around Ashran."] = true
 L["This will treat your Guild Members as Community Members."] = true
 L["Uninvite any players that are AFK?"] = true
 L["Use this to manage the Clubs, Communites & Guilds in the database."] = true
@@ -159,6 +165,7 @@ L["Use this to purge old members in database from currently selected communities
 L["Use this to refresh the members database from currently selected communities."] = true
 L["Use this to totally rebuild the members database from currently selected communities."] = true
 L["Vehicle Alert System?"] = true
+L["Vehicle Options"] = true
 L["Warn before hearth stoning or teleporting inside a battleground?"] = true
 L["Warn if/when queues become paused?"] = true
 L["Warn when Honor capped or close to it?"] = true
@@ -233,7 +240,6 @@ L["Ancient Inferno has spawned at the Ring of Conquest!"] = true
 L["Are you really sure you want to hearthstone?"] = true
 L["Are you really sure you want to teleport?"] = true
 L["Auto declined quest from"] = true
-L["Captain Galvangar"] = true
 L["Community Members"] = true
 L["Deserter"] = true
 L["Epic battleground has completed with a"] = true
@@ -255,7 +261,6 @@ L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"] = true
 L["War Supply Crate is flying in now!"] = true
 L["YOU ARE CURRENTLY THE NEW GROUP LEADER"] = true
 L["has requested to join your group"] = true
-L["jeron emberfall has been slain"] = true
 L["joined the queue for"] = true
 L["loss"] = true
 L["minutes"] = true
@@ -354,6 +359,13 @@ L["Uninviting ..."] = true
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = true
 L["You've been removed from the party for being AFK."] = true
 
+-- Ashran.lua
+L["%s has been killed."] = true
+L["%s has spawned."] = true
+L["Ancient Inferno"] = true
+L["Narduke"] = true
+L["Rylai Crestfall"] = true
+
 -- Battlegrounds.lua
 L["%s has been queued for %d %s and %d %s for %s."] = true
 L["%s: %d seconds remaining for players to take the queue."] = true
@@ -377,7 +389,6 @@ L["Front"] = true
 L["Gates Destroyed"] = true
 L["IBT"] = true
 L["IWB"] = true
-L["Jeron"] = true
 L["Joined Queue for"] = true
 L["Just entered match. Gates not opened yet!"] = true
 L["Left Queue for Popped"] = true
@@ -412,7 +423,6 @@ L["West"] = true
 
 -- CombatLog.lua
 L["High Warlord Volrath"] = true
-L["Jeron Emberfall"] = true
 L["Siege Engine"] = true
 
 -- POIs.lua
@@ -433,16 +443,19 @@ L["War Supply Crate has fully dropped to the ground!"] = true
 L["War Supply Crate is dropping in now!"] = true
 
 -- CommunityList.lua
+L["%d Communities"] = true
 L["Community List Manager"] = true
 L["Delete Community"] = true
 L["Set Community Note"] = true
 L["View Member List"] = true
 
 -- MemberList.lua
+L["%d Members"] = true
 L["Delete Member"] = true
 L["Set Member Note"] = true
 
 -- PlayerList.lua
+L["%d KOS, %d Players"] = true
 L["Add KOS"] = true
 L["Copy Player Name"] = true
 L["Delete Player"] = true
@@ -453,6 +466,7 @@ L["Remove KOS"] = true
 L["Set Player Note"] = true
 
 -- POIList.lua
+L["%d POIs"] = true
 L["Area POI"] = true
 L["Description"] = true
 L["ID"] = true
@@ -460,6 +474,11 @@ L["Name"] = true
 L["POI List Manager"] = true
 L["Position"] = true
 
+-- VehicleList.lua
+L["%d Vehicles"] = true
+L["Vehicle List Manager"] = true
+
 -- VignetteList.lua
+L["%d Vignettes"] = true
 L["Vignette"] = true
 L["Vignette List Manager"] = true

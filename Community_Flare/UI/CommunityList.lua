@@ -14,8 +14,6 @@ local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                         = _G.IsMouseButtonDown
 local PlayerLocation                            = _G.PlayerLocation
 local StaticPopup_Show                          = _G.StaticPopup_Show
-local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
-local UIDropDownMenu_Initialize                 = _G.UIDropDownMenu_Initialize
 local PlayerInfoGetRace                         = _G.C_PlayerInfo.GetRace
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
@@ -274,7 +272,7 @@ function CF_CommunityListMixin:RefreshListDisplay()
 		end
 
 		-- update counts
-		self.CommunityCount:SetText(strformat("%d Communities", #self.CommunityList))
+		self.CommunityCount:SetText(strformat(L["%d Communities"], #self.CommunityList))
 
 		-- update scroll box
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
@@ -400,13 +398,6 @@ function CF_CommunityListMixin:OnUpdate()
 			if (self.ScrollBar.scrollPercentage ~= scrollPercentage) then
 				-- updated
 				scrollPercentage = self.ScrollBar.scrollPercentage
-
-				-- get frames
-				--[[local frames = self.ScrollBox:GetFrames()
-				for k,v in pairs(frames) do
-					-- verify member GUID
-					NS:Verify_MemberGUID(v.guid)
-				end]]--
 			end
 		end
 	end
@@ -462,10 +453,24 @@ end
 function CF_CommunityListEntryMixin:OnClick(button)
 	-- right click?
 	if (button == "RightButton") then
-		-- toggle drop down menu
-		local communitysList = self:GetParentFrame()
-		communitysList:SetSelectedEntryForDropDown(self)
-		ToggleDropDownMenu(1, nil, communitysList.EntryDropDown, self, 0, 0)
+		-- has community?
+		local text = "Community"
+		if (self.info.community and (self.info.community ~= "")) then
+			-- save community
+			text = self.info.community
+		end
+
+		-- setup context data
+		local parent = self:GetParentFrame()
+		local contextData = {
+			name = text,
+			clubId = self.clubId,
+			info = self.info,
+			parent = parent,
+		}
+
+		-- open menu
+		UnitPopup_OpenMenu("CF_COMMUNITY_LIST", contextData)
 	end
 end
 
@@ -600,26 +605,18 @@ function UnitPopupCFViewMemberListButtonMixin:GetParentFrame()
 	return self:GetParent():GetParent()
 end
 
--- get set community note text
+-- get view member list text
 function UnitPopupCFViewMemberListButtonMixin:GetText()
 	-- return text
 	return L["View Member List"]
 end
 
--- set community note on click
-function UnitPopupCFViewMemberListButtonMixin:OnClick()
+-- view member list on click
+function UnitPopupCFViewMemberListButtonMixin:OnClick(contextData)
 	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.info and dropdownMenu.info.clubId) then
-		-- create context data
-		local data = { 
-			info = dropdownMenu.info,
-			clubId = dropdownMenu.info.clubId,
-			name = dropdownMenu.info.name,
-		}
-
+	if (contextData and contextData.info) then
 		-- show set community note dialog
-		local status = CF_MemberListFrame:SetClubID(data.clubId)
+		local status = CF_MemberListFrame:SetClubID(contextData.info.clubId)
 		if (status == true) then
 			-- already shown?
 			if (CF_MemberListFrame:IsShown()) then
@@ -649,15 +646,14 @@ function UnitPopupCFSetCommunityNoteButtonMixin:GetText()
 end
 
 -- set community note on click
-function UnitPopupCFSetCommunityNoteButtonMixin:OnClick()
+function UnitPopupCFSetCommunityNoteButtonMixin:OnClick(contextData)
 	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.info and dropdownMenu.info.clubId) then
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			info = dropdownMenu.info,
-			clubId = dropdownMenu.info.clubId,
-			name = dropdownMenu.info.name,
+			info = contextData.info,
+			clubId = contextData.info.clubId,
+			name = contextData.info.name,
 		}
 
 		-- show set community note dialog
@@ -681,15 +677,14 @@ function UnitPopupCFDeleteCommunityButtonMixin:GetText()
 end
 
 -- delete community on click
-function UnitPopupCFDeleteCommunityButtonMixin:OnClick()
+function UnitPopupCFDeleteCommunityButtonMixin:OnClick(contextData)
 	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.info and dropdownMenu.info.clubId) then
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			info = dropdownMenu.info,
-			clubId = dropdownMenu.info.clubId,
-			name = dropdownMenu.info.name,
+			info = contextData.info,
+			clubId = contextData.info.clubId,
+			name = contextData.info.name,
 		}
 
 		-- show delete community dialog
@@ -709,46 +704,6 @@ function UnitPopupMenuCFCommunities:GetEntries()
 		UnitPopupCFSetCommunityNoteButtonMixin,
 		UnitPopupCFDeleteCommunityButtonMixin,
 	}
-end
-
--- community list drop down initialize
-function CF_CommunityListEntryDropDown_Initialize(self, level)
-	-- no selected entry?
-	local communitysList = self:GetParent()
-	local selectedCommunityListEntry = communitysList:GetSelectedEntryForDropDown()
-	if (not selectedCommunityListEntry) then
-		-- finished
-		return
-	end
-
-	-- save community stuff
-	self.parent = communitysList
-	self.guid = selectedCommunityListEntry.guid
-	self.info = selectedCommunityListEntry.info
-
-	-- has community?
-	local text = "Player"
-	if (self.info.community and (self.info.community ~= "")) then
-		-- save community
-		text = self.info.community
-	end
-
-	-- open popup menu
-	local contextData = { parent = self.parent, guid = self.guid, name = text, info = self.info }
-	UnitPopup_OpenMenu("CF_COMMUNITY_LIST", contextData)
-end
-
--- community list drop down on load
-function CF_CommunityListEntryDropDown_OnLoad(self)
-	-- initialize drop down menu
-	UIDropDownMenu_Initialize(self, CF_CommunityListEntryDropDown_Initialize, "MENU")
-end
-
--- community list drop down on hide
-function CF_CommunityListEntryDropDown_OnHide(self)
-	-- remove selected entry
-	local communitysList = self:GetParent()
-	communitysList:SetSelectedEntryForDropDown(nil)
 end
 
 -- search box on escape pressed

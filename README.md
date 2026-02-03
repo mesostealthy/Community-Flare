@@ -20,27 +20,11 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v2.00.006:
--BUGFIX: Actually FIXES the Community Member list upon Gates opening for PvP Content!
-
-v2.00.005:
--BUGFIX: Disabled Always remove, then re-add community channels to general? (Caused LUA ERRORS!)
--BUGFIX: Properly shows Community Members upon Gates opening for PvP Content.
-
-v2.00.004:
--BUGFIX: Addon Messages are not sent during Chat Messaging Lockdowns anymore.
--BUGFIX: Changed Mercenary Contract check to new C_UnitAuras.
-
-v2.00.003:
--BUGFIX: Chat Message Filtering system disabled due to new Midnight restrictions!
-
-v2.00.002:
--BUGFIX: Fixed some LUA errors found for Midnight prepatch!
-
-v2.00.001:
--New Command: /comf clm to open the Community List Manager. Right click to open Member List Manager.
--New Battleground Setting: Disable Tooltips while inside PVP content. (Hold Shift to override to view them.)
--Disabled anything that was using the COMBAT LOG or is blocked while inside PVP content for Midnight.
--Bumped TOC to v12.0.0
-
-DOCUMENTATION TO BE UPDATED LATER!
+v2.01.001:
+-Some previous systems updated to work with the Midnight Addon Apocalypse restrictions.
+-New Vehicle Options: Moved all Vehicle stuff into this new Settings Group.
+-New Vehicle Setting: Hide Cooldown Manager while inside of a Vehicle in PvP Content.
+-New Vehicle Setting: Hide Resource Bars while inside of a Vehicle in PvP Content.
+-Old Command: Updated the /comf vehicles command to the Vehicle List Manager.
+-BUGFIX: Deletes AI Bots from Training Grounds PvP Content from the database.
+-REMOVED: Support for outdated Rdy Crate Tracker removed.

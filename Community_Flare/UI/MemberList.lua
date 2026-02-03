@@ -14,8 +14,6 @@ local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                         = _G.IsMouseButtonDown
 local PlayerLocation                            = _G.PlayerLocation
 local StaticPopup_Show                          = _G.StaticPopup_Show
-local UIDropDownMenu_GetCurrentDropDown         = _G.UIDropDownMenu_GetCurrentDropDown
-local UIDropDownMenu_Initialize                 = _G.UIDropDownMenu_Initialize
 local PlayerInfoGetRace                         = _G.C_PlayerInfo.GetRace
 local TimerAfter                                = _G.C_Timer.After
 local date                                      = _G.date
@@ -284,10 +282,10 @@ function CF_MemberListMixin:RefreshListDisplay()
 			local clubId = self:GetParentFrame():GetClubID()
 			for k,v in ipairs(self.MemberList) do
 				-- has guid?
-				local name = v
-				if (name) then
+				local name, guid = strsplit("@", v)
+				if (name and guid) then
 					-- insert
-					local info = { index = index, name = name, clubId = clubId }
+					local info = { index = index, name = name, guid = guid, clubId = clubId }
 					dataProvider:Insert({info=info})
 					index = index + 1
 				end
@@ -295,7 +293,7 @@ function CF_MemberListMixin:RefreshListDisplay()
 		end
 
 		-- update counts
-		self.MemberCount:SetText(strformat("%d Members", #self.MemberList))
+		self.MemberCount:SetText(strformat(L["%d Members"], #self.MemberList))
 
 		-- update scroll box
 		self.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
@@ -342,7 +340,7 @@ function CF_MemberListMixin:UpdateMemberList()
 				-- displayed?
 				if (display == true) then
 					-- insert
-					local data = strformat("%s", tostring(k))
+					local data = strformat("%s@%s", tostring(k), tostring(v.guid))
 					tinsert(self.MemberList, data)
 				end
 			end
@@ -424,11 +422,14 @@ function CF_MemberListMixin:OnUpdate()
 				scrollPercentage = self.ScrollBar.scrollPercentage
 
 				-- get frames
-				--[[local frames = self.ScrollBox:GetFrames()
+				local frames = self.ScrollBox:GetFrames()
 				for k,v in pairs(frames) do
-					-- verify member GUID
-					NS:Verify_MemberGUID(v.guid)
-				end]]--
+					-- has GUID?
+					if (v.guid) then
+						-- verify member GUID
+						NS:Verify_MemberGUID(v.guid)
+					end
+				end
 			end
 		end
 	end
@@ -484,10 +485,24 @@ end
 function CF_MemberListEntryMixin:OnClick(button)
 	-- right click?
 	if (button == "RightButton") then
-		-- toggle drop down menu
-		local membersList = self:GetParentFrame()
-		membersList:SetSelectedEntryForDropDown(self)
-		ToggleDropDownMenu(1, nil, membersList.EntryDropDown, self, 0, 0)
+		-- has member?
+		local text = "Member"
+		if (self.info.name and (self.info.name ~= "")) then
+			-- save member
+			text = self.info.name
+		end
+
+		-- setup context data
+		local parent = self:GetParentFrame()
+		local contextData = {
+			name = text,
+			guid = self.guid,
+			info = self.info,
+			parent = parent,
+		}
+
+		-- open menu
+		UnitPopup_OpenMenu("CF_MEMBER_LIST", contextData)
 	end
 end
 
@@ -551,6 +566,7 @@ function CF_MemberListEntryMixin:SetMember(info)
 		self.info = info
 		self.guid = info.guid
 		self.name = info.name
+		self.clubId = info.clubId
 		local text = strformat("%s", self.name)
 		self.MemberFrame.Name:SetText(text)
 
@@ -574,9 +590,7 @@ function CF_MemberListEntryMixin:Init(elementData)
 	-- has member info?
 	if (elementData.info) then
 		-- set member data
-		local info = elementData.info
-		self.clubId = info.clubId
-		self:SetMember(info)
+		self:SetMember(elementData.info)
 	end
 end
 
@@ -607,15 +621,15 @@ function UnitPopupCFSetMemberNoteButtonMixin:GetText()
 end
 
 -- set member note on click
-function UnitPopupCFSetMemberNoteButtonMixin:OnClick()
+function UnitPopupCFSetMemberNoteButtonMixin:OnClick(contextData)
 	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.info and dropdownMenu.info.clubId) then
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			info = dropdownMenu.info,
-			clubId = dropdownMenu.info.clubId,
-			name = dropdownMenu.info.name,
+			info = contextData.info,
+			clubId = contextData.info.clubId,
+			name = contextData.info.name,
+			guid = contextData.info.guid,
 		}
 
 		-- show set member note dialog
@@ -639,15 +653,15 @@ function UnitPopupCFDeleteMemberButtonMixin:GetText()
 end
 
 -- delete member on click
-function UnitPopupCFDeleteMemberButtonMixin:OnClick()
+function UnitPopupCFDeleteMemberButtonMixin:OnClick(contextData)
 	-- find proper dropdown menu
-	local dropdownMenu = UIDropDownMenu_GetCurrentDropDown()
-	if (dropdownMenu and dropdownMenu.info and dropdownMenu.info.clubId) then
+	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
-			info = dropdownMenu.info,
-			clubId = dropdownMenu.info.clubId,
-			name = dropdownMenu.info.name,
+			info = contextData.info,
+			clubId = contextData.info.clubId,
+			name = contextData.info.name,
+			guid = contextData.info.guid,
 		}
 
 		-- show delete member dialog
@@ -666,46 +680,6 @@ function UnitPopupMenuCFMembers:GetEntries()
 		UnitPopupCFSetMemberNoteButtonMixin,
 		UnitPopupCFDeleteMemberButtonMixin,
 	}
-end
-
--- member list drop down initialize
-function CF_MemberListEntryDropDown_Initialize(self, level)
-	-- no selected entry?
-	local membersList = self:GetParent()
-	local selectedMemberListEntry = membersList:GetSelectedEntryForDropDown()
-	if (not selectedMemberListEntry) then
-		-- finished
-		return
-	end
-
-	-- save member stuff
-	self.parent = membersList
-	self.guid = selectedMemberListEntry.guid
-	self.info = selectedMemberListEntry.info
-
-	-- has member?
-	local text = "Player"
-	if (self.info.name and (self.info.name ~= "")) then
-		-- save member
-		text = self.info.name
-	end
-
-	-- open popup menu
-	local contextData = { parent = self.parent, guid = self.guid, name = text, info = self.info }
-	UnitPopup_OpenMenu("CF_MEMBER_LIST", contextData)
-end
-
--- member list drop down on load
-function CF_MemberListEntryDropDown_OnLoad(self)
-	-- initialize drop down menu
-	UIDropDownMenu_Initialize(self, CF_MemberListEntryDropDown_Initialize, "MENU")
-end
-
--- member list drop down on hide
-function CF_MemberListEntryDropDown_OnHide(self)
-	-- remove selected entry
-	local membersList = self:GetParent()
-	membersList:SetSelectedEntryForDropDown(nil)
 end
 
 -- search box on escape pressed
