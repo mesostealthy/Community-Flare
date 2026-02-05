@@ -20,7 +20,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 -----------------------
 Latest Updates:
 -----------------------
-v2.01.001:
+v2.01.002:
 -Some previous systems updated to work with the Midnight Addon Apocalypse restrictions.
 -New Vehicle Options: Moved all Vehicle stuff into this new Settings Group.
 -New Vehicle Setting: Hide Cooldown Manager while inside of a Vehicle in PvP Content.

@@ -119,10 +119,11 @@ function CommunityFlare_GetMainAssist()
 	if (IsInRaid()) then
 		-- process all
 		for i=1, MAX_RAID_MEMBERS do
-			-- get role
-			local name, _, _, _, _, _, _, _, _, role = select(10, GetRaidRosterInfo(i))
-			if ((role == "mainassist") or (role == "MAINASSIST")) then
+			-- get player / role
+			local player, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
+			if (player and ((role == "mainassist") or (role == "MAINASSIST"))) then
 				-- return name
+				local name, realm = strsplit("-", player)
 				return name
 			end
 		end
@@ -136,10 +137,11 @@ function CommunityFlare_GetMainTank()
 	if (IsInRaid()) then
 		-- process all
 		for i=1, MAX_RAID_MEMBERS do
-			-- get role
-			local name, _, _, _, _, _, _, _, _, role = select(10, GetRaidRosterInfo(i))
-			if ((role == "maintank") or (role == "MAINTANK")) then
+			-- get player / role
+			local name, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
+			if (player and ((role == "maintank") or (role == "MAINTANK"))) then
 				-- return name
+				local name, realm = strsplit("-", player)
 				return name
 			end
 		end
