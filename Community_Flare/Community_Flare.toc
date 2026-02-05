@@ -28,8 +28,8 @@ Libs\AceConfig-3.0\AceConfig-3.0.xml
 Libs\AceComm-3.0\AceComm-3.0.xml
 Libs\AceTab-3.0\AceTab-3.0.xml
 Libs\AceSerializer-3.0\AceSerializer-3.0.xml
-Libs\LibCompress\lib.xml
-Libs\LibDeflate\lib.xml
+Libs\LibCompress\LibCompress.lua
+Libs\LibDeflate\LibDeflate.lua
 Libs\LibCandyBar-3.0\LibCandyBar-3.0.lua
 Libs\LibRangeCheck-3.0\LibRangeCheck-3.0.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
