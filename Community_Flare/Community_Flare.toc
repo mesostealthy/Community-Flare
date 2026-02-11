@@ -1,0 +1,19 @@
+## Interface: 120001
+## Title: Community Flare
+## Version: v2.04.001
+## X-Build: 204001
+## Author: Mesostealthy
+## SavedVariables: CommunityFlareDB
+## SavedVariablesPerCharacter: CommFlareCharDB
+## OptionalDeps: Ace3
+## IconTexture: Interface\AddOns\Community_Flare\Media\icon.tga
+## AddonCompartmentFunc: CommunityFlare_AddonCompartmentOnClick
+## X-Website: https://www.curseforge.com/wow/addons/community-flare
+## X-Curse-Project-ID: 941906
+## X-Wago-ID: j6jzxx6R
+
+Libs\Load.xml
+Locales\Load.xml
+Core\Load.xml
+Modules\Load.xml
+UI\Load.xml

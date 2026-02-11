@@ -1,0 +1,21 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="Assist.lua" />
+	<Script file="Battlegrounds.lua" />
+	<Script file="BlockGameMenus.lua" />
+	<Script file="History.lua" />
+	<Script file="POIs.lua" />
+	<Script file="Quests.lua" />
+	<Script file="Social.lua" />
+	<Script file="Vehicles.lua" />
+	<Script file="Vignettes.lua" />
+	<Script file="Widgets.lua" />
+	<!-- External Addon Modules -->
+	<Script file="Capping.lua" />
+	<Script file="REPorter.lua" />
+	<Script file="TomTom.lua" />
+	<!-- Specific Map Modules -->
+	<Script file="AlteracValley.lua" />
+	<Script file="Ashran.lua" />
+	<Script file="IsleOfConquest.lua" />
+</Ui>

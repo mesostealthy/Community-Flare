@@ -1,0 +1,17 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="Bootstrap.lua" />
+	<Script file="Constants.lua" />
+	<Script file="Config.lua" />
+	<Script file="Communication.lua" />
+	<Script file="Database.lua" />
+	<Script file="Debug.lua" />
+	<Script file="Events.lua" />
+	<Script file="Hooks.lua" />
+	<Script file="Init.lua" />
+	<Script file="Menus.lua" />
+	<Script file="SlashCmd.lua" />
+	<Script file="Specialization.lua" />
+	<Script file="StaticPopups.lua" />
+	<Script file="Timers.lua" />
+</Ui>

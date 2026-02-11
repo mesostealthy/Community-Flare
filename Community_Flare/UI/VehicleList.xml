@@ -1,0 +1,295 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="VehicleList.lua" />
+	<Button name="CF_VehicleListEntryTemplate" registerForClicks="LeftButtonUp, RightButtonUp" virtual="true" mixin="CF_VehicleListEntryMixin">
+		<Size y="20" />
+		<Frames>
+			<Frame parentKey="QueueFrame">
+				<Size y="20" />
+				<Anchors>
+					<Anchor point="LEFT" x="4" y="0" />
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString parentKey="Name" inherits="GameFontHighlightSmall" justifyH="LEFT" wordwrap="false">
+							<Size y="20" />
+							<Anchors>
+								<Anchor point="LEFT" />
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnClick method="OnClick" />
+			<OnEnter method="OnEnter" />
+			<OnLeave method="OnLeave" />
+		</Scripts>
+		<NormalTexture setAllPoints="true" file="Interface\GuildFrame\GuildFrame">
+			<TexCoords left="0.36230469" right="0.38183594" top="0.95898438" bottom="0.99804688" />
+		</NormalTexture>
+		<HighlightTexture file="Interface\FriendsFrame\UI-FriendsFrame-HighlightBar" alphaMode="ADD" setAllPoints="true" />
+	</Button>
+	<Frame name="CF_VehicleListFrameTemplate" mixin="CF_VehicleListMixin" virtual="true">
+		<Layers>
+			<Layer level="BORDER">
+				<FontString parentKey="VehicleCount" inherits="GameFontNormalSmall">
+					<Anchors>
+						<Anchor point="RIGHT" relativePoint="RIGHT" x="-5" />
+						<Anchor point="TOP" relativePoint="TOP" y="15" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame parentKey="ScrollBox" inherits="WowScrollBoxList">
+				<Anchors>
+					<Anchor point="RIGHT" x="-20" />
+					<Anchor point="TOPLEFT" />
+				</Anchors>
+			</Frame>
+			<EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar">
+				<Size x="20" />
+				<Anchors>
+					<Anchor point="RIGHT" relativePoint="RIGHT" />
+					<Anchor point="TOP" relativePoint="TOP" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND" textureSubLevel="1">
+						<Texture parentKey="BG" setAllPoints="true">
+							<Color r="0" g="0" b="0" a="0.5" />
+						</Texture>
+					</Layer>
+				</Layers>
+			</EventFrame>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad" />
+			<OnShow method="OnShow" />
+			<OnUpdate method="OnUpdate" />
+		</Scripts>
+	</Frame>
+	<Frame name="CF_VehicleListFrame" toplevel="true" parent="UIParent" movable="true" resizable="true" enableMouse="true" hidden="true" mixin="CF_VehicleListFrameMixin">
+		<Size>
+			<AbsDimension x="300" y="300" />
+		</Size>
+		<Anchors>
+			<Anchor point="CENTER" />
+		</Anchors>
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="1">
+				<Texture parentKey="BG" setAllPoints="true">
+					<Color r="0" g="0" b="0" a="0.5" />
+				</Texture>
+			</Layer>
+			<Layer level="BORDER">
+				<Texture parentKey="BorderBottom">
+					<Color r="0" g="0" b="0" a="1" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+					<Size x="0" y="1" />
+				</Texture>
+				<Texture parentKey="BorderLeft">
+					<Color r="0" g="0" b="0" a="1" />
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="BOTTOMLEFT" />
+					</Anchors>
+					<Size x="1" y="0" />
+				</Texture>
+				<Texture parentKey="BorderRight">
+					<Color r="0" g="0" b="0" a="1" />
+					<Anchors>
+						<Anchor point="TOPRIGHT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+					<Size x="1" y="0" />
+				</Texture>
+				<Texture parentKey="BorderTop">
+					<Color r="0" g="0" b="0" a="1" />
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="TOPRIGHT" />
+					</Anchors>
+					<Size x="0" y="1" />
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame parentKey="HeaderFrame">
+				<Size y="25" />
+				<Anchors>
+					<Anchor point="LEFT" />
+					<Anchor point="TOP" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND" textureSubLevel="1">
+						<Texture parentKey="BG" setAllPoints="true">
+							<Color r="0" g="0" b="0" a="1" />
+						</Texture>
+					</Layer>
+					<Layer>
+						<FontString parentKey="Title" font="GameFontHighlight" text="CF Vehicle List Manager">
+							<FontHeight val="13" />
+							<Color r="1" g="1" b="1" a="1" />
+							<Anchors>
+								<Anchor point="LEFT" x="5" />
+								<Anchor point="TOP" y="-7" />
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Button parentKey="RefreshButton" registerForClicks="AnyDown" mixin="CF_VehicleListRefreshButtonMixin">
+						<Size x="20" y="20" />
+						<Anchors>
+							<Anchor point="RIGHT" x="-28" />
+							<Anchor point="TOP" y="-1" />
+						</Anchors>
+						<Scripts>
+							<OnClick method="OnClick" />
+							<OnEnter method="OnEnter" />
+							<OnLeave method="OnLeave" />
+						</Scripts>
+						<NormalTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" alpha="0.2" setAllPoints="true" />
+						<HighlightTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" setAllPoints="true" />
+					</Button>
+					<Button parentKey="CloseButton" inherits="UIPanelCloseButton" mixin="CF_VehicleListCloseButtonMixin">
+						<Anchors>
+							<Anchor point="RIGHT" x="-1" />
+							<Anchor point="TOP" y="-1" />
+						</Anchors>
+						<Scripts>
+							<OnClick method="OnClick" />
+							<OnEnter method="OnEnter" />
+							<OnLeave method="OnLeave" />
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
+			<Frame parentKey="VehicleListFrame">
+				<Anchors>
+					<Anchor point="BOTTOM" y="19" />
+					<Anchor point="LEFT" x="2" />
+					<Anchor point="RIGHT" x="-2" />
+					<Anchor point="TOP" y="-26" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND" textureSubLevel="1">
+						<Texture parentKey="BG" setAllPoints="true">
+							<Color r="0" g="0" b="0" a="0.2" />
+						</Texture>
+					</Layer>
+					<Layer level="BORDER">
+						<Texture parentKey="BorderBottom">
+							<Color r="0" g="0" b="0" a="1" />
+							<Anchors>
+								<Anchor point="BOTTOMLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+							<Size x="0" y="1" />
+						</Texture>
+						<Texture parentKey="BorderLeft">
+							<Color r="0" g="0" b="0" a="1" />
+							<Anchors>
+								<Anchor point="TOPLEFT" />
+								<Anchor point="BOTTOMLEFT" />
+							</Anchors>
+							<Size x="1" y="0" />
+						</Texture>
+						<Texture parentKey="BorderRight">
+							<Color r="0" g="0" b="0" a="1" />
+							<Anchors>
+								<Anchor point="TOPRIGHT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+							<Size x="1" y="0" />
+						</Texture>
+						<Texture parentKey="BorderTop">
+							<Color r="0" g="0" b="0" a="1" />
+							<Anchors>
+								<Anchor point="TOPLEFT" />
+								<Anchor point="TOPRIGHT" />
+							</Anchors>
+							<Size x="0" y="1" />
+						</Texture>
+					</Layer>
+				</Layers>
+				<Frames>
+					<Frame parentKey="VehiclesHeader">
+						<Size>
+							<AbsDimension y="20" />
+						</Size>
+						<Anchors>
+							<Anchor point="RIGHT" />
+							<Anchor point="TOP" />
+						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND" textureSubLevel="1">
+								<Texture parentKey="BG" setAllPoints="true">
+									<Color r="0" g="0" b="0" a="1" />
+								</Texture>
+							</Layer>
+							<Layer>
+								<FontString name="$parentFontString" font="GameFontHighlight" text="Vehicles">
+									<FontHeight val="13" />
+									<Color r="1" g="1" b="1" a="1" />
+									<Anchors>
+										<Anchor point="LEFT" x="5" />
+										<Anchor point="TOP" y="-5" />
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+					</Frame>
+					<Frame parentKey="VehicleList" inherits="CF_VehicleListFrameTemplate">
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" x="0" y="0" />
+							<Anchor point="TOPLEFT" x="0" y="-20" />
+						</Anchors>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Button parentKey="ResizeBottomLeftButton" registerForClicks="AnyDown" mixin="CF_VehicleListResizeBottomLeftButtonMixin">
+				<Size x="15" y="15" />
+				<Anchors>
+					<Anchor point="LEFT" x="2" />
+					<Anchor point="BOTTOM" y="2" />
+				</Anchors>
+				<NormalTexture file="Interface\AddOns\Community_Flare\Media\resize.tga" alpha="0.2" setAllPoints="true">
+					<TexCoords left="1.0" right="0.0" top="0.0" bottom="1.0"/>
+				</NormalTexture>
+				<HighlightTexture file="Interface\AddOns\Community_Flare\Media\resize.tga" setAllPoints="true">
+					<TexCoords left="1.0" right="0.0" top="0.0" bottom="1.0"/>
+				</HighlightTexture>
+				<Scripts>
+					<OnMouseDown method="OnMouseDown" />
+					<OnMouseUp method="OnMouseUp" />
+				</Scripts>
+			</Button>
+			<Button parentKey="ResizeBottomRightButton" registerForClicks="AnyDown" mixin="CF_VehicleListResizeBottomRightButtonMixin">
+				<Size x="15" y="15" />
+				<Anchors>
+					<Anchor point="RIGHT" x="-2" />
+					<Anchor point="BOTTOM" y="2" />
+				</Anchors>
+				<NormalTexture file="Interface\AddOns\Community_Flare\Media\resize.tga" alpha="0.2" setAllPoints="true" />
+				<HighlightTexture file="Interface\AddOns\Community_Flare\Media\resize.tga" setAllPoints="true" />
+				<Scripts>
+					<OnMouseDown method="OnMouseDown" />
+					<OnMouseUp method="OnMouseUp" />
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad" />
+			<OnShow method="OnShow" />
+			<OnDragStart method="OnDragStart" />
+			<OnDragStop method="OnDragStop" />
+			<OnEvent method="OnEvent" />
+		</Scripts>
+	</Frame>
+</Ui>
