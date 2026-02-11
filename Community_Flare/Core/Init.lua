@@ -620,12 +620,23 @@ function NS:LoadSession()
 
 	-- load match log stuff
 	NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount or 0
-	NS.CommFlare.CF.MatchEndDate = NS.charDB.profile.MatchEndDate or ""
-	NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
-	NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
-	NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
 	NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives or 0
 	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives or 0
+
+	-- reloading?
+	if (NS.CommFlare.CF.Reloaded == true) then
+		-- load match date / times
+		NS.CommFlare.CF.MatchEndDate = NS.charDB.profile.MatchEndDate or ""
+		NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
+		NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
+		NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
+	else
+		-- reset match date / times
+		NS.CommFlare.CF.MatchEndDate = ""
+		NS.CommFlare.CF.MatchEndTime = 0
+		NS.CommFlare.CF.MatchStartDate = ""
+		NS.CommFlare.CF.MatchStartTime = 0
+	end
 
 	-- load battleground specific data
 	NS.CommFlare.CF.AB = NS.charDB.profile.AB or {}

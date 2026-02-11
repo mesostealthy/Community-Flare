@@ -1,2 +1,2 @@
-v2.04.001:
--More Community / Guild related restrictions handled properly.
+v2.04.002:
+-BUGFIX: Fixed LUA error while entering battlegrounds.

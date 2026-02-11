@@ -40,6 +40,7 @@ local UnitName                                    = _G.UnitName
 local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
 local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
+local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
 local CurrencyInfoGetCurrencyInfo                 = _G.C_CurrencyInfo.GetCurrencyInfo
 local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
 local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
