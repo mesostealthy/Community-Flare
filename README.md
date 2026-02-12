@@ -21,5 +21,8 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.04.002:
--BUGFIX: Fixed LUA error while entering battlegrounds.
+v2.05.001:
+-FEATURE: Added Buttons for nodes in the Isle of Conquest for the REPorter map.
+--Left Click = Calls out INCOMING to the node.
+--Right Click = Calls out CLEAR for the node.
+-BUGFIX: Fixed another LUA error inside of battlegrounds.

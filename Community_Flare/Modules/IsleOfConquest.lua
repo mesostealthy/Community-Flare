@@ -12,6 +12,7 @@ local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIF
 local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local MinimapGetPOITextureCoords                  = _G.C_Minimap.GetPOITextureCoords
 local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
+local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignetteInfo                 = _G.C_VignetteInfo.GetVignetteInfo
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
@@ -213,4 +214,27 @@ function NS:Process_IsleOfConquest_Widget(info)
 			end
 		end
 	end
+end
+
+-- add REPorter callouts
+function NS:REPorter_IsleOfConquest_Add_Callouts()
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- update last raid warning
+		NS.CommFlare.CF.LastRaidWarning = time()
+		TimerAfter(5, function()
+			-- call again
+			NS:REPorter_IsleOfConquest_Add_Callouts()
+		end)
+
+		-- finished
+		return
+	end
+
+	-- add new overlays
+	NS:REPorter_Add_New_Overlay("Docks")
+	NS:REPorter_Add_New_Overlay("Hangar")
+	NS:REPorter_Add_New_Overlay("Quarry")
+	NS:REPorter_Add_New_Overlay("Refinery")
+	NS:REPorter_Add_New_Overlay("Workshop")
 end

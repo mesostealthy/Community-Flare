@@ -2015,7 +2015,6 @@ end
 -- show stuff in vehicles
 function NS:ShowStuffInVehicles(type)
 	-- all or cdm?
-	print("ShowStuffInVehicles:", type)
 	if ((type == "all") or (type == "cdm")) then
 		-- hide CDM while inside vehicles?
 		if (NS.db.global.cdmHideInVehiclesPvP == true) then

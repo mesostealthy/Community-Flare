@@ -364,7 +364,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.Reloaded = false
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (not ChatInfoInChatMessagingLockdown()) then
 		-- get player score info
 		NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 	end
@@ -1308,7 +1308,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	end
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (not ChatInfoInChatMessagingLockdown()) then
 		-- get player score info
 		NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
 	end

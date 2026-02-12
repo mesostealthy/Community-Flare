@@ -1648,6 +1648,9 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			if (NS.CommFlare.CF.MapID == 169) then
 				-- process isle of conquest stuff
 				NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
+
+				-- REPorter isle of conquest add callouts
+				NS:REPorter_IsleOfConquest_Add_Callouts()
 			-- ashran?
 			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process ashran stuff
@@ -2101,6 +2104,12 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			NS.CommFlare.CF.ScoreRequested = 1
 			SetBattlefieldScoreFaction()
 			RequestBattlefieldScoreData()
+
+			-- isle of conquest?
+			if (NS.CommFlare.CF.MapID == 169) then
+				-- REPorter isle of conquest add callouts
+				NS:REPorter_IsleOfConquest_Add_Callouts()
+			end
 		end
 	end
 end
