@@ -45,6 +45,7 @@ L["Always save Combat Log inside PVP content?"] = "Toujours enregistrer le journ
 L["Always target nearest/previous enemy players inside PVP content?"] = "Toujours cibler les joueurs ennemis les plus proches/précédents dans le contenu PVP ?"
 L["Are you sure you want to purge the old members from the database?"] = "Êtes-vous sûr de vouloir supprimer les anciens membres de la base de données ?"
 L["Are you sure you want to wipe the members database and totally rebuild from scratch?"] = "Êtes-vous sûr de vouloir effacer la base de données des membres et la reconstruire entièrement ?"
+L["Alterac Valley Options"] = "Options pour la vallée d'Alterac"
 L["Ashran Options"] = "Options d'Ashran"
 L["Assistants Only"] = "Assistants uniquement"
 L["Auto assist community members?"] = "Attribuer automatiquement le rôle d'assistant aux membres de la communauté"
@@ -76,7 +77,8 @@ L["Disabled"] = "Désactivé"
 L["Display community member names when running /comf command?"] = "Afficher les noms des membres de la communauté lors de l'exécution de la commande /comf ?"
 L["Display how much time left for people in your group to enter the queue?"] = "Afficher le temps restant aux personnes de votre groupe pour entrer dans la file d'attente ?"
 L["Display notification for popped groups?"] = "Afficher une notification pour les groupes déclenchés ?"
-L["Enable Ashran Notifications?"] = true -- TODO
+L["Enable Alterac Valley Notifications?"] = "Activer les notifications d'Alterac Valley ?"
+L["Enable Ashran Notifications?"] = "Activer les notifications Ashran ?"
 L["Enable debug mode to help debug issues?"] = "Activer le mode débogage pour aider à résoudre les problèmes ?"
 L["Enable debug print chat window to log debug events?"] = "Activer la fenêtre de discussion d’impression de débogage pour enregistrer les événements de débogage ?"
 L["Enable the right click menu for community member list?"] = "Activer le menu contextuel pour la liste des membres de la communauté ?"
@@ -160,7 +162,8 @@ L["This will show a raid warning to you when the Ancient Inferno has spawned in 
 L["This will show a raid warning to you when you are given leadership of your party."] = "Ceci affichera un avertissement de raid lorsque vous obtenez le leadership de votre groupe."
 L["This will show a raid warning to you when your Mage is under attack in Ashran."] = "Cela vous affichera un avertissement de raid lorsque votre mage sera attaqué à Ashran."
 L["This will show you a message when a party member changes zones."] = "Cela vous montrera un message lorsqu'un membre du groupe change de zone."
-L["This will show you warning messages for critical events around Ashran."] = true -- TODO
+L["This will show you warning messages for critical events around Alterac Valley."] = "Ceci vous affichera des messages d'alerte concernant les événements critiques dans la vallée d'Alterac."
+L["This will show you warning messages for critical events around Ashran."] = "Vous y trouverez des messages d'alerte concernant les événements critiques aux alentours d'Ashran."
 L["This will treat your Guild Members as Community Members."] = "Cela traitera les membres de votre guilde comme des membres de la communauté."
 L["Uninvite any players that are AFK?"] = "Retirez tous les joueurs qui sont LDC ?"
 L["Use this to manage the Clubs, Communites & Guilds in the database."] = "Utilisez cette fonction pour gérer les clubs, les communautés et les guildes dans la base de données."
@@ -200,8 +203,8 @@ L["Deepwind Gorge"] = "Gorge de Vent-Caverneux"
 L["Eye of the Storm"] = "L’Œil du cyclone"
 L["Isle of Conquest"] = "Île des Conquérants"
 L["Korrak's Revenge"] = "Vengeance de Korrak"
-L["Random Epic Battleground"] = "TODO: Random Epic Battleground"
-L["Random Training Grounds"] = "TODO: Random Training Grounds"
+L["Random Epic Battleground"] = true -- TODO
+L["Random Training Grounds"] = true -- TODO
 L["Seething Shore"] = "Rivage Bouillonnant"
 L["Silvershard Mines"] = "Mines d’Éclargent"
 L["Temple of Kotmogu"] = "Temple de Kotmogu"
@@ -360,6 +363,10 @@ L["Set Player Note for %s:"] = "Définir la note du joueur pour %s :"
 L["Uninviting ..."] = "Désinvitation ..."
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = "Chuchotez-moi INV et si il y a une place disponible, vous serez rajouté à nouveau au groupe."
 L["You've been removed from the party for being AFK."] = "Vous avez été retiré du groupe pour être LDC."
+
+-- AlteracValley.lua
+L["Captain Balinda Stonehearth"] = "Capitaine Balinda Gîtepierre"
+L["Captain Galvangar"] = "Capitaine Galvangar"
 
 -- Ashran.lua
 L["%s has been killed."] = "%s a été tué."

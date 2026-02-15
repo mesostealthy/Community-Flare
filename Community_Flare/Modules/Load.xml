@@ -18,4 +18,5 @@
 	<Script file="AlteracValley.lua" />
 	<Script file="Ashran.lua" />
 	<Script file="IsleOfConquest.lua" />
+	<Script file="Wintergrasp.lua" />
 </Ui>

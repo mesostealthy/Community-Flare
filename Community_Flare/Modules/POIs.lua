@@ -7,10 +7,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                               = _G.C_Map.GetMapInfo
 local print                                       = _G.print
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
@@ -20,20 +16,20 @@ local strformat                                   = _G.string.format
 -- get current POI's
 function NS:Get_Current_POIs()
 	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		return nil
 	end
 
 	-- process any POI's
-	local pois = AreaPoiInfoGetAreaPOIForMap(NS.CommFlare.CF.MapID)
+	local pois = NS:GetAreaPOIForMap(NS.CommFlare.CF.MapID)
 	if (pois and (#pois > 0)) then
 		-- display infos
 		local list  = {}
 		for _,v in ipairs(pois) do
 			-- get area poi info
-			local info = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
+			local info = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
 			if (info and info.areaPoiID) then
 				-- has position?
 				if (info.position) then
@@ -63,7 +59,7 @@ end
 function NS:List_POIs()
 	-- get map id
 	print(L["Dumping POIs:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		print(L["Map ID: Not Found"])
@@ -72,7 +68,7 @@ function NS:List_POIs()
 
 	-- get map info
 	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
 		print(L["Map ID: Not Found"])
@@ -82,11 +78,11 @@ function NS:List_POIs()
 	-- process any POI's
 	local count = 0
 	print(strformat("Map Name: %s", NS.CommFlare.CF.MapInfo.name))
-	local pois = AreaPoiInfoGetAreaPOIForMap(NS.CommFlare.CF.MapID)
+	local pois = NS:GetAreaPOIForMap(NS.CommFlare.CF.MapID)
 	if (pois and (#pois > 0)) then
 		-- display infos
 		for _,v in ipairs(pois) do
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
 			if (NS.CommFlare.CF.POIInfo and NS.CommFlare.CF.POIInfo.areaPoiID) then
 				-- has texture index?
 				local text = strformat("%s: ID = %d", NS.CommFlare.CF.POIInfo.name, NS.CommFlare.CF.POIInfo.areaPoiID)

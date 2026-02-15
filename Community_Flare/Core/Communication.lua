@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 local _G                                        = _G
 local IsInRaid                                  = _G.IsInRaid
 local UnitName                                  = _G.UnitName
-local MapGetMapInfo                             = _G.C_Map.GetMapInfo
 local print                                     = _G.print
 local time                                      = _G.time
 local tonumber                                  = _G.tonumber
@@ -87,7 +86,7 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 								local mapID, mapName = strsplit(":", message)
 								if (not mapName) then
 									-- get map info by id
-									local info = MapGetMapInfo(tonumber(message))
+									local info = NS:GetMapInfo(tonumber(message))
 									if (info and info.name) then
 										-- set map name
 										mapName = info.name

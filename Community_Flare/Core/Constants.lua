@@ -7,7 +7,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local IsLFGDungeonJoinable                        = _G.IsLFGDungeonJoinable
-local GetBattlegroundInfo                         = _G.C_PvP.GetBattlegroundInfo
 local GetTrainingGrounds                          = _G.C_PvP.GetTrainingGrounds
 local GetSpellName                                = _G.C_Spell.GetSpellName
 local pairs                                       = _G.pairs
@@ -269,7 +268,7 @@ function NS:Build_Battlegrounds()
 	-- process all
 	for i = 1, GetNumBattlegroundTypes() do
 		-- get info
-		local info = GetBattlegroundInfo(i)
+		local info = NS:GetBattlegroundInfo(i)
 		if (info) then
 			-- epic battleground?
 			if (info.maxPlayers > 15) then

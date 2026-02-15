@@ -50,47 +50,22 @@ local ToggleFrame                                 = _G.ToggleFrame
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitGUID                                    = _G.UnitGUID
 local UnitHonorLevel                              = _G.UnitHonorLevel
-local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
 local UnitIsPlayer                                = _G.UnitIsPlayer
-local UnitInRaid                                  = _G.UnitInRaid
 local UnitName                                    = _G.UnitName
 local AddOnsIsAddOnLoaded                         = _G.C_AddOns.IsAddOnLoaded
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
-local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
-local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
-local ClubAreMembersReady                         = _G.C_Club.AreMembersReady
-local ClubFinderReturnClubApplicantList           = _G.C_ClubFinder.ReturnClubApplicantList
 local GetCVar                                     = _G.C_CVar.GetCVar
 local GetCVarDefault                              = _G.C_CVar.GetCVarDefault
 local SetCVar                                     = _G.C_CVar.SetCVar
-local DelvesUIHasActiveDelve                      = _G.C_DelvesUI.HasActiveDelve
-local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
-local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
-local EquipmentSetUseEquipmentSet                 = _G.C_EquipmentSet.UseEquipmentSet
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                               = _G.C_Map.GetMapInfo
-local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
-local MinimapGetPOITextureCoords                  = _G.C_Minimap.GetPOITextureCoords
-local PartyInfoGetInviteReferralInfo              = _G.C_PartyInfo.GetInviteReferralInfo
-local PartyInfoIsPartyFull                        = _G.C_PartyInfo.IsPartyFull
-local PartyInfoLeaveParty                         = _G.C_PartyInfo.LeaveParty
 local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
-local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
 local PvPGetCustomVictoryStatID                   = _G.C_PvP.GetCustomVictoryStatID
-local PvPGetScoreInfo                             = _G.C_PvP.GetScoreInfo
-local PvPGetScoreInfoByPlayerGuid                 = _G.C_PvP.GetScoreInfoByPlayerGuid
 local PvPIsActiveBattlefield                      = _G.C_PvP.IsActiveBattlefield
 local PvPIsArena                                  = _G.C_PvP.IsArena
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local PvPIsMatchFactional                         = _G.C_PvP.IsMatchFactional
 local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
-local TraitsGetConfigIDByTreeID                   = _G.C_Traits.GetConfigIDByTreeID
-local TraitsGetTreeCurrencyInfo                   = _G.C_Traits.GetTreeCurrencyInfo
-local SocialQueueGetGroupInfo                     = _G.C_SocialQueue.GetGroupInfo
 local TimerAfter                                  = _G.C_Timer.After
 local date                                        = _G.date
 local hooksecurefunc                              = _G.hooksecurefunc
@@ -235,7 +210,7 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = bnSenderID
 				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction()
+				SetBattlefieldScoreFaction(-1)
 				RequestBattlefieldScoreData()
 
 				-- delay 0.5 seconds
@@ -380,7 +355,7 @@ function NS:Event_Chat_Message_Party(...)
 						-- request battlefield score
 						NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 						NS.CommFlare.CF.WaitForUpdate["party"] = true
-						SetBattlefieldScoreFaction()
+						SetBattlefieldScoreFaction(-1)
 						RequestBattlefieldScoreData()
 
 						-- delay 0.5 seconds
@@ -440,7 +415,7 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
 				NS.CommFlare.CF.WaitForUpdate["sender"] = sender
 				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction()
+				SetBattlefieldScoreFaction(-1)
 				RequestBattlefieldScoreData()
 
 				-- delay 0.5 seconds
@@ -480,7 +455,7 @@ function NS.CommFlare:CLUB_ADDED(msg, ...)
 	end
 
 	-- found club?
-	local info = ClubGetClubInfo(clubId)
+	local info = NS:GetClubInfo(clubId)
 	if (info) then
 		-- guild?
 		local shouldProcess = false
@@ -509,7 +484,7 @@ function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 	local clubId = ...
 
 	-- cache player guid's
-	local list = ClubFinderReturnClubApplicantList(clubId)
+	local list = NS:ReturnClubApplicantList(clubId)
 	for k,v in ipairs(list) do
 		-- get name / server
 		local name, realm = select(6, GetPlayerInfoByGUID(v.playerGUID))
@@ -563,7 +538,7 @@ function NS.CommFlare:CLUB_MEMBER_PRESENCE_UPDATED(msg, ...)
 	-- always update, except on mobile
 	if ((presence > 0) and (presense ~= Enum.ClubMemberPresence.OnlineMobile)) then
 		-- only communities
-		local club = ClubGetClubInfo(clubId)
+		local club = NS:GetClubInfo(clubId)
 		if (club.clubType == Enum.ClubType.Character) then
 			-- get member info
 			local mi = NS:GetClubMemberInfo(clubId, memberId)
@@ -626,7 +601,7 @@ function NS.CommFlare:CLUB_MEMBERS_UPDATED(msg, ...)
 	end
 
 	-- are members ready?
-	if (ClubAreMembersReady(clubId) == true) then
+	if (NS:AreMembersReady(clubId) == true) then
 		-- update last seen
 		local members = CommunitiesUtil.GetAndSortMemberInfo(clubId)
 		for k,v in ipairs(members) do
@@ -694,7 +669,7 @@ function NS.CommFlare:CLUB_STREAMS_LOADED(msg, ...)
 	end
 
 	-- get club info
-	local info = ClubGetClubInfo(clubId)
+	local info = NS:GetClubInfo(clubId)
 	if (info) then
 		-- stream loaded
 		NS.CommFlare.CF.StreamsLoaded[clubId] = true
@@ -795,7 +770,7 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 				if (strfind(lower, L["you will be removed from"])) then
 					-- get invite confirmation info
 					local confirmationType, name, guid, rolesInvalid, willConvertToRaid, level, spec, itemLevel, isCrossFaction, playerFactionGroup, localizedFaction = GetInviteConfirmationInfo(invite)
-					local referredByGuid, referredByName, relationType, isQuickJoin, clubId = PartyInfoGetInviteReferralInfo(invite)
+					local referredByGuid, referredByName, relationType, isQuickJoin, clubId = NS:GetInviteReferralInfo(invite)
 					local playerName, color, selfRelationship = SocialQueueUtil_GetRelationshipInfo(guid, name, clubId)
 
 					-- has proper name?
@@ -820,7 +795,7 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 
 					-- battle net friend?
 					if (selfRelationship == "bnfriend") then
-						local accountInfo = BattleNetGetAccountInfoByGUID(guid)
+						local accountInfo = NS:GetAccountInfoByGUID(guid)
 						if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.playerGuid) then
 							-- send battle net message
 							NS:SendMessage(accountInfo.bnetAccountID, L["Sorry, group is currently full."])
@@ -836,12 +811,12 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 				elseif (strfind(lower, L["has requested to join your group"])) then
 					-- get invite confirmation info
 					local confirmationType, name, guid, rolesInvalid, willConvertToRaid, level, spec, itemLevel, isCrossFaction, playerFactionGroup, localizedFaction = GetInviteConfirmationInfo(invite)
-					local referredByGuid, referredByName, relationType, isQuickJoin, clubId = PartyInfoGetInviteReferralInfo(invite)
+					local referredByGuid, referredByName, relationType, isQuickJoin, clubId = NS:GetInviteReferralInfo(invite)
 					local playerName, color, selfRelationship = SocialQueueUtil_GetRelationshipInfo(guid, name, clubId)
 
 					-- will invite cause conversion to raid?
 					local cancelInvite = false
-					if (willConvertToRaid or (GetNumGroupMembers() > 4) or PartyInfoIsPartyFull()) then
+					if (willConvertToRaid or (GetNumGroupMembers() > 4) or NS:IsPartyFull()) then
 						-- cancel invite
 						cancelInvite = true
 					else
@@ -873,7 +848,7 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 
 						-- battle net friend?
 						if (selfRelationship == "bnfriend") then
-							local accountInfo = BattleNetGetAccountInfoByGUID(guid)
+							local accountInfo = NS:GetAccountInfoByGUID(guid)
 							if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.playerGuid) then
 								-- send battle net message
 								NS:SendMessage(accountInfo.bnetAccountID, L["Sorry, group is currently full."])
@@ -895,23 +870,23 @@ function NS.CommFlare:GROUP_INVITE_CONFIRMATION(msg)
 						end
 
 						-- battle net friend?
-						NS.CommFlare.CF.AutoInvite = false
+						local bAutoInvite = false
 						if (selfRelationship == "bnfriend") then
 							-- battle net auto invite enabled?
 							if (NS.db.global.bnetAutoInvite == true) then
 								-- auto invite enabled
-								NS.CommFlare.CF.AutoInvite = true
+								bAutoInvite = true
 							end
 						end
 
 						-- community auto invite enabled?
-						if ((NS.CommFlare.CF.AutoInvite == false) and (NS.charDB.profile.communityAutoInvite == true)) then
+						if ((bAutoInvite == false) and (NS.charDB.profile.communityAutoInvite == true)) then
 							-- is sender a community member?
-							NS.CommFlare.CF.AutoInvite = NS:Is_Community_Member(player)
+							bAutoInvite = NS:Is_Community_Member(player)
 						end
 
 						-- auto invite?
-						if (NS.CommFlare.CF.AutoInvite == true) then
+						if (bAutoInvite == true) then
 							-- accept invite
 							RespondToInviteConfirmation(invite, true)
 
@@ -938,7 +913,7 @@ function NS.CommFlare:GROUP_JOINED(msg, ...)
 	-- are you in a party?
 	if (IsInGroup()) then
 		-- is not group leader?
-		if (UnitIsGroupLeader("player") == false) then
+		if (NS:UnitIsGroupLeader("player") == false) then
 			-- always request party leadership?
 			if (NS.db.global.alwaysRequestPartyLead == true) then
 				-- player is community leader?
@@ -1037,21 +1012,21 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 								-- should log list / i.e. has shared community?
 								if (NS:Get_LogList_Status(full_name) == true) then
 									-- only allow leaders?
-									NS.CommFlare.CF.AutoPromote = false
+									local bAutoPromote = false
 									if (NS.charDB.profile.communityAutoAssist == 2) then
 										-- player is community leader?
 										if (NS:Is_Community_Leader(full_name) == true) then
 											-- auto promote
-											NS.CommFlare.CF.AutoPromote = true
+											bAutoPromote = true
 										end
 									-- allow all members?
 									elseif (NS.charDB.profile.communityAutoAssist == 3) then
 										-- auto promote
-										NS.CommFlare.CF.AutoPromote = true
+										bAutoPromote = true
 									end
 
 									-- auto promote?
-									if (NS.CommFlare.CF.AutoPromote == true) then
+									if (bAutoPromote == true) then
 										-- promote
 										PromoteToAssistant(name)
 									end
@@ -1303,40 +1278,40 @@ function NS.CommFlare:LFG_ROLE_CHECK_SHOW(msg, ...)
 			end
 
 			-- auto queueable?
-			NS.CommFlare.CF.AutoQueue = false
+			local bAutoQueue = false
 			if (NS.CommFlare.CF.AutoQueueable == true) then
 				-- party leader is community?
 				if (NS.charDB.profile.communityPartyLeader == true) then
 					-- auto queue enabled
-					NS.CommFlare.CF.AutoQueue = true
+					bAutoQueue = true
 				end
 
 				-- always auto queue?
-				if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.alwaysAutoQueue == true)) then
+				if ((bAutoQueue == false) and (NS.charDB.profile.alwaysAutoQueue == true)) then
 					-- auto queue enabled
-					NS.CommFlare.CF.AutoQueue = true
+					bAutoQueue = true
 				end
 
 				-- battle net auto queue enabled?
-				if ((NS.CommFlare.CF.AutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
+				if ((bAutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
 					local guid = NS:GetPartyLeaderGUID()
-					local info = BattleNetGetAccountInfoByGUID(guid)
+					local info = NS:GetAccountInfoByGUID(guid)
 					if (info and (info.isFriend == true)) then
 						-- auto invite enabled
-						NS.CommFlare.CF.AutoQueue = true
+						bAutoQueue = true
 					end
 				end
 
 				-- community auto queue?
-				if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.communityAutoQueue == true)) then
+				if ((bAutoQueue == false) and (NS.charDB.profile.communityAutoQueue == true)) then
 					-- is party leader a community member?
 					local leader = NS:GetPartyLeader()
-					NS.CommFlare.CF.AutoQueue = NS:Is_Community_Member(leader)
+					bAutoQueue = NS:Is_Community_Member(leader)
 				end
 			end
 
 			-- auto queue enabled?
-			if (NS.CommFlare.CF.AutoQueue == true) then
+			if (bAutoQueue == true) then
 				-- check for deserter
 				NS:CheckForAura("player", "HARMFUL", L["Deserter"])
 				if (NS.CommFlare.CF.HasAura == false) then
@@ -1348,7 +1323,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_SHOW(msg, ...)
 				else
 					-- have deserter / leave party
 					NS:SendMessage(nil, strformat("%s! %s!", L["Sorry, I currently have deserter"], L["Leaving party to avoid interrupting the queue"]))
-					PartyInfoLeaveParty()
+					NS:LeaveParty()
 				end
 			end
 		end
@@ -1415,23 +1390,23 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 	NS:CheckForAura("player", "HARMFUL", L["Deserter"])
 	if (NS.CommFlare.CF.HasAura == false) then
 		-- battle net auto invite enabled?
-		NS.CommFlare.CF.AutoInvite = false
+		local bAutoInvite = false
 		if (NS.db.global.bnetAutoInvite == true) then
-			local info = BattleNetGetAccountInfoByGUID(guid)
+			local info = NS:GetAccountInfoByGUID(guid)
 			if (info and (info.isFriend == true)) then
 				-- auto invite enabled
-				NS.CommFlare.CF.AutoInvite = true
+				bAutoInvite = true
 			end
 		end
 
 		-- community auto invite enabled?
-		if ((NS.CommFlare.CF.AutoInvite == false) and (NS.charDB.profile.communityAutoInvite == true)) then
+		if ((bAutoInvite == false) and (NS.charDB.profile.communityAutoInvite == true)) then
 			-- is sender a community member?
-			NS.CommFlare.CF.AutoInvite = NS:Is_Community_Member(sender)
+			bAutoInvite = NS:Is_Community_Member(sender)
 		end
 
 		-- should auto invite?
-		if (NS.CommFlare.CF.AutoInvite == true) then
+		if (bAutoInvite == true) then
 			-- lfg invite popup shown?
 			if (LFGInvitePopup:IsShown()) then
 				-- click accept button
@@ -1569,7 +1544,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	end
 
 	-- setup player
-	NS.CommFlare.CF.PlayerFaction = UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
 
@@ -1627,6 +1601,13 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- in battleground?
 		NS.CommFlare.CF.MatchStatus = 0
 		if (NS:IsInBattleground() == true) then
+			-- get MapID
+			NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
+			if (NS.CommFlare.CF.MapID) then
+				-- get map info
+				NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
+			end
+
 			-- match state is active?
 			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Active) then
 				-- match is active state?
@@ -1644,13 +1625,21 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 			end
 
+			-- alterac valley?
+			if (NS.CommFlare.CF.MapID == 91) then
+				-- REPorter alterac valley add callouts
+				NS:REPorter_AlteracValley_Add_Callouts()
 			-- isle of conquest?
-			if (NS.CommFlare.CF.MapID == 169) then
+			elseif (NS.CommFlare.CF.MapID == 169) then
 				-- process isle of conquest stuff
 				NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
 
 				-- REPorter isle of conquest add callouts
 				NS:REPorter_IsleOfConquest_Add_Callouts()
+			-- battle for wintergrasp?
+			elseif (NS.CommFlare.CF.MapID == 1334) then
+				-- REPorter wintergrasp add callouts
+				NS:REPorter_Wintergrasp_Add_Callouts()
 			-- ashran?
 			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process ashran stuff
@@ -1675,10 +1664,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 			-- get config ID for Reshii Wraps
 			local treeID = 1115
-			local configID = TraitsGetConfigIDByTreeID(treeID)
+			local configID = NS:GetConfigIDByTreeID(treeID)
 			if (configID) then
 				-- get currency info
-				local currencyInfo = TraitsGetTreeCurrencyInfo(configID, treeID, true)
+				local currencyInfo = NS:GetTreeCurrencyInfo(configID, treeID, true)
 				if (currencyInfo and currencyInfo[1]) then
 					-- found currency info?
 					local info = currencyInfo[1]
@@ -1814,7 +1803,7 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 		-- change equipment set?
 		if (bitband(NS.CommFlare.CF.RegenOptions, 1)) then
 			-- equip pvp gear equipment set
-			EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+			NS:UseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
 
 			-- clear regen options bit
 			NS.CommFlare.CF.RegenOptions = bitband(NS.CommFlare.CF.RegenOptions, bitbnot(1))
@@ -1915,13 +1904,13 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	-- has pvp equipment set?
 	if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
 		-- can use equipment sets?
-		if (EquipmentSetCanUseEquipmentSets() == true) then
-			local name, iconFileID, setID, isEquipped = EquipmentSetGetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
+		if (NS:UseEquipmentSet() == true) then
+			local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
 			if (name and (isEquipped == false)) then
 				-- not in combat lockdown?
 				if (InCombatLockdown() ~= true) then
 					-- equip pvp gear equipment set
-					EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+					NS:UseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
 				else
 					-- set regen options bit
 					NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
@@ -1963,7 +1952,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	NS.CommFlare.CF.MatchEndDate = date()
 	NS.CommFlare.CF.MatchEndTime = time()
 	NS.CommFlare.CF.Winner = GetBattlefieldWinner()
-	NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
 
 	-- update battleground status
 	local status = NS:Get_Current_Battleground_Status()
@@ -1972,7 +1961,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 		if (NS:IsInBattleground() == true) then
 			-- request battlefield score
 			NS.CommFlare.CF.ScoreRequested = 2
-			SetBattlefieldScoreFaction()
+			SetBattlefieldScoreFaction(-1)
 			RequestBattlefieldScoreData()
 		end
 	end
@@ -1988,10 +1977,10 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	end
 
 	-- get MapID
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (NS.CommFlare.CF.MapID) then
 		-- get map info
-		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+		NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	end
 
 	-- has active timers?
@@ -2102,13 +2091,21 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 
 			-- request battlefield score
 			NS.CommFlare.CF.ScoreRequested = 1
-			SetBattlefieldScoreFaction()
+			SetBattlefieldScoreFaction(-1)
 			RequestBattlefieldScoreData()
 
+			-- alterac valley?
+			if (NS.CommFlare.CF.MapID == 91) then
+				-- REPorter alterac valley add callouts
+				NS:REPorter_AlteracValley_Add_Callouts()
 			-- isle of conquest?
-			if (NS.CommFlare.CF.MapID == 169) then
+			elseif (NS.CommFlare.CF.MapID == 169) then
 				-- REPorter isle of conquest add callouts
 				NS:REPorter_IsleOfConquest_Add_Callouts()
+			-- battle for wintergrasp?
+			elseif (NS.CommFlare.CF.MapID == 1334) then
+				-- REPorter wintergrasp add callouts
+				NS:REPorter_Wintergrasp_Add_Callouts()
 			end
 		end
 	end
@@ -2142,7 +2139,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 		end
 
 		-- unit in raid?
-		if (UnitInRaid(player) ~= nil) then
+		if (NS:UnitInRaid(player)) then
 			-- in battleground?
 			if (NS:IsInBattleground() == true) then
 				-- block all shared quests?
@@ -2153,7 +2150,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 				-- block irrelevant quests?
 				elseif (NS.db.global.blockSharedQuests == 2) then
 					-- get MapID
-					NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+					NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 					if (NS.CommFlare.CF.MapID and (NS.CommFlare.CF.MapID > 0)) then
 						-- initialize
 						decline = true
@@ -2342,39 +2339,39 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 	end
 
 	-- auto queueable?
-	NS.CommFlare.CF.AutoQueue = false
+	local bAutoQueue = false
 	if (NS.CommFlare.CF.AutoQueueable == true) then
 		-- party leader is community?
 		if (NS.charDB.profile.communityPartyLeader == true) then
 			-- auto queue enabled
-			NS.CommFlare.CF.AutoQueue = true
+			bAutoQueue = true
 		end
 
 		-- always auto queue?
-		if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.alwaysAutoQueue == true)) then
+		if ((bAutoQueue == false) and (NS.charDB.profile.alwaysAutoQueue == true)) then
 			-- auto queue enabled
-			NS.CommFlare.CF.AutoQueue = true
+			bAutoQueue = true
 		end
 
 		-- battle net auto queue enabled?
-		if ((NS.CommFlare.CF.AutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
+		if ((bAutoQueue == false) and (NS.db.global.bnetAutoQueue == true)) then
 			local guid = NS:GetPartyLeaderGUID()
-			local info = BattleNetGetAccountInfoByGUID(guid)
+			local info = NS:GetAccountInfoByGUID(guid)
 			if (info and (info.isFriend == true)) then
 				-- auto queue enabled
-				NS.CommFlare.CF.AutoQueue = true
+				bAutoQueue = true
 			end
 		end
 
 		-- community auto queue?
-		if ((NS.CommFlare.CF.AutoQueue == false) and (NS.charDB.profile.communityAutoQueue == true)) then
+		if ((bAutoQueue == false) and (NS.charDB.profile.communityAutoQueue == true)) then
 			-- is sender a community member?
-			NS.CommFlare.CF.AutoQueue = NS:Is_Community_Member(sender)
+			bAutoQueue = NS:Is_Community_Member(sender)
 		end
 	end
 
 	-- auto queue enabled?
-	if (NS.CommFlare.CF.AutoQueue == true) then
+	if (bAutoQueue == true) then
 		-- verify player does not have deserter debuff
 		NS:CheckForAura("player", "HARMFUL", L["Deserter"])
 		if (NS.CommFlare.CF.HasAura == false) then
@@ -2511,7 +2508,7 @@ function NS.CommFlare:SOCIAL_QUEUE_UPDATE(msg, ...)
 	local groupGUID, numAddedItems = ...
 
 	-- nothing added?
-	local canJoin, numQueues, needTank, needHealer, needDamage, isSoloQueueParty, questSessionActive, leaderGUID = SocialQueueGetGroupInfo(groupGUID)
+	local canJoin, numQueues, needTank, needHealer, needDamage, isSoloQueueParty, questSessionActive, leaderGUID = NS:GetGroupInfo(groupGUID)
 	if ((not groupGUID) or (not numAddedItems) or (not leaderGUID)) then
 		-- finished
 		return
@@ -2750,7 +2747,7 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 		local kosAlerts = {}
 		local numScores = GetNumBattlefieldScores()
 		for i=1, numScores do
-			local info = PvPGetScoreInfo(i)
+			local info = NS:GetScoreInfo(i)
 			if (info and info.name and not issecretvalue(info.name)) then
 				-- force name-realm format
 				local player = info.name
@@ -2841,7 +2838,7 @@ function NS.CommFlare:UPDATE_UI_WIDGET(msg, ...)
 			NS.CommFlare.CF.ActiveWidgets[widgetInfo.widgetID] = data
 		end
 
-		-- alterac valley
+		-- alterac valley?
 		if (NS.CommFlare.CF.MapID == 91) then
 			-- process alterac valley widget
 			NS:Process_AlteracValley_Widget(widgetInfo)
@@ -2889,14 +2886,14 @@ end
 -- process zone changed new area
 function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		return
 	end
 
 	-- get map info
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
 		return

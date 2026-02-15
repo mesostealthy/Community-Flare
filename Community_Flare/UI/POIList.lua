@@ -5,28 +5,25 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local CreateDataProvider                        = _G.CreateDataProvider
-local CreateFromMixins                          = _G.CreateFromMixins
-local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                             = _G.DevTools_Dump
-local AreaPoiInfoGetAreaPOIForMap               = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                 = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
-local date                                      = _G.date
-local ipairs                                    = _G.ipairs
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local select                                    = _G.select
-local sort                                      = _G.sort
-local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local tostring                                  = _G.tostring
-local strformat                                 = _G.string.format
-local strlower                                  = _G.string.lower
-local strsplit                                  = _G.string.split
-local tinsert                                   = _G.table.insert
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local CreateDataProvider                          = _G.CreateDataProvider
+local CreateFromMixins                            = _G.CreateFromMixins
+local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
+local DevTools_Dump                               = _G.DevTools_Dump
+local date                                        = _G.date
+local ipairs                                      = _G.ipairs
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local select                                      = _G.select
+local sort                                        = _G.sort
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local tostring                                    = _G.tostring
+local strformat                                   = _G.string.format
+local strlower                                    = _G.string.lower
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- local variables
 local searchText = ""
@@ -209,16 +206,16 @@ function CF_POIListMixin:UpdatePOIList()
 	self.POINames = {}
 
 	-- get map id
-	local mapID = MapGetBestMapForUnit("player")
+	local mapID = NS:GetBestMapForUnit("player")
 	if (mapID) then
 		-- get pois for map
-		local pois = AreaPoiInfoGetAreaPOIForMap(mapID)
+		local pois = NS:GetAreaPOIForMap(mapID)
 		if (pois and (#pois > 0)) then
 			-- process pois
 			local count = 0
 			for _,v in ipairs(pois) do
 				-- get area poi info
-				local info = AreaPoiInfoGetAreaPOIInfo(mapID, v)
+				local info = NS:GetAreaPOIInfo(mapID, v)
 				if (info and info.areaPoiID) then
 					-- has position?
 					if (info.position) then

@@ -21,9 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.05.002:
--FEATURE: Added Buttons for nodes in the Isle of Conquest for the REPorter map.
---Left Click = Calls out INCOMING to the node.
---Right Click = Calls out CLEAR for the node.
--BUGFIX: Fixed another LUA error inside of battlegrounds.
--BUGFIX: More bugs gahhhhhhh!
+v2.06.001:
+-FRAMEWORK: Started revamping framework to safely handle secret values.
+-REPorter: Added callouts for Alterac Valley & Wintergrasp.

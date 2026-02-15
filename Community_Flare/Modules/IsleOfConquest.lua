@@ -7,14 +7,9 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
+local InCombatLockdown                            = _G.InCombatLockdown
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local MinimapGetPOITextureCoords                  = _G.C_Minimap.GetPOITextureCoords
-local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
 local TimerAfter                                  = _G.C_Timer.After
-local VignetteInfoGetVignetteInfo                 = _G.C_VignetteInfo.GetVignetteInfo
-local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local time                                        = _G.time
@@ -44,13 +39,13 @@ end
 function NS:Process_IsleOfConquest_POIs(mapID)
 	-- found POIs?
 	if (NS.faction ~= 0) then return end
-	local ids = AreaPoiInfoGetAreaPOIForMap(mapID)
+	local ids = NS:GetAreaPOIForMap(mapID)
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
 		for _, id in pairs(ids) do
 			-- get info
-			local info = AreaPoiInfoGetAreaPOIInfo(mapID, id)
+			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.name and info.areaPoiID) then
 				-- currently active
 				list[id] = CopyTable(info)
@@ -105,7 +100,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 	-- get all battlefield vehicles
 	if (NS.faction ~= 0) then return end
 	local numGlaives = 0
-	local list = PvPGetBattlefieldVehicles(mapID)
+	local list = NS:GetBattlefieldVehicles(mapID)
 	if (list and (#list > 0)) then
 		-- process all
 		for k,v in pairs(list) do
@@ -134,7 +129,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 			local path = {136441}
 			local factionColor = "colorHorde"
 			NS.CommFlare.CF.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives + 1
-			path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(40) -- horde horse icon
+			path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(40) -- horde horse icon
 			local name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
 
 			-- add new capping bar
@@ -160,7 +155,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 			local path = {136441}
 			local factionColor = "colorAlliance"
 			NS.CommFlare.CF.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives + 1
-			path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(38) -- alliance horse icon
+			path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(38) -- alliance horse icon
 			local name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
 
 			-- add new capping bar
@@ -221,7 +216,6 @@ function NS:REPorter_IsleOfConquest_Add_Callouts()
 	-- in combat lockdown?
 	if (InCombatLockdown()) then
 		-- update last raid warning
-		NS.CommFlare.CF.LastRaidWarning = time()
 		TimerAfter(5, function()
 			-- call again
 			NS:REPorter_IsleOfConquest_Add_Callouts()

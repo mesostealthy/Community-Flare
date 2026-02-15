@@ -6,7 +6,7 @@ if (not L) then return end
 
 -- localize stuff
 local _G                                          = _G
-local GetAddOnMetadata                            = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+local GetAddOnMetadata                            = _G.C_AddOns.GetAddOnMetadata
 local GetBuildInfo                                = _G.GetBuildInfo
 local GetInviteConfirmationInfo                   = _G.GetInviteConfirmationInfo
 local GetNextPendingInviteConfirmation            = _G.GetNextPendingInviteConfirmation
@@ -16,8 +16,6 @@ local SocialQueueUtil_GetRelationshipInfo         = _G.SocialQueueUtil_GetRelati
 local StaticPopup_FindVisible                     = _G.StaticPopup_FindVisible
 local StaticPopup_Hide                            = _G.StaticPopup_Hide
 local UnitFactionGroup                            = _G.UnitFactionGroup
-local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
-local PartyInfoGetInviteReferralInfo              = _G.C_PartyInfo.GetInviteReferralInfo
 local issecretvalue                               = _G.issecretvalue
 local select                                      = _G.select
 local tonumber                                    = _G.tonumber
@@ -46,9 +44,6 @@ NS.CommFlare = NS.Libs.AceAddon:NewAddon(ADDON_NAME, "AceComm-3.0", "AceConsole-
 if (not NS.CommFlare) then return end
 NS.CommFlare.CF = {
 	-- booleans
-	AutoInvite = false,
-	AutoPromote = false,
-	AutoQueue = false,
 	AutoQueueable = false,
 	CDMEnabled = false,
 	CDMPersistent = false,
@@ -72,9 +67,6 @@ NS.CommFlare.CF = {
 	VersionSent = false,
 
 	-- misc
-	Category = nil,
-	Field = nil,
-	Header = nil,
 	Leader = nil,
 	LeaderGUID = nil,
 	Options = nil,
@@ -122,7 +114,6 @@ NS.CommFlare.CF = {
 	MapName = L["N/A"],
 	MatchEndDate = "",
 	MatchStartDate = "",
-	PlayerFaction = "",
 	PlayerFullName = "",
 	PlayerServerName = "",
 	RaidLeader = L["N/A"],
@@ -151,7 +142,6 @@ NS.CommFlare.CF = {
 	LogListPlayers = {},
 	MapInfo = {},
 	MemberInfo = {},
-	MenuData = {},
 	MercCounts = {},
 	MercCountsList = {},
 	MercNames = {},
@@ -237,7 +227,7 @@ local function hook_HandlePendingInviteConfirmation(invite)
 		if (invite) then
 			-- get invite confirmation info
 			local confirmationType, sender, guid, rolesInvalid, willConvertToRaid, level, spec, itemLevel = GetInviteConfirmationInfo(invite)
-			local referredByGuid, referredByName, relationType, isQuickJoin, clubId = PartyInfoGetInviteReferralInfo(invite)
+			local referredByGuid, referredByName, relationType, isQuickJoin, clubId = NS:GetInviteReferralInfo(invite)
 			local playerName, color, selfRelationship = SocialQueueUtil_GetRelationshipInfo(guid, name, clubId)
 
 			-- cancel invite
@@ -251,7 +241,7 @@ local function hook_HandlePendingInviteConfirmation(invite)
 
 			-- battle net friend?
 			if (selfRelationship == "bnfriend") then
-				local accountInfo = BattleNetGetAccountInfoByGUID(guid)
+				local accountInfo = NS:GetAccountInfoByGUID(guid)
 				if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.playerGuid) then
 					-- send battle net message
 					NS:SendMessage(accountInfo.bnetAccountID, L["Sorry, can not accept invites while currently queued as a mercenary."])

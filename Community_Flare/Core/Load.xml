@@ -3,12 +3,13 @@
 	<Script file="Bootstrap.lua" />
 	<Script file="Constants.lua" />
 	<Script file="Config.lua" />
+	<Script file="Debug.lua" />
+	<Script file="Init.lua" />
+	<Script file="Restrictions.lua" />
 	<Script file="Communication.lua" />
 	<Script file="Database.lua" />
-	<Script file="Debug.lua" />
 	<Script file="Events.lua" />
 	<Script file="Hooks.lua" />
-	<Script file="Init.lua" />
 	<Script file="Menus.lua" />
 	<Script file="SlashCmd.lua" />
 	<Script file="Specialization.lua" />

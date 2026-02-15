@@ -7,8 +7,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local PvPGetBattlefieldVehicles                   = _G.C_PvP.GetBattlefieldVehicles
 local print                                       = _G.print
 local tostring                                    = _G.tostring
 local type                                        = _G.type
@@ -17,14 +15,14 @@ local strformat                                   = _G.string.format
 -- get current vehicles
 function NS:Get_Current_Vehicles()
 	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		return nil
 	end
 
 	-- process any vehicles
-	local vehicles = PvPGetBattlefieldVehicles(NS.CommFlare.CF.MapID)
+	local vehicles = NS:GetBattlefieldVehicles(NS.CommFlare.CF.MapID)
 	if (vehicles and (#vehicles > 0)) then
 		-- display infos
 		local list = {}
@@ -45,7 +43,7 @@ end
 function NS:List_Vehicles()
 	-- get map id
 	print(L["Dumping Vehicles:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		print(L["Map ID: Not Found"])
@@ -53,7 +51,7 @@ function NS:List_Vehicles()
 	end
 
 	-- process any vehicles
-	local vehicles = PvPGetBattlefieldVehicles(NS.CommFlare.CF.MapID)
+	local vehicles = NS:GetBattlefieldVehicles(NS.CommFlare.CF.MapID)
 	if (vehicles and (#vehicles > 0)) then
 		-- display infos
 		print(strformat(L["Count: %d"], #vehicles))
@@ -70,7 +68,7 @@ end
 -- update vehicles
 function NS:UpdateVehicles()
 	-- get map id
-	local mapID = MapGetBestMapForUnit("player")
+	local mapID = NS:GetBestMapForUnit("player")
 	if (not mapID) then
 		-- not found
 		return false
@@ -78,7 +76,7 @@ function NS:UpdateVehicles()
 
 	-- get vehicles
 	NS.CommFlare.CF.VehicleList = {}
-	local vehicles = PvPGetBattlefieldVehicles(mapID)
+	local vehicles = NS:GetBattlefieldVehicles(mapID)
 	if (not vehicles) then
 		-- not found
 		return false

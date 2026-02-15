@@ -8,10 +8,6 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local AreaPoiInfoGetAreaPOIForMap                 = _G.C_AreaPoiInfo.GetAreaPOIForMap
-local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local MinimapGetPOITextureCoords                  = _G.C_Minimap.GetPOITextureCoords
-local VignetteInfoGetVignetteInfo                 = _G.C_VignetteInfo.GetVignetteInfo
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local time                                        = _G.time
@@ -62,13 +58,13 @@ end
 function NS:Process_Ashran_POIs(mapID)
 	-- found POIs?
 	if (NS.faction ~= 0) then return end
-	local ids = AreaPoiInfoGetAreaPOIForMap(mapID)
+	local ids = NS:GetAreaPOIForMap(mapID)
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
 		for _, id in pairs(ids) do
 			-- get info
-			local info = AreaPoiInfoGetAreaPOIInfo(mapID, id)
+			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.name and info.areaPoiID) then
 				-- currently active
 				list[id] = CopyTable(info)
@@ -108,7 +104,7 @@ function NS:Process_Ashran_POIs(mapID)
 					if (info.CappingDeath and info.IconID and info.RespawnTime) then
 						-- add new capping bar
 						local path = {136441}
-						path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(info.IconID)
+						path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(info.IconID)
 						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, info.BarColor, path)
 					end
 
@@ -137,7 +133,7 @@ function NS:Process_Ashran_Vignettes(mapID)
 		local list = {}
 		for _, guid in pairs(ids) do
 			-- get info
-			local info = VignetteInfoGetVignetteInfo(guid)
+			local info = NS:GetVignetteInfo(guid)
 			if (info and info.name and info.vignetteID) then
 				-- add to list
 				local id = info.vignetteID
@@ -168,7 +164,7 @@ function NS:Process_Ashran_Vignettes(mapID)
 					if (info.CappingDeath and info.IconID and info.RespawnTime) then
 						-- add new capping bar
 						local path = {136441}
-						path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(info.IconID)
+						path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(info.IconID)
 						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, info.BarColor, path)
 					end
 
@@ -220,7 +216,7 @@ function NS:Process_Ashran_Widget(info)
 				if (diff >= 30) then
 					-- add new capping bar
 					local path = {136441}
-					path[2], path[3], path[4], path[5] = MinimapGetPOITextureCoords(158)
+					path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(158)
 					NS:Capping_Add_New_Bar(L["Jeron Emberfall"], 3600, "colorHorde", path)
 
 					-- notifications enabled?

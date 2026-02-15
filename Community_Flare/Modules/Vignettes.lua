@@ -11,15 +11,8 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                               = _G.C_Map.GetMapInfo
 local MapGetUserWaypointHyperlink                 = _G.C_Map.GetUserWaypointHyperlink
-local MapSetUserWaypoint                          = _G.C_Map.SetUserWaypoint
-local SuperTrackSetSuperTrackedUserWaypoint       = _G.C_SuperTrack.SetSuperTrackedUserWaypoint
 local TimerAfter                                  = _G.C_Timer.After
-local VignetteInfoGetVignetteInfo                 = _G.C_VignetteInfo.GetVignetteInfo
-local VignetteInfoGetVignettePosition             = _G.C_VignetteInfo.GetVignettePosition
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local print                                       = _G.print
 local time                                        = _G.time
@@ -145,19 +138,19 @@ function NS:VignetteCheckForAlerts(list)
 					local hyperLink = nil
 					if (createPin == true) then
 						-- get MapID
-						local mapID = MapGetBestMapForUnit("player")
+						local mapID = NS:GetBestMapForUnit("player")
 						if (mapID) then
 							-- can set user waypoint?
-							if (MapCanSetUserWaypointOnMap(mapID)) then
+							if (NS:CanSetUserWaypointOnMap(mapID)) then
 								-- create position from x/y
 								local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
-								MapSetUserWaypoint(point)
+								NS:SetUserWaypoint(point)
 								hyperLink = MapGetUserWaypointHyperlink()
 
 								-- not already tracked?
 								if (not uid) then
 									-- set super tracked
-									SuperTrackSetSuperTrackedUserWaypoint(true)
+									NS:SetSuperTrackedUserWaypoint(true)
 								end
 							end
 						end
@@ -201,7 +194,7 @@ end
 -- get current vignettes
 function NS:Get_Current_Vignettes()
 	-- get map id
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		return nil
@@ -214,10 +207,10 @@ function NS:Get_Current_Vignettes()
 		local vignettes = {}
 		for _,v in ipairs(guids) do
 			-- get vignette info
-			local info = VignetteInfoGetVignetteInfo(v)
+			local info = NS:GetVignetteInfo(v)
 			if (info and info.vignetteID) then
 				-- get position
-				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
+				local pos = NS:GetVignettePosition(v, NS.CommFlare.CF.MapID)
 				if (pos) then
 					-- get x/y
 					local x, y = pos:GetXY()
@@ -255,7 +248,7 @@ end
 function NS:List_Vignettes()
 	-- get map id
 	print(L["Dumping Vignettes:"])
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- not found
 		print(L["Map ID: Not Found"])
@@ -264,7 +257,7 @@ function NS:List_Vignettes()
 
 	-- get map info
 	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
 		print(L["Map ID: Not Found"])
@@ -279,10 +272,10 @@ function NS:List_Vignettes()
 		-- display infos
 		for _,v in ipairs(guids) do
 			-- get vignette info
-			local info = VignetteInfoGetVignetteInfo(v)
+			local info = NS:GetVignetteInfo(v)
 			if (info and info.vignetteID) then
 				-- get position
-				local pos = VignetteInfoGetVignettePosition(v, NS.CommFlare.CF.MapID)
+				local pos = NS:GetVignettePosition(v, NS.CommFlare.CF.MapID)
 				if (pos) then
 					-- get x/y
 					local x, y = pos:GetXY()

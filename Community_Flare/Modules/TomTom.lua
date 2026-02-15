@@ -6,10 +6,6 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local MapCanSetUserWaypointOnMap                  = _G.C_Map.CanSetUserWaypointOnMap
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapSetUserWaypoint                          = _G.C_Map.SetUserWaypoint
-local SuperTrackSetSuperTrackedUserWaypoint       = _G.C_SuperTrack.SetSuperTrackedUserWaypoint
 local pairs                                       = _G.pairs
 local securecallfunction                          = _G.securecallfunction
 local tonumber                                    = _G.tonumber
@@ -68,16 +64,16 @@ function NS:TomTomAddWaypoint(title, x, y)
 		return securecallfunction(TT.AddWaypoint, TT, NS.CommFlare.CF.MapID, tonumber(x), tonumber(y), options)
 	else
 		-- get MapID
-		local mapID = MapGetBestMapForUnit("player")
+		local mapID = NS:GetBestMapForUnit("player")
 		if (mapID) then
 			-- can set user waypoint?
-			if (MapCanSetUserWaypointOnMap(mapID)) then
+			if (NS:CanSetUserWaypointOnMap(mapID)) then
 				-- set user way point
 				local point = UiMapPoint.CreateFromCoordinates(mapID, tonumber(x), tonumber(y))
-				MapSetUserWaypoint(point)
+				NS:SetUserWaypoint(point)
 
 				-- set super tracked
-				SuperTrackSetSuperTrackedUserWaypoint(true)
+				NS:SetSuperTrackedUserWaypoint(true)
 			end
 		end
 	end

@@ -5,27 +5,24 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local CreateDataProvider                        = _G.CreateDataProvider
-local CreateFromMixins                          = _G.CreateFromMixins
-local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                             = _G.DevTools_Dump
-local MapGetBestMapForUnit                      = _G.C_Map.GetBestMapForUnit
-local VignetteInfoGetVignetteInfo               = _G.C_VignetteInfo.GetVignetteInfo
-local VignetteInfoGetVignettePosition           = _G.C_VignetteInfo.GetVignettePosition
-local VignetteInfoGetVignettes                  = _G.C_VignetteInfo.GetVignettes
-local date                                      = _G.date
-local ipairs                                    = _G.ipairs
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local select                                    = _G.select
-local sort                                      = _G.sort
-local time                                      = _G.time
-local strformat                                 = _G.string.format
-local strlower                                  = _G.string.lower
-local strsplit                                  = _G.string.split
-local tinsert                                   = _G.table.insert
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local CreateDataProvider                          = _G.CreateDataProvider
+local CreateFromMixins                            = _G.CreateFromMixins
+local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
+local DevTools_Dump                               = _G.DevTools_Dump
+local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
+local date                                        = _G.date
+local ipairs                                      = _G.ipairs
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local select                                      = _G.select
+local sort                                        = _G.sort
+local time                                        = _G.time
+local strformat                                   = _G.string.format
+local strlower                                    = _G.string.lower
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- local variables
 local searchText = ""
@@ -208,7 +205,7 @@ function CF_VignetteListMixin:UpdateVignetteList()
 	self.VignetteNames = {}
 
 	-- get map id
-	local mapID = MapGetBestMapForUnit("player")
+	local mapID = NS:GetBestMapForUnit("player")
 	if (mapID) then
 		-- process any vignettes
 		local guids = VignetteInfoGetVignettes()
@@ -217,10 +214,10 @@ function CF_VignetteListMixin:UpdateVignetteList()
 			local count = 0
 			for _,v in ipairs(guids) do
 				-- get vignette info
-				local info = VignetteInfoGetVignetteInfo(v)
+				local info = NS:GetVignetteInfo(v)
 				if (info and info.vignetteID) then
 					-- get position
-					local pos = VignetteInfoGetVignettePosition(v, mapID)
+					local pos = NS:GetVignettePosition(v, mapID)
 					if (pos) then
 						-- get x/y
 						local x, y = pos:GetXY()

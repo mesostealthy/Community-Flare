@@ -13,12 +13,8 @@ local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local UnitExists                                  = _G.UnitExists
 local UnitGUID                                    = _G.UnitGUID
 local UnitName                                    = _G.UnitName
-local SocialQueueGetGroupInfo                     = _G.C_SocialQueue.GetGroupInfo
-local SocialQueueGetGroupMembers                  = _G.C_SocialQueue.GetGroupMembers
-local SocialQueueGetGroupQueues                   = _G.C_SocialQueue.GetGroupQueues
 local TimerAfter                                  = _G.C_Timer.After
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -98,7 +94,7 @@ function NS:Cleanup_Groups()
 			-- queue exists?
 			if (NS.CommFlare.CF.SocialQueues[k]) then
 				-- check for queues
-				local queues = SocialQueueGetGroupQueues(k)
+				local queues = NS:GetGroupQueues(k)
 				if (not queues) then
 					-- clear social queue 30 seconds later
 					NS.CommFlare.CF.SocialQueues[k].stale = true
@@ -244,7 +240,7 @@ function NS:Update_Group(groupGUID)
 			for i=1, GetNumGroupMembers() do
 				-- unit exists?
 				local unit = ""
-				if (UnitExists("party" .. i)) then
+				if (NS:UnitExists("party" .. i)) then
 					-- partyX
 					unit = "party" .. i
 				else
@@ -255,7 +251,7 @@ function NS:Update_Group(groupGUID)
 				-- party leader?
 				local playerGUID = UnitGUID(unit)
 				local playerName, playerRealm = UnitName(unit)
-				if (UnitIsGroupLeader(unit)) then
+				if (NS:UnitIsGroupLeader(unit)) then
 					-- add leader
 					NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
 				end
@@ -266,7 +262,7 @@ function NS:Update_Group(groupGUID)
 		end
 	else
 		-- no leader detected?
-		local canJoin, _, _, _, _, isSoloQueueParty, _, leaderGUID = SocialQueueGetGroupInfo(groupGUID)
+		local canJoin, _, _, _, _, isSoloQueueParty, _, leaderGUID = NS:GetGroupInfo(groupGUID)
 		if (not leaderGUID) then
 			-- clear group
 			NS.CommFlare.CF.SocialQueues[groupGUID] = nil
@@ -297,7 +293,7 @@ function NS:Update_Group(groupGUID)
 		local CurrentQueues = {}
 		local mapName = L["N/A"]
 		local numTrackedQueues = 0
-		local queues = SocialQueueGetGroupQueues(groupGUID)
+		local queues = NS:GetGroupQueues(groupGUID)
 		if (queues and (#queues > 0)) then
 			-- process all queues
 			for i=1, #queues do
@@ -389,7 +385,7 @@ function NS:Update_Group(groupGUID)
 			end
 
 			-- has group members?
-			local members = SocialQueueGetGroupMembers(groupGUID)
+			local members = NS:GetGroupMembers(groupGUID)
 			if (members and (#members > 0)) then
 				-- process all members
 				NS.CommFlare.CF.SocialQueues[groupGUID].members = {}

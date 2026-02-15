@@ -10,12 +10,8 @@ local GetCommunitiesChannel                       = _G.ChatFrameUtil and _G.Chat
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
 local UnitGetAvailableRoles                       = _G.UnitGetAvailableRoles
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
-local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
-local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
-local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
 local EquipmentSetGetEquipmentSetIDs              = _G.C_EquipmentSet.GetEquipmentSetIDs
-local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
 local ipairs                                      = _G.ipairs
 local next                                        = _G.next
 local pairs                                       = _G.pairs
@@ -62,7 +58,8 @@ local GlobalDefaults = {
 
 		-- numbers
 		adjustVehicleTurnSpeed = 0,
-		ashranNotifications = 1,
+		avNotifications = 2,
+		ashranNotifications = 2,
 		blockSharedQuests = 2,
 		partyLeaderNotify = 2,
 		purgeLogTime = 2,
@@ -163,7 +160,7 @@ local function Setup_Main_Community_List(info)
 
 		-- process all
 		NS.CommFlare.CF.ClubCount = 0
-		NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
+		NS.CommFlare.CF.Clubs = NS:GetSubscribedClubs()
 		for _,v in ipairs(NS.CommFlare.CF.Clubs) do
 			-- only communities
 			if (v.clubType == Enum.ClubType.Character) then
@@ -248,7 +245,7 @@ local function Setup_Other_Community_List(info)
 
 	-- process all
 	NS.CommFlare.CF.ClubCount = 0
-	NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
+	NS.CommFlare.CF.Clubs = NS:GetSubscribedClubs()
 	for _,v in ipairs(NS.CommFlare.CF.Clubs) do
 		-- only communities
 		if (v.clubType == Enum.ClubType.Character) then
@@ -293,7 +290,7 @@ local function Other_Community_List_Disabled()
 
 		-- process all
 		NS.CommFlare.CF.ClubCount = 0
-		NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
+		NS.CommFlare.CF.Clubs = NS:GetSubscribedClubs()
 		for _,v in ipairs(NS.CommFlare.CF.Clubs) do
 			-- only communities
 			if (v.clubType == Enum.ClubType.Character) then
@@ -381,7 +378,7 @@ local function Setup_Community_List(info)
 
 	-- process all
 	local count = 0
-	local clubs = ClubGetSubscribedClubs()
+	local clubs = NS:GetSubscribedClubs()
 	for _,v in ipairs(clubs) do
 		-- only communities
 		if (v.clubType == Enum.ClubType.Character) then
@@ -626,7 +623,7 @@ local function Refresh_Database_Members()
 		-- process clubs
 		for _,clubId in ipairs(clubs) do
 			-- club type is a community?
-			local info = ClubGetClubInfo(clubId)
+			local info = NS:GetClubInfo(clubId)
 			if (info and (info.clubType == Enum.ClubType.Character)) then
 				-- add community
 				NS:Add_Community(clubId, info)
@@ -855,12 +852,12 @@ local function Setup_Equipment_Sets_List(info)
 	-- can use equipment sets?
 	local list = {}
 	list[-1] = L["None"]
-	if (EquipmentSetCanUseEquipmentSets() == true) then
+	if (NS:UseEquipmentSet() == true) then
 		-- process all equipment sets
 		local ids = EquipmentSetGetEquipmentSetIDs()
 		for k,v in ipairs(ids) do
 			-- add to list by name
-			local name = EquipmentSetGetEquipmentSetInfo(v)
+			local name = NS:GetEquipmentSetInfo(v)
 			list[v] = name
 		end
 	end
@@ -872,7 +869,7 @@ end
 -- equipment sets disabled?
 local function Equipment_Sets_Disabled()
 	-- can use equipment sets?
-	if (EquipmentSetCanUseEquipmentSets() == true) then
+	if (NS:UseEquipmentSet() == true) then
 		-- enabled
 		return false
 	else
@@ -1032,15 +1029,33 @@ local BattlegroundGroup = {
 			get = function(info) return NS.db.global.blockGameTooltips end,
 			set = function(info, value) NS.db.global.blockGameTooltips = value end,
 		},
-		ashranTitle = {
-			name = L["Ashran Options"],
+		avTitle = {
+			name = L["Alterac Valley Options"],
 			type = "header",
 			order = 15,
 			width = "full",
 		},
-		ashranNotifications = {
+		avNotifications = {
 			type = "select",
 			order = 16,
+			name = L["Enable Alterac Valley Notifications?"],
+			desc = L["This will show you warning messages for critical events around Alterac Valley."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.avNotifications end,
+			set = function(info, value) NS.db.global.avNotifications = value end,
+		},
+		ashranTitle = {
+			name = L["Ashran Options"],
+			type = "header",
+			order = 17,
+			width = "full",
+		},
+		ashranNotifications = {
+			type = "select",
+			order = 18,
 			name = L["Enable Ashran Notifications?"],
 			desc = L["This will show you warning messages for critical events around Ashran."],
 			values = {
@@ -1053,12 +1068,12 @@ local BattlegroundGroup = {
 		iocTitle = {
 			name = L["Isle of Conquest Options"],
 			type = "header",
-			order = 17,
+			order = 19,
 			width = "full",
 		},
 		iocVehicleAlertSystem = {
 			type = "toggle",
-			order = 18,
+			order = 20,
 			name = L["Vehicle Alert System?"],
 			desc = L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."],
 			width = "full",
@@ -1591,15 +1606,6 @@ local VehicleGroup = {
 			get = function(info) return NS.db.global.cdmHideInVehiclesPvP end,
 			set = function(info, value) NS.db.global.cdmHideInVehiclesPvP = value end,
 		},
-		--[[resourcesHideInVehiclesPvP = {
-			type = "toggle",
-			order = 4,
-			name = L["Hide the Primary & Second Resource Bars while inside Vehicles in PvP Content?"],
-			desc = L["This will hide the Primary & Second Resource Bars while inside vehicles in PvP Content."],
-			width = "full",
-			get = function(info) return NS.db.global.resourcesHideInVehiclesPvP end,
-			set = function(info, value) NS.db.global.resourcesHideInVehiclesPvP = value end,
-		},]]--
 	}
 }
 

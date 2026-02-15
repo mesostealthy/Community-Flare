@@ -7,10 +7,8 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local AddNewCommunitiesChannel                    = _G.ChatFrameUtil.AddNewCommunitiesChannel
-local BNGetFriendAccountInfo                      = _G.C_BattleNet.GetFriendAccountInfo
 local BNGetFriendIndex                            = _G.BNGetFriendIndex
 local BNGetNumFriends                             = _G.BNGetNumFriends
-local BNSendWhisper                               = _G.C_BattleNet and _G.C_BattleNet.SendWhisper or _G.BNSendWhisper
 local ContainsChannel                             = _G.ChatFrameMixin.ContainsChannel
 local CopyTable                                   = _G.CopyTable
 local FCF_IsChatWindowIndexReserved               = _G.FCF_IsChatWindowIndexReserved
@@ -34,49 +32,30 @@ local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RemoveCommunitiesChannel                    = _G.ChatFrameUtil.RemoveCommunitiesChannel
 local SaveBindings                                = _G.SaveBindings
-local SendChatMessage                             = _G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage or _G.SendChatMessage
 local SetBinding                                  = _G.SetBinding
 local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
-local UnitExists                                  = _G.UnitExists
 local UnitFullName                                = _G.UnitFullName
 local UnitGUID                                    = _G.UnitGUID
 local UnitIsConnected                             = _G.UnitIsConnected
-local UnitIsDeadOrGhost                           = _G.UnitIsDeadOrGhost
-local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
-local UnitInParty                                 = _G.UnitInParty
 local UnitName                                    = _G.UnitName
 local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
-local BattleNetGetAccountInfoByGUID               = _G.C_BattleNet.GetAccountInfoByGUID
-local BattleNetGetFriendAccountInfo               = _G.C_BattleNet.GetFriendAccountInfo
-local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
-local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
 local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
-local ClubGetClubMembers                          = _G.C_Club.GetClubMembers
-local ClubGetMemberInfo                           = _G.C_Club.GetMemberInfo
-local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
-local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
 local CVarGetCVar                                 = _G.C_CVar.GetCVar
 local CVarSetCVar                                 = _G.C_CVar.SetCVar
-local DelvesUIHasActiveDelve                      = _G.C_DelvesUI.HasActiveDelve
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                               = _G.C_Map.GetMapInfo
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                    = _G.C_PartyInfo.IsDelveComplete
 local PartyInfoIsDelveInProgress                  = _G.C_PartyInfo.IsDelveInProgress
 local PartyInfoIsPartyWalkIn                      = _G.C_PartyInfo.IsPartyWalkIn
-local PartyInfoSetRestrictPings                   = _G.C_PartyInfo.SetRestrictPings
 local PvPIsBattleground                           = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
 local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
-local SocialQueueGetGroupForPlayer                = _G.C_SocialQueue.GetGroupForPlayer
 local TimerAfter                                  = _G.C_Timer.After
-local TraitsGenerateImportString                  = _G.C_Traits.GenerateImportString
 local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -432,14 +411,8 @@ end
 
 -- get club member info
 function NS:GetClubMemberInfo(clubId, memberId)
-	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
-		-- finished
-		return nil
-	end
-
 	-- found member?
-	local mi = ClubGetMemberInfo(clubId, memberId)
+	local mi = NS:GetMemberInfo(clubId, memberId)
 	if (not mi or not mi.name) then
 		-- failed
 		return nil
@@ -515,7 +488,7 @@ function NS:IsInDelve()
 	end
 
 	-- has active delve?
-	local active = DelvesUIHasActiveDelve()
+	local active = NS:HasActiveDelve()
 	if (active == true) then
 		-- yup
 		return true
@@ -534,7 +507,7 @@ function NS:IsInvisible()
 	end
 
 	-- check Battle.NET account - has focus?
-	local accountInfo = BattleNetGetAccountInfoByGUID(UnitGUID("player"))
+	local accountInfo = NS:GetAccountInfoByGUID(UnitGUID("player"))
 	if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.hasFocus) then
 		-- has focus?
 		if (accountInfo.gameAccountInfo.hasFocus == true) then
@@ -550,13 +523,13 @@ function NS:IsInvisible()
 
 	-- process all clubs
 	local player = UnitName("player")
-	local clubs = ClubGetSubscribedClubs()
+	local clubs = NS:GetSubscribedClubs()
 	for _,v in ipairs(clubs) do
 		-- community?
 		if (v.clubType == Enum.ClubType.Character) then
 			-- process members
 			local clubId = v.clubId
-			local members = ClubGetClubMembers(clubId)
+			local members = NS:GetClubMembers(clubId)
 			for _,v2 in ipairs(members) do
 				local mi = NS:GetClubMemberInfo(clubId, v2)
 				if (mi and mi.name) then
@@ -585,7 +558,7 @@ end
 -- promote player to party leader
 function NS:PromoteToPartyLeader(player)
 	-- is player full name in party?
-	if (UnitInParty(player) == true) then
+	if (NS:UnitInParty(player) == true) then
 		PromoteToLeader(player)
 		return true
 	end
@@ -597,7 +570,7 @@ function NS:PromoteToPartyLeader(player)
 	end
 
 	-- unit is in party?
-	if (UnitInParty(player) == true) then
+	if (NS:UnitInParty(player) == true) then
 		PromoteToLeader(player)
 		return true
 	end
@@ -656,10 +629,10 @@ function NS:LoadSession()
 	NS.CommFlare.CF.WSG = NS.charDB.profile.WSG or {}
 
 	-- get MapID
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (NS.CommFlare.CF.MapID) then
 		-- get map info
-		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+		NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	end
 end
 
@@ -725,70 +698,6 @@ function NS:SendAddonMessage(prefix, text, distribution, target)
 	NS.CommFlare:SendCommMessage(prefix, text, distribution, target)
 end
 
--- send to party, whisper, or Battle.NET message
-function NS:SendMessage(sender, msg, channel)
-	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
-		-- finished
-		return
-	end
-
-	-- party?
-	if (not sender) then
-		-- in local party?
-		if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
-			-- send to party
-			SendChatMessage(msg, "PARTY")
-		end
-	-- string?
-	elseif (type(sender) == "string") then
-		-- channel?
-		if (sender == "CHANNEL") then
-			-- send to channel (hardware click required)
-			SendChatMessage(msg, "CHANNEL", nil, channel)
-		-- guild?
-		elseif (sender == "GUILD") then
-			-- in guild?
-			if (IsInGuild()) then
-				-- send to guild
-				SendChatMessage(msg, "GUILD")
-			end
-		-- instance?
-		elseif (sender == "INSTANCE") then
-			-- send to instance chat
-			SendChatMessage(msg, "INSTANCE_CHAT")
-		-- party?
-		elseif (sender == "PARTY") then
-			-- in local party?
-			if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
-				-- send to party
-				SendChatMessage(msg, "PARTY")
-			end
-		-- raid?
-		elseif (sender == "RAID") then
-			-- in raid?
-			if (IsInRaid() == true) then
-				-- send to raid
-				SendChatMessage(msg, "RAID")
-			end
-		-- raid warning?
-		elseif (sender == "RAID_WARNING") then
-			-- in raid?
-			if (IsInRaid() == true) then
-				-- send to raid warning
-				SendChatMessage(msg, "RAID_WARNING")
-			end
-		else
-			-- send to target whisper
-			SendChatMessage(msg, "WHISPER", nil, sender)
-		end
-	-- number?
-	elseif (type(sender) == "number") then
-		-- send to Battle.NET
-		BNSendWhisper(sender, msg)
-	end
-end
-
 -- add community chat window (also removes first if already added)
 function NS:AddCommunityChatWindow(clubId, streamId)
 	-- in chat messaging lockdown?
@@ -798,7 +707,7 @@ function NS:AddCommunityChatWindow(clubId, streamId)
 	end
 
 	-- no stream info?
-	local streamInfo = ClubGetStreamInfo(clubId, streamId)
+	local streamInfo = NS:GetStreamInfo(clubId, streamId)
 	if (not streamInfo) then
 		-- finished
 		return
@@ -851,7 +760,7 @@ function NS:RemoveCommunityChatWindow(clubId, streamId)
 	end
 
 	-- no stream info?
-	local streamInfo = ClubGetStreamInfo(clubId, streamId)
+	local streamInfo = NS:GetStreamInfo(clubId, streamId)
 	if (not streamInfo) then
 		-- finished
 		return
@@ -1029,7 +938,7 @@ end
 -- is currently group leader?
 function NS:IsGroupLeader()
 	-- is group leader?
-	if (UnitIsGroupLeader("player")) then
+	if (NS:UnitIsGroupLeader("player")) then
 		-- yes
 		return true
 	-- has no group members?
@@ -1050,7 +959,7 @@ function NS:GetPartyGUID()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not UnitExists(unit)) then
+			if (not NS:UnitExists(unit)) then
 				-- player
 				unit = "player"
 			end
@@ -1059,7 +968,7 @@ function NS:GetPartyGUID()
 			local playerGUID = UnitGUID(unit)
 			if (playerGUID and (playerGUID ~= "")) then
 				-- get group for player
-				local partyGUID = SocialQueueGetGroupForPlayer(playerGUID)
+				local partyGUID = NS:GetGroupForPlayer(playerGUID)
 				if (partyGUID and (partyGUID ~= "")) then
 					-- return party guid
 					return partyGUID
@@ -1093,7 +1002,7 @@ function NS:GetPartyUnit(player)
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not UnitExists(unit)) then
+			if (not NS:UnitExists(unit)) then
 				-- player
 				unit = "player"
 			end
@@ -1129,13 +1038,13 @@ function NS:GetPartyLeader()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not UnitExists(unit)) then
+			if (not NS:UnitExists(unit)) then
 				-- player
 				unit = "player"
 			end
 
 			-- is group leader?
-			if (UnitIsGroupLeader(unit)) then 
+			if (NS:UnitIsGroupLeader(unit)) then 
 				-- get unit name / realm (if available)
 				local name, realm = UnitName(unit)
 				if (name and (name ~= "")) then
@@ -1164,13 +1073,13 @@ function NS:GetPartyLeaderGUID()
 		for i=1, GetNumGroupMembers() do 
 			-- unit exists?
 			local unit = "party" .. i
-			if (not UnitExists(unit)) then
+			if (not NS:UnitExists(unit)) then
 				-- player
 				unit = "player"
 			end
 
 			-- is group leader?
-			if (UnitIsGroupLeader(unit)) then
+			if (NS:UnitIsGroupLeader(unit)) then
 				-- return guid
 				return UnitGUID(unit)
 			end
@@ -1267,10 +1176,10 @@ function NS:GetBNetFriendName(bnSenderID)
 	local index = BNGetFriendIndex(bnSenderID)
 	if (index ~= nil) then
 		-- process all Battle.NET accounts logged in
-		local numGameAccounts = BattleNetGetFriendNumGameAccounts(index)
+		local numGameAccounts = NS:GetFriendNumGameAccounts(index)
 		for i=1, numGameAccounts do
 			-- retail client?
-			local gameAccountInfo = BattleNetGetFriendGameAccountInfo(index, i)
+			local gameAccountInfo = NS:GetFriendGameAccountInfo(index, i)
 			if (gameAccountInfo and (gameAccountInfo.clientProgram == BNET_CLIENT_WOW) and (gameAccountInfo.wowProjectID == 1)) then
 				-- has character and realm names?
 				if (gameAccountInfo.characterName and gameAccountInfo.realmName) then
@@ -1297,7 +1206,7 @@ function NS:GetBNetPresenceIDByName(player)
 	-- process all friends
 	for i=1, BNGetNumFriends() do
 		-- player online?
-		local accountInfo = BattleNetGetFriendAccountInfo(i)
+		local accountInfo = NS:GetFriendAccountInfo(i)
 		if (accountInfo and accountInfo.gameAccountInfo) then
 			-- retail client?
 			local gameAccountInfo = accountInfo.gameAccountInfo
@@ -1388,7 +1297,7 @@ function NS:Process_Talents_Check(sender)
 			end
 
 			-- get import string
-			local data = TraitsGenerateImportString(configID)
+			local data = NS:GenerateImportString(configID)
 			if (data) then
 				-- finalize text
 				text = strformat("%s: %s", text, data)
@@ -1541,7 +1450,7 @@ function NS:Process_Party_States(isDead, isOffline)
 			end
 
 			-- are they dead/ghost?
-			if ((isDead == true) and (UnitIsDeadOrGhost(unit) == true)) then
+			if ((isDead == true) and (NS:UnitIsDeadOrGhost(unit) == true)) then
 				-- kick them
 				kickPlayer = true
 			-- are they offline?
@@ -1634,26 +1543,26 @@ function NS:VerifyPingStatus()
 					-- none?
 					if (NS.db.global.restrictPings == 0) then
 						-- none
-						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.None)
+						NS:SetRestrictPings(Enum.RestrictPingsTo.None)
 					-- leaders?
 					elseif (NS.db.global.restrictPings == 1) then
 						-- leader
-						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Lead)
+						NS:SetRestrictPings(Enum.RestrictPingsTo.Lead)
 					-- assistants?
 					elseif (NS.db.global.restrictPings == 2) then
 						-- assist
-						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+						NS:SetRestrictPings(Enum.RestrictPingsTo.Assist)
 					-- tank/healers?
 					elseif (NS.db.global.restrictPings == 3) then
 						-- tank/healer
-						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.TankHealer)
+						NS:SetRestrictPings(Enum.RestrictPingsTo.TankHealer)
 					end
 				-- do you have assist?
 				elseif (NS.CommFlare.CF.PlayerRank == 1) then
 					-- assistants?
 					if (NS.db.global.restrictPings == 2) then
 						-- assist
-						PartyInfoSetRestrictPings(Enum.RestrictPingsTo.Assist)
+						NS:SetRestrictPings(Enum.RestrictPingsTo.Assist)
 					end
 				end
 			end

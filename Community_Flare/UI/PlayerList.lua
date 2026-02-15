@@ -5,30 +5,29 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local CreateDataProvider                        = _G.CreateDataProvider
-local CreateFromMixins                          = _G.CreateFromMixins
-local CreateScrollBoxListLinearView             = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                             = _G.DevTools_Dump
-local GetPlayerInfoByGUID                       = _G.GetPlayerInfoByGUID
-local IsMouseButtonDown                         = _G.IsMouseButtonDown
-local PlayerLocation                            = _G.PlayerLocation
-local StaticPopup_Show                          = _G.StaticPopup_Show
-local PlayerInfoGetRace                         = _G.C_PlayerInfo.GetRace
-local TimerAfter                                = _G.C_Timer.After
-local date                                      = _G.date
-local ipairs                                    = _G.ipairs
-local pairs                                     = _G.pairs
-local print                                     = _G.print
-local select                                    = _G.select
-local sort                                      = _G.sort
-local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local strformat                                 = _G.string.format
-local strlower                                  = _G.string.lower
-local strsplit                                  = _G.string.split
-local tinsert                                   = _G.table.insert
-local tsort                                     = _G.table.sort
+local _G                                          = _G
+local CreateDataProvider                          = _G.CreateDataProvider
+local CreateFromMixins                            = _G.CreateFromMixins
+local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
+local DevTools_Dump                               = _G.DevTools_Dump
+local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
+local IsMouseButtonDown                           = _G.IsMouseButtonDown
+local PlayerLocation                              = _G.PlayerLocation
+local StaticPopup_Show                            = _G.StaticPopup_Show
+local TimerAfter                                  = _G.C_Timer.After
+local date                                        = _G.date
+local ipairs                                      = _G.ipairs
+local pairs                                       = _G.pairs
+local print                                       = _G.print
+local select                                      = _G.select
+local sort                                        = _G.sort
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local strformat                                   = _G.string.format
+local strlower                                    = _G.string.lower
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- local variables
 local searchText = ""
@@ -666,10 +665,10 @@ function CF_PlayerListEntryMixin:OnEnter()
 				local playerLocation = PlayerLocation:CreateFromGUID(self.guid)
 				if (playerLocation) then
 					-- get race id
-					local raceID = PlayerInfoGetRace(playerLocation)
+					local raceID = NS:PlayerInfoGetRace(playerLocation)
 					if (raceID) then
 						-- get faction
-						local factionInfo = C_CreatureInfo.GetFactionInfo(raceID)
+						local factionInfo = NS:GetFactioninfo(raceID)
 						if (factionInfo and factionInfo.name and (factionInfo.name ~= "")) then
 							-- display faction
 							GameTooltip:AddLine(strformat("Faction: %s", factionInfo.name), 1, 1, 1)

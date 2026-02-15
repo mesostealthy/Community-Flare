@@ -11,7 +11,6 @@ local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
 local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
-local UnitAurasGetUnitAuras                       = _G.C_UnitAuras.GetUnitAuras
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
@@ -29,9 +28,15 @@ local function Community_Flare_Slash_Command(input)
 
 	-- force input to lowercase
 	local lower = strlower(input)
-	if (lower == "auras") then
+	if (lower == "assist") then
+		-- available?
+		if (NS.AssistButton and NS.ToggleAssistButton) then
+			-- toggle assist button
+			NS.ToggleAssistButton()
+		end
+	elseif (lower == "auras") then
 		-- list helpful auras for target
-		local helpful = UnitAurasGetUnitAuras("target", "HELPFUL")
+		local helpful = NS:GetUnitAuras("target", "HELPFUL")
 		if (helpful) then
 			-- display helpful auras
 			local numauras = 0
@@ -48,7 +53,7 @@ local function Community_Flare_Slash_Command(input)
 		end
 
 		-- list harmful auras for target
-		local harmful = UnitAurasGetUnitAuras("target", "HARMFUL")
+		local harmful = NS:GetUnitAuras("target", "HARMFUL")
 		if (harmful) then
 			-- display helpful auras
 			local numauras = 0

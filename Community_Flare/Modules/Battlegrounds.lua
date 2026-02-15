@@ -34,29 +34,12 @@ local PVPReadyDialog                              = _G.PVPReadyDialog
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitGUID                                    = _G.UnitGUID
-local UnitInRaid                                  = _G.UnitInRaid
 local UnitLevel                                   = _G.UnitLevel
 local UnitName                                    = _G.UnitName
-local AreaPoiInfoGetAreaPOIInfo                   = _G.C_AreaPoiInfo.GetAreaPOIInfo
-local BattleNetGetFriendGameAccountInfo           = _G.C_BattleNet.GetFriendGameAccountInfo
-local BattleNetGetFriendNumGameAccounts           = _G.C_BattleNet.GetFriendNumGameAccounts
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
-local CurrencyInfoGetCurrencyInfo                 = _G.C_CurrencyInfo.GetCurrencyInfo
-local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
-local EquipmentSetGetEquipmentSetInfo             = _G.C_EquipmentSet.GetEquipmentSetInfo
-local EquipmentSetUseEquipmentSet                 = _G.C_EquipmentSet.UseEquipmentSet
-local ItemGetItemCount                            = _G.C_Item.GetItemCount
-local LFGInfo_GetAllEntriesForCategory            = _G.C_LFGInfo.GetAllEntriesForCategory
-local LFGInfo_HideNameFromUI                      = _G.C_LFGInfo.HideNameFromUI
-local MapGetBestMapForUnit                        = _G.C_Map.GetBestMapForUnit
-local MapGetMapInfo                               = _G.C_Map.GetMapInfo
-local PartyInfoIsPartyFull                        = _G.C_PartyInfo.IsPartyFull
-local PartyInfoInviteUnit                         = _G.C_PartyInfo.InviteUnit
 local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
-local PvPGetScoreInfo                             = _G.C_PvP.GetScoreInfo
-local PvPGetScoreInfoByPlayerGuid                 = _G.C_PvP.GetScoreInfoByPlayerGuid
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
 local GetDoubleStatusBarWidgetVisualizationInfo   = _G.C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
@@ -133,14 +116,14 @@ end
 -- is in epic battleground?
 function NS:IsInEpicBG()
 	-- get best map for player
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- failed
 		return false
 	end
 
 	--get map info
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- failed
 		return false
@@ -366,14 +349,14 @@ function NS:Initialize_Battleground_Status()
 	-- in chat messaging lockdown?
 	if (not ChatInfoInChatMessagingLockdown()) then
 		-- get player score info
-		NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
 	end
 
 	-- get MapID
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (NS.CommFlare.CF.MapID) then
 		-- get map info
-		NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+		NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 
 		-- alterac valley?
 		if (NS.CommFlare.CF.MapID == 91) then
@@ -425,7 +408,7 @@ function NS:PromoteToRaidLeader(player)
 	end
 
 	-- is player full name in raid?
-	if (UnitInRaid(player) ~= nil) then
+	if (NS:UnitInRaid(player)) then
 		-- promote to leader
 		PromoteToLeader(player)
 		return true
@@ -439,7 +422,7 @@ function NS:PromoteToRaidLeader(player)
 	end
 
 	-- unit is in raid?
-	if (UnitInRaid(player) ~= nil) then
+	if (NS:UnitInRaid(player)) then
 		-- promote to leader
 		PromoteToLeader(player)
 		return true
@@ -462,7 +445,7 @@ function NS:Check_For_Inactive_Players()
 		-- process all scores
 		local count = 0
 		for i=1, GetNumBattlefieldScores() do
-			local info = PvPGetScoreInfo(i)
+			local info = NS:GetScoreInfo(i)
 			if (info and info.name and not issecretvalue(info.name)) then
 				-- damage and healing done found?
 				if ((info.damageDone ~= nil) and (info.healingDone ~= nil)) then
@@ -489,14 +472,14 @@ end
 -- get current battleground status
 function NS:Get_Current_Battleground_Status()
 	-- get best map for player
-	NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
 		-- failed
 		return false
 	end
 
 	-- get map info
-	NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- failed
 		return false
@@ -547,7 +530,7 @@ function NS:Get_Current_Battleground_Status()
 		-- process bunkers
 		for i,v in ipairs(NS.CommFlare.CF.AV.Bunkers) do
 			NS.CommFlare.CF.AV.Bunkers[i].status = L["Up"]
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.AV.Bunkers[i].id)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.AV.Bunkers[i].id)
 			if (NS.CommFlare.CF.POIInfo) then
 				NS.CommFlare.CF.AV.Bunkers[i].status = L["Destroyed"]
 				NS.CommFlare.CF.AV.Counts.Bunkers = NS.CommFlare.CF.AV.Counts.Bunkers - 1
@@ -557,7 +540,7 @@ function NS:Get_Current_Battleground_Status()
 		-- process towers
 		for i,v in ipairs(NS.CommFlare.CF.AV.Towers) do
 			NS.CommFlare.CF.AV.Towers[i].status = L["Up"]
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.AV.Towers[i].id)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.AV.Towers[i].id)
 			if (NS.CommFlare.CF.POIInfo) then
 				NS.CommFlare.CF.AV.Towers[i].status = L["Destroyed"]
 				NS.CommFlare.CF.AV.Counts.Towers = NS.CommFlare.CF.AV.Counts.Towers - 1
@@ -598,7 +581,7 @@ function NS:Get_Current_Battleground_Status()
 
 		-- get match type
 		NS:CheckForAura("player", "HELPFUL", L["Mercenary Contract"])
-		NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, 6056) -- Wintergrasp Fortress Gate
+		NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, 6056) -- Wintergrasp Fortress Gate
 		if (NS.CommFlare.CF.POIInfo and ((NS.CommFlare.CF.POIInfo.textureIndex >= 77) and (NS.CommFlare.CF.POIInfo.textureIndex <= 79))) then
 			-- mercenary?
 			if (NS.CommFlare.CF.HasAura == true) then
@@ -625,7 +608,7 @@ function NS:Get_Current_Battleground_Status()
 		-- process towers
 		for i,v in ipairs(NS.CommFlare.CF.WG.Towers) do
 			NS.CommFlare.CF.WG.Towers[i].status = L["Up"]
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.WG.Towers[i].id)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.WG.Towers[i].id)
 			if (NS.CommFlare.CF.POIInfo and ((NS.CommFlare.CF.POIInfo.textureIndex == 51) or (NS.CommFlare.CF.POIInfo.textureIndex == 53))) then
 				NS.CommFlare.CF.WG.Towers[i].status = L["Destroyed"]
 				NS.CommFlare.CF.WG.Counts.Towers = NS.CommFlare.CF.WG.Counts.Towers + 1
@@ -682,7 +665,7 @@ function NS:Get_Current_Battleground_Status()
 		-- process alliance gates
 		for i,v in ipairs(NS.CommFlare.CF.IOC.AllianceGates) do
 			NS.CommFlare.CF.IOC.AllianceGates[i].status = L["Up"]
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.IOC.AllianceGates[i].id)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.IOC.AllianceGates[i].id)
 			if (NS.CommFlare.CF.POIInfo) then
 				NS.CommFlare.CF.IOC.AllianceGates[i].status = L["Destroyed"]
 				NS.CommFlare.CF.IOC.Counts.Alliance = NS.CommFlare.CF.IOC.Counts.Alliance + 1
@@ -692,7 +675,7 @@ function NS:Get_Current_Battleground_Status()
 		-- process horde gates
 		for i,v in ipairs(NS.CommFlare.CF.IOC.HordeGates) do
 			NS.CommFlare.CF.IOC.HordeGates[i].status = L["Up"]
-			NS.CommFlare.CF.POIInfo = AreaPoiInfoGetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.IOC.HordeGates[i].id)
+			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, NS.CommFlare.CF.IOC.HordeGates[i].id)
 			if (NS.CommFlare.CF.POIInfo) then
 				NS.CommFlare.CF.IOC.HordeGates[i].status = L["Destroyed"]
 				NS.CommFlare.CF.IOC.Counts.Horde = NS.CommFlare.CF.IOC.Counts.Horde + 1
@@ -1211,33 +1194,33 @@ function NS:Promote_Battleground_Player(info, player)
 	-- player has raid leader?
 	if (NS.CommFlare.CF.PlayerRank == 2) then
 		-- only allow leaders?
-		NS.CommFlare.CF.AutoPromote = false
+		local bAutoPromote = false
 		if (NS.charDB.profile.communityAutoAssist == 2) then
 			-- player is community leader?
 			if (NS:Is_Community_Leader(player) == true) then
 				-- auto promote
-				NS.CommFlare.CF.AutoPromote = true
+				bAutoPromote = true
 			end
 		-- allow all members?
 		elseif (NS.charDB.profile.communityAutoAssist == 3) then
 			-- auto promote
-			NS.CommFlare.CF.AutoPromote = true
+			bAutoPromote = true
 		end
 
 		-- auto promote?
-		if (NS.CommFlare.CF.AutoPromote == true) then
+		if (bAutoPromote == true) then
 			-- found raid unit / rank?
 			if (NS.CommFlare.CF.TeamUnits[player] and NS.CommFlare.CF.TeamUnits[player].unit and NS.CommFlare.CF.TeamUnits[player].rank) then
 				-- already assist?
 				if (NS.CommFlare.CF.TeamUnits[player].rank >= 1) then
 					-- disable promote
-					NS.CommFlare.CF.AutoPromote = false
+					bAutoPromote = false
 				end
 			end
 		end
 
 		-- auto promote?
-		if (NS.CommFlare.CF.AutoPromote == true) then
+		if (bAutoPromote == true) then
 			-- promote
 			PromoteToAssistant(info.name)
 		end
@@ -1310,7 +1293,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	-- in chat messaging lockdown?
 	if (not ChatInfoInChatMessagingLockdown()) then
 		-- get player score info
-		NS.CommFlare.CF.PlayerInfo = PvPGetScoreInfoByPlayerGuid(UnitGUID("player"))
+		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
 	end
 
 	-- get player rank
@@ -1318,7 +1301,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 
 	-- process all scores
 	for i=1, GetNumBattlefieldScores() do
-		local info = PvPGetScoreInfo(i)
+		local info = NS:GetScoreInfo(i)
 		if (info and info.name and not issecretvalue(info.name)) then
 			-- force name-realm format
 			local player = info.name
@@ -1361,7 +1344,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				end
 
 				-- player is horde?
-				if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+				if (NS.faction == Enum.PvPFaction.Horde) then
 					-- mercenary
 					mercenary = true
 				end
@@ -1390,7 +1373,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				end
 
 				-- player is alliance?
-				if (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+				if (NS.faction == Enum.PvPFaction.Alliance) then
 					-- mercenary
 					mercenary = true
 				end
@@ -1638,7 +1621,7 @@ function NS:Purge_Match_List()
 			-- delete
 			NS.db.global.matchLogList[k] = nil
 		else
-			-- older than 7 days?
+			-- older than x days?
 			local older = v.timestamp + (days_purged * 86400)
 			if (timestamp > older) then
 				-- delete
@@ -1689,10 +1672,10 @@ function NS:Log_Match_Roster()
 		-- valid start / end times?
 		if ((NS.CommFlare.CF.MatchStartTime > 0) and (NS.CommFlare.CF.MatchEndTime > 0) and (NS.CommFlare.CF.MatchEndTime > NS.CommFlare.CF.MatchStartTime)) then
 			-- get MapID
-			NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+			NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 			if (NS.CommFlare.CF.MapID) then
 				-- get map info
-				NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+				NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 			end
 
 			-- calculate time
@@ -1814,14 +1797,14 @@ function NS:Process_Auto_Invite(sender)
 				local index = BNGetFriendIndex(sender)
 				if (index ~= nil) then
 					-- process all bnet accounts logged in
-					local numGameAccounts = BattleNetGetFriendNumGameAccounts(index)
+					local numGameAccounts = NS:GetFriendNumGameAccounts(index)
 					for i=1, numGameAccounts do
 						-- check if account has player guid online
-						local accountInfo = BattleNetGetFriendGameAccountInfo(index, i)
+						local accountInfo = NS:GetFriendGameAccountInfo(index, i)
 						if (accountInfo.playerGuid) then
 							-- party is full?
 							local maxCount = NS:GetMaxGroupCount()
-							if ((GetNumGroupMembers() > (maxCount - 1)) or PartyInfoIsPartyFull()) then
+							if ((GetNumGroupMembers() > (maxCount - 1)) or NS:IsPartyFull()) then
 								-- force to max
 								NS.CommFlare.CF.Count = maxCount
 
@@ -1866,8 +1849,7 @@ function NS:Process_Auto_Invite(sender)
 				NS:SendMessage(sender, L["Sorry, currently in a brawl now."])
 			else
 				-- is sender a community member?
-				NS.CommFlare.CF.AutoInvite = NS:Is_Community_Member(sender)
-				if (NS.CommFlare.CF.AutoInvite == true) then
+				if (NS:Is_Community_Member(sender)) then
 					-- are you in a raid?
 					local maxCount = NS:GetMaxPartyCount()
 					if (IsInRaid()) then
@@ -1876,7 +1858,7 @@ function NS:Process_Auto_Invite(sender)
 					end
 
 					-- group is full?
-					if ((GetNumGroupMembers() > (maxCount - 1)) or PartyInfoIsPartyFull()) then
+					if ((GetNumGroupMembers() > (maxCount - 1)) or NS:IsPartyFull()) then
 						-- force to max
 						NS.CommFlare.CF.Count = maxCount
 
@@ -1889,7 +1871,7 @@ function NS:Process_Auto_Invite(sender)
 							NS.CommFlare.CF.Count = NS.CommFlare.CF.Count + 1
 
 							-- invite the user
-							PartyInfoInviteUnit(sender)
+							NS:InviteUnit(sender)
 						end
 					end
 				end
@@ -2091,10 +2073,10 @@ function NS:Get_Battleground_Status()
 		return text
 	else
 		-- get MapID
-		NS.CommFlare.CF.MapID = MapGetBestMapForUnit("player")
+		NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 		if (NS.CommFlare.CF.MapID) then
 			-- get map info
-			NS.CommFlare.CF.MapInfo = MapGetMapInfo(NS.CommFlare.CF.MapID)
+			NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 		end
 
 		-- check for queued battleground
@@ -2227,11 +2209,10 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+				if (NS.faction == Enum.PvPFaction.Horde) then
 					-- horde
 					faction = FACTION_HORDE
-				-- player is alliance?
-				elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+				else
 					-- alliance
 					faction = FACTION_ALLIANCE
 				end
@@ -2290,11 +2271,10 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+				if (NS.faction == Enum.PvPFaction.Horde) then
 					-- horde
 					faction = FACTION_HORDE
-				-- player is alliance?
-				elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+				else
 					-- alliance
 					faction = FACTION_ALLIANCE
 				end
@@ -2335,7 +2315,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- player is horde?
 				local faction = L["N/A"]
-				if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+				if (NS.faction == Enum.PvPFaction.Horde) then
 					-- horde
 					faction = FACTION_HORDE
 				else
@@ -2419,7 +2399,7 @@ function NS:Update_Battlefield_Status(index)
 				-- warn when honor capped?
 				if (NS.db.global.warningHonorCapped == true) then
 					-- get honor info
-					local info = CurrencyInfoGetCurrencyInfo(1792)
+					local info = NS:GetCurrencyInfo(1792)
 					if (info and info.quantity and info.maxQuantity) then
 						-- close to capping?
 						local diff = info.maxQuantity - info.quantity
@@ -2440,8 +2420,8 @@ function NS:Update_Battlefield_Status(index)
 				-- war when low or out of war mode pvp items?
 				if (NS.db.global.warningLowWarModeItemCount > 0) then
 					-- check war mode item counts
-					local count1 = ItemGetItemCount(224048) -- electric shock
-					local count2 = ItemGetItemCount(224049) -- web pull
+					local count1 = NS:GetItemCount(224048) -- electric shock
+					local count2 = NS:GetItemCount(224049) -- web pull
 					if ((count1 < NS.db.global.warningLowWarModeItemCount) or (count2 < NS.db.global.warningLowWarModeItemCount)) then
 						-- add tom tom way point
 						local uid = NS:TomTomAddWaypointByMapID(2339, "Maara War Mode PVP Vendor", "0.6020", "0.7000") -- Maara NPC in Dornogal
@@ -2573,11 +2553,10 @@ function NS:Update_Battlefield_Status(index)
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+							if (NS.faction == Enum.PvPFaction.Horde) then
 								-- horde
 								faction = FACTION_HORDE
-							-- player is alliance?
-							elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+							else
 								-- alliance
 								faction = FACTION_ALLIANCE
 							end
@@ -2635,11 +2614,10 @@ function NS:Update_Battlefield_Status(index)
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+							if (NS.faction == Enum.PvPFaction.Horde) then
 								-- horde
 								faction = FACTION_HORDE
-							-- player is alliance?
-							elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+							else
 								-- alliance
 								faction = FACTION_ALLIANCE
 							end
@@ -2671,11 +2649,10 @@ function NS:Update_Battlefield_Status(index)
 				elseif (NS.CommFlare.CF.LocalQueues[index].popped > 0) then
 					-- player is horde?
 					local faction = L["N/A"]
-					if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+					if (NS.faction == Enum.PvPFaction.Horde) then
 						-- horde
 						faction = FACTION_HORDE
-					-- player is alliance?
-					elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+					else
 						-- alliance
 						faction = FACTION_ALLIANCE
 					end
@@ -2724,13 +2701,13 @@ function NS:Update_Battlefield_Status(index)
 		-- has pvp equipment set?
 		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
 			-- can use equipment sets?
-			if (EquipmentSetCanUseEquipmentSets() == true) then
-				local name, iconFileID, setID, isEquipped = EquipmentSetGetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
+			if (NS:UseEquipmentSet() == true) then
+				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
 				if (name and (isEquipped == false)) then
 					-- not in combat lockdown?
 					if (InCombatLockdown() ~= true) then
 						-- equip pvp gear equipment set
-						EquipmentSetUseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+						NS:UseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
 					else
 						-- set regen options bit
 						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
@@ -2753,10 +2730,10 @@ function NS:Update_Brawl_Status()
 		local mode, submode = GetLFGMode(LE_LFG_CATEGORY_BATTLEFIELD)
 		if (mode) then
 			-- process all
-			local entryIDs = LFGInfo_GetAllEntriesForCategory(LE_LFG_CATEGORY_BATTLEFIELD)
+			local entryIDs = NS:GetAllEntriesForCategory(LE_LFG_CATEGORY_BATTLEFIELD)
 			for _, entryID in ipairs(entryIDs) do
 				-- not hidden?
-				if not LFGInfo_HideNameFromUI(entryID) then
+				if not NS:HideNameFromUI(entryID) then
 					-- get lfg dungeon info
 					local instanceName = GetLFGDungeonInfo(entryID)
 					if (instanceName) then
@@ -2808,7 +2785,7 @@ function NS:Update_Brawl_Status()
 						-- warn when honor capped?
 						if (NS.db.global.warningHonorCapped == true) then
 							-- get honor info
-							local info = CurrencyInfoGetCurrencyInfo(1792)
+							local info = NS:GetCurrencyInfo(1792)
 							if (info and info.quantity and info.maxQuantity) then
 								-- close to capping?
 								local diff = info.maxQuantity - info.quantity
@@ -2899,11 +2876,10 @@ function NS:Update_Brawl_Status()
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+							if (NS.faction == Enum.PvPFaction.Horde) then
 								-- horde
 								faction = FACTION_HORDE
-							-- player is alliance?
-							elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+							else
 								-- alliance
 								faction = FACTION_ALLIANCE
 							end
@@ -2932,11 +2908,10 @@ function NS:Update_Brawl_Status()
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
 							local faction = L["N/A"]
-							if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+							if (NS.faction == Enum.PvPFaction.Horde) then
 								-- horde
 								faction = FACTION_HORDE
-							-- player is alliance?
-							elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+							else
 								-- alliance
 								faction = FACTION_ALLIANCE
 							end
@@ -2979,11 +2954,10 @@ function NS:Update_Brawl_Status()
 				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
 					-- player is horde?
 					local faction = L["N/A"]
-					if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+					if (NS.faction == Enum.PvPFaction.Horde) then
 						-- horde
 						faction = FACTION_HORDE
-					-- player is alliance?
-					elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+					else
 						-- alliance
 						faction = FACTION_ALLIANCE
 					end
@@ -3117,11 +3091,10 @@ function NS:Get_Current_Queues_Text()
 	if (text and (text ~= "")) then
 		-- player is horde?
 		local faction = L["N/A"]
-		if (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
+		if (NS.faction == Enum.PvPFaction.Horde) then
 			-- horde
 			faction = FACTION_HORDE
-		-- player is alliance?
-		elseif (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
+		else
 			-- alliance
 			faction = FACTION_ALLIANCE
 		end

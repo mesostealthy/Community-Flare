@@ -17,14 +17,7 @@ local MergeTable                                  = _G.MergeTable
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitName                                    = _G.UnitName
 local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
-local ClubAreMembersReady                         = _G.C_Club.AreMembersReady
-local ClubFocusMembers                            = _G.C_Club.FocusMembers
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
-local ClubGetClubInfo                             = _G.C_Club.GetClubInfo
-local ClubGetClubMembers                          = _G.C_Club.GetClubMembers
-local ClubGetStreamInfo                           = _G.C_Club.GetStreamInfo
-local ClubGetStreams                              = _G.C_Club.GetStreams
-local ClubGetSubscribedClubs                      = _G.C_Club.GetSubscribedClubs
 local PvPIsArena                                  = _G.C_PvP.IsArena
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
@@ -60,7 +53,7 @@ function NS:Verify_Default_Community_Setup()
 	if (NS.charDB.profile.communityMain == 0) then
 		-- count eligible communities
 		local clubId = nil
-		NS.CommFlare.CF.Clubs = ClubGetSubscribedClubs()
+		NS.CommFlare.CF.Clubs = NS:GetSubscribedClubs()
 		for k,v in ipairs(NS.CommFlare.CF.Clubs) do
 			-- community?
 			if (v.clubType == Enum.ClubType.Character) then
@@ -106,7 +99,7 @@ function NS:Verify_Default_Community_Setup()
 			-- find oldest subscribed club
 			local clubId = 0
 			local lowest = 0
-			local clubs = ClubGetSubscribedClubs()
+			local clubs = NS:GetSubscribedClubs()
 			for k,v in pairs(clubs) do
 				-- community?
 				if (v.clubType == Enum.ClubType.Character) then
@@ -160,7 +153,7 @@ function NS:Get_Clubs_List(bIgnoreGuild)
 	local clubId = NS.charDB.profile.communityMain
 	if (clubId > 1) then
 		-- not still in main community?
-		local info = ClubGetClubInfo(clubId)
+		local info = NS:GetClubInfo(clubId)
 		if (not info) then
 			-- invalid club
 			NS.charDB.profile.communityMain = 0
@@ -325,7 +318,7 @@ function NS:Verify_Club_Streams(clubs)
 	local loaded = true
 	for clubId,_ in pairs(clubs) do
 		-- not loaded?
-		local streams = ClubGetStreams(clubId)
+		local streams = NS:GetStreams(clubId)
 		if (not streams or (#streams < 1)) then
 			-- failed
 			loaded = false
@@ -345,12 +338,12 @@ function NS:Verify_Club_Streams(clubs)
 	-- process all clubs
 	for clubId,_ in pairs(clubs) do
 		-- has streams?
-		local streams = ClubGetStreams(clubId)
+		local streams = NS:GetStreams(clubId)
 		if (streams) then
 			-- process all
 			for _,v in ipairs(streams) do
 				-- has stream info?
-				local streamInfo = ClubGetStreamInfo(clubId, v.streamId)
+				local streamInfo = NS:GetStreamInfo(clubId, v.streamId)
 				if (streamInfo and streamInfo.streamType) then
 					-- general?
 					if (streamInfo.streamType == Enum.ClubStreamType.General) then
@@ -884,8 +877,8 @@ function NS:Check_For_Deployed_Members()
 			-- process all
 			local count = 0
 			local deployed = {}
-			local club = ClubGetClubInfo(clubId)
-			local members = ClubGetClubMembers(clubId)
+			local club = NS:GetClubInfo(clubId)
+			local members = NS:GetClubMembers(clubId)
 			for _,v in ipairs(members) do
 				-- get club member info
 				local mi = NS:GetClubMemberInfo(clubId, v)
@@ -1516,7 +1509,7 @@ function NS:Add_All_Club_Members_By_ClubID(clubId)
 	end
 
 	-- get club info
-	local info = ClubGetClubInfo(clubId)
+	local info = NS:GetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
 		-- process all
 		local count = 0
@@ -1564,7 +1557,7 @@ function NS:Remove_All_Club_Members_By_ClubID(clubId)
 	end
 
 	-- get club info
-	local info = ClubGetClubInfo(clubId)
+	local info = NS:GetClubInfo(clubId)
 	if (info and info.name and (info.name ~= "")) then
 		-- process all
 		local count = 0
@@ -1648,7 +1641,7 @@ function NS:Process_Club_Members()
 	-- process clubs
 	for _,clubId in ipairs(clubs) do
 		-- found club?
-		local info = ClubGetClubInfo(clubId)
+		local info = NS:GetClubInfo(clubId)
 		if (info) then
 			-- guild?
 			local shouldProcess = false
@@ -1670,9 +1663,9 @@ function NS:Process_Club_Members()
 				NS:Add_Community(clubId, info)
 
 				-- are members ready?
-				if (ClubAreMembersReady(clubId) == true) then
+				if (NS:AreMembersReady(clubId) == true) then
 					-- process all
-					local members = ClubGetClubMembers(clubId)
+					local members = NS:GetClubMembers(clubId)
 					if (members) then
 						-- process all
 						for k,v in ipairs(members) do
@@ -1696,7 +1689,7 @@ function NS:Process_Club_Members()
 					end
 				else
 					-- focus members
-					ClubFocusMembers(clubId)
+					NS:FocusMembers(clubId)
 				end
 			end
 		end
@@ -1749,7 +1742,7 @@ function NS:Club_Member_Added(clubId, memberId)
 	local mi = NS:GetClubMemberInfo(clubId, memberId)
 	if (mi and mi.name) then
 		-- found community info?
-		local info = ClubGetClubInfo(clubId)
+		local info = NS:GetClubInfo(clubId)
 		if (info and info.name) then
 			-- guild?
 			if (info.clubType == Enum.ClubType.Guild) then
@@ -1851,7 +1844,7 @@ function NS:Club_Member_Removed(clubId, memberId)
 		end
 
 		-- found community info?
-		local info = ClubGetClubInfo(clubId)
+		local info = NS:GetClubInfo(clubId)
 		if (info and info.name) then
 			-- found member name?
 			if (NS.CommFlare.CF.MemberInfo.name ~= nil) then
@@ -1966,7 +1959,7 @@ function NS:Find_ExCommunity_Members(clubId)
 	-- process all
 	local count = 0
 	local current = {}
-	local members = ClubGetClubMembers(clubId)
+	local members = NS:GetClubMembers(clubId)
 	for _,v in ipairs(members) do
 		local mi = NS:GetClubMemberInfo(clubId, v)
 		if (mi and mi.guid and mi.name) then

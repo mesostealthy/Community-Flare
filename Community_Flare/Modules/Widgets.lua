@@ -6,7 +6,6 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                                               = _G
-local MapGetBestMapForUnit                                             = _G.C_Map.GetBestMapForUnit
 local GetBulletTextListWidgetVisualizationInfo                         = _G.C_UIWidgetManager.GetBulletTextListWidgetVisualizationInfo
 local GetButtonHeaderWidgetVisualizationInfo                           = _G.C_UIWidgetManager.GetButtonHeaderWidgetVisualizationInfo
 local GetCaptureBarWidgetVisualizationInfo                             = _G.C_UIWidgetManager.GetCaptureBarWidgetVisualizationInfo
@@ -39,9 +38,16 @@ local GetTextWithSubtextWidgetVisualizationInfo                        = _G.C_UI
 local GetTugOfWarWidgetVisualizationInfo                               = _G.C_UIWidgetManager.GetTugOfWarWidgetVisualizationInfo
 local GetUnitPowerBarWidgetVisualizationInfo                           = _G.C_UIWidgetManager.GetUnitPowerBarWidgetVisualizationInfo
 local GetZoneControlVisualizationInfo                                  = _G.C_UIWidgetManager.GetZoneControlVisualizationInfo
+local issecretvalue                                                    = _G.issecretvalue
 
 -- get widget data
 function NS:GetWidgetData(info)
+	-- sanity checks?
+	if (not info or issecretvalue(info.widgetType) or issecretvalue(info.widgetID)) then
+		-- failed
+		return nil
+	end
+
 	-- 0: IconAndText?
 	if (info.widgetType == Enum.UIWidgetVisualizationType.IconAndText) then
 		-- get icon and text info

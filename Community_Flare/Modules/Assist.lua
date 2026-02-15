@@ -98,6 +98,19 @@ function NS:ShowAssistButton()
 	end
 end
 
+-- toggle assist button
+function NS:ToggleAssistButton()
+	-- shown?
+	if (NS.faction ~= 0) then return end
+	if (NS.AssistButton:IsShown()) then
+		-- hide
+		NS.AssistButton:Hide()
+	else
+		-- show
+		NS.AssistButton:Show()
+	end
+end
+
 -- create assist button
 function NS:CreateAssistButton()
 	-- already initialized?
@@ -121,7 +134,7 @@ function NS:CreateAssistButton()
 		NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
 	else
 		-- center window (default)
-		NS.AssistButton:SetPoint("CENTER")
+		NS.AssistButton:SetPoint("CENTER", 150, 0)
 	end
 	NS.AssistButton:SetResizable(true)
 	NS.AssistButton:SetResizeBounds(50, 50, 250, 250)
@@ -139,9 +152,8 @@ function NS:CreateAssistButton()
 				if (NS.db.global.AssistFrame.locked == true) then
 					-- disable
 					self.Background:SetAlpha(0)
-					self.Header.Background:SetAlpha(0)
+					self.Header.Background:SetAlpha(0.25)
 					self.Header.Text:SetAlpha(0)
-					self.Header:SetAlpha(0)
 					self.ResizeButton:SetEnabled(false)
 					self.ResizeButton:SetAlpha(0)
 				else
@@ -149,21 +161,20 @@ function NS:CreateAssistButton()
 					self.Background:SetAlpha(1)
 					self.Header.Background:SetAlpha(1)
 					self.Header.Text:SetAlpha(1)
-					self.Header:SetAlpha(1)
 					self.ResizeButton:SetEnabled(true)
 					self.ResizeButton:SetAlpha(1)
 				end
 			end
 
 			-- shown
-			NS.AssistButton.shown = true
+			self.shown = true
 		end
 	end)
 	NS.AssistButton:SetScript("OnHide", function(self)
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- hidden
-			NS.AssistButton.shown = nil
+			self.shown = nil
 		end
 	end)
 	NS.AssistButton:SetScript("OnDragStart", function(self)
@@ -201,26 +212,23 @@ function NS:CreateAssistButton()
 	NS.AssistButton:SetScript("OnMouseUp", function(self, button)
 		-- right click?
 		if (button == "RightButton") then
-			-- toggle alpha
-			local alpha = self.Header.Background:GetAlpha()
-			if (alpha == 1) then
-				-- disable
-				NS.db.global.AssistFrame.locked = true
-				self.Background:SetAlpha(0)
-				self.Header.Background:SetAlpha(0)
-				self.Header.Text:SetAlpha(0)
-				self.Header:SetAlpha(0)
-				self.ResizeButton:SetEnabled(false)
-				self.ResizeButton:SetAlpha(0)
-			else
+			-- toggle lock
+			if (NS.db.global.AssistFrame.locked == true) then
 				-- enable
 				NS.db.global.AssistFrame.locked = nil
 				self.Background:SetAlpha(1)
 				self.Header.Background:SetAlpha(1)
 				self.Header.Text:SetAlpha(1)
-				self.Header:SetAlpha(1)
 				self.ResizeButton:SetEnabled(true)
 				self.ResizeButton:SetAlpha(1)
+			else
+				-- disable
+				NS.db.global.AssistFrame.locked = true
+				self.Background:SetAlpha(0)
+				self.Header.Background:SetAlpha(0.25)
+				self.Header.Text:SetAlpha(0)
+				self.ResizeButton:SetEnabled(false)
+				self.ResizeButton:SetAlpha(0)
 			end
 		end
 	end)

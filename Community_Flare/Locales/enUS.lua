@@ -44,6 +44,7 @@ L["Always save Combat Log inside PVP content?"] = true
 L["Always target nearest/previous enemy players inside PVP content?"] = true
 L["Are you sure you want to purge the old members from the database?"] = true
 L["Are you sure you want to wipe the members database and totally rebuild from scratch?"] = true
+L["Alterac Valley Options"] = true
 L["Ashran Options"] = true
 L["Assistants Only"] = true
 L["Auto assist community members?"] = true
@@ -75,6 +76,7 @@ L["Disabled"] = true
 L["Display community member names when running /comf command?"] = true
 L["Display how much time left for people in your group to enter the queue?"] = true
 L["Display notification for popped groups?"] = true
+L["Enable Alterac Valley Notifications?"] = true
 L["Enable Ashran Notifications?"] = true
 L["Enable debug mode to help debug issues?"] = true
 L["Enable debug print chat window to log debug events?"] = true
@@ -159,6 +161,7 @@ L["This will show a raid warning to you when the Ancient Inferno has spawned in 
 L["This will show a raid warning to you when you are given leadership of your party."] = true
 L["This will show a raid warning to you when your Mage is under attack in Ashran."] = true
 L["This will show you a message when a party member changes zones."] = true
+L["This will show you warning messages for critical events around Alterac Valley."] = true
 L["This will show you warning messages for critical events around Ashran."] = true
 L["This will treat your Guild Members as Community Members."] = true
 L["Uninvite any players that are AFK?"] = true
@@ -359,6 +362,10 @@ L["Set Player Note for %s:"] = true
 L["Uninviting ..."] = true
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = true
 L["You've been removed from the party for being AFK."] = true
+
+-- AlteracValley.lua
+L["Captain Balinda Stonehearth"] = true
+L["Captain Galvangar"] = true
 
 -- Ashran.lua
 L["%s has been killed."] = true
