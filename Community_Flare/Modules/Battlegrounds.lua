@@ -25,25 +25,20 @@ local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetPVPRoles                                 = _G.GetPVPRoles
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local InCombatLockdown                            = _G.InCombatLockdown
-local IsAddOnLoaded                               = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
+local IsAddOnLoaded                               = _G.C_AddOns.IsAddOnLoaded
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToAssistant                          = _G.PromoteToAssistant
 local PromoteToLeader                             = _G.PromoteToLeader
 local PVPReadyDialog                              = _G.PVPReadyDialog
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local UnitFactionGroup                            = _G.UnitFactionGroup
-local UnitGUID                                    = _G.UnitGUID
-local UnitLevel                                   = _G.UnitLevel
 local UnitName                                    = _G.UnitName
-local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
+local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
-local GetDoubleStatusBarWidgetVisualizationInfo   = _G.C_UIWidgetManager.GetDoubleStatusBarWidgetVisualizationInfo
-local GetIconAndTextWidgetVisualizationInfo       = _G.C_UIWidgetManager.GetIconAndTextWidgetVisualizationInfo
 local date                                        = _G.date
 local ipairs                                      = _G.ipairs
 local issecretvalue                               = _G.issecretvalue
@@ -334,6 +329,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.MapInfo = {}
 	NS.CommFlare.CF.RosterList = {}
 	NS.CommFlare.CF.VehicleDeaths = {}
+	NS.CommFlare.CF.KosRefreshTime = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchEndDate = ""
 	NS.CommFlare.CF.MatchEndTime = 0
@@ -347,9 +343,10 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.Reloaded = false
 
 	-- in chat messaging lockdown?
-	if (not ChatInfoInChatMessagingLockdown()) then
+	if (not InChatMessagingLockdown()) then
 		-- get player score info
-		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
+		local playerGUID = NS:UnitGUID("player")
+		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
 	end
 
 	-- get MapID
@@ -548,7 +545,7 @@ function NS:Get_Current_Battleground_Status()
 		end
 
 		-- 1684 = widgetID for Score Remaining
-		NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1684)
+		NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1684)
 		if (NS.CommFlare.CF.WidgetInfo) then
 			-- set proper scores
 			NS.CommFlare.CF.AV.Scores = { Alliance = NS.CommFlare.CF.WidgetInfo.leftBarValue, Horde = NS.CommFlare.CF.WidgetInfo.rightBarValue }
@@ -563,7 +560,7 @@ function NS:Get_Current_Battleground_Status()
 		NS.CommFlare.CF.ASH.Scores = { Alliance = L["N/A"], Horde = L["N/A"] }
 
 		-- 1997 = widgetID for Score Remaining
-		NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1997)
+		NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1997)
 		if (NS.CommFlare.CF.WidgetInfo) then
 			-- set proper scores
 			NS.CommFlare.CF.ASH.Scores = { Alliance = NS.CommFlare.CF.WidgetInfo.leftBarValue, Horde = NS.CommFlare.CF.WidgetInfo.rightBarValue }
@@ -618,21 +615,21 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 542 = widgetID for Horde Vehicle count
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(542)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(542)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.WG.Vehicles.Horde = NS.CommFlare.CF.WidgetInfo.text
 			end
 
 			-- 543 = widgetID for Alliance Vehicle count
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(543)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(543)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.WG.Vehicles.Alliance = NS.CommFlare.CF.WidgetInfo.text
 			end
 
 			-- 1612 = widgetID for Time Remaining
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(1612)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(1612)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.WG.TimeRemaining = NS.CommFlare.CF.WidgetInfo.text
@@ -683,7 +680,7 @@ function NS:Get_Current_Battleground_Status()
 		end
 
 		-- 1685 = widgetID for Score Remaining
-		NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1685)
+		NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1685)
 		if (NS.CommFlare.CF.WidgetInfo) then
 			-- set proper scores
 			NS.CommFlare.CF.IOC.Scores = { Alliance = NS.CommFlare.CF.WidgetInfo.leftBarValue, Horde = NS.CommFlare.CF.WidgetInfo.rightBarValue }
@@ -702,21 +699,21 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 788 = widgetID for Alliance score
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(788)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(788)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper alliance score
 				NS.CommFlare.CF.SSvTM.AllianceScore = NS.CommFlare.CF.WidgetInfo.text
 			end
 
 			-- 789 = widgetID for Horde score
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(789)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(789)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper horde score
 				NS.CommFlare.CF.SSvTM.HordeScore = NS.CommFlare.CF.WidgetInfo.text
 			end
 
 			-- 790 = widgetID for Time Remaining
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(790)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(790)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.SSvTM.TimeRemaining = NS.CommFlare.CF.WidgetInfo.text
@@ -735,7 +732,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1671 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1671)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1671)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.AB.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -755,7 +752,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1671 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1671)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1671)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.BFG.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -775,7 +772,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1671 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(5153)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(5153)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.DHR.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -795,7 +792,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 2074 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(2074)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(2074)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.DWG.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -815,7 +812,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1671 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1671)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1671)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.EOTS.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -836,7 +833,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1688 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1688)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1688)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.SSH.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -844,7 +841,7 @@ function NS:Get_Current_Battleground_Status()
 			end
 
 			-- 1705 = widgetID for Time Remaining
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(1705)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(1705)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.SSH.TimeRemaining = NS.CommFlare.CF.WidgetInfo.text
@@ -863,7 +860,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1687 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1687)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1687)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.SSM.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -883,7 +880,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 1689 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(1689)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(1689)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.TOK.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -904,7 +901,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 2 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(2)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(2)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.TWP.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -912,7 +909,7 @@ function NS:Get_Current_Battleground_Status()
 			end
 
 			-- 6 = widgetID for Time Remaining
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(6)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(6)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.TWP.TimeRemaining = NS.CommFlare.CF.WidgetInfo.text
@@ -932,7 +929,7 @@ function NS:Get_Current_Battleground_Status()
 		-- match started?
 		if (NS.CommFlare.CF.MatchStatus ~= 1) then
 			-- 2 = widgetID for Scores
-			NS.CommFlare.CF.WidgetInfo = GetDoubleStatusBarWidgetVisualizationInfo(2)
+			NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(2)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper scores
 				NS.CommFlare.CF.WSG.AllianceScore = NS.CommFlare.CF.WidgetInfo.leftBarValue
@@ -940,7 +937,7 @@ function NS:Get_Current_Battleground_Status()
 			end
 
 			-- 6 = widgetID for Time Remaining
-			NS.CommFlare.CF.WidgetInfo = GetIconAndTextWidgetVisualizationInfo(790)
+			NS.CommFlare.CF.WidgetInfo = NS:GetIconAndTextWidgetVisualizationInfo(790)
 			if (NS.CommFlare.CF.WidgetInfo) then
 				-- set proper time
 				NS.CommFlare.CF.WSG.TimeRemaining = NS.CommFlare.CF.WidgetInfo.text
@@ -1291,9 +1288,10 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	end
 
 	-- in chat messaging lockdown?
-	if (not ChatInfoInChatMessagingLockdown()) then
+	if (not InChatMessagingLockdown()) then
 		-- get player score info
-		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
+		local playerGUID = NS:UnitGUID("player")
+		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
 	end
 
 	-- get player rank
@@ -2220,7 +2218,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				-- finalize text
 				local text = nil
 				local count = NS:GetGroupCountText()
-				local level = UnitLevel("player")
+				local level = NS:UnitLevel("player")
 				if (level < 80) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], mapName)
@@ -2287,7 +2285,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- finalize text
-				local level = UnitLevel("player")
+				local level = NS:UnitLevel("player")
 				if (level < 80) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
@@ -2331,7 +2329,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- finalize text
-				local level = UnitLevel("player")
+				local level = NS:UnitLevel("player")
 				if (level < 80) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
@@ -2384,7 +2382,7 @@ function NS:Update_Battlefield_Status(index)
 		local leaderGUID = NS.CommFlare.CF.LeaderGUID
 		if (not leaderGUID) then
 			-- use player
-			leaderGUID = UnitGUID("player")
+			leaderGUID = NS:UnitGUID("player")
 		end
 
 		-- queued?
@@ -2571,7 +2569,7 @@ function NS:Update_Battlefield_Status(index)
 							-- finalize text
 							local text = nil
 							local count = NS:GetGroupCountText()
-							local level = UnitLevel("player")
+							local level = NS:UnitLevel("player")
 							if (level < 80) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Queue Popped for"], mapName)
@@ -2632,7 +2630,7 @@ function NS:Update_Battlefield_Status(index)
 							-- finalize text
 							local text = nil
 							local count = NS:GetGroupCountText()
-							local level = UnitLevel("player")
+							local level = NS:UnitLevel("player")
 							if (level < 80) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Queue for"], mapName)
@@ -2666,7 +2664,7 @@ function NS:Update_Battlefield_Status(index)
 
 					-- finalize text
 					local text = nil
-					local level = UnitLevel("player")
+					local level = NS:UnitLevel("player")
 					if (level < 80) then
 						-- add with level
 						text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
@@ -2836,7 +2834,7 @@ function NS:Update_Brawl_Status()
 								-- finalize text
 								local text = nil
 								local count = NS:GetGroupCountText()
-								local level = UnitLevel("player")
+								local level = NS:UnitLevel("player")
 								if (level < 80) then
 									-- add with level
 									text = strformat("[%s %d] %s %s %s!", L["Level"], level, count, L["Queue Popped for"], mapName)
@@ -2887,7 +2885,7 @@ function NS:Update_Brawl_Status()
 							-- dropped
 							local text = nil
 							local count = NS:GetGroupCountText()
-							local level = UnitLevel("player")
+							local level = NS:UnitLevel("player")
 							if (level < 80) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
@@ -2918,7 +2916,7 @@ function NS:Update_Brawl_Status()
 
 							-- missed
 							local text = nil
-							local level = UnitLevel("player")
+							local level = NS:UnitLevel("player")
 							if (level < 80) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
@@ -2942,7 +2940,7 @@ function NS:Update_Brawl_Status()
 							NS:SendMessage("RAID", text)
 						else
 							-- send party message
-							NS:SendMessage(nil, text)
+							NS:SendMessage("PARTY", text)
 						end
 					end
 
@@ -2964,7 +2962,7 @@ function NS:Update_Brawl_Status()
 
 					-- left queue
 					local text = nil
-					local level = UnitLevel("player")
+					local level = NS:UnitLevel("player")
 					if (level < 80) then
 						-- add with level
 						text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Left Queue for Popped"], mapName)
@@ -2981,7 +2979,7 @@ function NS:Update_Brawl_Status()
 							NS:SendMessage("RAID", text)
 						else
 							-- send party message
-							NS:SendMessage(nil, text)
+							NS:SendMessage("PARTY", text)
 						end
 					end
 
@@ -3101,7 +3099,7 @@ function NS:Get_Current_Queues_Text()
 
 		-- finalize text
 		local count = NS:GetGroupCountText()
-		local level = UnitLevel("player")
+		local level = NS:UnitLevel("player")
 		if (level < 80) then
 			-- add with level
 			text = strformat("[%s %d] %s %s %s%s %s", L["Level"], level, count, faction, mercenary, L["Currently Queued for"], text)

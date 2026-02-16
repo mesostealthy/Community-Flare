@@ -38,8 +38,7 @@ CF_MemberListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_MemberListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", "Member List Manager")
-	self.HeaderFrame.Title:SetText(title)
+	self.HeaderFrame.Title:SetText(strformat("CF %s", "Member List Manager"))
 
 	-- register left button for dragging
 	self:SetResizeBounds(250, 250)
@@ -560,14 +559,13 @@ end
 -- set name
 function CF_MemberListEntryMixin:SetMember(info)
 	-- has name info?
-	if (info) then
+	if (info and info.guid and info.name) then
 		-- save name info / text
 		self.info = info
 		self.guid = info.guid
 		self.name = info.name
 		self.clubId = info.clubId
-		local text = strformat("%s", self.name)
-		self.MemberFrame.Name:SetText(text)
+		self.MemberFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
 		self.MemberFrame.Name:SetTextColor(1, 1, 1)

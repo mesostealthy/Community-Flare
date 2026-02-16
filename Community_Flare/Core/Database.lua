@@ -9,14 +9,13 @@ local _G                                          = _G
 local AddChatWindowChannel                        = _G.AddChatWindowChannel
 local CopyTable                                   = _G.CopyTable
 local GetChannelName                              = _G.GetChannelName
-local GetCommunitiesChannel                       = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannel or _G.Chat_GetCommunitiesChannel
-local GetCommunitiesChannelName                   = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannelName or _G.Chat_GetCommunitiesChannelName
+local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunitiesChannel
+local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGuild                                   = _G.IsInGuild
 local MergeTable                                  = _G.MergeTable
-local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitName                                    = _G.UnitName
-local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
+local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
 local PvPIsArena                                  = _G.C_PvP.IsArena
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
@@ -44,7 +43,7 @@ local tsort                                       = _G.table.sort
 function NS:Verify_Default_Community_Setup()
 	-- in chat messaging lockdown?
 	local count = 0
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return count
 	end
@@ -136,7 +135,7 @@ end
 -- get club list
 function NS:Get_Clubs_List(bIgnoreGuild)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return nil
 	end
@@ -250,7 +249,7 @@ end
 -- verify club streams
 function NS:Verify_Club_Streams(clubs)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -863,7 +862,7 @@ end
 -- check for deployed members
 function NS:Check_For_Deployed_Members()
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1497,7 +1496,7 @@ end
 -- add all club members from club id
 function NS:Add_All_Club_Members_By_ClubID(clubId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1545,7 +1544,7 @@ end
 -- remove all club members from club id
 function NS:Remove_All_Club_Members_By_ClubID(clubId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1626,7 +1625,7 @@ end
 -- process club members
 function NS:Process_Club_Members()
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return false
 	end
@@ -1733,7 +1732,7 @@ end
 -- club member added
 function NS:Club_Member_Added(clubId, memberId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1769,7 +1768,7 @@ end
 -- club member removed
 function NS:Club_Member_Removed(clubId, memberId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1864,7 +1863,7 @@ end
 -- club member updated
 function NS:Club_Member_Updated(clubId, memberId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -1951,7 +1950,7 @@ end
 -- find community members who left?
 function NS:Find_ExCommunity_Members(clubId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -2240,7 +2239,7 @@ end
 -- purge database members
 function NS:Purge_Database_Members()
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end

@@ -6,7 +6,7 @@ if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
-local FocusActiveWindow                           = _G.ChatFrameUtil and _G.ChatFrameUtil.FocusActiveWindow or _G.ChatEdit_FocusActiveWindow
+local FocusActiveWindow                           = _G.ChatFrameUtil.FocusActiveWindow
 local UninviteUnit                                = _G.UninviteUnit
 local StaticPopup_StandardEditBoxOnEscapePressed  = _G.StaticPopup_StandardEditBoxOnEscapePressed
 local pairs                                       = _G.pairs

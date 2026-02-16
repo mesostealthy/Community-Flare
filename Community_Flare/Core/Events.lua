@@ -47,14 +47,9 @@ local StaticPopup_FindVisible                     = _G.StaticPopup_FindVisible
 local StaticPopup_Hide                            = _G.StaticPopup_Hide
 local StaticPopup1Text                            = _G.StaticPopup1Text
 local ToggleFrame                                 = _G.ToggleFrame
-local UnitFactionGroup                            = _G.UnitFactionGroup
-local UnitGUID                                    = _G.UnitGUID
-local UnitHonorLevel                              = _G.UnitHonorLevel
-local UnitIsPlayer                                = _G.UnitIsPlayer
 local UnitName                                    = _G.UnitName
-local AddOnsIsAddOnLoaded                         = _G.C_AddOns.IsAddOnLoaded
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
-local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
+local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local GetCVar                                     = _G.C_CVar.GetCVar
 local GetCVarDefault                              = _G.C_CVar.GetCVarDefault
 local SetCVar                                     = _G.C_CVar.SetCVar
@@ -131,7 +126,7 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	local prefix, text, channel, sender, target, zoneChannelID, localID, name, instanceID = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -169,7 +164,7 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -243,7 +238,7 @@ function NS.CommFlare:CHAT_MSG_COMMUNITIES_CHANNEL(msg, ...)
 	local text, sender, _, _, _, _, _, _, channelBaseName, _, _, _, bnSenderID = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -270,7 +265,7 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 	local text, sender = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -322,7 +317,7 @@ function NS:Event_Chat_Message_Party(...)
 	local text, sender = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -338,7 +333,7 @@ function NS:Event_Chat_Message_Party(...)
 			-- exact matches only
 			if (lower == "!cf") then
 				-- send community flare version number
-				NS:SendMessage(nil, strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
+				NS:SendMessage("PARTY", strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 			end
 		-- status check?
 		elseif (lower:find("!status")) then
@@ -390,7 +385,7 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 	local text, sender = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -448,7 +443,7 @@ function NS.CommFlare:CLUB_ADDED(msg, ...)
 	local clubId = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- update club member later
 		tinsert(NS.CommFlare.Updated.Club_Added, { clubId = clubId, timestamp = time() })
 		return
@@ -510,7 +505,7 @@ function NS.CommFlare:CLUB_MEMBER_ADDED(msg, ...)
 	local clubId, memberId = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- update club member later
 		tinsert(NS.CommFlare.Updated.Club_Member_Added, { clubId = clubId, memberId = memberId, timestamp = time() })
 		return
@@ -529,7 +524,7 @@ function NS.CommFlare:CLUB_MEMBER_PRESENCE_UPDATED(msg, ...)
 	local clubId, memberId, presence = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- update club member later
 		tinsert(NS.CommFlare.Updated.Club_Member_Presence_Updated, { clubId = clubId, memberId = memberId, presence = presence, timestamp = time() })
 		return
@@ -594,7 +589,7 @@ function NS.CommFlare:CLUB_MEMBERS_UPDATED(msg, ...)
 	local clubId = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- update club member later
 		tinsert(NS.CommFlare.Updated.Club_Members_Updated, { clubId = clubId, timestamp = time() })
 		return
@@ -662,7 +657,7 @@ function NS.CommFlare:CLUB_STREAMS_LOADED(msg, ...)
 	local clubId = ...
 
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- update club member later
 		tinsert(NS.CommFlare.Updated.Club_Streams_Loaded, { clubId = clubId, timestamp = time() })
 		return
@@ -1322,7 +1317,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_SHOW(msg, ...)
 					end
 				else
 					-- have deserter / leave party
-					NS:SendMessage(nil, strformat("%s! %s!", L["Sorry, I currently have deserter"], L["Leaving party to avoid interrupting the queue"]))
+					NS:SendMessage("PARTY", strformat("%s! %s!", L["Sorry, I currently have deserter"], L["Leaving party to avoid interrupting the queue"]))
 					NS:LeaveParty()
 				end
 			end
@@ -1341,26 +1336,17 @@ function NS.CommFlare:NAME_PLATE_UNIT_ADDED(msg, ...)
 	local unit = ...
 
 	-- player unit?
-	if (UnitIsPlayer(unit)) then
-		-- midnight?
-		local guid = UnitGUID(unit)
-		if (NS.CommFlare.isMidnight == true) then
-			-- has secret value?
-			if (issecretvalue(guid)) then
-				-- delete
-				guid = nil
-			end
-		end
-
-		-- has guid?
-		if (guid) then
+	if (NS:UnitIsPlayer(unit)) then
+		-- proper guid found?
+		local guid = NS:UnitGUID(unit)
+		if (guid and not issecretvalue(guid)) then
 			-- cached memberGUID?
 			if (NS.db.global.MemberGUIDs[guid]) then
 				-- cached member?
 				local player = NS.db.global.MemberGUIDs[guid]
 				if (NS.db.global.members[player]) then
 					-- honor level updated?
-					local honorLevel = UnitHonorLevel(unit)
+					local honorLevel = NS:UnitHonorLevel(unit)
 					if (honorLevel and (NS.db.global.members[player].hl ~= honorLevel)) then
 						-- save honor level
 						NS.db.global.members[player].hl = honorLevel
@@ -1620,8 +1606,11 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 				-- available?
 				if (NS.ShowAssistButton) then
-					-- show assist button
-					NS:ShowAssistButton()
+					-- assist button enabled?
+					if (NS.db.global.assistButtonEnabled == true) then
+						-- show assist button
+						NS:ShowAssistButton()
+					end
 				end
 			end
 
@@ -1715,6 +1704,13 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 			-- refresh active timers
 			NS:Refresh_Active_Timers()
+		end
+
+		-- has position?
+		if (NS.db.global.AssistFrame and NS.db.global.AssistFrame.left and NS.db.global.AssistFrame.top) then
+			-- initialize settings
+			NS.db.global.assistButtonXPos = 0
+			NS.db.global.assistButtonYPos = 0
 		end
 
 		-- TODO: verify club streams
@@ -1825,15 +1821,18 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 
 		-- available?
 		if (NS.AssistButton and NS.AssistButton.Button and NS.HideAssistButton and NS.ShowAssistButton) then
-			-- hide assist button?
-			if (NS.CommFlare.CF.RegenJobs["HideAssistButton"] == true) then
-				-- hide
-				NS.CommFlare.CF.RegenJobs["HideAssistButton"] = nil
-				NS:HideAssistButton()
-			elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"] == true) then
-				-- show
-				NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = nil
-				NS:ShowAssistButton()
+			-- assist button enabled?
+			if (NS.db.global.assistButtonEnabled == true) then
+				-- hide assist button?
+				if (NS.CommFlare.CF.RegenJobs["HideAssistButton"] == true) then
+					-- hide
+					NS.CommFlare.CF.RegenJobs["HideAssistButton"] = nil
+					NS:HideAssistButton()
+				elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"] == true) then
+					-- show
+					NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = nil
+					NS:ShowAssistButton()
+				end
 			end
 		end
 	end
@@ -1843,12 +1842,15 @@ end
 function NS.CommFlare:PLAYER_ROLES_ASSIGNED(msg)
 	-- available?
 	if (NS.ShowAssistButton) then
-		-- in battleground?
-		if (NS:IsInBattleground() == true) then
-			-- match state is not complete?
-			if (PvPGetActiveMatchState() ~= Enum.PvPMatchState.Complete) then
-				-- show assist button
-				NS:ShowAssistButton()
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
+				-- match state is not complete?
+				if (PvPGetActiveMatchState() ~= Enum.PvPMatchState.Complete) then
+					-- show assist button
+					NS:ShowAssistButton()
+				end
 			end
 		end
 	end
@@ -1952,7 +1954,10 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	NS.CommFlare.CF.MatchEndDate = date()
 	NS.CommFlare.CF.MatchEndTime = time()
 	NS.CommFlare.CF.Winner = GetBattlefieldWinner()
-	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(UnitGUID("player"))
+
+	-- get player score info
+	local playerGUID = NS:UnitGUID("player")
+	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
 
 	-- update battleground status
 	local status = NS:Get_Current_Battleground_Status()
@@ -2037,17 +2042,20 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	end
 
 	-- inside vehicle?
-	if (UnitInVehicle("player")) then
+	if (NS:UnitInVehicle("player")) then
 		-- show stuff in vehicles
 		NS:ShowStuffInVehicles("all")
 	end
 
 	-- available?
 	if (NS.AssistButton and NS.HideAssistButton) then
-		-- assist button shown?
-		if (NS.AssistButton:IsShown()) then
-			-- hide assist button
-			NS:HideAssistButton()
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- assist button shown?
+			if (NS.AssistButton:IsShown()) then
+				-- hide assist button
+				NS:HideAssistButton()
+			end
 		end
 	end
 end
@@ -2086,6 +2094,7 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			NS.CommFlare.CF.MatchStatus = 2
 			NS.CommFlare.CF.MatchEndTime = 0
 			NS.CommFlare.CF.MatchEndDate = ""
+			NS.CommFlare.CF.KosRefreshTime = 0
 			NS.CommFlare.CF.MatchStartDate = date()
 			NS.CommFlare.CF.MatchStartTime = time()
 
@@ -2313,7 +2322,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 			local popped, mapName = NS:Has_Battleground_Popped()
 			if ((popped == true) and mapName) then
 				-- send party message
-				NS:SendMessage(nil, strformat(L["I have not left the previously popped queue for %s."], mapName))
+				NS:SendMessage("PARTY", strformat(L["I have not left the previously popped queue for %s."], mapName))
 			end
 		end
 	end
@@ -2322,7 +2331,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 	NS:CheckForAura("player", "HELPFUL", L["Mercenary Contract"])
 	if (NS.CommFlare.CF.HasAura == true) then
 		-- send party message
-		NS:SendMessage(nil, strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
+		NS:SendMessage("PARTY", strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
 	end
 
 	-- capable of auto queuing?
@@ -2396,7 +2405,7 @@ function NS.CommFlare:READY_CHECK(msg, ...)
 			end
 
 			-- send back to party that you have deserter
-			NS:SendMessage(nil, message)
+			NS:SendMessage("PARTY", message)
 			if (ReadyCheckFrame:IsShown()) then
 				-- click no button
 				ReadyCheckFrameNoButton:Click()
@@ -2454,7 +2463,7 @@ function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 						-- alliance faction?
 						local text = ""
 						local count = NS:GetGroupCountText()
-						local faction = UnitFactionGroup("player")
+						local faction = NS:UnitFactionGroup("player")
 						if (faction == FACTION_ALLIANCE) then
 							-- alliance ready
 							text = strformat(L["%s Alliance Ready!"], count)
@@ -2557,7 +2566,7 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 							-- are you in a party?
 							if (IsInGroup() and not IsInRaid()) then
 								-- send party message
-								NS:SendMessage(nil, strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
+								NS:SendMessage("PARTY", strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
 							end
 						-- shadow rift?
 						elseif (v.spellId == 353293) then
@@ -2737,77 +2746,8 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 			end
 		end
 
-		-- not created?
-		if (not NS.db.global.KosList) then
-			-- initialize
-			NS.db.global.KosList = {}
-		end
-
-		-- process all scores
-		local kosAlerts = {}
-		local numScores = GetNumBattlefieldScores()
-		for i=1, numScores do
-			local info = NS:GetScoreInfo(i)
-			if (info and info.name and not issecretvalue(info.name)) then
-				-- force name-realm format
-				local player = info.name
-				if (not strmatch(player, "-")) then
-					-- player is NOT AI?
-					if (info.honorLevel > 0) then
-						-- add realm name
-						player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
-					end
-				end
-
-				-- add roster
-				NS.CommFlare.CF.FullRoster[player] = info
-
-				-- has guid?
-				if (info.guid) then
-					-- player is NOT AI?
-					if (info.honorLevel > 0) then
-						-- process member guid
-						local guid = info.guid
-						NS:Process_MemberGUID(guid, player)
-
-						-- KOS target?
-						if (NS.db.global.KosList[guid]) then
-							-- not already alerted?
-							if (not NS.CommFlare.CF.KosAlerted[guid]) then
-								-- insert
-								NS.CommFlare.CF.KosAlerted[guid] = player
-								tinsert(kosAlerts, player)
-							end
-						end
-					end
-				end
-			end
-		end
-
-		-- any alerts?
-		if (#kosAlerts > 0) then
-			-- sort
-			tsort(kosAlerts)
-
-			-- process all
-			local text = nil
-			for k,v in ipairs(kosAlerts) do
-				-- first?
-				if (not text) then
-					-- initialize
-					text = v
-				else
-					-- append
-					text = strformat("%s, %s", text, v)
-				end
-			end
-
-			-- has text?
-			if (text) then
-				-- issue local raid warning (with raid warning audio sound)
-				RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat("KOS: %s", text))
-			end
-		end
+		-- check score board for KOS
+		NS:CheckScoreBoardForKos()
 	end
 end
 
@@ -2965,13 +2905,16 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 
 	-- has assist button?
 	if (NS.AssistButton and NS.HideAssistButton) then
-		-- assist button shown?
-		if (NS.AssistButton:IsShown()) then
-			-- check zone type
-			local inInstance, instanceType = IsInInstance()
-			if (instanceType ~= "pvp") then
-				-- hide assist button
-				NS:HideAssistButton()
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- assist button shown?
+			if (NS.AssistButton:IsShown()) then
+				-- check zone type
+				local inInstance, instanceType = IsInInstance()
+				if (instanceType ~= "pvp") then
+					-- hide assist button
+					NS:HideAssistButton()
+				end
 			end
 		end
 	end

@@ -8,8 +8,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local GetClassInfo                                = _G.GetClassInfo
 local GetNumClasses                               = _G.GetNumClasses
-local GetNumSpecializationsForClassID             = _G.C_SpecializationInfo and _G.C_SpecializationInfo.GetNumSpecializationsForClassID or _G.GetNumSpecializationsForClassID
-local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
+local GetNumSpecializationsForClassID             = _G.C_SpecializationInfo.GetNumSpecializationsForClassID
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local strformat                                   = _G.string.format
@@ -36,7 +35,7 @@ function NS:Build_Classes()
 		-- process all specializations
 		for specIndex=1, GetNumSpecializationsForClassID(classID) do
 			-- getr specialization info / create specialization
-			local specID, specName, specDescription, specIcon, role = GetSpecializationInfoForClassID(classID, specIndex)
+			local specID, specName, specDescription, specIcon, role = NS:GetSpecializationInfoForClassID(classID, specIndex)
 			if (not NS.CommFlare.Classes[className].specs[specName]) then
 				-- initialize
 				NS.CommFlare.Classes[className].specs[specName] = {}

@@ -6,10 +6,11 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local GetCommunitiesChannel                       = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannel or _G.Chat_GetCommunitiesChannel
+local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunitiesChannel
+local GetScreenHeight                             = _G.GetScreenHeight
+local GetScreenWidth                              = _G.GetScreenWidth
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
-local UnitGetAvailableRoles                       = _G.UnitGetAvailableRoles
-local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
+local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
 local EquipmentSetGetEquipmentSetIDs              = _G.C_EquipmentSet.GetEquipmentSetIDs
 local ipairs                                      = _G.ipairs
@@ -39,6 +40,7 @@ local GlobalDefaults = {
 
 		-- booleans
 		alwaysRequestPartyLead = false,
+		assistButtonEnabled = true,
 		blockGameTooltips = false,
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
@@ -58,6 +60,8 @@ local GlobalDefaults = {
 
 		-- numbers
 		adjustVehicleTurnSpeed = 0,
+		assistButtonXPos = 0,
+		assistButtonYPos = 0,
 		avNotifications = 2,
 		ashranNotifications = 2,
 		blockSharedQuests = 2,
@@ -148,7 +152,7 @@ local function Setup_Main_Community_List(info)
 	-- in chat messaging lockdown?
 	local list = {}
 	list[1] = L["None"]
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return list
 	end
@@ -238,7 +242,7 @@ end
 local function Setup_Other_Community_List(info)
 	-- in chat messaging lockdown?
 	local list = {}
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return list
 	end
@@ -283,7 +287,7 @@ local function Other_Community_List_Disabled()
 	-- main community set?
 	if (NS.charDB.profile.communityMain > 1) then
 		-- in chat messaging lockdown?
-		if (ChatInfoInChatMessagingLockdown()) then
+		if (InChatMessagingLockdown()) then
 			-- finished
 			return true
 		end
@@ -371,7 +375,7 @@ end
 local function Setup_Community_List(info)
 	-- in chat messaging lockdown?
 	local list = {}
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return list
 	end
@@ -609,7 +613,7 @@ end
 -- refresh database
 local function Refresh_Database_Members()
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -770,7 +774,7 @@ end
 -- is tank role available?
 local function Check_Tank_Available()
 	-- get available roles
-	local hasTank, hasHealer, hasDPS = UnitGetAvailableRoles("player")
+	local hasTank, hasHealer, hasDPS = NS:UnitGetAvailableRoles("player")
 	if (hasTank == true) then
 		-- enabled
 		return false
@@ -801,7 +805,7 @@ end
 -- is healer role available?
 local function Check_Healer_Available()
 	-- get available roles
-	local hasTank, hasHealer, hasDPS = UnitGetAvailableRoles("player")
+	local hasTank, hasHealer, hasDPS = NS:UnitGetAvailableRoles("player")
 	if (hasHealer == true) then
 		-- enabled
 		return false
@@ -878,11 +882,178 @@ local function Equipment_Sets_Disabled()
 	end
 end
 
+-- set assist button x pos
+local previousAssistButtonXPos = 0
+local function SetAssistButtonXPos(info, value)
+	-- adjust assist button x position
+	if (info[#info] == "assistButtonXPos") then
+		-- has assist button?
+		if (NS.AssistButton) then
+			-- save positions
+			local maxwidth = math.floor(GetScreenWidth())
+			local left = NS.db.global.AssistFrame.left + value
+			local width = NS.AssistButton:GetWidth()
+			local top = NS.db.global.AssistFrame.top or 0
+			if (left < 0) then
+				-- reset
+				left = 0
+			elseif ((left + width) > maxwidth) then
+				-- reset
+				left = maxwidth - width
+			end
+
+			-- move assist button
+			NS.AssistButton:ClearAllPoints()
+			NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+
+			-- has previous?
+			if (previousAssistButtonXPos ~= 0) then
+				-- matches current?
+				if (previousAssistButtonXPos == value) then
+					-- save button position
+					NS:SaveButtonPosition()
+					previousAssistButtonXPos = 0
+				end
+			end
+
+			-- update previous
+			previousAssistButtonXPos = value
+		end
+	end
+end
+
+-- set assist button y pos
+local previousAssistButtonYPos = 0
+local function SetAssistButtonYPos(info, value)
+	-- adjust assist button y position
+	if (info[#info] == "assistButtonYPos") then
+		-- has assist button?
+		if (NS.AssistButton) then
+			-- save positions
+			local maxheight = math.floor(GetScreenHeight())
+			local left = NS.db.global.AssistFrame.left or 0
+			local height = NS.AssistButton:GetHeight()
+			local top = NS.db.global.AssistFrame.top - value
+			if ((top - height) < 0) then
+				-- reset
+				top = height
+			elseif ((top - 20) > maxheight) then
+				-- reset
+				top = maxheight + 20
+			end
+
+			-- move assist button
+			NS.AssistButton:ClearAllPoints()
+			NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+
+			-- has previous?
+			if (previousAssistButtonYPos ~= 0) then
+				-- matches current?
+				if (previousAssistButtonYPos == value) then
+					-- save button position
+					NS:SaveButtonPosition()
+					previousAssistButtonYPos = 0
+				end
+			end
+
+			-- update previous
+			previousAssistButtonYPos = value
+		end
+	end
+end
+
+-- assist button group
+local AssistButtonGroup = {
+	name = L["Assist Button Options"],
+	type = "group",
+	order = 2,
+	hidden = function()
+		-- hidden?
+		return (NS.faction ~= 0) and false
+	end,
+	args = {
+		assistButtonTitle = {
+			name = L["Assist Button Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		assistButtonEnabled = {
+			type = "toggle",
+			order = 2,
+			name = L["Enable Assist Button?"],
+			desc = L["This will enable the Assist Button when your team has a Main Assist set."],
+			width = "full",
+			get = function(info) return NS.db.global.assistButtonEnabled end,
+			set = function(info, value) NS.db.global.assistButtonEnabled = value end,
+		},
+		assistButtonLocked = {
+			type = "toggle",
+			order = 3,
+			name = L["Position Locked?"],
+			desc = L["This will lock the Assist Button to the current position."],
+			width = "full",
+			get = function(info) return NS.db.global.AssistFrame.locked end,
+			set = function(info, value)
+				-- lock frame
+				NS.db.global.AssistFrame.locked = value
+
+				-- update assist button
+				NS:UpdateAssistButton()
+			end,
+		},
+		assistButtonXPos = {
+			type = "range",
+			order = 4,
+			name = "Adjust X-Position",
+			desc = "This will move the Assist Button along the X-Axis.",
+			min = -500,
+			max = 500,
+			step = 1,
+			disabled = function (info) return NS.db.global.AssistFrame.locked end,
+			hidden = function(info)
+				-- available?
+				if (NS.AssistButton) then
+					-- not shown?
+					if (not NS.AssistButton:IsShown()) then
+						-- show
+						NS.AssistButton:Show()
+					end
+				end
+			end,
+			get = function(info) return NS.db.global.assistButtonXPos end,
+			set = SetAssistButtonXPos,
+		},
+		assistButtonYPos = {
+			type = "range",
+			order = 5,
+			name = "Adjust Y-Position",
+			desc = "This will move the Assist Button along the Y-Axis.",
+			min = -500,
+			max = 500,
+			step = 1,
+			disabled = function (info) return NS.db.global.AssistFrame.locked end,
+			hidden = function(info)
+				-- available?
+				if (NS.AssistButton) then
+					-- not shown?
+					if (not NS.AssistButton:IsShown()) then
+						-- show
+						NS.AssistButton:Show()
+					end
+				end
+			end,
+			get = function(info) return NS.db.global.assistButtonYPos end,
+			set = SetAssistButtonYPos,
+		},
+	}
+}
+
 -- battleground group
 local BattlegroundGroup = {
 	name = L["Battleground Options"],
 	type = "group",
-	order = 2,
+	order = 3,
 	args = {
 		battlegroundTitle = {
 			name = L["Battleground Options"],
@@ -1194,7 +1365,7 @@ local CommunityGroup = {
 local DatabaseGroup = {
 	name = L["Database Options"],
 	type = "group",
-	order = 3,
+	order = 4,
 	args = {
 		generalTitle = {
 			name = L["Database Options"],
@@ -1256,7 +1427,7 @@ local DebugGroup = {
 local HousingGroup = {
 	name = L["Housing Options"],
 	type = "group",
-	order = 4,
+	order = 5,
 	args = {
 		worldTitle = {
 			name = L["Housing Options"],
@@ -1280,7 +1451,7 @@ local HousingGroup = {
 local InviteGroup = {
 	name = L["Invite Options"],
 	type = "group",
-	order = 5,
+	order = 6,
 	args = {
 		inviteTitle = {
 			name = L["Invite Options"],
@@ -1313,7 +1484,7 @@ local InviteGroup = {
 local MountedGroup = {
 	name = L["Mounted Options"],
 	type = "group",
-	order = 6,
+	order = 7,
 	args = {
 		generalTitle = {
 			name = L["Mounted Options"],
@@ -1337,7 +1508,7 @@ local MountedGroup = {
 local PartyGroup = {
 	name = L["Party Options"],
 	type = "group",
-	order = 7,
+	order = 8,
 	args = {
 		partyTitle = {
 			name = L["Party Options"],
@@ -1397,7 +1568,7 @@ local PartyGroup = {
 local QueueGroup = {
 	name = L["Queue Options"],
 	type = "group",
-	order = 8,
+	order = 9,
 	args = {
 		queueTitle = {
 			name = L["Queue Options"],
@@ -1541,7 +1712,7 @@ local QueueGroup = {
 local ReportGroup = {
 	name = L["Report Options"],
 	type = "group",
-	order = 9,
+	order = 10,
 	args = {
 		generalTitle = {
 			name = L["Report Options"],
@@ -1575,7 +1746,7 @@ local ReportGroup = {
 local VehicleGroup = {
 	name = L["Vehicle Options"],
 	type = "group",
-	order = 10,
+	order = 11,
 	args = {
 		generalTitle = {
 			name = L["Vehicle Options"],
@@ -1613,7 +1784,7 @@ local VehicleGroup = {
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 11,
+	order = 12,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1681,6 +1852,7 @@ function NS:CreateConfigOptions()
 		name = NS.CommFlare.Title_Full,
 		type = "group",
 		args = {
+			AssistButtonGroup = AssistButtonGroup,
 			BattlegroundGroup = BattlegroundGroup,
 			CommunityGroup = CommunityGroup,
 			DatabaseGroup = DatabaseGroup,

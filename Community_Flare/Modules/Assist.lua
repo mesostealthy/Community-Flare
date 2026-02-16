@@ -11,6 +11,7 @@ local CreateFrame                                 = _G.CreateFrame
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsInRaid                                    = _G.IsInRaid
+local mfloor                                      = _G.math.floor
 local strsplit                                    = _G.string.split
 
 -- create frames
@@ -76,17 +77,26 @@ end
 function NS:ShowAssistButton()
 	-- get main assist
 	if (NS.faction ~= 0) then return end
-	local player = CommunityFlare_GetMainAssist()
-	if (player) then
+	local player1 = CommunityFlare_GetMainAssist()
+	if (player1) then
 		-- not in combat?
-		NS.AssistButton.Button.macrotext = "/assist [nodead] " .. player
 		if (not InCombatLockdown()) then
 			-- setup macrotext
+			NS.AssistButton.Button.macrotext1 = "/assist [nodead] " .. player1
 			NS.AssistButton.Button:SetAttribute("type1", "macro")
-			NS.AssistButton.Button:SetAttribute("macrotext1", NS.AssistButton.Button.macrotext)
+			NS.AssistButton.Button:SetAttribute("macrotext1", NS.AssistButton.Button.macrotext1)
 			if (not NS.AssistButton:IsShown()) then
 				-- show
 				NS.AssistButton:Show()
+			end
+
+			-- has main tank?
+			local player2 = CommunityFlare_GetMainTank()
+			if (player2) then
+				-- setup macrotext
+				NS.AssistButton.Button.macrotext2 = "/assist [nodead] " .. player2
+				NS.AssistButton.Button:SetAttribute("type2", "macro")
+				NS.AssistButton.Button:SetAttribute("macrotext2", NS.AssistButton.Button.macrotext2)
 			end
 		else
 			-- show later
@@ -98,17 +108,94 @@ function NS:ShowAssistButton()
 	end
 end
 
+-- update assist button
+function NS:UpdateAssistButton()
+	-- show appropriate stuff
+	if (NS.faction ~= 0) then return end
+	if (NS.db.global.AssistFrame.locked == true) then
+		-- disable
+		NS.AssistButton.Background:SetAlpha(0)
+		NS.AssistButton.Header.Background:SetAlpha(0)
+		NS.AssistButton.Header.Text:SetAlpha(0)
+		NS.AssistButton.ResizeButton:SetEnabled(false)
+		NS.AssistButton.ResizeButton:SetAlpha(0)
+	else
+		-- enable
+		NS.AssistButton.Background:SetAlpha(1)
+		NS.AssistButton.Header.Background:SetAlpha(1)
+		NS.AssistButton.Header.Text:SetAlpha(1)
+		NS.AssistButton.ResizeButton:SetEnabled(true)
+		NS.AssistButton.ResizeButton:SetAlpha(1)
+	end
+end
+
 -- toggle assist button
 function NS:ToggleAssistButton()
 	-- shown?
 	if (NS.faction ~= 0) then return end
 	if (NS.AssistButton:IsShown()) then
-		-- hide
-		NS.AssistButton:Hide()
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- hide
+			NS.AssistButton:Hide()
+		else
+			-- hide later
+			NS.CommFlare.CF.RegenJobs["HideAssistButton"] = true
+		end
 	else
-		-- show
-		NS.AssistButton:Show()
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- show
+			NS.AssistButton:Show()
+		else
+			-- show later
+			NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = true
+		end
 	end
+end
+
+-- save button position
+function NS:SaveButtonPosition()
+	-- not initialized?
+	if (NS.faction ~= 0) then return end
+	if (not NS.db.global.AssistFrame) then
+		-- initialize
+		NS.db.global.AssistFrame = {}
+	end
+
+	-- sanity checks
+	local scale = NS.AssistButton:GetScale()
+	local maxheight = mfloor(GetScreenHeight())
+	local maxwidth = mfloor(GetScreenWidth())
+	local height = NS.AssistButton:GetHeight()
+	local width = NS.AssistButton:GetWidth()
+	local left, top = NS.AssistButton:GetLeft() * scale, NS.AssistButton:GetTop() * scale
+
+	-- sanity check for x position
+	if (left < 0) then
+		-- reset
+		left = 0
+	elseif ((left + width) > maxwidth) then
+		-- reset
+		left = maxwidth - width
+	end
+
+	-- sanity check for y position
+	if ((top - height) < 0) then
+		-- reset
+		top = height
+	elseif (top > maxheight) then
+		-- reset
+		top = maxheight
+	end
+
+	-- save positions
+	NS.db.global.AssistFrame.left = left
+	NS.db.global.AssistFrame.top = top
+
+	-- move assist button
+	NS.AssistButton:ClearAllPoints()
+	NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
 end
 
 -- create assist button
@@ -149,21 +236,9 @@ function NS:CreateAssistButton()
 				self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", NS.db.global.AssistFrame.left, NS.db.global.AssistFrame.top)
 				self:SetWidth(width)
 				self:SetHeight(width + 20)
-				if (NS.db.global.AssistFrame.locked == true) then
-					-- disable
-					self.Background:SetAlpha(0)
-					self.Header.Background:SetAlpha(0.25)
-					self.Header.Text:SetAlpha(0)
-					self.ResizeButton:SetEnabled(false)
-					self.ResizeButton:SetAlpha(0)
-				else
-					-- enable
-					self.Background:SetAlpha(1)
-					self.Header.Background:SetAlpha(1)
-					self.Header.Text:SetAlpha(1)
-					self.ResizeButton:SetEnabled(true)
-					self.ResizeButton:SetAlpha(1)
-				end
+
+				-- update assist button
+				NS:UpdateAssistButton()
 			end
 
 			-- shown
@@ -196,18 +271,34 @@ function NS:CreateAssistButton()
 			-- stop moving or sizing
 			self:StopMovingOrSizing()
 
-			-- get / save position
-			local scale = self:GetScale()
-			local left, top = self:GetLeft() * scale, self:GetTop() * scale
-			if (not NS.db.global.AssistFrame) then
-				-- initialize
-				NS.db.global.AssistFrame = {}
-			end
-
-			-- save positions
-			NS.db.global.AssistFrame.left = left
-			NS.db.global.AssistFrame.top = top
+			-- save button position
+			NS:SaveButtonPosition()
 		end
+	end)
+	NS.AssistButton:SetScript("OnEnter", function(self)
+		-- locked?
+		if (NS.db.global.AssistFrame.locked == true) then
+			-- show header background
+			self.Header.Background:SetAlpha(1)
+			self.Header.Text:SetAlpha(1)
+		end
+
+		-- show tooltip
+		GameTooltip:SetOwner(self)
+		GameTooltip:AddLine("Main Assist Button")
+		GameTooltip:AddLine("-Right Click: Lock / Unlock Window Position", 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	NS.AssistButton:SetScript("OnLeave", function(self)
+		-- locked?
+		if (NS.db.global.AssistFrame.locked == true) then
+			-- show header background
+			self.Header.Background:SetAlpha(0)
+			self.Header.Text:SetAlpha(0)
+		end
+
+		-- hide tooltip
+		GameTooltip:Hide()
 	end)
 	NS.AssistButton:SetScript("OnMouseUp", function(self, button)
 		-- right click?
@@ -216,20 +307,13 @@ function NS:CreateAssistButton()
 			if (NS.db.global.AssistFrame.locked == true) then
 				-- enable
 				NS.db.global.AssistFrame.locked = nil
-				self.Background:SetAlpha(1)
-				self.Header.Background:SetAlpha(1)
-				self.Header.Text:SetAlpha(1)
-				self.ResizeButton:SetEnabled(true)
-				self.ResizeButton:SetAlpha(1)
 			else
 				-- disable
 				NS.db.global.AssistFrame.locked = true
-				self.Background:SetAlpha(0)
-				self.Header.Background:SetAlpha(0.25)
-				self.Header.Text:SetAlpha(0)
-				self.ResizeButton:SetEnabled(false)
-				self.ResizeButton:SetAlpha(0)
 			end
+
+			-- update assist button
+			NS:UpdateAssistButton()
 		end
 	end)
 	NS.AssistButton:SetScript("OnSizeChanged", function(self, width, height)

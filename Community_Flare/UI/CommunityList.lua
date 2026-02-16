@@ -38,8 +38,7 @@ CF_CommunityListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_CommunityListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", L["Community List Manager"])
-	self.HeaderFrame.Title:SetText(title)
+	self.HeaderFrame.Title:SetText(strformat("CF %s", L["Community List Manager"]))
 
 	-- register left button for dragging
 	self:SetResizeBounds(250, 250)
@@ -551,12 +550,11 @@ end
 -- set community
 function CF_CommunityListEntryMixin:SetCommunity(info)
 	-- has community info?
-	if (info) then
+	if (info and info.clubId and info.name) then
 		-- save community info / text
 		self.info = info
 		self.clubId = info.clubId
-		local text = strformat("%s", info.name)
-		self.CommunityFrame.Name:SetText(text)
+		self.CommunityFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
 		self.CommunityFrame.Name:SetTextColor(1, 1, 1)

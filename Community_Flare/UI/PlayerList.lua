@@ -38,8 +38,7 @@ CF_PlayerListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_PlayerListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", L["Player List Manager"])
-	self.HeaderFrame.Title:SetText(title)
+	self.HeaderFrame.Title:SetText(strformat("CF %s", L["Player List Manager"]))
 
 	-- register left button for dragging
 	self:SetResizeBounds(250, 250)
@@ -250,10 +249,10 @@ function CF_PlayerListAddKosButtonMixin:OnClick(button)
 	-- left button?
 	if (button == "LeftButton") then
 		-- check target for player
-		local guid = UnitGUID("target")
+		local guid = NS:UnitGUID("target")
 		if (guid and guid:find("Player-")) then
 			-- get name / realm
-			local name, realm = UnitFullName("target")
+			local name, realm = NS:UnitFullName("target")
 			if (name) then
 				-- no realm?
 				if (not realm) then
@@ -740,12 +739,11 @@ end
 -- set player
 function CF_PlayerListEntryMixin:SetPlayer(info)
 	-- has player info?
-	if (info) then
+	if (info and info.guid and info.player) then
 		-- save player info / text
 		self.info = info
 		self.guid = info.guid
-		local text = strformat("%s", info.player)
-		self.PlayerFrame.Name:SetText(text)
+		self.PlayerFrame.Name:SetText(strformat("%s", info.player))
 
 		-- kos?
 		if (info.kos and (info.kos == true)) then

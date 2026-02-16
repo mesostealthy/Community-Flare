@@ -13,7 +13,6 @@ local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local UnitGUID                                    = _G.UnitGUID
 local UnitName                                    = _G.UnitName
 local TimerAfter                                  = _G.C_Timer.After
 local ipairs                                      = _G.ipairs
@@ -228,7 +227,7 @@ function NS:Update_Group(groupGUID)
 		-- only yourself?
 		if (count == 1) then
 			-- add leader + member
-			local playerGUID = UnitGUID("player")
+			local playerGUID = NS:UnitGUID("player")
 			local playerName, playerRealm = UnitName("player")
 			NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = 1
 			NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
@@ -239,17 +238,16 @@ function NS:Update_Group(groupGUID)
 			NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = GetNumGroupMembers()
 			for i=1, GetNumGroupMembers() do
 				-- unit exists?
-				local unit = ""
-				if (NS:UnitExists("party" .. i)) then
-					-- partyX
-					unit = "party" .. i
+				local unit = "party" .. i
+				if (NS:UnitExists(unit) == true) then
+					-- using partyX
 				else
 					-- player
 					unit = "player"
 				end
 
 				-- party leader?
-				local playerGUID = UnitGUID(unit)
+				local playerGUID = NS:UnitGUID(unit)
 				local playerName, playerRealm = UnitName(unit)
 				if (NS:UnitIsGroupLeader(unit)) then
 					-- add leader

@@ -16,7 +16,7 @@ local FCF_IterateActiveChatWindows                = _G.FCF_IterateActiveChatWind
 local GetBindingAction                            = _G.GetBindingAction
 local GetBindingKey                               = _G.GetBindingKey
 local GetChannelName                              = _G.GetChannelName
-local GetCommunitiesChannelName                   = _G.ChatFrameUtil and _G.ChatFrameUtil.GetCommunitiesChannelName or _G.Chat_GetCommunitiesChannelName
+local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
@@ -36,13 +36,9 @@ local SetBinding                                  = _G.SetBinding
 local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
-local UnitFullName                                = _G.UnitFullName
-local UnitGUID                                    = _G.UnitGUID
-local UnitIsConnected                             = _G.UnitIsConnected
 local UnitName                                    = _G.UnitName
-local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
-local ChatInfoInChatMessagingLockdown             = _G.C_ChatInfo.InChatMessagingLockdown
+local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
 local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
 local CVarGetCVar                                 = _G.C_CVar.GetCVar
@@ -501,13 +497,14 @@ end
 -- is player appearing offline?
 function NS:IsInvisible()
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return nil
 	end
 
 	-- check Battle.NET account - has focus?
-	local accountInfo = NS:GetAccountInfoByGUID(UnitGUID("player"))
+	local playerGUID = NS:UnitGUID("player")
+	local accountInfo = NS:GetAccountInfoByGUID(playerGUID)
 	if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.hasFocus) then
 		-- has focus?
 		if (accountInfo.gameAccountInfo.hasFocus == true) then
@@ -689,7 +686,7 @@ end
 -- send addon message
 function NS:SendAddonMessage(prefix, text, distribution, target)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -701,7 +698,7 @@ end
 -- add community chat window (also removes first if already added)
 function NS:AddCommunityChatWindow(clubId, streamId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -754,7 +751,7 @@ end
 -- remove community chat window
 function NS:RemoveCommunityChatWindow(clubId, streamId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return
 	end
@@ -794,7 +791,7 @@ end
 -- readd community chat window
 function NS:ReaddCommunityChatWindow(clubId, streamId)
 	-- in chat messaging lockdown?
-	if (ChatInfoInChatMessagingLockdown()) then
+	if (InChatMessagingLockdown()) then
 		-- finished
 		return false
 	end
@@ -959,13 +956,15 @@ function NS:GetPartyGUID()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not NS:UnitExists(unit)) then
+			if (NS:UnitExists(unit) == true) then
+				-- using partyX
+			else
 				-- player
 				unit = "player"
 			end
 
 			-- get group for player
-			local playerGUID = UnitGUID(unit)
+			local playerGUID = NS:UnitGUID(unit)
 			if (playerGUID and (playerGUID ~= "")) then
 				-- get group for player
 				local partyGUID = NS:GetGroupForPlayer(playerGUID)
@@ -1002,7 +1001,9 @@ function NS:GetPartyUnit(player)
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not NS:UnitExists(unit)) then
+			if (NS:UnitExists(unit) == true) then
+				-- using partyX
+			else
 				-- player
 				unit = "player"
 			end
@@ -1038,7 +1039,9 @@ function NS:GetPartyLeader()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (not NS:UnitExists(unit)) then
+			if (NS:UnitExists(unit) == true) then
+				-- using partyX
+			else
 				-- player
 				unit = "player"
 			end
@@ -1073,7 +1076,9 @@ function NS:GetPartyLeaderGUID()
 		for i=1, GetNumGroupMembers() do 
 			-- unit exists?
 			local unit = "party" .. i
-			if (not NS:UnitExists(unit)) then
+			if (NS:UnitExists(unit) == true) then
+				-- using partyX
+			else
 				-- player
 				unit = "player"
 			end
@@ -1081,13 +1086,13 @@ function NS:GetPartyLeaderGUID()
 			-- is group leader?
 			if (NS:UnitIsGroupLeader(unit)) then
 				-- return guid
-				return UnitGUID(unit)
+				return NS:UnitGUID(unit)
 			end
 		end
 	end
 
 	-- solo atm
-	return UnitGUID("player")
+	return NS:UnitGUID("player")
 end
 
 -- get max party count
@@ -1454,7 +1459,7 @@ function NS:Process_Party_States(isDead, isOffline)
 				-- kick them
 				kickPlayer = true
 			-- are they offline?
-			elseif ((isOffline == true) and (UnitIsConnected(unit) ~= true)) then
+			elseif ((isOffline == true) and (NS:UnitIsConnected(unit) ~= true)) then
 				-- kick them
 				kickPlayer = true
 			end
@@ -1499,7 +1504,7 @@ function NS:Queue_Check_Role_Chosen()
 		local player, realm = UnitName(unit)
 		if (player and (player ~= "")) then
 			-- check relationship
-			local realmRelationship = UnitRealmRelationship(unit)
+			local realmRelationship = NS:UnitRealmRelationship(unit)
 			if (realmRelationship == LE_REALM_RELATION_SAME) then
 				-- player with same realm
 				player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)

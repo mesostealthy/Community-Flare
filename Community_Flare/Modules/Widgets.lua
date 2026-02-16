@@ -40,6 +40,29 @@ local GetUnitPowerBarWidgetVisualizationInfo                           = _G.C_UI
 local GetZoneControlVisualizationInfo                                  = _G.C_UIWidgetManager.GetZoneControlVisualizationInfo
 local issecretvalue                                                    = _G.issecretvalue
 
+-- get double status bar widget visulalization info
+function NS:GetDoubleStatusBarWidgetVisualizationInfo(widgetID)
+	-- sanity checks?
+	if (not widgetID or issecretvalue(widgetID)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return GetDoubleStatusBarWidgetVisualizationInfo(widgetID)
+end
+
+function NS:GetIconAndTextWidgetVisualizationInfo(widgetID)
+	-- sanity checks?
+	if (not widgetID or issecretvalue(widgetID)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return GetIconAndTextWidgetVisualizationInfo(widgetID)
+end
+
 -- get widget data
 function NS:GetWidgetData(info)
 	-- sanity checks?

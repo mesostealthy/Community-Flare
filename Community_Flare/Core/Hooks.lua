@@ -9,10 +9,10 @@ local _G                                          = _G
 local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
+local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local IsShiftKeyDown                              = _G.IsShiftKeyDown
-local UnitGUID                                    = _G.UnitGUID
 local PvPIsArena                                  = _G.C_PvP.IsArena
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
@@ -56,7 +56,7 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 				local leaderGUID = NS.CommFlare.CF.LeaderGUID
 				if (not leaderGUID) then
 					-- use player
-					leaderGUID = UnitGUID("player")
+					leaderGUID = NS:UnitGUID("player")
 				end
 
 				-- accepted queue?
@@ -126,7 +126,7 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 						NS:SendMessage("RAID", text)
 					else
 						-- send party message
-						NS:SendMessage(nil, text)
+						NS:SendMessage("PARTY", text)
 					end
 				end
 
@@ -153,7 +153,7 @@ local function hook_AcceptProposal()
 					NS:SendMessage("RAID", strformat(L["Accepted Queue For Popped %s!"], mapName))
 				else
 					-- send party message
-					NS:SendMessage(nil, strformat(L["Accepted Queue For Popped %s!"], mapName))
+					NS:SendMessage("PARTY", strformat(L["Accepted Queue For Popped %s!"], mapName))
 				end
 			end
 		end
@@ -185,7 +185,7 @@ local function hook_LeaveBattlefield()
 				NS:SendMessage("RAID", text)
 			else
 				-- send party message
-				NS:SendMessage(nil, text)
+				NS:SendMessage("PARTY", text)
 			end
 		end
 	end

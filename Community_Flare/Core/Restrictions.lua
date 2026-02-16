@@ -6,13 +6,24 @@ if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
+local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local UnitExists                                  = _G.UnitExists
+local UnitFactionGroup                            = _G.UnitFactionGroup
+local UnitFullName                                = _G.UnitFullName
+local UnitGetAvailableRoles                       = _G.UnitGetAvailableRoles
+local UnitGUID                                    = _G.UnitGUID
+local UnitHonorLevel                              = _G.UnitHonorLevel
 local UnitInParty                                 = _G.UnitInParty
 local UnitInRaid                                  = _G.UnitInRaid
+local UnitInVehicle                               = _G.UnitInVehicle
+local UnitIsConnected                             = _G.UnitIsConnected
 local UnitIsDeadOrGhost                           = _G.UnitIsDeadOrGhost
 local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
+local UnitIsPlayer                                = _G.UnitIsPlayer
+local UnitLevel                                   = _G.UnitLevel
+local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local GetAreaPOIForMap                            = _G.C_AreaPoiInfo.GetAreaPOIForMap
 local GetAreaPOIInfo                              = _G.C_AreaPoiInfo.GetAreaPOIInfo
 local GetAccountInfoByGUID                        = _G.C_BattleNet.GetAccountInfoByGUID
@@ -69,6 +80,18 @@ local issecretvalue                               = _G.issecretvalue
 local type                                        = _G.type
 
 -- unit exists
+function NS:GetSpecializationInfoForClassID(classID, index, ...)
+	-- sanity checks
+	if (not classID or not index or issecretvalue(classID) or issecretvalue(index)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return GetSpecializationInfoForClassID(classID, index, ...)
+end
+
+-- unit exists
 function NS:UnitExists(unitToken)
 	-- sanity checks
 	if (not unitToken or issecretvalue(unitToken)) then
@@ -78,6 +101,66 @@ function NS:UnitExists(unitToken)
 
 	-- success
 	return UnitExists(unitId)
+end
+
+-- unit full name
+function NS:UnitFullName(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitFullName(unitId)
+end
+
+-- unit faction group
+function NS:UnitFactionGroup(unitId)
+	-- sanity checks
+	if (not unitId or issecretvalue(unitId)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitFactionGroup(unitId)
+end
+
+-- unit get available roles
+function NS:UnitGetAvailableRoles(unitId)
+	-- sanity checks
+	if (not unitId or issecretvalue(unitId)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitGetAvailableRoles(unitId)
+end
+
+-- unit guid
+function NS:UnitGUID(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitGUID(unitToken)
+end
+
+-- unit honor level
+function NS:UnitHonorLevel(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitHonorLevel(unitToken)
 end
 
 -- unit in party
@@ -104,6 +187,30 @@ function NS:UnitInRaid(unitToken)
 	return UnitInRaid(unitToken)
 end
 
+-- unit in vehicle
+function NS:UnitInVehicle(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitInVehicle(unitToken)
+end
+
+-- unit is connected
+function NS:UnitIsConnected(unitId)
+	-- sanity checks
+	if (not unitId or issecretvalue(unitId)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitIsConnected(unitId)
+end
+
 -- unit is dead or ghost
 function NS:UnitIsDeadOrGhost(unitToken)
 	-- sanity checks
@@ -126,6 +233,42 @@ function NS:UnitIsGroupLeader(unitId, ...)
 
 	-- success
 	return UnitIsGroupLeader(unitId, ...)
+end
+
+-- unit is player
+function NS:UnitIsPlayer(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitIsPlayer(unitToken)
+end
+
+-- unit level
+function NS:UnitLevel(unitId)
+	-- sanity checks
+	if (not unitId or issecretvalue(unitId)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitLevel(unitId)
+end
+
+-- unit realm relationship
+function NS:UnitRealmRelationship(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitRealmRelationship(unitToken)
 end
 
 ----------------------------------------------------------------------------------------------------------
@@ -841,15 +984,8 @@ function NS:SendMessage(sender, msg, channel)
 		return nil
 	end
 
-	-- party?
-	if (not sender) then
-		-- in local party?
-		if (IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid()) then
-			-- send to party
-			SendChatMessage(msg, "PARTY")
-		end
 	-- string?
-	elseif (type(sender) == "string") then
+	if (type(sender) == "string") then
 		-- channel?
 		if (sender == "CHANNEL") then
 			-- send to channel (hardware click required)

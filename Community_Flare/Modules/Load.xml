@@ -4,6 +4,7 @@
 	<Script file="Battlegrounds.lua" />
 	<Script file="BlockGameMenus.lua" />
 	<Script file="History.lua" />
+	<Script file="KOS.lua" />
 	<Script file="POIs.lua" />
 	<Script file="Quests.lua" />
 	<Script file="Social.lua" />

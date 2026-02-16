@@ -32,8 +32,7 @@ CF_VehicleListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_VehicleListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", L["Vehicle List Manager"])
-	self.HeaderFrame.Title:SetText(title)
+	self.HeaderFrame.Title:SetText(strformat("CF %s", L["Vehicle List Manager"]))
 
 	-- register stuff
 	self:SetResizeBounds(250, 250)
@@ -341,11 +340,10 @@ end
 -- set queue
 function CF_VehicleListEntryMixin:SetQueue(info)
 	-- has queue info?
-	if (info) then
+	if (info and info.name) then
 		-- save queue info / text
 		self.info = info
-		local text = strformat("%s", info.name)
-		self.QueueFrame.Name:SetText(text)
+		self.QueueFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
 		self.QueueFrame.Name:SetTextColor(1, 1, 1)

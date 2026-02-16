@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.06.001:
--FRAMEWORK: Started revamping framework to safely handle secret values.
--REPorter: Added callouts for Alterac Valley & Wintergrasp.
+v2.07.001:
+-FRAMEWORK: Finish up the revamp to safely handle functions that don't allow secret values.
+-BUGFIX: SendMessage to PARTY is working again.

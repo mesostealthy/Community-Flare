@@ -34,8 +34,7 @@ CF_POIListFrameMixin = CreateFromMixins(CallbackRegistryMixin)
 -- on load
 function CF_POIListFrameMixin:OnLoad()
 	-- update header text
-	local title = strformat("CF %s", L["POI List Manager"])
-	self.HeaderFrame.Title:SetText(title)
+	self.HeaderFrame.Title:SetText(strformat("CF %s", L["POI List Manager"]))
 
 	-- register stuff
 	self:SetResizeBounds(250, 250)
@@ -378,12 +377,11 @@ end
 -- set queue
 function CF_POIListEntryMixin:SetQueue(info)
 	-- has queue info?
-	if (info) then
+	if (info and info.guid and info.name) then
 		-- save queue info / text
 		self.info = info
 		self.guid = info.guid
-		local text = strformat("%s", info.name)
-		self.QueueFrame.Name:SetText(text)
+		self.QueueFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
 		self.QueueFrame.Name:SetTextColor(1, 1, 1)

@@ -12,12 +12,13 @@ local FCF_SetWindowName                           = _G.FCF_SetWindowName
 local FCFDock_GetChatFrames                       = _G.FCFDock_GetChatFrames
 local FCFDock_GetSelectedWindow                   = _G.FCFDock_GetSelectedWindow
 local GetChatWindowInfo                           = _G.GetChatWindowInfo
-local ReceiveAllPrivateMessages                   = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_ReceiveAllPrivateMessages
-local RemoveAllChannels                           = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_RemoveAllChannels
-local RemoveAllMessageGroups                      = _G.ChatFrameMixin and _G.ChatFrameMixin.ReceiveAllPrivateMessages or _G.ChatFrame_RemoveAllMessageGroups
+local ReceiveAllPrivateMessages                   = _G.ChatFrameMixin.ReceiveAllPrivateMessages
+local RemoveAllChannels                           = _G.ChatFrameMixin.ReceiveAllPrivateMessages
+local RemoveAllMessageGroups                      = _G.ChatFrameMixin.ReceiveAllPrivateMessages
 local SetChatWindowLocked                         = _G.SetChatWindowLocked
 local SetChatWindowShown                          = _G.SetChatWindowShown
-local SetLastActiveWindow                         = _G.ChatFrameUtil and _G.ChatFrameUtil.SetLastActiveWindow or _G.ChatEdit_SetLastActiveWindow
+local SetLastActiveWindow                         = _G.ChatFrameUtil.SetLastActiveWindow
+local issecretvalue                               = _G.issecretvalue
 
 -- local variables
 local debugTab = nil
@@ -55,6 +56,12 @@ end
 
 -- debug print
 function NS:Debug_Print(text)
+	-- sanity checks
+	if (not text or (text == "") or issecretvalue(text)) then
+		-- failed
+		return nil
+	end
+
 	-- find debug chat frame
 	local index = NS:Find_Chat_Frame("Debug")
 	if (not index) then
@@ -103,4 +110,7 @@ function NS:Debug_Print(text)
 			debugFrame:AddMessage(text)
 		end
 	end
+
+	-- success
+	return true
 end
