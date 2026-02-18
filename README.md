@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.07.001:
--FRAMEWORK: Finish up the revamp to safely handle functions that don't allow secret values.
--BUGFIX: SendMessage to PARTY is working again.
+v2.08.001:
+-REPorter: Callouts added for Arathi Basin, Ashran, Battle for Gilneas, Deepwind Gorge & Eye of the Storm.
+-REPorter: Callouts have Tooltip on hover over objectives if able to issue call.

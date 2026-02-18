@@ -18,6 +18,10 @@
 	<!-- Specific Map Modules -->
 	<Script file="AlteracValley.lua" />
 	<Script file="Ashran.lua" />
+	<Script file="ArathiBasin.lua" />
+	<Script file="DeepwindGorge.lua" />
+	<Script file="EyeOfTheStorm.lua" />
+	<Script file="Gilneas.lua" />
 	<Script file="IsleOfConquest.lua" />
 	<Script file="Wintergrasp.lua" />
 </Ui>

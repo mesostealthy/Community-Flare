@@ -53,6 +53,7 @@ local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagin
 local GetCVar                                     = _G.C_CVar.GetCVar
 local GetCVarDefault                              = _G.C_CVar.GetCVarDefault
 local SetCVar                                     = _G.C_CVar.SetCVar
+local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
 local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local PvPGetCustomVictoryStatID                   = _G.C_PvP.GetCustomVictoryStatID
@@ -1535,6 +1536,8 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 	-- setup hooks
 	NS:SetupHooks()
+	NS:REPorter_SetupHooks()
+
 
 	-- hide cooldown manage while mounted?
 	if (NS.db.global.cdmHideWhileMounted == true) then
@@ -1614,21 +1617,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 			end
 
-			-- alterac valley?
-			if (NS.CommFlare.CF.MapID == 91) then
-				-- REPorter alterac valley add callouts
-				NS:REPorter_AlteracValley_Add_Callouts()
 			-- isle of conquest?
-			elseif (NS.CommFlare.CF.MapID == 169) then
+			if (NS.CommFlare.CF.MapID == 169) then
 				-- process isle of conquest stuff
 				NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
-
-				-- REPorter isle of conquest add callouts
-				NS:REPorter_IsleOfConquest_Add_Callouts()
-			-- battle for wintergrasp?
-			elseif (NS.CommFlare.CF.MapID == 1334) then
-				-- REPorter wintergrasp add callouts
-				NS:REPorter_Wintergrasp_Add_Callouts()
 			-- ashran?
 			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process ashran stuff
@@ -1906,7 +1898,7 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 	-- has pvp equipment set?
 	if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
 		-- can use equipment sets?
-		if (NS:UseEquipmentSet() == true) then
+		if (CanUseEquipmentSets() == true) then
 			local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
 			if (name and (isEquipped == false)) then
 				-- not in combat lockdown?
@@ -2107,14 +2099,34 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			if (NS.CommFlare.CF.MapID == 91) then
 				-- REPorter alterac valley add callouts
 				NS:REPorter_AlteracValley_Add_Callouts()
+			-- eye of the storm?
+			elseif (NS.CommFlare.CF.MapID == 112) then
+				-- REPorter eye of the storm add callouts
+				NS:REPorter_EyeOfTheStorm_Add_Callouts()
 			-- isle of conquest?
 			elseif (NS.CommFlare.CF.MapID == 169) then
 				-- REPorter isle of conquest add callouts
 				NS:REPorter_IsleOfConquest_Add_Callouts()
+			-- battle for gilneas?
+			elseif (NS.CommFlare.CF.MapID == 275) then
+				-- REPorter gilneas add callouts
+				NS:REPorter_Gilneas_Add_Callouts()
 			-- battle for wintergrasp?
 			elseif (NS.CommFlare.CF.MapID == 1334) then
 				-- REPorter wintergrasp add callouts
 				NS:REPorter_Wintergrasp_Add_Callouts()
+			-- arathi basin?
+			elseif (NS.CommFlare.CF.MapID == 1366) then
+				-- REPorter arathi basin add callouts
+				NS:REPorter_ArathiBasin_Add_Callouts()
+			-- ashran?
+			elseif (NS.CommFlare.CF.MapID == 1478) then
+				-- REPorter ashran add callouts
+				NS:REPorter_Ashran_Add_Callouts()
+			-- deepwind gorge?
+			elseif (NS.CommFlare.CF.MapID == 1576) then
+				-- REPorter deepwind gorge add callouts
+				NS:REPorter_DeepwindGorge_Add_Callouts()
 			end
 		end
 	end

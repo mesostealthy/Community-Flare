@@ -21,7 +21,7 @@ local CreateFrame, error, setmetatable, UIParent = CreateFrame, error, setmetata
 if not LibStub then error("LibCandyBar-3.0 requires LibStub.") end
 local cbh = LibStub:GetLibrary("CallbackHandler-1.0")
 if not cbh then error("LibCandyBar-3.0 requires CallbackHandler-1.0") end
-local lib = LibStub:NewLibrary("LibCandyBar-3.0", 107) -- Bump minor on changes
+local lib = LibStub:NewLibrary("LibCandyBar-3.0", 108) -- Bump minor on changes
 if not lib then return end
 lib.callbacks = lib.callbacks or cbh:New(lib)
 local cb = lib.callbacks
@@ -537,15 +537,11 @@ function lib:New(texture, width, height)
 		local iconBackdrop = CreateFrame("Frame", nil, bar, "BackdropTemplate") -- Used by bar stylers for backdrops
 		bar.candyBarIconFrameBackdrop = iconBackdrop
 
-		local duration = statusbar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
-		duration:SetPoint("TOPLEFT", statusbar, "TOPLEFT", 2, 0)
-		duration:SetPoint("BOTTOMRIGHT", statusbar, "BOTTOMRIGHT", -2, 0)
-		bar.candyBarDuration = duration
-
 		local label = statusbar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
-		label:SetPoint("TOPLEFT", statusbar, "TOPLEFT", 2, 0)
-		label:SetPoint("BOTTOMRIGHT", statusbar, "BOTTOMRIGHT", -2, 0)
 		bar.candyBarLabel = label
+
+		local duration = statusbar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
+		bar.candyBarDuration = duration
 
 		local updater = bar:CreateAnimationGroup()
 		updater:SetLooping("REPEAT")
@@ -556,12 +552,23 @@ function lib:New(texture, width, height)
 		bar.repeater = anim
 	else
 		barCache[bar] = nil
+
+		-- Clear secrets from icon textures
 		if bar.candyBarIconFrame.SetToDefaults then
 			bar.candyBarIconFrame:SetToDefaults()
 		end
-		if bar.candyBarIconFrameBackdrop.SetToDefaults then
-			bar.candyBarIconFrameBackdrop:SetToDefaults()
+		bar.candyBarIconFrame:ClearAllPoints()
+		bar.candyBarIconFrameBackdrop:ClearAllPoints()
+
+		-- Clear secrets from fontstrings
+		if bar.candyBarLabel.ClearText then
+			bar.candyBarLabel:ClearText()
 		end
+		bar.candyBarLabel:ClearAllPoints()
+		if bar.candyBarDuration.ClearText then
+			bar.candyBarDuration:ClearText()
+		end
+		bar.candyBarDuration:ClearAllPoints()
 	end
 
 	bar:SetFrameStrata("MEDIUM")
@@ -570,6 +577,10 @@ function lib:New(texture, width, height)
 	bar.candyBarBackground:SetTexture(texture)
 	bar.width = width
 	bar.height = height
+	bar.candyBarLabel:SetPoint("TOPLEFT", bar.candyBarBar, "TOPLEFT", 2, 0)
+	bar.candyBarLabel:SetPoint("BOTTOMRIGHT", bar.candyBarBar, "BOTTOMRIGHT", -2, 0)
+	bar.candyBarDuration:SetPoint("TOPLEFT", bar.candyBarBar, "TOPLEFT", 2, 0)
+	bar.candyBarDuration:SetPoint("BOTTOMRIGHT", bar.candyBarBar, "BOTTOMRIGHT", -2, 0)
 
 	-- RESET ALL THE THINGS!
 	bar.fill = nil

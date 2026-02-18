@@ -672,7 +672,6 @@ function NS:Setup_BlockGameMenuHooks()
 
 	-- not installed?
 	if (hook_MainMenuMicroButton_installed == false) then
-		-- TODO: REDO BELOW WITH RAW HOOKS!
 		-- hooks for blocking escape key menu inside a battleground
 		NS.CommFlare.CF.AllowMainMenu = false
 		MainMenuMicroButton:HookScript("OnMouseDown", hook_MainMenuMicroButton_OnMouseDown)

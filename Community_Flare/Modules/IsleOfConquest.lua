@@ -214,6 +214,7 @@ end
 -- add REPorter callouts
 function NS:REPorter_IsleOfConquest_Add_Callouts()
 	-- in combat lockdown?
+	if (NS.faction ~= 0) then return end
 	if (InCombatLockdown()) then
 		-- update last raid warning
 		TimerAfter(5, function()

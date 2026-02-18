@@ -9,14 +9,17 @@ local _G                                          = _G
 local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunitiesChannel
 local GetScreenHeight                             = _G.GetScreenHeight
 local GetScreenWidth                              = _G.GetScreenWidth
+local InCombatLockdown                            = _G.InCombatLockdown
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
-local EquipmentSetGetEquipmentSetIDs              = _G.C_EquipmentSet.GetEquipmentSetIDs
+local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
+local GetEquipmentSetIDs                          = _G.C_EquipmentSet.GetEquipmentSetIDs
 local ipairs                                      = _G.ipairs
 local next                                        = _G.next
 local pairs                                       = _G.pairs
 local print                                       = _G.print
+local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local tinsert                                     = _G.table.insert
 
@@ -647,25 +650,31 @@ end
 
 -- toggle community list manager
 local function Toggle_Community_List_Manager()
-	-- shown?
-	if (CF_CommunityListFrame:IsShown()) then
-		-- hide
-		CF_CommunityListFrame:Hide()
-	else
-		-- show
-		CF_CommunityListFrame:Show()
+	-- not in combat lockdown?
+	if (not InCombatLockdown()) then
+		-- shown?
+		if (CF_CommunityListFrame:IsShown()) then
+			-- hide
+			CF_CommunityListFrame:Hide()
+		else
+			-- show
+			CF_CommunityListFrame:Show()
+		end
 	end
 end
 
 -- toggle player list manager
 local function Toggle_Player_List_Manager()
-	-- shown?
-	if (CF_PlayerListFrame:IsShown()) then
-		-- hide
-		CF_PlayerListFrame:Hide()
-	else
-		-- show
-		CF_PlayerListFrame:Show()
+	-- not in combat lockdown?
+	if (not InCombatLockdown()) then
+		-- shown?
+		if (CF_PlayerListFrame:IsShown()) then
+			-- hide
+			CF_PlayerListFrame:Hide()
+		else
+			-- show
+			CF_PlayerListFrame:Show()
+		end
 	end
 end
 
@@ -856,9 +865,9 @@ local function Setup_Equipment_Sets_List(info)
 	-- can use equipment sets?
 	local list = {}
 	list[-1] = L["None"]
-	if (NS:UseEquipmentSet() == true) then
+	if (CanUseEquipmentSets() == true) then
 		-- process all equipment sets
-		local ids = EquipmentSetGetEquipmentSetIDs()
+		local ids = GetEquipmentSetIDs()
 		for k,v in ipairs(ids) do
 			-- add to list by name
 			local name = NS:GetEquipmentSetInfo(v)
@@ -873,7 +882,7 @@ end
 -- equipment sets disabled?
 local function Equipment_Sets_Disabled()
 	-- can use equipment sets?
-	if (NS:UseEquipmentSet() == true) then
+	if (CanUseEquipmentSets() == true) then
 		-- enabled
 		return false
 	else
@@ -890,7 +899,7 @@ local function SetAssistButtonXPos(info, value)
 		-- has assist button?
 		if (NS.AssistButton) then
 			-- save positions
-			local maxwidth = math.floor(GetScreenWidth())
+			local maxwidth = mfloor(GetScreenWidth())
 			local left = NS.db.global.AssistFrame.left + value
 			local width = NS.AssistButton:GetWidth()
 			local top = NS.db.global.AssistFrame.top or 0
@@ -930,7 +939,7 @@ local function SetAssistButtonYPos(info, value)
 		-- has assist button?
 		if (NS.AssistButton) then
 			-- save positions
-			local maxheight = math.floor(GetScreenHeight())
+			local maxheight = mfloor(GetScreenHeight())
 			local left = NS.db.global.AssistFrame.left or 0
 			local height = NS.AssistButton:GetHeight()
 			local top = NS.db.global.AssistFrame.top - value
@@ -1014,10 +1023,13 @@ local AssistButtonGroup = {
 			hidden = function(info)
 				-- available?
 				if (NS.AssistButton) then
-					-- not shown?
-					if (not NS.AssistButton:IsShown()) then
-						-- show
-						NS.AssistButton:Show()
+					-- not in combat lockdown?
+					if (not InCombatLockdown()) then
+						-- not shown?
+						if (not NS.AssistButton:IsShown()) then
+							-- show
+							NS.AssistButton:Show()
+						end
 					end
 				end
 			end,
@@ -1036,10 +1048,13 @@ local AssistButtonGroup = {
 			hidden = function(info)
 				-- available?
 				if (NS.AssistButton) then
-					-- not shown?
-					if (not NS.AssistButton:IsShown()) then
-						-- show
-						NS.AssistButton:Show()
+					-- not in combat lockdown?
+					if (not InCombatLockdown()) then
+						-- not shown?
+						if (not NS.AssistButton:IsShown()) then
+							-- show
+							NS.AssistButton:Show()
+						end
 					end
 				end
 			end,

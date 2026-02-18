@@ -31,14 +31,6 @@ NS.AshranTrackedPOIs = {
 -- vignettes
 NS.AshranActiveVignettes = {}
 NS.AshranTrackedVignettes = {
-	[640] = {
-		["name"] = L["Rylai Crestfall"],
-		["AlertDeath"] = true,
-		["BarColor"] = "colorAlliance",
-		["CappingDeath"] = true,
-		["IconID"] = 157,
-		["RespawnTime"] = 3600,
-	},
 	[4915] = {
 		["name"] = L["Narduke"],
 		["AlertDeath"] = true,
@@ -199,7 +191,18 @@ function NS:Process_Ashran_Widget(info)
 				-- decreased by 30+?
 				local diff = NS.CommFlare.CF.ASH.PrevLeftScore - tonumber(data.leftBarValue)
 				if (diff >= 30) then
-					-- TODO: Alliance lost 30+
+					-- add new capping bar
+					local path = {136441}
+					path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(157)
+					NS:Capping_Add_New_Bar(L["Jeron Emberfall"], 3600, "colorAlliance", path)
+
+					-- notifications enabled?
+					if (NS.db.global.ashranNotifications ~= 1) then
+						-- issue local raid warning (with raid warning audio sound)
+						local message = strformat(L["%s has been killed."], L["Rylai Crestfall"])
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+					end
+
 				end
 
 				-- update
@@ -232,4 +235,28 @@ function NS:Process_Ashran_Widget(info)
 			end
 		end
 	end
+end
+
+-- add REPorter callouts
+function NS:REPorter_Ashran_Add_Callouts()
+	-- in combat lockdown?
+	if (NS.faction ~= 0) then return end
+	if (InCombatLockdown()) then
+		-- update last raid warning
+		TimerAfter(5, function()
+			-- call again
+			NS:REPorter_Ashran_Add_Callouts()
+		end)
+
+		-- finished
+		return
+	end
+
+	-- add new overlays
+	NS:REPorter_Add_New_Overlay("Archmage Overwatch")
+	NS:REPorter_Add_New_Overlay("Crossroads")
+	NS:REPorter_Add_New_Overlay("Emberfall Tower")
+	NS:REPorter_Add_New_Overlay("Tremblade's Vanguard")
+	NS:REPorter_Add_New_Overlay("Volrath's Advance")
+	NS:REPorter_Add_New_Overlay("Warspear Outpost")
 end

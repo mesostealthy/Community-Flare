@@ -186,10 +186,6 @@ L["Yes"] = true
 L["You are not currently in a Guild."] = true
 
 -- Constants.lua
-L["Alterac Valley"] = true
-L["Arathi Basin"] = true
-L["Ashran"] = true
-L["Battle for Wintergrasp"] = true
 L["Brawl: Arathi Blizzard"] = true
 L["Brawl: Classic Ashran"] = true
 L["Brawl: Comp Stomp"] = true
@@ -202,19 +198,8 @@ L["Brawl: Shado-Pan Showdown"] = true
 L["Brawl: Southshore vs. Tarren Mill"] = true
 L["Brawl: Temple of Hotmogu"] = true
 L["Brawl: Warsong Scramble"] = true
-L["Deephaul Ravine"] = true
-L["Deepwind Gorge"] = true
-L["Eye of the Storm"] = true
-L["Isle of Conquest"] = true
 L["Korrak's Revenge"] = true
 L["Random Epic Battleground"] = true
-L["Random Training Grounds"] = true
-L["Seething Shore"] = true
-L["Silvershard Mines"] = true
-L["Temple of Kotmogu"] = true
-L["The Battle for Gilneas"] = true
-L["Twin Peaks"] = true
-L["Warsong Gulch"] = true
 
 -- Database.lua
 L["%s: %s (%d, %d) added to community %s."] = true

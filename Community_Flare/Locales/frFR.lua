@@ -186,10 +186,6 @@ L["Yes"] = "Oui"
 L["You are not currently in a Guild."] = "Vous n'êtes pas actuellement dans une guilde."
 
 -- Constants.lua
-L["Alterac Valley"] = "Vallée d’Alterac"
-L["Arathi Basin"] = "Bassin Arathi"
-L["Ashran"] = "A’shran"
-L["Battle for Wintergrasp"] = "Bataille de Joug-d’Hiver"
 L["Brawl: Arathi Blizzard"] = "Choc : Blizzard arathi"
 L["Brawl: Classic Ashran"] = "Choc : A’shran classique"
 L["Brawl: Comp Stomp"] = "Choc : contre l’IA"
@@ -202,19 +198,8 @@ L["Brawl: Shado-Pan Showdown"] = "Choc : Confrontation pandashan"
 L["Brawl: Southshore vs. Tarren Mill"] = "Choc : M.-de-Tarren c. Austrivage"
 L["Brawl: Temple of Hotmogu"] = "Choc : Temple de Supermogu"
 L["Brawl: Warsong Scramble"] = "Choc : Cohue Chanteguerre"
-L["Deephaul Ravine"] = "Ravin d’Abondabîme"
-L["Deepwind Gorge"] = "Gorge de Vent-Caverneux"
-L["Eye of the Storm"] = "L’Œil du cyclone"
-L["Isle of Conquest"] = "Île des Conquérants"
 L["Korrak's Revenge"] = "Vengeance de Korrak"
-L["Random Epic Battleground"] = true -- TODO
-L["Random Training Grounds"] = true -- TODO
-L["Seething Shore"] = "Rivage Bouillonnant"
-L["Silvershard Mines"] = "Mines d’Éclargent"
-L["Temple of Kotmogu"] = "Temple de Kotmogu"
-L["The Battle for Gilneas"] = "La bataille de Gilnéas"
-L["Twin Peaks"] = "Pics-Jumeaux"
-L["Warsong Gulch"] = "Goulet des Chanteguerres"
+L["Random Epic Battleground"] = "Champ de bataille épique aléatoire"
 
 -- Database.lua
 L["%s: %s (%d, %d) added to community %s."] = "%s : %s (%d, %d) rajouter à la communauté %s."

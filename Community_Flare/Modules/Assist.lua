@@ -11,6 +11,10 @@ local CreateFrame                                 = _G.CreateFrame
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsInRaid                                    = _G.IsInRaid
+local UnitIsEnemy                                 = _G.UnitIsEnemy
+local UnitIsPlayer                                = _G.UnitIsPlayer
+local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
+local GetNamePlates                               = _G.C_NamePlate.GetNamePlates
 local mfloor                                      = _G.math.floor
 local strsplit                                    = _G.string.split
 
@@ -31,7 +35,7 @@ function CommunityFlare_GetMainAssist()
 			if (player and ((role == "mainassist") or (role == "MAINASSIST"))) then
 				-- return name
 				local name, realm = strsplit("-", player)
-				return name
+				return name, i
 			end
 		end
 	end
@@ -50,7 +54,7 @@ function CommunityFlare_GetMainTank()
 			if (player and ((role == "maintank") or (role == "MAINTANK"))) then
 				-- return name
 				local name, realm = strsplit("-", player)
-				return name
+				return name, i
 			end
 		end
 	end
@@ -77,12 +81,13 @@ end
 function NS:ShowAssistButton()
 	-- get main assist
 	if (NS.faction ~= 0) then return end
-	local player1 = CommunityFlare_GetMainAssist()
+	local player1, unitToken1 = CommunityFlare_GetMainAssist()
 	if (player1) then
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- setup macrotext
 			NS.AssistButton.Button.macrotext1 = "/assist [nodead] " .. player1
+			NS.AssistButton.Button.unitToken1 = "raid" .. unitToken1
 			NS.AssistButton.Button:SetAttribute("type1", "macro")
 			NS.AssistButton.Button:SetAttribute("macrotext1", NS.AssistButton.Button.macrotext1)
 			if (not NS.AssistButton:IsShown()) then
@@ -91,10 +96,11 @@ function NS:ShowAssistButton()
 			end
 
 			-- has main tank?
-			local player2 = CommunityFlare_GetMainTank()
+			local player2, unitToken2 = CommunityFlare_GetMainTank()
 			if (player2) then
 				-- setup macrotext
 				NS.AssistButton.Button.macrotext2 = "/assist [nodead] " .. player2
+				NS.AssistButton.Button.unitToken2 = "raid" .. unitToken2
 				NS.AssistButton.Button:SetAttribute("type2", "macro")
 				NS.AssistButton.Button:SetAttribute("macrotext2", NS.AssistButton.Button.macrotext2)
 			end
@@ -196,6 +202,87 @@ function NS:SaveButtonPosition()
 	-- move assist button
 	NS.AssistButton:ClearAllPoints()
 	NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+end
+
+-- name plate added
+function NS:AssistButtonNamePlateAdded(...)
+	-- get main assist
+	local unitToken = ...
+	if (NS.faction ~= 0) then return end
+	local player1, unitToken1 = CommunityFlare_GetMainAssist()
+	if (player1) then
+		-- nameplateX only
+		if (unitToken:find("nameplate")) then
+			-- enemy player?
+			if (UnitIsEnemy(unitToken, "player")) then
+				-- get name plate
+				local namePlate = GetNamePlateForUnit(unitToken)
+				if (not namePlate) then
+					-- failed
+					return nil
+				end
+
+				-- uninitialized?
+				if (not namePlate.CF) then
+					-- create frame
+					namePlate.CF = {}
+					namePlate.CF.frame = CreateFrame("Frame", nil, namePlate)
+					namePlate.CF.frame:SetFrameStrata("HIGH")
+					namePlate.CF.frame:SetSize(50, 50)
+					namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
+					namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
+					namePlate.CF.frame.texture:SetAllPoints()
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare_Details\\Media\\dps.tga")
+				end
+
+				-- show transparent
+				namePlate.CF.frame:SetAlpha(0)
+				namePlate.CF.frame:Show()
+			end
+		end
+	end
+end
+
+-- name plate removed
+function NS:AssistButtonNamePlateRemoved(...)
+	-- nameplateX only
+	local unitToken = ...
+	if (NS.faction ~= 0) then return end
+	if (unitToken:find("nameplate")) then
+		-- get name plate
+		local namePlate = GetNamePlateForUnit(unitToken)
+		if (not namePlate) then
+			-- failed
+			return nil
+		end
+
+		-- frame created?
+		if (namePlate.CF and namePlate.CF.frame and namePlate.CF.texture) then
+			-- hide
+			namePlate.CF.frame:SetAlpha(0)
+			namePlate.CF.frame:Hide()
+		end
+	end
+end
+
+-- assist button update target
+function NS:AssistButtonUpdateTarget(...)
+	-- get main assist
+	if (NS.faction ~= 0) then return end
+	local player1, unitToken1 = CommunityFlare_GetMainAssist()
+	if (player1) then
+		-- process all
+		local targetUnit = "raid" .. unitToken1 .. "target"
+		for _, namePlate in ipairs(GetNamePlates()) do
+			-- get unit
+			local unit = namePlate:GetUnit()
+			if (namePlate.CF and namePlate.CF.frame) then
+				-- set alpha from boolean
+				local isTarget = UnitIsUnit(targetUnit, unit)
+				namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
+			end
+		end
+	end
 end
 
 -- create assist button
@@ -356,24 +443,52 @@ function NS:CreateAssistButton()
 	NS.AssistButton.ResizeButton:SetFrameLevel(10)
 	NS.AssistButton.ResizeButton:SetPoint("BOTTOMRIGHT", NS.AssistButton.Button, "BOTTOMRIGHT")
 	NS.AssistButton.ResizeButton:SetScript("OnMouseDown", function(self)
-		-- start sizing
-		NS.AssistButton:StartSizing("BOTTOMRIGHT")
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- start sizing
+			NS.AssistButton:StartSizing("BOTTOMRIGHT")
+		end
 	end)
 	NS.AssistButton.ResizeButton:SetScript("OnMouseUp", function(self)
-		-- stop moving or sizing
-		NS.AssistButton:StopMovingOrSizing()
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- stop moving or sizing
+			NS.AssistButton:StopMovingOrSizing()
 
-		-- get / save position
-		local parent = self:GetParent()
-		local scale = parent:GetScale()
-		local width = parent:GetWidth() * scale
-		if (not NS.db.global.AssistFrame) then
-			-- initialize
-			NS.db.global.AssistFrame = {}
+			-- get / save position
+			local parent = self:GetParent()
+			local scale = parent:GetScale()
+			local width = parent:GetWidth() * scale
+			if (not NS.db.global.AssistFrame) then
+				-- initialize
+				NS.db.global.AssistFrame = {}
+			end
+
+			-- save positions
+			NS.db.global.AssistFrame.width = width
 		end
+	end)
 
-		-- save positions
-		NS.db.global.AssistFrame.width = width
+	-- event handler
+	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_BEHIND_CAMERA_CHANGED")
+	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+	NS.AssistButton:RegisterEvent("UNIT_TARGET")
+	NS.AssistButton:SetScript("OnEvent", function(self, event, ...)
+		-- name plate unit added?
+		if (event == "NAME_PLATE_UNIT_ADDED") then
+			-- assist button name plate added
+			NS:AssistButtonNamePlateAdded(...)
+		elseif (event == "NAME_PLATE_UNIT_BEHIND_CAMERA_CHANGED") then
+			-- assist button name plate added
+			NS:AssistButtonNamePlateAdded(...)
+		elseif (event == "NAME_PLATE_UNIT_REMOVED") then
+			-- assist button name plate removed
+			NS:AssistButtonNamePlateRemoved(...)
+		elseif (event == "UNIT_TARGET") then
+			-- assist button update target
+			NS:AssistButtonUpdateTarget(...)
+		end
 	end)
 
 	-- initialized

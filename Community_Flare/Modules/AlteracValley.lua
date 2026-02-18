@@ -87,6 +87,7 @@ end
 -- add REPorter callouts
 function NS:REPorter_AlteracValley_Add_Callouts()
 	-- in combat lockdown?
+	if (NS.faction ~= 0) then return end
 	if (InCombatLockdown()) then
 		-- update last raid warning
 		TimerAfter(5, function()
@@ -98,7 +99,7 @@ function NS:REPorter_AlteracValley_Add_Callouts()
 		return
 	end
 
-	-- add new overlays
+	-- add remaining overlays
 	NS:REPorter_Add_New_Overlay("Dun Baldar North Bunker")
 	NS:REPorter_Add_New_Overlay("Dun Baldar South Bunker")
 	NS:REPorter_Add_New_Overlay("East Frostwolf Tower")

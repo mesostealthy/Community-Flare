@@ -34,6 +34,7 @@ local PVPReadyDialog                              = _G.PVPReadyDialog
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local UnitName                                    = _G.UnitName
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
+local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
 local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
@@ -2699,7 +2700,7 @@ function NS:Update_Battlefield_Status(index)
 		-- has pvp equipment set?
 		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
 			-- can use equipment sets?
-			if (NS:UseEquipmentSet() == true) then
+			if (CanUseEquipmentSets() == true) then
 				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
 				if (name and (isEquipped == false)) then
 					-- not in combat lockdown?

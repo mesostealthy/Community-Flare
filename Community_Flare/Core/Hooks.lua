@@ -10,7 +10,9 @@ local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpirat
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
+local InCombatLockdown                            = _G.InCombatLockdown
 local IsInGroup                                   = _G.IsInGroup
+local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local IsShiftKeyDown                              = _G.IsShiftKeyDown
 local PvPIsArena                                  = _G.C_PvP.IsArena
@@ -35,6 +37,7 @@ local hook_PVPMatchResults_OnUpdate_installed = false
 local hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = false
 local hook_QuickJoinRoleSelectionFrame_OnShow_installed = false
 local hook_GameTooltip_OnShow_installed = false
+local hook_SettingsPanel_OnHide_installed = false
 
 -- securely hook accept battlefield port
 local function hook_AcceptBattlefieldPort(index, acceptFlag)
@@ -336,7 +339,7 @@ local function hook_QuickJoinRoleSelectionFrame_OnShow()
 	end
 end
 
--- secure hook game tooltip on show
+-- securely hook game tooltip on show
 local function hook_GameTooltip_OnShow()
 	-- game tooltips blocked?
 	if (NS.db.global.blockGameTooltips == true) then
@@ -346,6 +349,22 @@ local function hook_GameTooltip_OnShow()
 			if (not IsShiftKeyDown()) then
 				-- hide
 				GameTooltip:Hide()
+			end
+		end
+	end
+end
+
+-- securely hook settings panel on hide
+local function hook_SettingsPanel_OnHide()
+	-- not inside pvp?
+	local inInstance, instanceType = IsInInstance()
+	if (instanceType ~= "pvp") then
+		-- not in combat lockdown?
+		if (not InCombatLockdown()) then
+			-- shown?
+			if (NS.AssistButton:IsShown()) then
+				-- hide
+				NS.AssistButton:Hide()
 			end
 		end
 	end
@@ -415,7 +434,7 @@ function NS:SetupHooks()
 	if (hook_HonorFrameQueueButton_OnEnter_installed ~= true) then
 		-- honor frame loaded?
 		if (HonorFrame and HonorFrameQueueButton) then
-			-- hook queue button mouse over
+			-- hook HonorFrameQueueButton:OnEnter
 			HonorFrameQueueButton:HookScript("OnEnter", hook_HonorFrameQueueButton_OnEnter)
 			hook_HonorFrameQueueButton_OnEnter_installed = true
 		end
@@ -425,7 +444,7 @@ function NS:SetupHooks()
 	if (hook_QuickJoinRoleSelectionFrame_OnShow_installed ~= true) then
 		-- quick join role selection frame loaded?
 		if (QuickJoinRoleSelectionFrame) then
-			-- hook quick join role selection on show
+			-- hook QuickJoinRoleSelectionFrame:OnShow
 			QuickJoinRoleSelectionFrame:HookScript("OnShow", hook_QuickJoinRoleSelectionFrame_OnShow)
 			hook_QuickJoinRoleSelectionFrame_OnShow_installed = true
 		end
@@ -435,9 +454,20 @@ function NS:SetupHooks()
 	if (hook_GameTooltip_OnShow_installed ~= true) then
 		--- game tooltip loaded?
 		if (GameTooltip) then
-			-- hook game tooltip on show
+			-- hook GameTooltip:OnShow
 			GameTooltip:HookScript("OnShow", hook_GameTooltip_OnShow)
 			hook_GameTooltip_OnShow_installed = true
+		end
+	end
+
+
+	-- SettingsPanel:OnHide() not hooked?
+	if (hook_SettingsPanel_OnHide_installed ~= true) then
+		--- settings panel loaded?
+		if (SettingsPanel) then
+			-- hook SettingsPanel:OnHide
+			SettingsPanel:HookScript("OnHide", hook_SettingsPanel_OnHide)
+			hook_SettingsPanel_OnHide_installed = true
 		end
 	end
 end

@@ -10,14 +10,14 @@ local InCombatLockdown                            = _G.InCombatLockdown
 local TimerAfter                                  = _G.C_Timer.After
 
 -- add REPorter callouts
-function NS:REPorter_Wintergrasp_Add_Callouts()
+function NS:REPorter_ArathiBasin_Add_Callouts()
 	-- in combat lockdown?
 	if (NS.faction ~= 0) then return end
 	if (InCombatLockdown()) then
 		-- update last raid warning
 		TimerAfter(5, function()
 			-- call again
-			NS:REPorter_Wintergrasp_Add_Callouts()
+			NS:REPorter_ArathiBasin_Add_Callouts()
 		end)
 
 		-- finished
@@ -25,11 +25,9 @@ function NS:REPorter_Wintergrasp_Add_Callouts()
 	end
 
 	-- add new overlays
-	NS:REPorter_Add_New_Overlay("Broken Temple Vehicle Workshop")
-	NS:REPorter_Add_New_Overlay("Eastspark Vehicle Workshop")
-	NS:REPorter_Add_New_Overlay("Flamewatch Tower")
-	NS:REPorter_Add_New_Overlay("Shadowsight Tower")
-	NS:REPorter_Add_New_Overlay("Sunken Ring Vehicle Workshop")
-	NS:REPorter_Add_New_Overlay("Westspark Vehicle Workshop")
-	NS:REPorter_Add_New_Overlay("Winter's Edge Tower")
+	NS:REPorter_Add_New_Overlay("Blacksmith")
+	NS:REPorter_Add_New_Overlay("Farm")
+	NS:REPorter_Add_New_Overlay("Gold Mine")
+	NS:REPorter_Add_New_Overlay("Lumber Mill")
+	NS:REPorter_Add_New_Overlay("Stables")
 end
