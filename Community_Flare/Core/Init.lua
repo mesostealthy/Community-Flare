@@ -51,7 +51,6 @@ local PvPIsBattleground                           = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
 local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
-local TimerAfter                                  = _G.C_Timer.After
 local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs

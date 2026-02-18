@@ -667,7 +667,7 @@ function CF_PlayerListEntryMixin:OnEnter()
 					local raceID = NS:PlayerInfoGetRace(playerLocation)
 					if (raceID) then
 						-- get faction
-						local factionInfo = NS:GetFactioninfo(raceID)
+						local factionInfo = NS:GetFactionInfo(raceID)
 						if (factionInfo and factionInfo.name and (factionInfo.name ~= "")) then
 							-- display faction
 							GameTooltip:AddLine(strformat("Faction: %s", factionInfo.name), 1, 1, 1)

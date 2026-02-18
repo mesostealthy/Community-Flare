@@ -8,6 +8,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local time                                        = _G.time

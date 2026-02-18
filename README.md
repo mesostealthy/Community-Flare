@@ -21,6 +21,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.08.001:
+v2.08.002:
 -REPorter: Callouts added for Arathi Basin, Ashran, Battle for Gilneas, Deepwind Gorge & Eye of the Storm.
 -REPorter: Callouts have Tooltip on hover over objectives if able to issue call.
+-BUGFIXES: Fixed a few LUA errors for some updated functions.

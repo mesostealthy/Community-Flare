@@ -14,7 +14,6 @@ local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                           = _G.IsMouseButtonDown
 local PlayerLocation                              = _G.PlayerLocation
 local StaticPopup_Show                            = _G.StaticPopup_Show
-local TimerAfter                                  = _G.C_Timer.After
 local date                                        = _G.date
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
