@@ -101,8 +101,8 @@ function NS.CommFlare:ADDON_LOADED(msg, ...)
 		-- enforce pvp roles
 		NS:Enforce_PVP_Roles()
 
-		-- setup hooks
-		NS:SetupHooks()
+		-- battlefield setup hooks
+		NS:Battlefield_SetupHooks()
 	end
 end
 
@@ -110,14 +110,18 @@ end
 function NS.CommFlare:AREA_POIS_UPDATED(msg)
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
+		-- alterac valley?
+		if (NS.CommFlare.CF.MapID == 91) then
+			-- process alterac valley POIs
+			NS:Process_AlteracValley_POIs()
 		-- isle of conquest?
-		if (NS.CommFlare.CF.MapID == 169) then
+		elseif (NS.CommFlare.CF.MapID == 169) then
 			-- process isle of conquest POIs
-			NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
+			NS:Process_IsleOfConquest_POIs()
 		-- ashran?
 		elseif (NS.CommFlare.CF.MapID == 1478) then
 			-- process ashran POIs
-			NS:Process_Ashran_POIs(NS.CommFlare.CF.MapID)
+			NS:Process_Ashran_POIs()
 		end
 	end
 end
@@ -1534,10 +1538,16 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
 
-	-- setup hooks
-	NS:SetupHooks()
-	NS:REPorter_SetupHooks()
+	-- build stuff
+	NS:Build_Battlegrounds()
+	NS:Build_Classes()
+	NS:Build_Spells()
+	NS:Build_Training_Grounds()
 
+	-- setup hooks
+	NS:Battlefield_SetupHooks()
+	NS:CommunityGuild_SetupHooks()
+	NS:REPorter_SetupHooks()
 
 	-- hide cooldown manage while mounted?
 	if (NS.db.global.cdmHideWhileMounted == true) then
@@ -1617,15 +1627,23 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 			end
 
+			-- alterac valley?
+			if (NS.CommFlare.CF.MapID == 91) then
+				-- process alterac valley stuff
+				NS:AlteracValley_Initialize()
+				NS:Process_AlteracValley_POIs()
+				NS:Process_AlteracValley_Vignettes()
 			-- isle of conquest?
-			if (NS.CommFlare.CF.MapID == 169) then
+			elseif (NS.CommFlare.CF.MapID == 169) then
 				-- process isle of conquest stuff
-				NS:Process_IsleOfConquest_POIs(NS.CommFlare.CF.MapID)
+				NS:IsleOfConquest_Initialize()
+				NS:Process_IsleOfConquest_POIs()
 			-- ashran?
 			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process ashran stuff
-				NS:Process_Ashran_POIs(NS.CommFlare.CF.MapID)
-				NS:Process_Ashran_Vignettes(NS.CommFlare.CF.MapID)
+				NS:Ashran_Initialize()
+				NS:Process_Ashran_POIs()
+				NS:Process_Ashran_Vignettes()
 			end
 
 			-- block game menu hot keys enabled?
@@ -1705,10 +1723,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			NS.db.global.assistButtonYPos = 0
 		end
 
-		-- TODO: verify club streams
-		--NS.CommFlare.CF.StreamsRetryCount = 0
-		--local clubs = NS:Get_Enabled_Clubs()
-		--NS:Verify_Club_Streams(clubs)
+		-- verify club streams
+		NS.CommFlare.CF.StreamsRetryCount = 0
+		local clubs = NS:Get_Enabled_Clubs()
+		NS:Verify_Club_Streams(clubs)
 	else
 		-- match is active state?
 		if (PvPGetActiveMatchDuration() > 0) then
@@ -2001,7 +2019,7 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 			TimerAfter(timer, function()
 				-- won the match?
 				local text = nil
-				if (NS.CommFlare.CF.PlayerInfo.faction == NS.CommFlare.CF.Winner) then
+				if (NS.faction == NS.CommFlare.CF.Winner) then
 					-- victory
 					text = strformat("%s = %d %s, %d %s; %s %s!", L["Time Elapsed"],
 						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
@@ -2813,10 +2831,14 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 	if (inInstance == true) then
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
+			-- alterac valley?
+			if (NS.CommFlare.CF.MapID == 91) then
+				-- process alterac valley stuff
+				NS:Process_AlteracValley_Vignettes()
 			-- ashran?
-			if (NS.CommFlare.CF.MapID == 1478) then
+			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process ashran stuff
-				NS:Process_Ashran_Vignettes(NS.CommFlare.CF.MapID)
+				NS:Process_Ashran_Vignettes()
 			end
 		end
 	else

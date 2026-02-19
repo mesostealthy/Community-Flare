@@ -9,7 +9,6 @@ local _G                                          = _G
 local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                               = _G.DevTools_Dump
 local date                                        = _G.date
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -196,7 +195,7 @@ function CF_VehicleListMixin:RefreshListDisplay()
 	end
 end
 
--- update queue list
+-- update vehicle list
 function CF_VehicleListMixin:UpdateVehicleList()
 	-- initialize
 	self.VehicleList = {}
@@ -264,7 +263,7 @@ end
 
 -- on show
 function CF_VehicleListMixin:OnShow()
-	-- update queue list
+	-- update vehicle list
 	self:UpdateVehicleList()
 end
 
@@ -337,20 +336,20 @@ function CF_VehicleListEntryMixin:OnLeave()
 	GameTooltip:Hide()
 end
 
--- set queue
-function CF_VehicleListEntryMixin:SetQueue(info)
-	-- has queue info?
+-- set entry
+function CF_VehicleListEntryMixin:SetEntry(info)
+	-- has info?
 	if (info and info.name) then
-		-- save queue info / text
+		-- save info / text
 		self.info = info
-		self.QueueFrame.Name:SetText(strformat("%s", info.name))
+		self.EntryFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
-		self.QueueFrame.Name:SetTextColor(1, 1, 1)
+		self.EntryFrame.Name:SetTextColor(1, 1, 1)
 	else
 		-- delete member info / text
 		self.info = nil
-		self.QueueFrame.Name:SetText(nil)
+		self.EntryFrame.Name:SetText(nil)
 	end
 
 	-- update frame
@@ -362,23 +361,23 @@ function CF_VehicleListEntryMixin:Init(elementData)
 	-- update frame
 	self:UpdateFrame()
 
-	-- has queue info?
+	-- has info?
 	if (elementData.info) then
-		-- set queue data
+		-- set data
 		local info = elementData.info
-		self:SetQueue(info)
+		self:SetEntry(info)
 	end
 end
 
 -- update frame
 function CF_VehicleListEntryMixin:UpdateFrame()
 	-- update frame
-	local queueFrame = self.QueueFrame
-	queueFrame.Name:ClearAllPoints()
-	queueFrame.Name:SetPoint("LEFT", queueFrame, "LEFT", 0, 0)
-	queueFrame:ClearAllPoints()
-	queueFrame:SetPoint("LEFT", 4, 0)
-	queueFrame:SetWidth(130)
+	local entryFrame = self.EntryFrame
+	entryFrame.Name:ClearAllPoints()
+	entryFrame.Name:SetPoint("LEFT", entryFrame, "LEFT", 0, 0)
+	entryFrame:ClearAllPoints()
+	entryFrame:SetPoint("LEFT", 4, 0)
+	entryFrame:SetWidth(130)
 end
 
 -- create table

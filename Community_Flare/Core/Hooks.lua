@@ -370,8 +370,8 @@ local function hook_SettingsPanel_OnHide()
 	end
 end
 
--- setup hooks
-function NS:SetupHooks()
+-- battlefield setup hooks
+function NS:Battlefield_SetupHooks()
 	-- AcceptBattlefieldPort() not hooked?
 	if (hook_AcceptBattlefieldPort_installed ~= true) then
 		-- hook AcceptBattlefieldPort
@@ -398,26 +398,6 @@ function NS:SetupHooks()
 		-- hook RejectProposal
 		hooksecurefunc("RejectProposal", hook_RejectProposal)
 		hook_RejectProposal_installed = true
-	end
-
-	-- ClubFinderCommunityAndGuildFinderFrame.CommunityCards:RefreshLayout() not hooked?
-	if (hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed ~= true) then
-		-- community cards loaded?
-		if (ClubFinderCommunityAndGuildFinderFrame and ClubFinderCommunityAndGuildFinderFrame.CommunityCards) then
-			-- hook ClubFinderCommunityAndGuildFinderFrame.CommunityCards:RefreshLayout
-			hooksecurefunc(ClubFinderCommunityAndGuildFinderFrame.CommunityCards, "RefreshLayout", hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout)
-			hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed = true
-		end
-	end
-
-	-- ClubFinderGuildFinderFrame.GuildCards:RefreshLayout() not hooked?
-	if (hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed ~= true) then
-		-- guild cards loaded?
-		if (ClubFinderGuildFinderFrame and ClubFinderGuildFinderFrame.GuildCards) then
-			-- hook ClubFinderGuildFinderFrame.GuildCards:RefreshLayout
-			hooksecurefunc(ClubFinderGuildFinderFrame.GuildCards, "RefreshLayout", hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout)
-			hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed = true
-		end
 	end
 
 	-- PVPMatchResults:OnUpdate() not hooked?
@@ -460,7 +440,6 @@ function NS:SetupHooks()
 		end
 	end
 
-
 	-- SettingsPanel:OnHide() not hooked?
 	if (hook_SettingsPanel_OnHide_installed ~= true) then
 		--- settings panel loaded?
@@ -468,6 +447,29 @@ function NS:SetupHooks()
 			-- hook SettingsPanel:OnHide
 			SettingsPanel:HookScript("OnHide", hook_SettingsPanel_OnHide)
 			hook_SettingsPanel_OnHide_installed = true
+		end
+	end
+end
+
+-- community / guild setup hooks
+function NS:CommunityGuild_SetupHooks()
+	-- ClubFinderCommunityAndGuildFinderFrame.CommunityCards:RefreshLayout() not hooked?
+	if (hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed ~= true) then
+		-- community cards loaded?
+		if (ClubFinderCommunityAndGuildFinderFrame and ClubFinderCommunityAndGuildFinderFrame.CommunityCards) then
+			-- hook ClubFinderCommunityAndGuildFinderFrame.CommunityCards:RefreshLayout
+			hooksecurefunc(ClubFinderCommunityAndGuildFinderFrame.CommunityCards, "RefreshLayout", hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout)
+			hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed = true
+		end
+	end
+
+	-- ClubFinderGuildFinderFrame.GuildCards:RefreshLayout() not hooked?
+	if (hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed ~= true) then
+		-- guild cards loaded?
+		if (ClubFinderGuildFinderFrame and ClubFinderGuildFinderFrame.GuildCards) then
+			-- hook ClubFinderGuildFinderFrame.GuildCards:RefreshLayout
+			hooksecurefunc(ClubFinderGuildFinderFrame.GuildCards, "RefreshLayout", hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout)
+			hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed = true
 		end
 	end
 end

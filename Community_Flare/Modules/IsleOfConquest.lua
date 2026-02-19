@@ -21,7 +21,7 @@ NS.IOCActivePOIs = {}
 NS.IOCTrackedPOIs = {} -- none for now
 
 -- initialize
-function NS:IOC_Initialize()
+function NS:IsleOfConquest_Initialize()
 	-- reset stuff
 	NS.IOCActivePOIs = {}
 	NS.CommFlare.CF.IOC.AllianceGlaivesUp = 0
@@ -36,9 +36,10 @@ function NS:IOC_Initialize()
 end
 
 -- process isle of conquest pois
-function NS:Process_IsleOfConquest_POIs(mapID)
+function NS:Process_IsleOfConquest_POIs()
 	-- found POIs?
 	if (NS.faction ~= 0) then return end
+	local mapID = NS.CommFlare.CF.MapID
 	local ids = NS:GetAreaPOIForMap(mapID)
 	if (ids and (#ids > 0)) then
 		-- check for additions
@@ -227,8 +228,16 @@ function NS:REPorter_IsleOfConquest_Add_Callouts()
 	end
 
 	-- add new overlays
+	NS:REPorter_Add_New_Overlay("Alliance Gate - East")
+	NS:REPorter_Add_New_Overlay("Alliance Gate - Front")
+	NS:REPorter_Add_New_Overlay("Alliance Gate - West")
+	NS:REPorter_Add_New_Overlay("Alliance Keep")
 	NS:REPorter_Add_New_Overlay("Docks")
 	NS:REPorter_Add_New_Overlay("Hangar")
+	NS:REPorter_Add_New_Overlay("Horde Gate - East")
+	NS:REPorter_Add_New_Overlay("Horde Gate - Front")
+	NS:REPorter_Add_New_Overlay("Horde Gate - West")
+	NS:REPorter_Add_New_Overlay("Horde Keep")
 	NS:REPorter_Add_New_Overlay("Quarry")
 	NS:REPorter_Add_New_Overlay("Refinery")
 	NS:REPorter_Add_New_Overlay("Workshop")

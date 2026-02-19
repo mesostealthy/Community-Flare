@@ -1353,16 +1353,6 @@ local CommunityGroup = {
 			width = "full",
 			get = function(info) return NS.charDB.profile.alwaysReaddChannels end,
 			set = function(info, value) NS.charDB.profile.alwaysReaddChannels = value end,
-			hidden = function()
-				-- is midnight?
-				if (NS.CommFlare.isMidnight) then
-					-- force disable
-					NS.charDB.profile.alwaysReaddChannels = false
-				end
-
-				-- hidden?
-				return NS.CommFlare.isMidnight
-			end,
 		},
 		communityRightClickMenu = {
 			type = "toggle",

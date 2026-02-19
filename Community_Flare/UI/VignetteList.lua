@@ -9,7 +9,6 @@ local _G                                          = _G
 local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                               = _G.DevTools_Dump
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local date                                        = _G.date
 local ipairs                                      = _G.ipairs
@@ -197,7 +196,7 @@ function CF_VignetteListMixin:RefreshListDisplay()
 	end
 end
 
--- update queue list
+-- update vignette list
 function CF_VignetteListMixin:UpdateVignetteList()
 	-- initialize
 	self.VignetteList = {}
@@ -281,7 +280,7 @@ end
 
 -- on show
 function CF_VignetteListMixin:OnShow()
-	-- update queue list
+	-- update vignette list
 	self:UpdateVignetteList()
 end
 
@@ -362,21 +361,20 @@ function CF_VignetteListEntryMixin:OnLeave()
 	GameTooltip:Hide()
 end
 
--- set queue
-function CF_VignetteListEntryMixin:SetQueue(info)
-	-- has queue info?
-	if (info and info.guid and info.name) then
-		-- save queue info / text
+-- set entry
+function CF_VignetteListEntryMixin:SetEntry(info)
+	-- has info?
+	if (info and info.name) then
+		-- save info / text
 		self.info = info
-		self.guid = info.guid
-		self.QueueFrame.Name:SetText(strformat("%s", info.name))
+		self.EntryFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
-		self.QueueFrame.Name:SetTextColor(1, 1, 1)
+		self.EntryFrame.Name:SetTextColor(1, 1, 1)
 	else
 		-- delete member info / text
 		self.info = nil
-		self.QueueFrame.Name:SetText(nil)
+		self.EntryFrame.Name:SetText(nil)
 	end
 
 	-- update frame
@@ -388,24 +386,23 @@ function CF_VignetteListEntryMixin:Init(elementData)
 	-- update frame
 	self:UpdateFrame()
 
-	-- has queue info?
+	-- has info?
 	if (elementData.info) then
-		-- set queue data
+		-- set data
 		local info = elementData.info
-		self.guid = info.guid
-		self:SetQueue(info)
+		self:SetEntry(info)
 	end
 end
 
 -- update frame
 function CF_VignetteListEntryMixin:UpdateFrame()
 	-- update frame
-	local queueFrame = self.QueueFrame
-	queueFrame.Name:ClearAllPoints()
-	queueFrame.Name:SetPoint("LEFT", queueFrame, "LEFT", 0, 0)
-	queueFrame:ClearAllPoints()
-	queueFrame:SetPoint("LEFT", 4, 0)
-	queueFrame:SetWidth(130)
+	local eventFrame = self.EntryFrame
+	eventFrame.Name:ClearAllPoints()
+	eventFrame.Name:SetPoint("LEFT", eventFrame, "LEFT", 0, 0)
+	eventFrame:ClearAllPoints()
+	eventFrame:SetPoint("LEFT", 4, 0)
+	eventFrame:SetWidth(130)
 end
 
 -- create table

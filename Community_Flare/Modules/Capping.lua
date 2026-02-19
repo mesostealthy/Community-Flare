@@ -20,6 +20,7 @@ local tsort                                       = _G.table.sort
 -- list bars
 function NS:Capping_List_Bars()
 	-- has capping?
+	if (NS.faction ~= 0) then return end
 	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
 		-- process all
 		for bar,_ in pairs(CappingFrame.bars) do
@@ -32,6 +33,7 @@ end
 -- refresh bars
 function NS:Capping_Refresh_Bars()
 	-- has capping?
+	if (NS.faction ~= 0) then return end
 	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
 		-- rearrange bars
 		CappingFrame.RearrangeBars()
@@ -41,6 +43,7 @@ end
 -- find bar
 function NS:Capping_Find_Bar(name, exact)
 	-- has capping?
+	if (NS.faction ~= 0) then return end
 	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
 		-- process all
 		for bar,_ in pairs(CappingFrame.bars) do
@@ -72,6 +75,7 @@ end
 -- stop bars
 function NS:Capping_Stop_Bars(name)
 	-- has capping?
+	if (NS.faction ~= 0) then return end
 	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
 		-- process all
 		local refresh = false
@@ -99,6 +103,7 @@ end
 -- report bar
 local function ReportBar(bar, channel)
 	-- sanity checks
+	if (NS.faction ~= 0) then return end
 	if (not bar) then return end
 	if ((channel == "INSTANCE_CHAT") and not IsInGroup(2)) then channel = "RAID" end -- LE_PARTY_CATEGORY_INSTANCE = 2
 
@@ -124,6 +129,7 @@ end
 -- bar clicked script
 local function BarOnClick(bar, button)
 	-- has capping?
+	if (NS.faction ~= 0) then return end
 	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
 		-- left button?
 		if (button == "LeftButton") then
@@ -148,6 +154,7 @@ end
 -- add new bar
 function NS:Capping_Add_New_Bar(name, remaining, colorid, icon, priority, maxBarTime)
 	-- no name given?
+	if (NS.faction ~= 0) then return end
 	if (not name or (name == "")) then
 		-- finished
 		return

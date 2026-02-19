@@ -356,6 +356,7 @@ L["You've been removed from the party for being AFK."] = "Vous avez été retir�
 -- AlteracValley.lua
 L["Captain Balinda Stonehearth"] = "Capitaine Balinda Gîtepierre"
 L["Captain Galvangar"] = "Capitaine Galvangar"
+L["Primalist Thurloga"] = "Primaliste Thurloga"
 
 -- Ashran.lua
 L["%s has been killed."] = "%s a été tué."

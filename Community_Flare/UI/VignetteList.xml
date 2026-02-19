@@ -4,7 +4,7 @@
 	<Button name="CF_VignetteListEntryTemplate" registerForClicks="LeftButtonUp, RightButtonUp" virtual="true" mixin="CF_VignetteListEntryMixin">
 		<Size y="20" />
 		<Frames>
-			<Frame parentKey="QueueFrame">
+			<Frame parentKey="EntryFrame">
 				<Size y="20" />
 				<Anchors>
 					<Anchor point="LEFT" x="4" y="0" />

@@ -356,6 +356,7 @@ L["You've been removed from the party for being AFK."] = true
 -- AlteracValley.lua
 L["Captain Balinda Stonehearth"] = true
 L["Captain Galvangar"] = true
+L["Primalist Thurloga"] = true
 
 -- Ashran.lua
 L["%s has been killed."] = true

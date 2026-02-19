@@ -6,9 +6,11 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
+local GetNumBattlegroundTypes                     = _G.GetNumBattlegroundTypes
 local IsLFGDungeonJoinable                        = _G.IsLFGDungeonJoinable
 local GetTrainingGrounds                          = _G.C_PvP.GetTrainingGrounds
 local GetSpellName                                = _G.C_Spell.GetSpellName
+local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local tinsert                                     = _G.table.insert
 
@@ -262,7 +264,8 @@ function NS:Build_Battlegrounds()
 		return
 	end
 
-	-- insert global strings
+	-- initialize random battlegrounds
+	NS.CommFlare.RandomBattlegrounds = {}
 	tinsert(NS.CommFlare.RandomBattlegrounds, { name = RANDOM_BATTLEGROUND, id = 1, prefix = "RBG" })
 
 	-- process all

@@ -9,7 +9,6 @@ local _G                                          = _G
 local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
-local DevTools_Dump                               = _G.DevTools_Dump
 local date                                        = _G.date
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -198,7 +197,7 @@ function CF_POIListMixin:RefreshListDisplay()
 	end
 end
 
--- update queue list
+-- update poi list
 function CF_POIListMixin:UpdatePOIList()
 	-- initialize
 	self.POIList = {}
@@ -281,7 +280,7 @@ end
 
 -- on show
 function CF_POIListMixin:OnShow()
-	-- update queue list
+	-- update poi list
 	self:UpdatePOIList()
 end
 
@@ -329,6 +328,7 @@ end
 -- on enter
 function CF_POIListEntryMixin:OnEnter()
 	-- start tooltip
+	GLOBAL_self = self
 	local info = self.info.data
 	GameTooltip:SetOwner(self)
 
@@ -374,21 +374,20 @@ function CF_POIListEntryMixin:OnLeave()
 	GameTooltip:Hide()
 end
 
--- set queue
-function CF_POIListEntryMixin:SetQueue(info)
-	-- has queue info?
-	if (info and info.guid and info.name) then
-		-- save queue info / text
+-- set entry
+function CF_POIListEntryMixin:SetEntry(info)
+	-- has info?
+	if (info and info.name) then
+		-- save info / text
 		self.info = info
-		self.guid = info.guid
-		self.QueueFrame.Name:SetText(strformat("%s", info.name))
+		self.EntryFrame.Name:SetText(strformat("%s", info.name))
 
 		-- white
-		self.QueueFrame.Name:SetTextColor(1, 1, 1)
+		self.EntryFrame.Name:SetTextColor(1, 1, 1)
 	else
 		-- delete member info / text
 		self.info = nil
-		self.QueueFrame.Name:SetText(nil)
+		self.EntryFrame.Name:SetText(nil)
 	end
 
 	-- update frame
@@ -400,24 +399,23 @@ function CF_POIListEntryMixin:Init(elementData)
 	-- update frame
 	self:UpdateFrame()
 
-	-- has queue info?
+	-- has info?
 	if (elementData.info) then
-		-- set queue data
+		-- set data
 		local info = elementData.info
-		self.guid = info.guid
-		self:SetQueue(info)
+		self:SetEntry(info)
 	end
 end
 
 -- update frame
 function CF_POIListEntryMixin:UpdateFrame()
 	-- update frame
-	local queueFrame = self.QueueFrame
-	queueFrame.Name:ClearAllPoints()
-	queueFrame.Name:SetPoint("LEFT", queueFrame, "LEFT", 0, 0)
-	queueFrame:ClearAllPoints()
-	queueFrame:SetPoint("LEFT", 4, 0)
-	queueFrame:SetWidth(130)
+	local entryFrame = self.EntryFrame
+	entryFrame.Name:ClearAllPoints()
+	entryFrame.Name:SetPoint("LEFT", entryFrame, "LEFT", 0, 0)
+	entryFrame:ClearAllPoints()
+	entryFrame:SetPoint("LEFT", 4, 0)
+	entryFrame:SetWidth(130)
 end
 
 -- create table

@@ -211,7 +211,7 @@ NS.CommFlare.InterfaceVersion = select(4, GetBuildInfo())
 function NS:IsOutdatedVersion()
 	-- past supported version?
 	if (NS.CommFlare.InterfaceVersion > 120001) then
-		-- TODO: localize warning
+		-- TODO: localize warning?
 		print(strformat("%s: WoW Interface Version beyond %d detected! Please UPGRADE from Curseforge or Wago!", NS.CommFlare.Title, NS.CommFlare.InterfaceVersion))
 		return true
 	end
@@ -272,12 +272,6 @@ function NS.CommFlare:OnInitialize()
 
 	-- create config options
 	NS:CreateConfigOptions()
-
-	-- build stuff
-	NS:Build_Battlegrounds()
-	NS:Build_Classes()
-	NS:Build_Spells()
-	NS:Build_Training_Grounds()
 
 	-- setup hook
 	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)

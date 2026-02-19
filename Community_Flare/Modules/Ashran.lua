@@ -48,9 +48,10 @@ function NS:Ashran_Initialize()
 end
 
 -- process ashran pois
-function NS:Process_Ashran_POIs(mapID)
+function NS:Process_Ashran_POIs()
 	-- found POIs?
 	if (NS.faction ~= 0) then return end
+	local mapID = NS.CommFlare.CF.MapID
 	local ids = NS:GetAreaPOIForMap(mapID)
 	if (ids and (#ids > 0)) then
 		-- check for additions
@@ -117,9 +118,10 @@ function NS:Process_Ashran_POIs(mapID)
 end
 
 -- process ashran vignettes
-function NS:Process_Ashran_Vignettes(mapID)
+function NS:Process_Ashran_Vignettes()
 	-- found vignettes?
 	if (NS.faction ~= 0) then return end
+	local mapID = NS.CommFlare.CF.MapID
 	local ids = VignetteInfoGetVignettes()
 	if (ids and (#ids > 0)) then
 		-- check for additions
@@ -184,13 +186,17 @@ function NS:Process_Ashran_Widget(info)
 	if (data) then
 		-- score remaining?
 		if (data.widgetID == 1997) then
-			-- first left score?
-			if (NS.CommFlare.CF.ASH.PrevLeftScore < 0) then
+			-- invalid previous left score?
+			if (not NS.CommFlare.CF.ASH.PrevLeftScore) then
 				-- initialize
-				NS.CommFlare.CF.ASH.PrevLeftScore = tonumber(data.leftBarValue)
-			else
+				NS.CommFlare.CF.ASH.PrevLeftScore = -1
+			end
+
+			-- first left score?
+			local leftBarValue = tonumber(data.leftBarValue)
+			if (NS.CommFlare.CF.ASH.PrevLeftScore > 0) then
 				-- decreased by 30+?
-				local diff = NS.CommFlare.CF.ASH.PrevLeftScore - tonumber(data.leftBarValue)
+				local diff = NS.CommFlare.CF.ASH.PrevLeftScore - leftBarValue
 				if (diff >= 30) then
 					-- add new capping bar
 					local path = {136441}
@@ -203,20 +209,15 @@ function NS:Process_Ashran_Widget(info)
 						local message = strformat(L["%s has been killed."], L["Rylai Crestfall"])
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
 					end
-
 				end
-
-				-- update
-				NS.CommFlare.CF.ASH.PrevLeftScore = tonumber(data.leftBarValue)
 			end
 
+
 			-- first right score?
-			if (NS.CommFlare.CF.ASH.PrevRightScore < 0) then
-				-- initialize
-				NS.CommFlare.CF.ASH.PrevRightScore = tonumber(data.rightBarValue)
-			else
+			local rightBarValue = tonumber(data.rightBarValue)
+			if (NS.CommFlare.CF.ASH.PrevRightScore > 0) then
 				-- decreased by 30+?
-				local diff = NS.CommFlare.CF.ASH.PrevRightScore - tonumber(data.rightBarValue)
+				local diff = NS.CommFlare.CF.ASH.PrevRightScore - rightBarValue
 				if (diff >= 30) then
 					-- add new capping bar
 					local path = {136441}
@@ -230,10 +231,11 @@ function NS:Process_Ashran_Widget(info)
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
 					end
 				end
-
-				-- update
-				NS.CommFlare.CF.ASH.PrevRightScore = tonumber(data.rightBarValue)
 			end
+
+			-- update
+			NS.CommFlare.CF.ASH.PrevLeftScore = leftBarValue
+			NS.CommFlare.CF.ASH.PrevRightScore = rightBarValue
 		end
 	end
 end
