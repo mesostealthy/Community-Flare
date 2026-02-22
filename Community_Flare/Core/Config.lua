@@ -68,6 +68,7 @@ local GlobalDefaults = {
 		avNotifications = 2,
 		ashranNotifications = 2,
 		blockSharedQuests = 2,
+		iocNotifications = 2,
 		partyLeaderNotify = 2,
 		purgeLogTime = 2,
 		restrictPings = 0,
@@ -896,8 +897,8 @@ local previousAssistButtonXPos = 0
 local function SetAssistButtonXPos(info, value)
 	-- adjust assist button x position
 	if (info[#info] == "assistButtonXPos") then
-		-- has assist button?
-		if (NS.AssistButton) then
+		-- available?
+		if (NS.AssistButton and NS.SaveButtonPosition) then
 			-- save positions
 			local maxwidth = mfloor(GetScreenWidth())
 			local left = NS.db.global.AssistFrame.left + value
@@ -936,8 +937,8 @@ local previousAssistButtonYPos = 0
 local function SetAssistButtonYPos(info, value)
 	-- adjust assist button y position
 	if (info[#info] == "assistButtonYPos") then
-		-- has assist button?
-		if (NS.AssistButton) then
+		-- available?
+		if (NS.AssistButton and NS.SaveButtonPosition) then
 			-- save positions
 			local maxheight = mfloor(GetScreenHeight())
 			local left = NS.db.global.AssistFrame.left or 0
@@ -976,10 +977,7 @@ local AssistButtonGroup = {
 	name = L["Assist Button Options"],
 	type = "group",
 	order = 2,
-	hidden = function()
-		-- hidden?
-		return (NS.faction ~= 0) and false
-	end,
+	hidden = function() return (NS.faction ~= 0) end,
 	args = {
 		assistButtonTitle = {
 			name = L["Assist Button Options"],
@@ -1004,11 +1002,14 @@ local AssistButtonGroup = {
 			width = "full",
 			get = function(info) return NS.db.global.AssistFrame.locked end,
 			set = function(info, value)
-				-- lock frame
-				NS.db.global.AssistFrame.locked = value
+				-- available?
+				if (NS.AssistButton and NS.UpdateAssistButton) then
+					-- lock frame
+					NS.db.global.AssistFrame.locked = value
 
-				-- update assist button
-				NS:UpdateAssistButton()
+					-- update assist button
+					NS:UpdateAssistButton()
+				end
 			end,
 		},
 		assistButtonXPos = {
@@ -1224,7 +1225,7 @@ local BattlegroundGroup = {
 		avNotifications = {
 			type = "select",
 			order = 16,
-			name = L["Enable Alterac Valley Notifications?"],
+			name = L["Enable Notifications?"],
 			desc = L["This will show you warning messages for critical events around Alterac Valley."],
 			values = {
 				[1] = L["None"],
@@ -1242,7 +1243,7 @@ local BattlegroundGroup = {
 		ashranNotifications = {
 			type = "select",
 			order = 18,
-			name = L["Enable Ashran Notifications?"],
+			name = L["Enable Notifications?"],
 			desc = L["This will show you warning messages for critical events around Ashran."],
 			values = {
 				[1] = L["None"],
@@ -1257,9 +1258,21 @@ local BattlegroundGroup = {
 			order = 19,
 			width = "full",
 		},
+		iocNotifications = {
+			type = "select",
+			order = 20,
+			name = L["Enable Notifications?"],
+			desc = L["This will show you warning messages for critical events around Isle of Conquest."],
+			values = {
+				[1] = L["None"],
+				[2] = L["Local Warning Only"],
+			},
+			get = function(info) return NS.db.global.iocNotifications end,
+			set = function(info, value) NS.db.global.iocNotifications = value end,
+		},
 		iocVehicleAlertSystem = {
 			type = "toggle",
-			order = 20,
+			order = 21,
 			name = L["Vehicle Alert System?"],
 			desc = L["This will alert you when a Vehicle dies, and when a new one should be spawned/spawning."],
 			width = "full",

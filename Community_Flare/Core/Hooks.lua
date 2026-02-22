@@ -361,10 +361,10 @@ local function hook_SettingsPanel_OnHide()
 	if (instanceType ~= "pvp") then
 		-- not in combat lockdown?
 		if (not InCombatLockdown()) then
-			-- shown?
-			if (NS.AssistButton:IsShown()) then
-				-- hide
-				NS.AssistButton:Hide()
+			-- available?
+			if (NS.AssistButton and NS.HideAssistButton) then
+				-- hide assist button
+				NS:HideAssistButton()
 			end
 		end
 	end
@@ -442,7 +442,7 @@ function NS:Battlefield_SetupHooks()
 
 	-- SettingsPanel:OnHide() not hooked?
 	if (hook_SettingsPanel_OnHide_installed ~= true) then
-		--- settings panel loaded?
+		-- settings panel loaded?
 		if (SettingsPanel) then
 			-- hook SettingsPanel:OnHide
 			SettingsPanel:HookScript("OnHide", hook_SettingsPanel_OnHide)

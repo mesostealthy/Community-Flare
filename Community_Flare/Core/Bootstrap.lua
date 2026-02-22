@@ -275,9 +275,6 @@ function NS.CommFlare:OnInitialize()
 
 	-- setup hook
 	NS.CommFlare:RawHook("HandlePendingInviteConfirmation", hook_HandlePendingInviteConfirmation, true)
-
-	-- create assist button
-	NS:CreateAssistButton()
 end
 
 -- addon compartment on click

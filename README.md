@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.09.001:
--More features added for some of the Battleground maps.
--BUGFIX: POI List & Vignette List Managers working again.
+v2.10.001:
+-NEW SETTING: Added Isle of Conquest notifications for critical events.
+-BUGFIXES: Fixed more stuff for Epic Battleground maps & LUA errors.

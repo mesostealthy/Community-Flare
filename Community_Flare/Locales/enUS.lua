@@ -80,6 +80,7 @@ L["Display notification for popped groups?"] = true
 L["Enable Alterac Valley Notifications?"] = true
 L["Enable Ashran Notifications?"] = true
 L["Enable Assist Button?"] = true
+L["Enable Notifications?"] = true
 L["Enable debug mode to help debug issues?"] = true
 L["Enable debug print chat window to log debug events?"] = true
 L["Enable the right click menu for community member list?"] = true
@@ -168,6 +169,7 @@ L["This will show a raid warning to you when your Mage is under attack in Ashran
 L["This will show you a message when a party member changes zones."] = true
 L["This will show you warning messages for critical events around Alterac Valley."] = true
 L["This will show you warning messages for critical events around Ashran."] = true
+L["This will show you warning messages for critical events around Isle of Conquest."] = true
 L["This will treat your Guild Members as Community Members."] = true
 L["Uninvite any players that are AFK?"] = true
 L["Use this to manage the Clubs, Communites & Guilds in the database."] = true
@@ -424,6 +426,10 @@ L["West"] = true
 -- CombatLog.lua
 L["High Warlord Volrath"] = true
 L["Siege Engine"] = true
+
+-- IsleOfConquest.lua
+L["Alliance Gate"] = true
+L["Horde Gate"] = true
 
 -- POIs.lua
 L["Dumping POIs:"] = true

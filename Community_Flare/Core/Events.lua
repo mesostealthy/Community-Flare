@@ -1597,6 +1597,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- enforce binding rules
 		NS:Enforce_Binding_Rules()
 
+		-- available?
+		if (NS.AssistButton and NS.CreateAssistButton) then
+			-- create assist button
+			NS:CreateAssistButton()
+		end
+
 		-- in battleground?
 		NS.CommFlare.CF.MatchStatus = 0
 		if (NS:IsInBattleground() == true) then
@@ -1618,7 +1624,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				end
 
 				-- available?
-				if (NS.ShowAssistButton) then
+				if (NS.AssistButton and NS.ShowAssistButton) then
 					-- assist button enabled?
 					if (NS.db.global.assistButtonEnabled == true) then
 						-- show assist button
@@ -1830,7 +1836,7 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 		end
 
 		-- available?
-		if (NS.AssistButton and NS.AssistButton.Button and NS.HideAssistButton and NS.ShowAssistButton) then
+		if (NS.AssistButton and NS.HideAssistButton and NS.ShowAssistButton) then
 			-- assist button enabled?
 			if (NS.db.global.assistButtonEnabled == true) then
 				-- hide assist button?
@@ -1851,7 +1857,7 @@ end
 -- process player roles assigned
 function NS.CommFlare:PLAYER_ROLES_ASSIGNED(msg)
 	-- available?
-	if (NS.ShowAssistButton) then
+	if (NS.AssistButton and NS.ShowAssistButton) then
 		-- assist button enabled?
 		if (NS.db.global.assistButtonEnabled == true) then
 			-- in battleground?
@@ -2937,7 +2943,7 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 		NS.CommFlare.CF.LastRaidWarning = 0
 	end
 
-	-- has assist button?
+	-- available?
 	if (NS.AssistButton and NS.HideAssistButton) then
 		-- assist button enabled?
 		if (NS.db.global.assistButtonEnabled == true) then

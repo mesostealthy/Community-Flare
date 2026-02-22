@@ -45,6 +45,14 @@ function NS:Ashran_Initialize()
 	NS.AshranActiveVignettes = {}
 	NS.CommFlare.CF.ASH.PrevLeftScore = -1
 	NS.CommFlare.CF.ASH.PrevRightScore = -1
+
+	-- get initial scores
+	local data = NS:GetDoubleStatusBarWidgetVisualizationInfo(1997)
+	if (data and data.leftBarValue and data.rightBarValue) then
+		-- setup previous scores
+		NS.CommFlare.CF.ASH.PrevLeftScore = tonumber(data.leftBarValue)
+		NS.CommFlare.CF.ASH.PrevRightScore = tonumber(data.rightBarValue)
+	end
 end
 
 -- process ashran pois
@@ -180,20 +188,20 @@ end
 
 -- process ashran widget
 function NS:Process_Ashran_Widget(info)
-	-- get widget data
+	-- score remaining?
 	if (NS.faction ~= 0) then return end
-	local data = NS:GetWidgetData(info)
-	if (data) then
-		-- score remaining?
-		if (data.widgetID == 1997) then
+	if (info.widgetID == 1997) then
+		-- get widget data
+		local data = NS:GetWidgetData(info)
+		if (data) then
 			-- invalid previous left score?
-			if (not NS.CommFlare.CF.ASH.PrevLeftScore) then
+			local leftBarValue = tonumber(data.leftBarValue)
+			if (not NS.CommFlare.CF.ASH.PrevLeftScore or (NS.CommFlare.CF.ASH.PrevLeftScore < 0)) then
 				-- initialize
-				NS.CommFlare.CF.ASH.PrevLeftScore = -1
+				NS.CommFlare.CF.ASH.PrevLeftScore = leftBarValue
 			end
 
-			-- first left score?
-			local leftBarValue = tonumber(data.leftBarValue)
+			-- valid left score?
 			if (NS.CommFlare.CF.ASH.PrevLeftScore > 0) then
 				-- decreased by 30+?
 				local diff = NS.CommFlare.CF.ASH.PrevLeftScore - leftBarValue
@@ -201,7 +209,7 @@ function NS:Process_Ashran_Widget(info)
 					-- add new capping bar
 					local path = {136441}
 					path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(157)
-					NS:Capping_Add_New_Bar(L["Jeron Emberfall"], 3600, "colorAlliance", path)
+					NS:Capping_Add_New_Bar(L["Rylai Crestfall"], 3600, "colorAlliance", path)
 
 					-- notifications enabled?
 					if (NS.db.global.ashranNotifications ~= 1) then
@@ -212,9 +220,14 @@ function NS:Process_Ashran_Widget(info)
 				end
 			end
 
-
-			-- first right score?
+			-- invalid previous right score?
 			local rightBarValue = tonumber(data.rightBarValue)
+			if (not NS.CommFlare.CF.ASH.PrevRightScore or (NS.CommFlare.CF.ASH.PrevRightScore < 0)) then
+				-- initialize
+				NS.CommFlare.CF.ASH.PrevRightScore = rightBarValue
+			end
+
+			-- valid right score?
 			if (NS.CommFlare.CF.ASH.PrevRightScore > 0) then
 				-- decreased by 30+?
 				local diff = NS.CommFlare.CF.ASH.PrevRightScore - rightBarValue

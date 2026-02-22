@@ -47,6 +47,14 @@ function NS:AlteracValley_Initialize()
 	NS.CommFlare.CF.AV.RightGained = 0
 	NS.CommFlare.CF.AV.PrevLeftScore = -1
 	NS.CommFlare.CF.AV.PrevRightScore = -1
+
+	-- get initial scores
+	local data = NS:GetDoubleStatusBarWidgetVisualizationInfo(1684)
+	if (data and data.leftBarValue and data.rightBarValue) then
+		-- setup previous scores
+		NS.CommFlare.CF.AV.PrevLeftScore = tonumber(data.leftBarValue)
+		NS.CommFlare.CF.AV.PrevRightScore = tonumber(data.rightBarValue)
+	end
 end
 
 -- count bunkers / towers destroyed
@@ -255,17 +263,23 @@ function NS:Process_AlteracValley_Widget(info)
 	if (info.widgetID == 1684) then
 		-- give time for Bunkers/Towers to burn
 		TimerAfter(0.5, function()
+			-- match completed?
+			if (NS.CommFlare.CF.MatchStatus == 3) then
+				-- finished
+				return
+			end
+
 			-- get widget data
 			local data = NS:GetWidgetData(info)
 			if (data) then
 				-- invalid previous left score?
-				if (not NS.CommFlare.CF.AV.PrevLeftScore) then
+				local leftBarValue = tonumber(data.leftBarValue)
+				if (not NS.CommFlare.CF.AV.PrevLeftScore or (NS.CommFlare.CF.AV.PrevLeftScore < 0)) then
 					-- initialize
-					NS.CommFlare.CF.AV.PrevLeftScore = -1
+					NS.CommFlare.CF.AV.PrevLeftScore = leftBarValue
 				end
 				
-				-- first left score?
-				local leftBarValue = tonumber(data.leftBarValue)
+				-- valid left score?
 				if (NS.CommFlare.CF.AV.PrevLeftScore > 0) then
 					-- decreased by 100+?
 					local diff = NS.CommFlare.CF.AV.PrevLeftScore - leftBarValue
@@ -290,13 +304,13 @@ function NS:Process_AlteracValley_Widget(info)
 				end
 
 				-- invalid previous right score?
-				if (not NS.CommFlare.CF.AV.PrevRightScore) then
+				local rightBarValue = tonumber(data.rightBarValue)
+				if (not NS.CommFlare.CF.AV.PrevRightScore or (NS.CommFlare.CF.AV.PrevRightScore < 0)) then
 					-- initialize
-					NS.CommFlare.CF.AV.PrevRightScore = -1
+					NS.CommFlare.CF.AV.PrevRightScore = rightBarValue
 				end
 
-				-- first right score?
-				local rightBarValue = tonumber(data.rightBarValue)
+				-- valid right score?
 				if (NS.CommFlare.CF.AV.PrevRightScore > 0) then
 					-- decreased by 100+?
 					local diff = NS.CommFlare.CF.AV.PrevRightScore - rightBarValue

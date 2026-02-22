@@ -57,7 +57,7 @@ end
 -- debug print
 function NS:Debug_Print(text)
 	-- sanity checks
-	if (not text or (text == "") or issecretvalue(text)) then
+	if (not text or issecretvalue(text) or (text == "")) then
 		-- failed
 		return nil
 	end

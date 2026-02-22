@@ -27,12 +27,20 @@ function NS:IsleOfConquest_Initialize()
 	NS.CommFlare.CF.IOC.AllianceGlaivesUp = 0
 	NS.CommFlare.CF.IOC.HordeGlaivesUp = 0
 	NS.CommFlare.CF.IOC.LeftGained = 0
+	NS.CommFlare.CF.IOC.RightGained = 0
 	NS.CommFlare.CF.IOC.PrevLeftScore = -1
 	NS.CommFlare.CF.IOC.PrevRightScore = -1
-	NS.CommFlare.CF.IOC.RightGained = 0
 
 	-- Docks: Uncontrolled initially
 	NS.CommFlare.CF.IOC.DocksFlag = 2360
+
+	-- get initial scores
+	local data = NS:GetDoubleStatusBarWidgetVisualizationInfo(1685)
+	if (data and data.leftBarValue and data.rightBarValue) then
+		-- setup previous scores
+		NS.CommFlare.CF.IOC.PrevLeftScore = tonumber(data.leftBarValue)
+		NS.CommFlare.CF.IOC.PrevRightScore = tonumber(data.rightBarValue)
+	end
 end
 
 -- process isle of conquest pois
@@ -173,41 +181,77 @@ end
 
 -- process isle of conquest widget
 function NS:Process_IsleOfConquest_Widget(info)
-	-- get widget data
+	-- score remaining?
 	if (NS.faction ~= 0) then return end
-	local data = NS:GetWidgetData(info)
-	if (data) then
-		-- score remaining?
-		if (data.widgetID == 1685) then
-			-- first left score?
-			if (NS.CommFlare.CF.IOC.PrevLeftScore < 0) then
+	if (info.widgetID == 1685) then
+		-- get widget data
+		local data = NS:GetWidgetData(info)
+		if (data) then
+			-- invalid previous left score?
+			local leftBarValue = tonumber(data.leftBarValue)
+			if (not NS.CommFlare.CF.IOC.PrevLeftScore or (NS.CommFlare.CF.IOC.PrevLeftScore < 0)) then
 				-- initialize
-				NS.CommFlare.CF.IOC.PrevLeftScore = tonumber(data.leftBarValue)
-			else
+				NS.CommFlare.CF.IOC.PrevLeftScore = leftBarValue
+			end
+
+			-- valid left score?
+			if (NS.CommFlare.CF.IOC.PrevLeftScore > 0) then
+				-- decreased by 50+?
+				local diff = NS.CommFlare.CF.IOC.PrevLeftScore - leftBarValue
+				if (diff >= 50) then
+					-- notifications enabled?
+					if (NS.db.global.iocNotifications ~= 1) then
+						-- issue local raid warning (with raid warning audio sound)
+						local message = strformat(L["%s has been killed."], L["Alliance Gate"])
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+					end
 				-- increased?
-				if (data.leftBarValue > NS.CommFlare.CF.IOC.PrevLeftScore) then
+				elseif (leftBarValue > NS.CommFlare.CF.IOC.PrevLeftScore) then
+					-- not initialized?
+					if (not NS.CommFlare.CF.IOC.LeftGained) then
+						-- initialize
+						NS.CommFlare.CF.IOC.LeftGained = 0
+					end
+
 					-- increase
 					NS.CommFlare.CF.IOC.LeftGained = NS.CommFlare.CF.IOC.LeftGained + 1
 				end
-
-				-- update
-				NS.CommFlare.CF.IOC.PrevLeftScore = tonumber(data.leftBarValue)
 			end
 
-			-- first right scorie?
-			if (NS.CommFlare.CF.IOC.PrevRightScore < 0) then
+			-- invalid previous right score?
+			local rightBarValue = tonumber(data.rightBarValue)
+			if (not NS.CommFlare.CF.IOC.PrevRightScore or (NS.CommFlare.CF.IOC.PrevRightScore < 0)) then
 				-- initialize
-				NS.CommFlare.CF.IOC.PrevRightScore = tonumber(data.rightBarValue)
-			else
+				NS.CommFlare.CF.IOC.PrevRightScore = rightBarValue
+			end
+
+			-- valid right score?
+			if (NS.CommFlare.CF.IOC.PrevRightScore > 0) then
+				-- decreased by 50+?
+				local diff = NS.CommFlare.CF.IOC.PrevRightScore - rightBarValue
+				if (diff >= 50) then
+					-- notifications enabled?
+					if (NS.db.global.iocNotifications ~= 1) then
+						-- issue local raid warning (with raid warning audio sound)
+						local message = strformat(L["%s has been killed."], L["Horde Gate"])
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+					end
 				-- increased?
-				if (data.rightBarValue > NS.CommFlare.CF.IOC.PrevRightScore) then
+				elseif (rightBarValue > NS.CommFlare.CF.IOC.PrevRightScore) then
+					-- not initialized?
+					if (not NS.CommFlare.CF.IOC.RightGained) then
+						-- initialize
+						NS.CommFlare.CF.IOC.RightGained = 0
+					end
+
 					-- increase
 					NS.CommFlare.CF.IOC.RightGained = NS.CommFlare.CF.IOC.RightGained + 1
 				end
-
-				-- update
-				NS.CommFlare.CF.IOC.PrevRightScore = tonumber(data.rightBarValue)
 			end
+
+			-- update
+			NS.CommFlare.CF.IOC.PrevLeftScore = leftBarValue
+			NS.CommFlare.CF.IOC.PrevRightScore = rightBarValue
 		end
 	end
 end

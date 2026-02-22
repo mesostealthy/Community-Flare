@@ -81,6 +81,7 @@ L["Display notification for popped groups?"] = "Afficher une notification pour l
 L["Enable Alterac Valley Notifications?"] = "Activer les notifications d'Alterac Valley ?"
 L["Enable Ashran Notifications?"] = "Activer les notifications Ashran ?"
 L["Enable Assist Button?"] = "Activer le bouton d'assistance ?"
+L["Enable Notifications?"] = "Activer les notifications ?"
 L["Enable debug mode to help debug issues?"] = "Activer le mode débogage pour aider à résoudre les problèmes ?"
 L["Enable debug print chat window to log debug events?"] = "Activer la fenêtre de discussion d’impression de débogage pour enregistrer les événements de débogage ?"
 L["Enable the right click menu for community member list?"] = "Activer le menu contextuel pour la liste des membres de la communauté ?"
@@ -168,6 +169,7 @@ L["This will show a raid warning to you when your Mage is under attack in Ashran
 L["This will show you a message when a party member changes zones."] = "Cela vous montrera un message lorsqu'un membre du groupe change de zone."
 L["This will show you warning messages for critical events around Alterac Valley."] = "Ceci vous affichera des messages d'alerte concernant les événements critiques dans la vallée d'Alterac."
 L["This will show you warning messages for critical events around Ashran."] = "Vous y trouverez des messages d'alerte concernant les événements critiques aux alentours d'Ashran."
+L["This will show you warning messages for critical events around Isle of Conquest."] = "Vous y trouverez des messages d'avertissement concernant les événements critiques survenant autour de l'Île de la Conquête."
 L["This will treat your Guild Members as Community Members."] = "Cela traitera les membres de votre guilde comme des membres de la communauté."
 L["Uninvite any players that are AFK?"] = "Retirez tous les joueurs qui sont LDC ?"
 L["Use this to manage the Clubs, Communites & Guilds in the database."] = "Utilisez cette fonction pour gérer les clubs, les communautés et les guildes dans la base de données."
@@ -424,6 +426,10 @@ L["West"] = "à l'ouest"
 -- CombatLog.lua
 L["High Warlord Volrath"] = "Grand seigneur de guerre Wôlrath"
 L["Siege Engine"] = "Engin de siège"
+
+-- IsleOfConquest.lua
+L["Alliance Gate"] = "Porte de l'Alliance"
+L["Horde Gate"] = "Porte de la Horde"
 
 -- POIs.lua
 L["Dumping POIs:"] = "Verser des POI :"

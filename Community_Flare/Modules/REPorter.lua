@@ -46,28 +46,32 @@ function NS:REPorter_Add_New_Overlay(name)
 			        frame.Overlay:SetWidth(REPorter.POIIconSize)
 				frame.Overlay:SetPoint("CENTER", "REPorterFrameCorePOI", "TOPLEFT", info.x, info.y)
 			        frame.Overlay:SetAttribute("type1", "macro")
-				local macrotext1 = "/i INCOMING " .. info.name
+				local macrotext1 = "/i INCOMING: " .. info.name
 			        frame.Overlay:SetAttribute("macrotext1", macrotext1)
 			        frame.Overlay:SetAttribute("type2", "macro")
-				local macrotext2 = "/i CLEAR " .. info.name
+				local macrotext2 = "/i CLEAR: " .. info.name
 			        frame.Overlay:SetAttribute("macrotext2", macrotext2)
 			        frame.Overlay:SetAttribute("shift-type1", "macro")
-				local macrotext3 = "/i ATTACK " .. info.name
+				local macrotext3 = "/i ATTACK: " .. info.name
 			        frame.Overlay:SetAttribute("shift-macrotext1", macrotext3)
 			        frame.Overlay:SetAttribute("shift-type2", "macro")
-				local macrotext4 = "/i DEFEND " .. info.name
+				local macrotext4 = "/i DEFEND: " .. info.name
 			        frame.Overlay:SetAttribute("shift-macrotext2", macrotext4)
 			        frame.Overlay:SetAttribute("alt-type2", "macro")
-				local macrotext5 = "/i ON MY WAY " .. info.name
+				local macrotext5 = "/i ON MY WAY: " .. info.name
 			        frame.Overlay:SetAttribute("alt-macrotext2", macrotext5)
 			        frame.Overlay:SetScript("OnEnter", function(self)
-					REPorter:UnitOnEnterPOI(frame)
-					GameTooltip:AddLine("Left Click: INCOMING", 1, 1, 1)
-					GameTooltip:AddLine("Right Click: CLEAR", 1, 1, 1)
-					GameTooltip:AddLine("Shift+Left Click: ATTACK", 1, 1, 1)
-					GameTooltip:AddLine("Shift+Right Click: DEFEND", 1, 1, 1)
-					GameTooltip:AddLine("Alt+Right Click: ON MY WAY", 1, 1, 1)
-					GameTooltip:Show()
+					-- has reporter + frame?
+					if (REPorter and frame) then
+						-- show tooltip
+						REPorter:UnitOnEnterPOI(frame)
+						GameTooltip:AddLine("Left Click: INCOMING", 1, 1, 1)
+						GameTooltip:AddLine("Right Click: CLEAR", 1, 1, 1)
+						GameTooltip:AddLine("Shift+Left Click: ATTACK", 1, 1, 1)
+						GameTooltip:AddLine("Shift+Right Click: DEFEND", 1, 1, 1)
+						GameTooltip:AddLine("Alt+Right Click: ON MY WAY", 1, 1, 1)
+						GameTooltip:Show()
+					end
 				end)
 			        frame.Overlay:SetScript("OnLeave", function() GameTooltip:Hide() end)
 				NS.REPorterOverlayCache[name] = frame

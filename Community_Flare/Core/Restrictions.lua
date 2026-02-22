@@ -147,6 +147,12 @@ function NS:UnitGUID(unitToken)
 		return nil
 	end
 
+	-- blizzard bugfix
+	if (not UnitExists(unitToken)) then
+		-- failed
+		return nil
+	end
+
 	-- success
 	return UnitGUID(unitToken)
 end
