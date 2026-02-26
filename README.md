@@ -21,6 +21,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.10.001:
--NEW SETTING: Added Isle of Conquest notifications for critical events.
--BUGFIXES: Fixed more stuff for Epic Battleground maps & LUA errors.
+v2.11.001:
+-REMOVED: Some old features that are no longer viable for the Midnight expansion.
+-BUFIXES: Too many to name, mostly typos / updated names.
+-MISC: Some more changes for the Midnight early access.

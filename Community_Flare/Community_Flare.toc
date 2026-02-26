@@ -1,7 +1,7 @@
 ## Interface: 120001
 ## Title: Community Flare
-## Version: v2.10.001
-## X-Build: 210001
+## Version: v2.11.001
+## X-Build: 211001
 ## Author: Mesostealthy
 ## SavedVariables: CommunityFlareDB
 ## SavedVariablesPerCharacter: CommFlareCharDB

@@ -113,31 +113,6 @@ local function Community_Flare_Slash_Command(input)
 				end
 			end
 		end
-	elseif (lower == "inactive") then
-		-- check for inactive players
-		print(strformat(L["%s: Checking for inactive players."], NS.CommFlare.Title))
-
-		-- in battleground?
-		local timer = 0
-		if (NS:IsInBattleground() == true) then
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
-				NS.CommFlare.CF.WaitForUpdate["inactive"] = true
-				SetBattlefieldScoreFaction(-1)
-				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
-			end
-		end
-
-		-- run immediately?
-		if (timer == 0) then
-			-- check for inactive players
-			NS:Check_For_Inactive_Players()
-		end
 	elseif (lower == "leaders") then
 		-- rebuild leaders
 		NS:Rebuild_Community_Leaders()

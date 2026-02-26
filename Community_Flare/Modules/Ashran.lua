@@ -13,6 +13,7 @@ local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignett
 local pairs                                       = _G.pairs
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 
 -- pois
@@ -70,6 +71,7 @@ function NS:Process_Ashran_POIs()
 			if (info and info.name and info.areaPoiID) then
 				-- currently active
 				list[id] = CopyTable(info)
+				wipe(info)
 
 				-- tracked?
 				local data = NS.AshranTrackedPOIs[id]
@@ -141,6 +143,7 @@ function NS:Process_Ashran_Vignettes()
 				-- add to list
 				local id = info.vignetteID
 				list[id] = CopyTable(info)
+				wipe(info)
 
 				-- tracked?
 				local data = NS.AshranTrackedVignettes[id]

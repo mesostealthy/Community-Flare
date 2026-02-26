@@ -84,7 +84,6 @@ local strlower                                    = _G.string.lower
 local strmatch                                    = _G.string.match
 local strsplit                                    = _G.string.split
 local tinsert                                     = _G.table.insert
-local tsort                                       = _G.table.sort
 
 -- process active delve data update
 function NS.CommFlare:ACTIVE_DELVE_DATA_UPDATE(msg)
@@ -199,30 +198,6 @@ function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 	elseif (lower == "!pl") then
 		-- process pass leadership
 		NS:Process_Pass_Leadership(bnSenderID)
-	-- status check?
-	elseif (lower == "!status") then
-		-- in battleground?
-		local timer = 0
-		if (NS:IsInBattleground() == true) then
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
-				NS.CommFlare.CF.WaitForUpdate["sender"] = bnSenderID
-				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction(-1)
-				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
-			end
-		end
-
-		-- run immediately?
-		if (timer == 0) then
-			-- process status check
-			NS:Process_Status_Check(bnSenderID)
-		end
 	-- talents check?
 	elseif (lower == "!talents") then
 		-- process talents check
@@ -340,35 +315,6 @@ function NS:Event_Chat_Message_Party(...)
 				-- send community flare version number
 				NS:SendMessage("PARTY", strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
 			end
-		-- status check?
-		elseif (lower:find("!status")) then
-			-- strip (name2chat):
-			lower = strgsub(lower, "[\(](.+)[\)\:] ", "")
-
-			-- exact matches only
-			if (lower == "!status") then
-				-- in battleground?
-				local timer = 0
-				if (NS:IsInBattleground() == true) then
-					-- battlefield score needs updating?
-					if (PVPMatchScoreboard.selectedTab ~= 1) then
-						-- request battlefield score
-						NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
-						NS.CommFlare.CF.WaitForUpdate["party"] = true
-						SetBattlefieldScoreFaction(-1)
-						RequestBattlefieldScoreData()
-
-						-- delay 0.5 seconds
-						timer = 0.5
-					end
-				end
-
-				-- run immediately?
-				if (timer == 0) then
-					-- process status check
-					NS:Process_Status_Check(sender)
-				end
-			end
 		end
 	end
 end
@@ -404,30 +350,6 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 	elseif (lower == "!pl") then
 		-- process pass leadership
 		NS:Process_Pass_Leadership(sender)
-	-- status check?
-	elseif (lower == "!status") then
-		-- in battleground?
-		local timer = 0
-		if (NS:IsInBattleground() == true) then
-			-- battlefield score needs updating?
-			if (PVPMatchScoreboard.selectedTab ~= 1) then
-				-- request battlefield score
-				NS.CommFlare.CF.WaitForUpdate = NS.CommFlare.CF.WaitForUpdate or {}
-				NS.CommFlare.CF.WaitForUpdate["sender"] = sender
-				NS.CommFlare.CF.WaitForUpdate["whisper"] = true
-				SetBattlefieldScoreFaction(-1)
-				RequestBattlefieldScoreData()
-
-				-- delay 0.5 seconds
-				timer = 0.5
-			end
-		end
-
-		-- run immediately?
-		if (timer == 0) then
-			-- process status check
-			NS:Process_Status_Check(sender)
-		end
 	-- talents check?
 	elseif (lower == "!talents") then
 		-- process talents check
@@ -483,7 +405,17 @@ end
 function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 	local clubId = ...
 
+	-- not initialized?
+	if (not NS.db.global.ApplicantLists) then
+		-- initialize
+		NS.db.global.ApplicantLists = {}
+	end
+
+	-- always reset
+	NS.db.global.ApplicantLists[clubId] = {}
+
 	-- cache player guid's
+	local applicantList = NS.db.global.ApplicantLists[clubId]
 	local list = NS:ReturnClubApplicantList(clubId)
 	for k,v in ipairs(list) do
 		-- get name / server
@@ -501,6 +433,10 @@ function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 				-- add realm name
 				player = strformat("%s-%s", player, realm)
 			end
+
+			-- save applicant
+			applicantList[player] = v.playerGUID
+			NS:Process_MemberGUID(v.playerGUID, player)
 		end
 	end
 end
@@ -2016,41 +1952,6 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 		end
 	end
 
-	-- report to anyone?
-	if (NS.CommFlare.CF.StatusCheck and next(NS.CommFlare.CF.StatusCheck)) then
-		-- process all
-		local timer = 0.0
-		for k,v in pairs(NS.CommFlare.CF.StatusCheck) do
-			-- send replies staggered
-			TimerAfter(timer, function()
-				-- won the match?
-				local text = nil
-				if (NS.faction == NS.CommFlare.CF.Winner) then
-					-- victory
-					text = strformat("%s = %d %s, %d %s; %s %s!", L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						L["Epic battleground has completed with a"], L["victory"])
-				else
-					-- loss
-					text = strformat("%s = %d %s, %d %s; %s %s!", L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						L["Epic battleground has completed with a"], L["loss"])
-				end
-
-				-- send message
-				NS:SendMessage(k, strformat("%s (%d %s)", text, count, L["Community Members"]))
-			end)
-
-			-- next
-			timer = timer + 0.2
-		end
-	end
-
-	-- clear
-	NS.CommFlare.CF.StatusCheck = {}
-
 	-- should log pvp combat?
 	if (NS.db.global.pvpCombatLogging == true) then
 		-- reset combat logging
@@ -2686,7 +2587,7 @@ end
 
 -- process unit spellcast start
 function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
-	local unitTarget, castGUID, spellID = ...
+	local unitTarget, castGUID, spellID, castBarID = ...
 
 	-- only check player
 	if (unitTarget == "player") then
@@ -2740,15 +2641,6 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 		NS.CommFlare.CF.WaitForUpdate["inactive"] = nil
 	end
 
-	-- party?
-	if (NS.CommFlare.CF.WaitForUpdate["party"] == true) then
-		-- process status check
-		NS:Process_Status_Check(nil)
-
-		-- clear party
-		NS.CommFlare.CF.WaitForUpdate["party"] = nil
-	end
-
 	-- update?
 	if (NS.CommFlare.CF.WaitForUpdate["update"] == true) then
 		-- display full battleground setup
@@ -2756,16 +2648,6 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 
 		-- clear update
 		NS.CommFlare.CF.WaitForUpdate["update"] = nil
-	end
-
-	-- whisper?
-	if (NS.CommFlare.CF.WaitForUpdate["whisper"] == true) then
-		-- process status check
-		NS:Process_Status_Check(NS.CommFlare.CF.WaitForUpdate["sender"])
-
-		-- clear sender / whisper
-		NS.CommFlare.CF.WaitForUpdate["sender"] = nil
-		NS.CommFlare.CF.WaitForUpdate["whisper"] = nil
 	end
 
 	-- match still going?

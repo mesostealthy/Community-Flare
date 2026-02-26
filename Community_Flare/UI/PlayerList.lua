@@ -6,6 +6,7 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
+local CopyTable                                   = _G.CopyTable
 local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
@@ -20,9 +21,9 @@ local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
-local sort                                        = _G.sort
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
 local strsplit                                    = _G.string.split
@@ -1077,6 +1078,7 @@ local function RefreshPlayerName(guid, old_player)
 		if (NS.db.global.members[old_player]) then
 			-- move member
 			NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+			wipe(NS.db.global.members[old_player])
 			NS.db.global.members[old_player] = nil
 			updated = true
 		end
@@ -1085,6 +1087,7 @@ local function RefreshPlayerName(guid, old_player)
 		if (NS.db.global.history[old_player]) then
 			-- move history
 			NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+			wipe(NS.db.global.history[old_player])
 			NS.db.global.history[old_player] = nil
 			updated = true
 		end

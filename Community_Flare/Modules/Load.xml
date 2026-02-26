@@ -1,9 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
 	<Script file="Assist.lua" />
-	<Script file="Battlegrounds.lua" />
-	<Script file="BlockGameMenus.lua" />
-	<Script file="History.lua" />
 	<Script file="KOS.lua" />
 	<Script file="POIs.lua" />
 	<Script file="Quests.lua" />

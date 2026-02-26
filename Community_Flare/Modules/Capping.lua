@@ -15,7 +15,6 @@ local print                                       = _G.print
 local type                                        = _G.type
 local unpack                                      = _G.unpack
 local strformat                                   = _G.string.format
-local tsort                                       = _G.table.sort
 
 -- list bars
 function NS:Capping_List_Bars()

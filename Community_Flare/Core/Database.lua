@@ -377,7 +377,7 @@ end
 function NS:Is_Community_Leader(name)
 	-- invalid name?
 	local player = name
-	if (not player or (player == "") or issecretvalue(player)) then
+	if (not player or issecretvalue(player) or (player == "")) then
 		-- failed
 		return false
 	end
@@ -404,13 +404,13 @@ end
 -- process member guid
 function NS:Process_MemberGUID(guid, player)
 	-- no guid?
-	if (not guid or (guid == "") or issecretvalue(guid)) then
+	if (not guid or issecretvalue(guid) or (guid == "")) then
 		-- failed
 		return false
 	end
 
 	-- no player?
-	if (not player or (player == "") or issecretvalue(player)) then
+	if (not player or issecretvalue(player) or (player == "")) then
 		-- failed
 		return false
 	end
@@ -430,6 +430,7 @@ function NS:Process_MemberGUID(guid, player)
 			if (NS.db.global.members[old_player]) then
 				-- move member
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+				wipe(NS.db.global.members[old_player])
 				NS.db.global.members[old_player] = nil
 			end
 
@@ -439,6 +440,8 @@ function NS:Process_MemberGUID(guid, player)
 				if (not NS.db.global.history[player]) then
 					-- move history
 					NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+					wipe(NS.db.global.history[old_player])
+					NS.db.global.history[old_player] = nil
 				-- has old history?
 				elseif (NS.db.global.history[player]) then
 					-- first seen updated?
@@ -510,7 +513,7 @@ end
 -- verify member guid
 function NS:Verify_MemberGUID(guid)
 	-- no guid?
-	if (not guid or (guid == "") or issecretvalue(guid)) then
+	if (not guid or issecretvalue(guid) or (guid == "")) then
 		-- failed
 		return false
 	end
@@ -541,6 +544,7 @@ function NS:Verify_MemberGUID(guid)
 			if (NS.db.global.members[old_player]) then
 				-- move member
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+				wipe(NS.db.global.members[old_player])
 				NS.db.global.members[old_player] = nil
 			end
 
@@ -548,6 +552,7 @@ function NS:Verify_MemberGUID(guid)
 			if (NS.db.global.history[old_player]) then
 				-- move history
 				NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+				wipe(NS.db.global.history[old_player])
 				NS.db.global.history[old_player] = nil
 			end
 
@@ -569,7 +574,7 @@ end
 function NS:Get_Community_Member(name)
 	-- invalid name?
 	local player = name
-	if (not player or (player == "") or issecretvalue(player)) then
+	if (not player or issecretvalue(player) or (player == "")) then
 		-- failed
 		return nil
 	end
@@ -593,7 +598,7 @@ end
 -- get loglist status
 function NS:Get_LogList_Status(player)
 	-- invalid name?
-	if (not player or (player == "") or issecretvalue(player)) then
+	if (not player or issecretvalue(player) or (player == "")) then
 		-- failed
 		return false
 	end
@@ -645,6 +650,7 @@ function NS:Cleanup_Stuff()
 	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- invalid key?
+		local space = strmatch(v, " ")
 		local parts = { strsplit("-", k) }
 		if (space or (#parts > 3)) then
 			-- check for old member?
@@ -665,7 +671,6 @@ function NS:Cleanup_Stuff()
 
 		-- has extra?
 		local name, realm, extra = strsplit("-", v)
-		local space = strmatch(v, " ")
 		if (extra or space) then
 			-- update member guid
 			local player = strformat("%s-%s", name, realm)
@@ -675,6 +680,7 @@ function NS:Cleanup_Stuff()
 			if (NS.db.global.members[v]) then
 				-- move member
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[v])
+				wipe(NS.db.global.members[v])
 				NS.db.global.members[v] = nil
 			end
 
@@ -682,6 +688,7 @@ function NS:Cleanup_Stuff()
 			if (NS.db.global.history[v]) then
 				-- move history
 				NS.db.global.history[player] = CopyTable(NS.db.global.history[v])
+				wipe(NS.db.global.history[v])
 				NS.db.global.history[v] = nil
 			end
 		end
@@ -2074,7 +2081,7 @@ end
 function NS:Is_Community_Member(name)
 	-- invalid name?
 	local player = name
-	if (not player or (player == "") or issecretvalue(player)) then
+	if (not player or issecretvalue(player) or (player == "")) then
 		-- failed
 		return false
 	end
@@ -2137,7 +2144,7 @@ end
 -- has shared community?
 function NS:Has_Shared_Community(sender)
 	-- invalid sender?
-	if (not sender or (sender == "") or issecretvalue(sender)) then
+	if (not sender or issecretvalue(sender) or (sender == "")) then
 		-- failed
 		return false
 	end
@@ -2183,7 +2190,7 @@ end
 -- find member by guid
 function NS:Find_Community_Member_By_GUID(guid)
 	-- invalid guid?
-	if (not guid or (guid == "") or issecretvalue(guid)) then
+	if (not guid or issecretvalue(guid) or (guid == "")) then
 		-- failed
 		return nil
 	end
@@ -2276,7 +2283,7 @@ end
 -- is community member (modular)
 function NS.CommFlare:Is_Community_Member(name)
 	-- invalid name?
-	if (not name or (name == "") or issecretvalue(name)) then
+	if (not name or issecretvalue(name) or (name == "")) then
 		-- failed
 		return nil
 	end
@@ -2327,7 +2334,6 @@ function NS.CommFlare:Prune_Database()
 	end
 
 	-- process all
-	local count = 0
 	local members = CopyTable(NS.db.global.members)
 	for k,v in pairs(NS.db.global.MemberGUIDs) do
 		-- delete
@@ -2379,6 +2385,9 @@ function NS.CommFlare:Prune_Database()
 			end
 		end
 	end
+
+	-- wipe
+	wipe(members)
 
 	-- return count
 	return count

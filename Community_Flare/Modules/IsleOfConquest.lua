@@ -14,6 +14,7 @@ local pairs                                       = _G.pairs
 local print                                       = _G.print
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 
 -- pois
@@ -58,6 +59,7 @@ function NS:Process_IsleOfConquest_POIs()
 			if (info and info.name and info.areaPoiID) then
 				-- currently active
 				list[id] = CopyTable(info)
+				wipe(info)
 
 				-- not active?
 				if (not NS.IOCActivePOIs[id]) then

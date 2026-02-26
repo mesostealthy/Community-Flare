@@ -60,6 +60,7 @@ local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
+local wipe                                        = _G.wipe
 local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strgmatch                                   = _G.string.gmatch
@@ -68,6 +69,7 @@ local strmatch                                    = _G.string.match
 local strsplit                                    = _G.string.split
 local strsub                                      = _G.string.sub
 local tinsert                                     = _G.table.insert
+local tsort                                       = _G.table.sort
 
 -- global: Get Variables (only Version atm)
 function CommunityFlare_GetVar(name)
@@ -85,6 +87,98 @@ function CommunityFlare_GetVar(name)
 
 	-- nothing
 	return nil
+end
+
+-- sort table keys
+function NS:SortTableKeys(tbl, bReversed)
+	-- invalid?
+	if (not tbl) then
+		-- failed
+		return nil
+	end
+
+	-- create keys
+	local keys = {}
+	for k,v in pairs(tbl) do
+		tinsert(keys, k)
+	end
+
+	-- reversed?
+	if (bReversed) then
+		-- sort keys (descending)
+		tsort(keys, function(a, b)
+			if (type(a) ~= type(b)) then
+				return 0
+			end
+			return a > b
+		end)
+	else
+		-- sort keys (ascending)
+		tsort(keys, function(a, b)
+			if (type(a) ~= type(b)) then
+				return 0
+			end
+			return a < b
+		end)
+	end
+
+	-- create list
+	local list = {}
+	for _,k in ipairs(keys) do
+		tinsert(list, k)
+	end
+
+	-- wipe
+	wipe(keys)
+
+	-- return list
+	return list
+end
+
+-- sort table values
+function NS:SortTableValues(tbl, bReversed)
+	-- invalid?
+	if (not tbl) then
+		-- failed
+		return nil
+	end
+
+	-- create keys
+	local keys = {}
+	for k,v in pairs(tbl) do
+		tinsert(keys, k)
+	end
+
+	-- reversed?
+	if (bReversed) then
+		-- sort keys (descending)
+		tsort(keys, function(a, b)
+			if (type(a) ~= type(b)) then
+				return 0
+			end
+			return tbl[a] > tbl[b]
+		end)
+	else
+		-- sort keys (ascending)
+		tsort(keys, function(a, b)
+			if (type(a) ~= type(b)) then
+				return 0
+			end
+			return tbl[a] < tbl[b]
+		end)
+	end
+
+	-- create list
+	local list = {}
+	for _,k in ipairs(keys) do
+		tinsert(list, tbl[k])
+	end
+
+	-- wipe
+	wipe(keys)
+
+	-- return list
+	return list
 end
 
 -- check for table additions

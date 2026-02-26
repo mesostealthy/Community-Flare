@@ -228,6 +228,7 @@ if not isRetail then
 end
 
 tinsert(HarmSpells.MAGE, 44614) -- Flurry (40 yards)
+tinsert(HarmSpells.MAGE, 11366) -- Pyroblast (40 yards)
 tinsert(HarmSpells.MAGE, 5019) -- Shoot (30 yards)
 tinsert(HarmSpells.MAGE, 118) -- Polymorph (30 yards)
 tinsert(HarmSpells.MAGE, 116) -- Frostbolt (40 yards)

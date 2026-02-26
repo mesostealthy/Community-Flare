@@ -10,6 +10,7 @@ local CopyTable                                   = _G.CopyTable
 local print                                       = _G.print
 local tostring                                    = _G.tostring
 local type                                        = _G.type
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 
 -- get current vehicles

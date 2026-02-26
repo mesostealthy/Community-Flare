@@ -9,17 +9,16 @@ local _G                                          = _G
 local BNGetFriendIndex                            = _G.BNGetFriendIndex
 local BNInviteFriend                              = _G.BNInviteFriend
 local BNRequestInviteFriend                       = _G.BNRequestInviteFriend
-local GetBattlefieldInstanceRunTime               = _G.GetBattlefieldInstanceRunTime
 local GetBattlefieldEstimatedWaitTime             = _G.GetBattlefieldEstimatedWaitTime
 local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
-local GetBattlefieldTimeWaited                    = _G.GetBattlefieldTimeWaited
 local GetDisplayedInviteType                      = _G.GetDisplayedInviteType
 local GetLFGDungeonInfo                           = _G.GetLFGDungeonInfo
 local GetLFGInfoServer                            = _G.GetLFGInfoServer
 local GetLFGQueueStats                            = _G.GetLFGQueueStats
 local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
+local GetMaxLevelForLatestExpansion               = _G.GetMaxLevelForLatestExpansion
 local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetPVPRoles                                 = _G.GetPVPRoles
@@ -37,7 +36,6 @@ local UnitName                                    = _G.UnitName
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
 local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
-local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
@@ -429,43 +427,6 @@ function NS:PromoteToRaidLeader(player)
 
 	-- failed
 	return false
-end
-
--- look for players with 0 damage and 0 healing
-function NS:Check_For_Inactive_Players()
-	-- has match started yet?
-	if (PvPGetActiveMatchDuration() > 0) then
-		-- calculate time elapsed
-		NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldInstanceRunTime()
-		NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-		NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-		NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
-		-- process all scores
-		local count = 0
-		for i=1, GetNumBattlefieldScores() do
-			local info = NS:GetScoreInfo(i)
-			if (info and info.name and not issecretvalue(info.name)) then
-				-- damage and healing done found?
-				if ((info.damageDone ~= nil) and (info.healingDone ~= nil)) then
-					-- both equal zero?
-					if ((info.damageDone == 0) and (info.healingDone == 0)) then
-						-- display
-						print(strformat(L["%s: AFK after %d minutes, %d seconds?"], info.name, NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds))
-
-						-- increase
-						count = count + 1
-					end
-				end
-			end
-		end
-
-		-- display
-		print(strformat(L["Count: %d"], count))
-	else
-		-- display
-		print(strformat(L["%s: Not currently in an active match."], NS.CommFlare.Title))
-	end
 end
 
 -- get current battleground status
@@ -1324,7 +1285,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 
 				-- get community member
 				local playerGUID = UnitGUID(unit)
-				NS:Process_MemberGUID(unit, player)
+				NS:Process_MemberGUID(playerGUID, player)
 				local mercenary = UnitIsMercenary("player")
 				local member = NS:Get_Community_Member(player)
 				if (member and member.clubs) then
@@ -1751,7 +1712,8 @@ function NS:Log_Match_Roster()
 	local list = nil
 	if (NS.CommFlare.CF.LogListPlayers and next(NS.CommFlare.CF.LogListPlayers)) then
 		-- build list
-		for k,v in pairs(NS.CommFlare.CF.LogListPlayers) do
+		local sortedList = NS:SortTableKeys(NS.CommFlare.CF.LogListPlayers)
+		for k,v in pairs(sortedList) do
 			-- empty?
 			if (list == nil) then
 				-- start
@@ -1767,7 +1729,8 @@ function NS:Log_Match_Roster()
 	-- has log list names list?
 	elseif (NS.CommFlare.CF.LogListNamesList and next(NS.CommFlare.CF.LogListNamesList)) then
 		-- build log list
-		for k,v in pairs(NS.CommFlare.CF.LogListNamesList) do
+		local sortedList = NS:SortTableValues(NS.CommFlare.CF.LogListNamesList)
+		for k,v in pairs(sortedList) do
 			-- empty?
 			if (list == nil) then
 				list = v
@@ -1996,302 +1959,6 @@ function NS:Process_Auto_Invite(sender)
 	end
 end
 
--- get battleground status
-function NS:Get_Battleground_Status()
-	-- currently in battleground?
-	if (NS:IsInBattleground() == true) then
-		-- get current battleground status
-		local text = nil
-		local status = NS:Get_Current_Battleground_Status()
-		if (status == true) then
-			-- update battleground stuff / counts
-			NS:Update_Battleground_Stuff(false, false)
-
-			-- use proper count
-			local count = 0
-			if (NS.CommFlare.CF.PlayerMercenary == true) then
-				-- mercenary count
-				count = NS.CommFlare.CF.MercCount
-			else
-				-- community count
-				count = NS.CommFlare.CF.CommCount
-			end
-
-			-- has match started yet?
-			local duration = PvPGetActiveMatchDuration()
-			if (duration > 0) then
-				-- calculate time elapsed
-				NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldInstanceRunTime()
-				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
-				-- alterac valley or korrak's revenge?
-				if ((NS.CommFlare.CF.MapID == 91) or (NS.CommFlare.CF.MapID == 1537)) then
-					-- set text to alterac valley status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %s = %d/4; %s = %d/4; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.AV.Scores.Alliance,
-						FACTION_HORDE, NS.CommFlare.CF.AV.Scores.Horde,
-						L["Bunkers Left"], NS.CommFlare.CF.AV.Counts.Bunkers,
-						L["Towers Left"], NS.CommFlare.CF.AV.Counts.Towers,
-						count, L["Community Members"])
-				-- ashran?
-				elseif (NS.CommFlare.CF.MapID == 1478) then
-					-- set text to ashran status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.ASH.Scores.Alliance,
-						FACTION_HORDE, NS.CommFlare.CF.ASH.Scores.Horde,
-						count, L["Community Members"])
-				-- battle for wintergrasp?
-				elseif (NS.CommFlare.CF.MapID == 1334) then
-					-- set text to wintergrasp status
-					text = strformat("%s (%s): %s; %s = %d %s, %d %s; %s %s; %s %s; %s: %d/3; %d %s",
-						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.WG.Type,
-						NS.CommFlare.CF.WG.TimeRemaining, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.WG.Vehicles.Alliance,
-						FACTION_HORDE, NS.CommFlare.CF.WG.Vehicles.Horde,
-						L["Towers Destroyed"], NS.CommFlare.CF.WG.Counts.Towers,
-						count, L["Community Members"])
-				-- isle of conquest?
-				elseif (NS.CommFlare.CF.MapID == 169) then
-					-- set text to isle of conquest status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s: %d/3; %s = %s; %s: %d/3; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.IOC.Scores.Alliance,
-						L["Gates Destroyed"], NS.CommFlare.CF.IOC.Counts.Alliance,
-						FACTION_HORDE, NS.CommFlare.CF.IOC.Scores.Horde,
-						L["Gates Destroyed"], NS.CommFlare.CF.IOC.Counts.Horde,
-						count, L["Community Members"])
-				-- southshore vs tarren mill?
-				elseif (NS.CommFlare.CF.MapID == 623) then
-					-- set text to southshore vs tarren mill status
-					text = strformat("%s: %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.SSvTM.TimeRemaining,
-						FACTION_ALLIANCE, NS.CommFlare.CF.SSvTM.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.SSvTM.HordeScore,
-						count, L["Community Members"])
-				-- arathi basin?
-				elseif (NS.CommFlare.CF.MapID == 1366) then
-					-- set text to arathi basin status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.AB.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.AB.HordeScore,
-						count, L["Community Members"])
-				-- battle for gilneas?
-				elseif (NS.CommFlare.CF.MapID == 275) then
-					-- set text to battle for gilneas status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.BFG.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.BFG.HordeScore,
-						count, L["Community Members"])
-				-- deepwind gorge?
-				elseif (NS.CommFlare.CF.MapID == 1576) then
-					-- set text to deepwind gorge status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.DWG.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.DWG.HordeScore,
-						count, L["Community Members"])
-				-- eye of the storm?
-				elseif (NS.CommFlare.CF.MapID == 112) then
-					-- set text to eye of the storm status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.EOTS.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.EOTS.HordeScore,
-						count, L["Community Members"])
-				-- seething shore?
-				elseif (NS.CommFlare.CF.MapID == 907) then
-					-- set text to seething shore status
-					text = strformat("%s: %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.SSH.TimeRemaining,
-						FACTION_ALLIANCE, NS.CommFlare.CF.SSH.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.SSH.HordeScore,
-						count, L["Community Members"])
-				-- silvershard mines?
-				elseif (NS.CommFlare.CF.MapID == 423) then
-					-- set text to silvershard mines status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.SSM.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.SSM.HordeScore,
-						count, L["Community Members"])
-				-- temple of kotmogu?
-				elseif (NS.CommFlare.CF.MapID == 417) then
-					-- set text to temple of kotmogu status
-					text = strformat("%s: %s = %d %s, %d %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, L["Time Elapsed"],
-						NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-						NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-						FACTION_ALLIANCE, NS.CommFlare.CF.TOK.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.TOK.HordeScore,
-						count, L["Community Members"])
-				-- twin peaks?
-				elseif (NS.CommFlare.CF.MapID == 206) then
-					-- set text to twin peaks status
-					text = strformat("%s: %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.TWP.TimeRemaining,
-						FACTION_ALLIANCE, NS.CommFlare.CF.TWP.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.TWP.HordeScore,
-						count, L["Community Members"])
-				-- warsong gulch?
-				elseif (NS.CommFlare.CF.MapID == 1339) then
-					-- set text to warsong gulch status
-					text = strformat("%s: %s; %s = %s; %s = %s; %d %s",
-						NS.CommFlare.CF.MapInfo.name, NS.CommFlare.CF.WSG.TimeRemaining,
-						FACTION_ALLIANCE, NS.CommFlare.CF.WSG.AllianceScore,
-						FACTION_HORDE, NS.CommFlare.CF.WSG.HordeScore,
-						count, L["Community Members"])
-				end
-			else
-				-- set text to gates not opened yet
-				text = strformat("%s: %s (%d %s)",
-					NS.CommFlare.CF.MapInfo.name, L["Just entered match. Gates not opened yet!"],
-					count, L["Community Members"])
-			end
-
-			-- has raid leader?
-			if (NS.CommFlare.CF.RaidLeader and (NS.CommFlare.CF.RaidLeader ~= L["N/A"])) then
-				-- add raid leader to text
-				text = strformat("%s; %s = %s", text, L["Raid Leader"], NS.CommFlare.CF.RaidLeader)
-			end
-		else
-			-- set text to not an epic battleground
-			text = strformat(L["%s: Not an epic battleground to track."], NS.CommFlare.CF.MapInfo.name)
-		end
-
-		-- return text
-		return text
-	else
-		-- get MapID
-		NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
-		if (NS.CommFlare.CF.MapID) then
-			-- get map info
-			NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
-		end
-
-		-- check for queued battleground
-		local text = {}
-		local reported = false
-		NS.CommFlare.CF.Leader = NS:GetPartyLeader()
-		for i=1, GetMaxBattlefieldID() do
-			-- queued and tracked?
-			local status, mapName = GetBattlefieldStatus(i)
-			local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-			if ((status == "queued") and (isTracked == true)) then
-				-- reported
-				reported = true
-
-				-- set text to time in queue
-				NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldTimeWaited(i)
-				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-				text[i] = strformat(L["%s has been queued for %d %s and %d %s for %s."],
-					NS.CommFlare.CF.Leader,
-					NS.CommFlare.CF.Timer.Minutes, L["minutes"],
-					NS.CommFlare.CF.Timer.Seconds, L["seconds"],
-					mapName)
-			end
-		end
-
-		-- return text
-		return text
-	end
-end
-
--- process status check
-function NS:Process_Status_Check(sender)
-	-- has sender?
-	if (sender) then
-		-- no shared community?
-		if (NS:Has_Shared_Community(sender) == false) then
-			-- finished
-			return
-		end
-	end
-
-	-- get battleground status?
-	local text = NS:Get_Battleground_Status()
-	if (type(text) == "string") then
-		-- has sender?
-		if (sender) then
-			-- add to table for later
-			NS.CommFlare.CF.StatusCheck[sender] = time()
-		end
-
-		-- send text to sender
-		NS:SendMessage(sender, text)
-	-- still in queue?
-	elseif (type(text) == "table") then
-		-- has sender?
-		if (sender) then
-			-- process all
-			local timer = 0.0
-			local reported = false
-			for k,v in pairs(text) do
-				-- reported
-				reported = true
-
-				-- send replies staggered
-				TimerAfter(timer, function()
-					-- report queue time
-					NS:SendMessage(sender, v)
-				end)
-
-				-- next
-				timer = timer + 0.2
-			end
-
-			-- verify player does not have deserter debuff
-			NS:CheckForAura("player", "HARMFUL", L["Deserter"])
-			if (NS.CommFlare.CF.HasAura == true) then
-				-- has time left?
-				local message = strformat("%s!", L["Sorry, I currently have deserter"])
-				if (NS.CommFlare.CF.AuraData.timeLeft) then
-					-- append time left
-					local seconds = NS.CommFlare.CF.AuraData.timeLeft
-					local minutes = mfloor(seconds / 60)
-					seconds = seconds - (minutes * 60)
-					local timeLeft = strformat(L["%d minutes, %d seconds"], minutes, seconds)
-					message = strformat(L["%s (%s left.)"], message, timeLeft)
-				end
-
-				-- send back to party that you have deserter
-				NS:SendMessage(sender, message)
-			end
-
-			-- not reported?
-			if (reported == false) then
-				-- not currently in queue
-				NS:SendMessage(sender, L["Not currently in an epic battleground or queue!"])
-			end
-		end
-	end
-end
-
 -- report joined with estimated time
 function NS:Report_Joined_With_Estimated_Time(index)
 	-- clear role chosen table
@@ -2334,7 +2001,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				local text = nil
 				local count = NS:GetGroupCountText()
 				local level = NS:UnitLevel("player")
-				if (level < 80) then
+				if (level < GetMaxLevelForLatestExpansion()) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], mapName)
 				else
@@ -2401,7 +2068,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- finalize text
 				local level = NS:UnitLevel("player")
-				if (level < 80) then
+				if (level < GetMaxLevelForLatestExpansion()) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
 				else
@@ -2445,7 +2112,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- finalize text
 				local level = NS:UnitLevel("player")
-				if (level < 80) then
+				if (level < GetMaxLevelForLatestExpansion()) then
 					-- add with level
 					text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Joined Queue for"], mapName)
 				else
@@ -2685,7 +2352,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = nil
 							local count = NS:GetGroupCountText()
 							local level = NS:UnitLevel("player")
-							if (level < 80) then
+							if (level < GetMaxLevelForLatestExpansion()) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Queue Popped for"], mapName)
 							else
@@ -2746,7 +2413,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = nil
 							local count = NS:GetGroupCountText()
 							local level = NS:UnitLevel("player")
-							if (level < 80) then
+							if (level < GetMaxLevelForLatestExpansion()) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s%s %s!", L["Level"], level, count, faction, mercenary, L["Dropped Queue for"], mapName)
 							else
@@ -2780,7 +2447,7 @@ function NS:Update_Battlefield_Status(index)
 					-- finalize text
 					local text = nil
 					local level = NS:UnitLevel("player")
-					if (level < 80) then
+					if (level < GetMaxLevelForLatestExpansion()) then
 						-- add with level
 						text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
 					else
@@ -2950,7 +2617,7 @@ function NS:Update_Brawl_Status()
 								local text = nil
 								local count = NS:GetGroupCountText()
 								local level = NS:UnitLevel("player")
-								if (level < 80) then
+								if (level < GetMaxLevelForLatestExpansion()) then
 									-- add with level
 									text = strformat("[%s %d] %s %s %s!", L["Level"], level, count, L["Queue Popped for"], mapName)
 								else
@@ -3001,7 +2668,7 @@ function NS:Update_Brawl_Status()
 							local text = nil
 							local count = NS:GetGroupCountText()
 							local level = NS:UnitLevel("player")
-							if (level < 80) then
+							if (level < GetMaxLevelForLatestExpansion()) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
 							else
@@ -3032,7 +2699,7 @@ function NS:Update_Brawl_Status()
 							-- missed
 							local text = nil
 							local level = NS:UnitLevel("player")
-							if (level < 80) then
+							if (level < GetMaxLevelForLatestExpansion()) then
 								-- add with level
 								text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
 							else
@@ -3078,7 +2745,7 @@ function NS:Update_Brawl_Status()
 					-- left queue
 					local text = nil
 					local level = NS:UnitLevel("player")
-					if (level < 80) then
+					if (level < GetMaxLevelForLatestExpansion()) then
 						-- add with level
 						text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Left Queue for Popped"], mapName)
 					else
@@ -3215,7 +2882,7 @@ function NS:Get_Current_Queues_Text()
 		-- finalize text
 		local count = NS:GetGroupCountText()
 		local level = NS:UnitLevel("player")
-		if (level < 80) then
+		if (level < GetMaxLevelForLatestExpansion()) then
 			-- add with level
 			text = strformat("[%s %d] %s %s %s%s %s", L["Level"], level, count, faction, mercenary, L["Currently Queued for"], text)
 		else

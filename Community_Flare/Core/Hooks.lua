@@ -34,7 +34,6 @@ local hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed = f
 local hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed = false
 local hook_HonorFrameQueueButton_OnEnter_installed = false
 local hook_PVPMatchResults_OnUpdate_installed = false
-local hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = false
 local hook_QuickJoinRoleSelectionFrame_OnShow_installed = false
 local hook_GameTooltip_OnShow_installed = false
 local hook_SettingsPanel_OnHide_installed = false
@@ -285,16 +284,6 @@ end
 
 -- securely hook PVPMatchResults OnUpdate
 local function hook_PVPMatchResults_OnUpdate(self)
-	-- PVPMatchResults.scrollBox:ScrollToBegin not hooked?
-	if (hook_PVPMatchResults_scrollBox_ScrollToBegin_installed ~= true) then
-		-- fix pvp match results scrolling
-		if (PVPMatchResults and PVPMatchResults.scrollBox) then
-			-- disable ScrollToBegin
-			PVPMatchResults.scrollBox.ScrollToBegin = function(self) end
-			hook_PVPMatchResults_scrollBox_ScrollToBegin_installed = true
-		end
-	end
-
 	-- details button exists?
 	if (DetailsOpenArenaSummaryButtonOnPVPMatchResults) then
 		-- in battleground / brawl?

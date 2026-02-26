@@ -13,6 +13,7 @@ local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local tonumber                                    = _G.tonumber
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 
 -- pois
@@ -114,6 +115,7 @@ function NS:Process_AlteracValley_POIs()
 			if (info and info.name and info.areaPoiID) then
 				-- add to list
 				list[info.name] = CopyTable(info)
+				wipe(info)
 			end
 		end
 
@@ -211,6 +213,7 @@ function NS:Process_AlteracValley_Vignettes()
 				-- add to list
 				local id = info.vignetteID
 				list[id] = CopyTable(info)
+				wipe(info)
 
 				-- tracked?
 				local data = NS.AlteracValleyTrackedVignettes[id]

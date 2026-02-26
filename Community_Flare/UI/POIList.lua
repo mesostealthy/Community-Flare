@@ -14,7 +14,6 @@ local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
-local sort                                        = _G.sort
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring

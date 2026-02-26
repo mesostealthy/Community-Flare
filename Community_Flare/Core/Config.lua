@@ -34,10 +34,11 @@ local GlobalDefaults = {
 		clubs = {},
 		history = {},
 		matchLogList = {},
+		members = {},
+		ApplicantLists = {},
+		AssistFrame = {},
 		MemberGUIDs = {},
 		MemberNotes = {},
-		members = {},
-		AssistFrame = {},
 		SocialQueues = {},
 		WarCrateLocations = {},
 
@@ -866,7 +867,7 @@ local function Setup_Equipment_Sets_List(info)
 	-- can use equipment sets?
 	local list = {}
 	list[-1] = L["None"]
-	if (CanUseEquipmentSets() == true) then
+	if (CanUseEquipmentSets()) then
 		-- process all equipment sets
 		local ids = GetEquipmentSetIDs()
 		for k,v in ipairs(ids) do
@@ -883,7 +884,7 @@ end
 -- equipment sets disabled?
 local function Equipment_Sets_Disabled()
 	-- can use equipment sets?
-	if (CanUseEquipmentSets() == true) then
+	if (CanUseEquipmentSets()) then
 		-- enabled
 		return false
 	else
@@ -900,10 +901,11 @@ local function SetAssistButtonXPos(info, value)
 		-- available?
 		if (NS.AssistButton and NS.SaveButtonPosition) then
 			-- save positions
+			local scale = NS.AssistButton:GetScale()
 			local maxwidth = mfloor(GetScreenWidth())
-			local left = NS.db.global.AssistFrame.left + value
 			local width = NS.AssistButton:GetWidth()
-			local top = NS.db.global.AssistFrame.top or 0
+			local left = (NS.db.global.AssistFrame.left or NS.AssistButton:GetLeft()) + value
+			local top = NS.AssistButton:GetTop() * scale
 			if (left < 0) then
 				-- reset
 				left = 0
@@ -940,10 +942,11 @@ local function SetAssistButtonYPos(info, value)
 		-- available?
 		if (NS.AssistButton and NS.SaveButtonPosition) then
 			-- save positions
+			local scale = NS.AssistButton:GetScale()
 			local maxheight = mfloor(GetScreenHeight())
-			local left = NS.db.global.AssistFrame.left or 0
+			local left = NS.AssistButton:GetLeft() * scale
 			local height = NS.AssistButton:GetHeight()
-			local top = NS.db.global.AssistFrame.top - value
+			local top = (NS.db.global.AssistFrame.top or NS.AssistButton:GetTop()) - value
 			if ((top - height) < 0) then
 				-- reset
 				top = height

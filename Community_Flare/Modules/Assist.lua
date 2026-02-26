@@ -128,38 +128,74 @@ end
 
 -- name plate added
 function NS:AssistButtonNamePlateAdded(...)
-	-- get main assist
+	-- nameplateX only
 	local unitToken = ...
 	if (NS.faction ~= 0) then return end
-	local player1, unitToken1 = CommunityFlare_GetMainAssist()
-	if (player1) then
-		-- nameplateX only
-		if (unitToken:find("nameplate")) then
-			-- enemy player?
-			if (UnitIsEnemy(unitToken, "player")) then
-				-- get name plate
-				local namePlate = GetNamePlateForUnit(unitToken)
-				if (not namePlate) then
-					-- failed
-					return nil
-				end
+	if (unitToken:find("nameplate")) then
+		-- enemy player?
+		if (UnitIsEnemy(unitToken, "player")) then
+			-- get name plate
+			local namePlate = GetNamePlateForUnit(unitToken)
+			if (not namePlate) then
+				-- failed
+				return nil
+			end
 
-				-- uninitialized?
-				if (not namePlate.CF) then
-					-- create frame
-					namePlate.CF = {}
-					namePlate.CF.frame = CreateFrame("Frame", nil, namePlate)
-					namePlate.CF.frame:SetFrameStrata("HIGH")
-					namePlate.CF.frame:SetSize(50, 50)
-					namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
-					namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
-					namePlate.CF.frame.texture:SetAllPoints()
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare_Details\\Media\\dps.tga")
-				end
+			-- uninitialized?
+			if (not namePlate.CF) then
+				-- initialize
+				namePlate.CF = {}
+			end
 
-				-- show transparent
-				namePlate.CF.frame:SetAlpha(0)
-				namePlate.CF.frame:Show()
+			-- create frame
+			namePlate.CF.frame = CreateFrame("Frame", nil, namePlate)
+			namePlate.CF.frame:SetFrameStrata("HIGH")
+			namePlate.CF.frame:SetSize(50, 50)
+			namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
+			namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
+			namePlate.CF.frame.texture:SetAllPoints()
+
+			-- show (hidden)
+			namePlate.CF.frame:SetAlpha(0)
+			namePlate.CF.frame:Show()
+
+			-- get main assist
+			local player1, unitToken1 = CommunityFlare_GetMainAssist()
+			if (player1) then
+				-- set main assist
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\damager.tga")
+				namePlate.CF.frame:SetAlpha(1)
+			else
+				-- check class base
+				local className, classID = UnitClassBase(unitToken)
+				if (className == "MONK") then
+					-- check power type
+					local powerType = UnitPowerType(unitToken)
+					if (powerType == 0) then
+						-- set healer
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+						namePlate.CF.frame:SetAlpha(1)
+					end
+				elseif (className == "PRIEST") then
+					-- check power type
+					local powerType = UnitPowerType(unitToken)
+					if (powerType ~= 13) then
+						-- set healer
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+						namePlate.CF.frame:SetAlpha(1)
+					end
+				elseif (className == "SHAMAN") then
+					-- check power type
+					local powerType = UnitPowerType(unitToken)
+					if (powerType ~= 11) then
+						-- set healer
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+						namePlate.CF.frame:SetAlpha(1)
+					end
+				else
+					-- clear texture
+					namePlate.CF.frame.texture:SetTexture(nil)
+				end
 			end
 		end
 	end
@@ -179,8 +215,9 @@ function NS:AssistButtonNamePlateRemoved(...)
 		end
 
 		-- frame created?
-		if (namePlate.CF and namePlate.CF.frame and namePlate.CF.texture) then
+		if (namePlate.CF and namePlate.CF.frame and namePlate.CF.frame.texture) then
 			-- hide
+			namePlate.CF.frame.texture:SetTexture(nil)
 			namePlate.CF.frame:SetAlpha(0)
 			namePlate.CF.frame:Hide()
 		end

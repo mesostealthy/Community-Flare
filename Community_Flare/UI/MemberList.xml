@@ -154,8 +154,8 @@
 							<OnEnter method="OnEnter" />
 							<OnLeave method="OnLeave" />
 						</Scripts>
-						<NormalTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" alpha="0.2" setAllPoints="true" />
-						<HighlightTexture file="Interface\AddOns\Community_Flare_Details\Media\refresh.tga" setAllPoints="true" />
+						<NormalTexture file="Interface\AddOns\Community_Flare\Media\refresh.tga" alpha="0.2" setAllPoints="true" />
+						<HighlightTexture file="Interface\AddOns\Community_Flare\Media\refresh.tga" setAllPoints="true" />
 					</Button>
 					<Button parentKey="CloseButton" inherits="UIPanelCloseButton" mixin="CF_MemberListCloseButtonMixin">
 						<Anchors>

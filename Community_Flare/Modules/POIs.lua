@@ -6,7 +6,6 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local CopyTable                                   = _G.CopyTable
 local print                                       = _G.print
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring

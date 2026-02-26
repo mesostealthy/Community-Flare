@@ -6,10 +6,13 @@
 	<Script file="Debug.lua" />
 	<Script file="Init.lua" />
 	<Script file="Restrictions.lua" />
+	<Script file="Battlegrounds.lua" />
+	<Script file="BlockGameMenus.lua" />
 	<Script file="Communication.lua" />
 	<Script file="Database.lua" />
 	<Script file="Events.lua" />
 	<Script file="Hooks.lua" />
+	<Script file="History.lua" />
 	<Script file="Menus.lua" />
 	<Script file="SlashCmd.lua" />
 	<Script file="Specialization.lua" />
