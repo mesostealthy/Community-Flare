@@ -2589,6 +2589,19 @@ end
 function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 	local unitTarget, castGUID, spellID, castBarID = ...
 
+	-- debug print enabled?
+	if (NS.db.global.debugPrint == true) then
+		-- non secret spell ID?
+		if (not issecretvalue(spellID)) then
+			if ((unitTarget ~= "player") and (unitTarget ~= "target") and (unitTarget ~= "targettarget")) then
+				if (not unitTarget:find("raid")) then
+					-- debug print
+					NS:Debug_Print("UNIT_SPELLCAST_START:", unitTarget, spellID, castBarID)
+				end
+			end
+		end
+	end
+
 	-- only check player
 	if (unitTarget == "player") then
 		-- has warning setting enabled?
@@ -2609,6 +2622,42 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 						-- issue local raid warning (with raid warning audio sound)
 						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to teleport?"])
 					end
+				end
+			end
+		end
+	end
+end
+
+-- process unit spellcast stop
+function NS.CommFlare:UNIT_SPELLCAST_STOP(msg, ...)
+	local unitTarget, castGUID, spellID, castBarID = ...
+
+	-- debug print enabled?
+	if (NS.db.global.debugPrint == true) then
+		-- non secret spell ID?
+		if (not issecretvalue(spellID)) then
+			if ((unitTarget ~= "player") and (unitTarget ~= "target") and (unitTarget ~= "targettarget")) then
+				if (not unitTarget:find("raid")) then
+					-- debug print
+					NS:Debug_Print("UNIT_SPELLCAST_STOP:", unitTarget, spellID, castBarID)
+				end
+			end
+		end
+	end
+end
+
+-- process unit spellcast succeeded
+function NS.CommFlare:UNIT_SPELLCAST_SUCCEEDED(msg, ...)
+	local unitTarget, castGUID, spellID, castBarID = ...
+
+	-- debug print enabled?
+	if (NS.db.global.debugPrint == true) then
+		-- non secret spell ID?
+		if (not issecretvalue(spellID)) then
+			if ((unitTarget ~= "player") and (unitTarget ~= "target") and (unitTarget ~= "targettarget")) then
+				if (not unitTarget:find("raid")) then
+					-- debug print
+					NS:Debug_Print("UNIT_SPELLCAST_SUCCEEDED:", unitTarget, spellID, castBarID)
 				end
 			end
 		end
@@ -2915,6 +2964,8 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("UNIT_ENTERED_VEHICLE")
 	self:RegisterEvent("UNIT_EXITED_VEHICLE")
 	self:RegisterEvent("UNIT_SPELLCAST_START")
+	self:RegisterEvent("UNIT_SPELLCAST_STOP")
+	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
 	self:RegisterEvent("UPDATE_UI_WIDGET")
@@ -2995,6 +3046,8 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("UNIT_ENTERED_VEHICLE")
 	self:UnregisterEvent("UNIT_EXITED_VEHICLE")
 	self:UnregisterEvent("UNIT_SPELLCAST_START")
+	self:UnregisterEvent("UNIT_SPELLCAST_STOP")
+	self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_STATUS")
 	self:UnregisterEvent("UPDATE_UI_WIDGET")
