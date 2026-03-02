@@ -267,7 +267,7 @@ function NS:CreateAssistButton()
 	NS.AssistButton:EnableMouse(true)
 	NS.AssistButton:RegisterForDrag("LeftButton")
 	NS.AssistButton:SetMovable(true)
-	NS.AssistButton:SetSize(width, width + 20)
+	NS.AssistButton:SetSize(width, 20)
 	if ((left > 0) and (top > 0)) then
 		-- position window properly
 		NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
@@ -376,7 +376,7 @@ function NS:CreateAssistButton()
 			-- not locked?
 			if (NS.db.global.AssistFrame.locked ~= true) then
 				-- always use same
-				self:SetSize(width, width + 20)
+				self:SetSize(width, 20)
 				self.Button:SetSize(width, width)
 				self.Header.Text:SetWidth(width)
 			end
