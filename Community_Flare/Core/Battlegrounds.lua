@@ -13,8 +13,6 @@ local GetBattlefieldEstimatedWaitTime             = _G.GetBattlefieldEstimatedWa
 local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetDisplayedInviteType                      = _G.GetDisplayedInviteType
-local GetLFGDungeonInfo                           = _G.GetLFGDungeonInfo
-local GetLFGInfoServer                            = _G.GetLFGInfoServer
 local GetLFGQueueStats                            = _G.GetLFGQueueStats
 local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
@@ -35,8 +33,6 @@ local UnitIsMercenary                             = _G.UnitIsMercenary
 local UnitName                                    = _G.UnitName
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
-local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
-local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
 local date                                        = _G.date
@@ -1713,14 +1709,14 @@ function NS:Log_Match_Roster()
 	if (NS.CommFlare.CF.LogListPlayers and next(NS.CommFlare.CF.LogListPlayers)) then
 		-- build list
 		local sortedList = NS:SortTableKeys(NS.CommFlare.CF.LogListPlayers)
-		for k,v in pairs(sortedList) do
+		for _,v in pairs(sortedList) do
 			-- empty?
 			if (list == nil) then
 				-- start
-				list = k
+				list = v
 			else
 				-- append
-				list = list .. ", " .. k
+				list = list .. ", " .. v
 			end
 
 			-- increase
@@ -1730,7 +1726,7 @@ function NS:Log_Match_Roster()
 	elseif (NS.CommFlare.CF.LogListNamesList and next(NS.CommFlare.CF.LogListNamesList)) then
 		-- build log list
 		local sortedList = NS:SortTableValues(NS.CommFlare.CF.LogListNamesList)
-		for k,v in pairs(sortedList) do
+		for _,v in pairs(sortedList) do
 			-- empty?
 			if (list == nil) then
 				list = v
@@ -1970,14 +1966,21 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		return
 	end
 
-	-- brawl?
-	if (index == "Brawl") then
-		-- is tracked pvp?
-		local mapName = NS.CommFlare.CF.LocalQueues[index].name
-		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
+	-- brawl / dungeon?
+	if ((index == "Brawl") or (index == "Dungeon")) then
+		-- brawl?
+		local isTracked = true
+		local instanceName = NS.CommFlare.CF.LocalQueues[index].name
+		if (index == "Brawl") then
+			-- is tracked PVP?
+			isTracked = NS:IsTrackedPVP(instanceName)
+		end
+
+		-- is tracked?
 		if (isTracked == true) then
 			-- get lfg queue stats
-			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(LE_LFG_CATEGORY_BATTLEFIELD)
+			local category = NS.CommFlare.CF.LocalQueues[index].category
+			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(category)
 			if (hasData and averageWait) then
 				-- get estimated time
 				NS.CommFlare.CF.Timer.MilliSeconds = averageWait * 1000
@@ -2003,10 +2006,10 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				local level = NS:UnitLevel("player")
 				if (level < GetMaxLevelForLatestExpansion()) then
 					-- add with level
-					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], mapName)
+					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], instanceName)
 				else
 					-- add without level
-					text = strformat("%s %s %s %s!", count, faction, L["Joined Queue for"], mapName)
+					text = strformat("%s %s %s %s!", count, faction, L["Joined Queue for"], instanceName)
 				end
 
 				-- add time waited
@@ -2223,6 +2226,7 @@ function NS:Update_Battlefield_Status(index)
 				local timestamp = time()
 				NS.CommFlare.CF.LocalQueues[index] = {
 					["name"] = mapName,
+					["category"] = LE_LFG_CATEGORY_BATTLEFIELD,
 					["created"] = timestamp,
 					["entered"] = false,
 					["joined"] = true,
@@ -2242,8 +2246,8 @@ function NS:Update_Battlefield_Status(index)
 
 				-- delay some
 				TimerAfter(0.5, function()
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
+					-- should report queue?
+					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
 						if (NS:IsGroupLeader() == true) then
 							-- report joined queue with estimated time
@@ -2327,8 +2331,8 @@ function NS:Update_Battlefield_Status(index)
 				-- port expiration not expired?
 				NS.CommFlare.CF.Expiration = GetBattlefieldPortExpiration(index)
 				if (NS.CommFlare.CF.Expiration > 0) then
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
+					-- should report queue?
+					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
@@ -2388,8 +2392,8 @@ function NS:Update_Battlefield_Status(index)
 					NS.CommFlare.CF.LocalData.NumHealers = 0
 					NS.CommFlare.CF.LocalData.NumTanks = 0
 
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
+					-- should report queue?
+					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
 						if (NS:IsGroupLeader() == true) then
 							-- player is horde?
@@ -2427,36 +2431,36 @@ function NS:Update_Battlefield_Status(index)
 					end
 				-- popped?
 				elseif (NS.CommFlare.CF.LocalQueues[index].popped > 0) then
-					-- player is horde?
-					local faction = L["N/A"]
-					if (NS.faction == Enum.PvPFaction.Horde) then
-						-- horde
-						faction = FACTION_HORDE
-					else
-						-- alliance
-						faction = FACTION_ALLIANCE
-					end
+					-- should report queue?
+					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
+						-- player is horde?
+						local faction = L["N/A"]
+						if (NS.faction == Enum.PvPFaction.Horde) then
+							-- horde
+							faction = FACTION_HORDE
+						else
+							-- alliance
+							faction = FACTION_ALLIANCE
+						end
 
-					-- mercenary queue?
-					local mercenary = ""
-					if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
-						-- set mercenary text
-						mercenary = strformat("%s ", L["Mercenary"])
-					end
+						-- mercenary queue?
+						local mercenary = ""
+						if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+							-- set mercenary text
+							mercenary = strformat("%s ", L["Mercenary"])
+						end
 
-					-- finalize text
-					local text = nil
-					local level = NS:UnitLevel("player")
-					if (level < GetMaxLevelForLatestExpansion()) then
-						-- add with level
-						text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
-					else
-						-- add without level
-						text = strformat("%s %s%s %s!", faction, mercenary, L["Missed Queue for Popped"], mapName)
-					end
+						-- finalize text
+						local text = nil
+						local level = NS:UnitLevel("player")
+						if (level < GetMaxLevelForLatestExpansion()) then
+							-- add with level
+							text = strformat("[%s %d] %s %s%s %s!", L["Level"], level, faction, mercenary, L["Missed Queue for Popped"], mapName)
+						else
+							-- add without level
+							text = strformat("%s %s%s %s!", faction, mercenary, L["Missed Queue for Popped"], mapName)
+						end
 
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
 						-- send to community
 						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 					end
@@ -2495,293 +2499,6 @@ function NS:Update_Battlefield_Status(index)
 				end
 			end
 		end
-	end
-end
-
--- update brawl status
-function NS:Update_Brawl_Status()
-	-- brawl queueud?
-	local index = "Brawl"
-	NS:Verify_Role_Counts()
-	local inParty, joined, queued, _, _, _, slotCount, category, leader, tank, healer, dps = GetLFGInfoServer(LE_LFG_CATEGORY_BATTLEFIELD)
-	if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
-		-- found battlefield queue?
-		local mapName = nil
-		local mode, submode = GetLFGMode(LE_LFG_CATEGORY_BATTLEFIELD)
-		if (mode) then
-			-- process all
-			local entryIDs = NS:GetAllEntriesForCategory(LE_LFG_CATEGORY_BATTLEFIELD)
-			for _, entryID in ipairs(entryIDs) do
-				-- not hidden?
-				if not NS:HideNameFromUI(entryID) then
-					-- get lfg dungeon info
-					local instanceName = GetLFGDungeonInfo(entryID)
-					if (instanceName) then
-						-- update map name
-						mapName = instanceName
-					end
-				end
-			end
-		end
-
-		-- map name not found yet?
-		if (not mapName) then
-			-- get brawl info
-			local brawlInfo
-			if (PvPIsInBrawl() == true) then
-				brawlInfo = PvPGetActiveBrawlInfo()
-			else
-				brawlInfo = PvPGetAvailableBrawlInfo()
-			end
-
-			-- use brawl name
-			mapName = brawlInfo.name
-		end
-
-		-- map name found now?
-		if (mapName) then
-			-- joined?
-			if (joined == true) then
-				-- queued?
-				if (queued == true) then
-					-- just entering queue?
-					if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
-						-- add to queues
-						local timestamp = time()
-						NS.CommFlare.CF.LocalQueues[index] = {
-							["name"] = mapName,
-							["created"] = timestamp,
-							["entered"] = false,
-							["joined"] = true,
-							["popped"] = 0,
-							["status"] = "queued",
-							["suspended"] = false,
-							["type"] = index,
-						}
-
-						-- update local group
-						NS:Update_Group("local")
-
-						-- warn when honor capped?
-						if (NS.db.global.warningHonorCapped == true) then
-							-- get honor info
-							local info = NS:GetCurrencyInfo(1792)
-							if (info and info.quantity and info.maxQuantity) then
-								-- close to capping?
-								local diff = info.maxQuantity - info.quantity
-								if (diff) then
-									-- capped?
-									if (diff == 0) then
-										-- issue local raid warning (with raid warning audio sound)
-										RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Honor capped! Please spend some!"])
-									-- close to capping?
-									elseif (diff < 2500) then
-										-- issue local raid warning (with raid warning audio sound)
-										RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
-									end
-								end
-							end
-						end
-
-						-- delay some
-						TimerAfter(0.5, function()
-							-- community reporter enabled?
-							if (NS.charDB.profile.communityReporter == true) then
-								-- are you group leader?
-								if (NS:IsGroupLeader() == true) then
-									-- report joined queue with estimated time
-									NS.CommFlare.CF.EstimatedWaitTime = 0
-									NS:Report_Joined_With_Estimated_Time(index)
-								end
-							end
-						end)
-					end
-				-- queue exists?
-				elseif (NS.CommFlare.CF.LocalQueues[index]) then
-					-- popped?
-					if ((NS.CommFlare.CF.LocalQueues[index].status == "popped") and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped == 0)) then
-						-- update popped time
-						NS.CommFlare.CF.LocalQueues[index].popped = time()
-						NS.CommFlare.CF.SocialQueues["local"].name = mapName
-						NS.CommFlare.CF.SocialQueues["local"].popped = NS.CommFlare.CF.LocalQueues[index].popped
-
-						-- update group / process popped
-						NS:Update_Group("local")
-						NS:Process_Popped("local")
-
-						-- community reporter enabled?
-						if (NS.charDB.profile.communityReporter == true) then
-							-- are you group leader?
-							if (NS:IsGroupLeader() == true) then
-								-- finalize text
-								local text = nil
-								local count = NS:GetGroupCountText()
-								local level = NS:UnitLevel("player")
-								if (level < GetMaxLevelForLatestExpansion()) then
-									-- add with level
-									text = strformat("[%s %d] %s %s %s!", L["Level"], level, count, L["Queue Popped for"], mapName)
-								else
-									-- add without level
-									text = strformat("%s %s %s!", count, L["Queue Popped for"], mapName)
-								end
-
-								-- add tanks / heals / dps counts
-								if ((NS.CommFlare.CF.LocalData.NumTanks > 0) or (NS.CommFlare.CF.LocalData.NumHealers > 0) or (NS.CommFlare.CF.LocalData.NumDPS > 0)) then
-									-- add counts
-									text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
-								end
-
-								-- send to community
-								NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-							end
-						end
-					end
-				end
-			else
-				-- clear local queue
-				NS.CommFlare.CF.LocalQueues[index] = nil
-			end
-		end
-	else
-		-- queue created?
-		if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].created and (NS.CommFlare.CF.LocalQueues[index].created > 0)) then
-			-- has name?
-			if (NS.CommFlare.CF.LocalQueues[index].name and (NS.CommFlare.CF.LocalQueues[index].name ~= "")) then
-				-- dropped?
-				local mapName = NS.CommFlare.CF.LocalQueues[index].name
-				if (NS.CommFlare.CF.LocalQueues[index].status == "queued") then
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
-						-- are you group leader?
-						if (NS:IsGroupLeader() == true) then
-							-- player is horde?
-							local faction = L["N/A"]
-							if (NS.faction == Enum.PvPFaction.Horde) then
-								-- horde
-								faction = FACTION_HORDE
-							else
-								-- alliance
-								faction = FACTION_ALLIANCE
-							end
-
-							-- dropped
-							local text = nil
-							local count = NS:GetGroupCountText()
-							local level = NS:UnitLevel("player")
-							if (level < GetMaxLevelForLatestExpansion()) then
-								-- add with level
-								text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Dropped Queue for"], mapName)
-							else
-								-- add without level
-								text = strformat("%s %s %s %s!", count, faction, L["Dropped Queue for"], mapName)
-							end
-
-							-- send to community
-							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-						end
-					end
-				-- failed?
-				elseif (NS.CommFlare.CF.LocalQueues[index].status == "failed") then
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
-						-- are you group leader?
-						if (NS:IsGroupLeader() == true) then
-							-- player is horde?
-							local faction = L["N/A"]
-							if (NS.faction == Enum.PvPFaction.Horde) then
-								-- horde
-								faction = FACTION_HORDE
-							else
-								-- alliance
-								faction = FACTION_ALLIANCE
-							end
-
-							-- missed
-							local text = nil
-							local level = NS:UnitLevel("player")
-							if (level < GetMaxLevelForLatestExpansion()) then
-								-- add with level
-								text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Missed Queue for Popped"], mapName)
-							else
-								-- add without level
-								text = strformat("%s %s %s!", faction, L["Missed Queue for Popped"], mapName)
-							end
-
-							-- send to community
-							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-						end
-					end
-				-- entered?
-				elseif (NS.CommFlare.CF.LocalQueues[index].status == "entered") then
-					-- are you in a party / raid?
-					local text = strformat(L["Entered Queue For Popped %s!"], mapName)
-					if (IsInGroup()) then
-						-- are you in a raid?
-						if (IsInRaid()) then
-							-- send raid message
-							NS:SendMessage("RAID", text)
-						else
-							-- send party message
-							NS:SendMessage("PARTY", text)
-						end
-					end
-
-					-- save stuff
-					NS.CommFlare.CF.LeftTime = 0
-					NS.CommFlare.CF.Expiration = 0
-					NS.CommFlare.CF.EnteredTime = time()
-				-- rejected?
-				elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
-					-- player is horde?
-					local faction = L["N/A"]
-					if (NS.faction == Enum.PvPFaction.Horde) then
-						-- horde
-						faction = FACTION_HORDE
-					else
-						-- alliance
-						faction = FACTION_ALLIANCE
-					end
-
-					-- left queue
-					local text = nil
-					local level = NS:UnitLevel("player")
-					if (level < GetMaxLevelForLatestExpansion()) then
-						-- add with level
-						text = strformat("[%s %d] %s %s %s!", L["Level"], level, faction, L["Left Queue for Popped"], mapName)
-					else
-						-- add without level
-						text = strformat("%s %s %s!", faction, L["Left Queue for Popped"], mapName)
-					end
-
-					-- are you in a party / raid?
-					if (IsInGroup()) then
-						-- are you in a raid?
-						if (IsInRaid()) then
-							-- send raid message
-							NS:SendMessage("RAID", text)
-						else
-							-- send party message
-							NS:SendMessage("PARTY", text)
-						end
-					end
-
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
-						-- send to community
-						NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-					end
-
-					-- has social queue?
-					if (NS.CommFlare.CF.SocialQueues["local"].queues and NS.CommFlare.CF.SocialQueues["local"].queues[index]) then
-						-- clear queue
-						NS.CommFlare.CF.SocialQueues["local"].queues[index] = nil
-					end
-				end
-			end
-		end
-
-		-- clear local queue
-		NS.CommFlare.CF.LocalQueues[index] = nil
 	end
 end
 

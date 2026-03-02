@@ -49,7 +49,7 @@ local GlobalDefaults = {
 		bnetAutoInvite = true,
 		bnetAutoQueue = true,
 		cdmHideInVehiclesPvP = false,
-		cdmHideWhileMounted = false,
+		communityReportDungeons = false,
 		debugMode = false,
 		debugPrint = false,
 		displayPoppedGroups = false,
@@ -1411,39 +1411,6 @@ local DatabaseGroup = {
 	}
 }
 
--- debug group
-local DebugGroup = {
-	name = L["Debug Options"],
-	type = "group",
-	order = 20,
-	args = {
-		debugTitle = {
-			name = L["Debug Options"],
-			type = "header",
-			order = 1,
-			width = "full",
-		},
-		debugMode = {
-			type = "toggle",
-			order = 2,
-			name = L["Enable debug mode to help debug issues?"],
-			desc = L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."],
-			width = "full",
-			get = function(info) return NS.db.global.debugMode end,
-			set = function(info, value) NS.db.global.debugMode = value end,
-		},
-		debugPrint = {
-			type = "toggle",
-			order = 3,
-			name = L["Enable debug print chat window to log debug events?"],
-			desc = L["This will log some debug event messages into a debug window to help MESO fix bugs."],
-			width = "full",
-			get = function(info) return NS.db.global.debugPrint end,
-			set = function(info, value) NS.db.global.debugPrint = value end,
-		},
-	}
-}
-
 -- housing group
 local HousingGroup = {
 	name = L["Housing Options"],
@@ -1501,35 +1468,11 @@ local InviteGroup = {
 	}
 }
 
--- mounted group
-local MountedGroup = {
-	name = L["Mounted Options"],
-	type = "group",
-	order = 7,
-	args = {
-		generalTitle = {
-			name = L["Mounted Options"],
-			type = "header",
-			order = 1,
-			width = "full",
-		},
-		cdmHideWhileMounted = {
-			type = "toggle",
-			order = 2,
-			name = L["Hide the Cooldown Manager while mounted?"],
-			desc = L["This will hide the Cooldown Manager while mounted in all Content."],
-			width = "full",
-			get = function(info) return NS.db.global.cdmHideWhileMounted end,
-			set = function(info, value) NS.db.global.cdmHideWhileMounted = value end,
-		},
-	}
-}
-
 -- party group
 local PartyGroup = {
 	name = L["Party Options"],
 	type = "group",
-	order = 8,
+	order = 7,
 	args = {
 		partyTitle = {
 			name = L["Party Options"],
@@ -1589,7 +1532,7 @@ local PartyGroup = {
 local QueueGroup = {
 	name = L["Queue Options"],
 	type = "group",
-	order = 9,
+	order = 8,
 	args = {
 		queueTitle = {
 			name = L["Queue Options"],
@@ -1733,7 +1676,7 @@ local QueueGroup = {
 local ReportGroup = {
 	name = L["Report Options"],
 	type = "group",
-	order = 10,
+	order = 9,
 	args = {
 		generalTitle = {
 			name = L["Report Options"],
@@ -1750,9 +1693,18 @@ local ReportGroup = {
 			get = function(info) return NS.charDB.profile.communityReporter end,
 			set = Community_Set_Reporter,
 		},
+		communityReportDungeons = {
+			type = "toggle",
+			order = 3,
+			name = L["Report dungeon queue status to communities?"],
+			desc = L["This will provide a quick popup message for you to send your dungeon queue status to the Community chat."],
+			width = "full",
+			get = function(info) return NS.db.global.communityReportDungeons end,
+			set = function(info, value) NS.db.global.communityReportDungeons = value end,
+		},
 		communityReportList = {
 			type = "multiselect",
-			order = 3,
+			order = 4,
 			name = L["Communities to Report to?"],
 			desc = L["Choose the communities that you want to report info to."],
 			values = Setup_Community_List,
@@ -1767,7 +1719,7 @@ local ReportGroup = {
 local VehicleGroup = {
 	name = L["Vehicle Options"],
 	type = "group",
-	order = 11,
+	order = 10,
 	args = {
 		generalTitle = {
 			name = L["Vehicle Options"],
@@ -1805,7 +1757,7 @@ local VehicleGroup = {
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 12,
+	order = 11,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1821,6 +1773,39 @@ local WorldGroup = {
 			width = "full",
 			get = function(info) return NS.db.global.notifyWarCrateInbound end,
 			set = function(info, value) NS.db.global.notifyWarCrateInbound = value end,
+		},
+	}
+}
+
+-- debug group
+local DebugGroup = {
+	name = L["Debug Options"],
+	type = "group",
+	order = 20,
+	args = {
+		debugTitle = {
+			name = L["Debug Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		debugMode = {
+			type = "toggle",
+			order = 2,
+			name = L["Enable debug mode to help debug issues?"],
+			desc = L["This will do various things to help with debugging bugs in the addon to help MESO fix bugs."],
+			width = "full",
+			get = function(info) return NS.db.global.debugMode end,
+			set = function(info, value) NS.db.global.debugMode = value end,
+		},
+		debugPrint = {
+			type = "toggle",
+			order = 3,
+			name = L["Enable debug print chat window to log debug events?"],
+			desc = L["This will log some debug event messages into a debug window to help MESO fix bugs."],
+			width = "full",
+			get = function(info) return NS.db.global.debugPrint end,
+			set = function(info, value) NS.db.global.debugPrint = value end,
 		},
 	}
 }
@@ -1880,7 +1865,6 @@ function NS:CreateConfigOptions()
 			DebugGroup = DebugGroup,
 			HousingGroup = HousingGroup,
 			InviteGroup = InviteGroup,
-			MountedGroup = MountedGroup,
 			PartyGroup = PartyGroup,
 			QueueGroup = QueueGroup,
 			ReportGroup = ReportGroup,

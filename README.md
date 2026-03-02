@@ -21,7 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.11.002:
--REMOVED: Some old features that are no longer viable for the Midnight expansion.
--BUFIXES: Too many to name, mostly typos / updated names.
--MISC: Some more changes for the Midnight early access.
+v2.12.001:
+-Report Queues now shows level to let you know what bracket is being Queued.
+-NEW SETTING: Report dungeon queue status to communities?

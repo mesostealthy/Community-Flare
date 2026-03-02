@@ -17,7 +17,7 @@ local GetAutoCompletePresenceID                   = _G.GetAutoCompletePresenceID
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
 local GetHomePartyInfo                            = _G.GetHomePartyInfo
 local GetInviteConfirmationInfo                   = _G.GetInviteConfirmationInfo
-local GetLFGQueueStats                            = _G.GetLFGQueueStats
+local GetLFGProposal                              = _G.GetLFGProposal
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
 local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
@@ -629,30 +629,6 @@ function NS.CommFlare:CURRENCY_DISPLAY_UPDATE(msg, ...)
 	end
 end
 
--- process cvar update
-function NS.CommFlare:CVAR_UPDATE(msg, ...)
-	local cvarName, value = ...
-
-	-- cooldownViewerEnabled?
-	if ((cvarName == "cooldownViewerEnabled") and (value == "1")) then
-		-- hide cooldown manage while mounted?
-		if (NS.db.global.cdmHideWhileMounted == true) then
-			-- persistent?
-			if (NS.CommFlare.CF.CDMPersistent == true) then
-				-- is mounted?
-				if (IsMounted()) then
-					-- cooldown manager enabled?
-					NS.CommFlare.CF.CDMEnabled = GetCVar("cooldownViewerEnabled")
-					if (NS.CommFlare.CF.CDMEnabled) then
-						-- disable cooldown manager
-						SetCVar("cooldownViewerEnabled", 0)
-					end
-				end
-			end
-		end
-	end
-end
-
 -- process group formed
 function NS.CommFlare:GROUP_FORMED(msg, ...)
 	local category, partyGUID = ...
@@ -1029,8 +1005,8 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 				local text = NS:GetGroupCountText()
 				local maxCount = NS:GetMaxGroupCount()
 				if ((NS.CommFlare.CF.PreviousCount > 0) and (NS.CommFlare.CF.PreviousCount < maxCount) and (count == maxCount)) then
-					-- community reporter enabled?
-					if (NS.charDB.profile.communityReporter == true) then
+					-- should report queue?
+					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- finalize text
 						text = strformat("%s %s!", text, L["Full Now"])
 
@@ -1072,62 +1048,127 @@ end
 
 -- process lfg proposal done
 function NS.CommFlare:LFG_PROPOSAL_DONE(msg)
-	-- brawl queue exists?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index]) then
-		-- not rejected?
-		if (NS.CommFlare.CF.LocalQueues[index].status ~= "rejected") then
+	-- valid brawl queue?
+	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Brawl"].status ~= "rejected") then
 			-- entered queue pop
-			NS.CommFlare.CF.LocalQueues[index].status = "entered"
+			NS.CommFlare.CF.LocalQueues["Brawl"].status = "entered"
 		end
 
-		-- update brawl status
-		NS:Update_Brawl_Status()
+		-- update queue status
+		NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
+	end
+
+	-- valid dungeon queue?
+	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status ~= "rejected") then
+			-- entered queue pop
+			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "entered"
+		end
+
+		-- update queue status
+		NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
 	end
 end
 
 -- process lfg proposal failed
 function NS.CommFlare:LFG_PROPOSAL_FAILED(msg)
-	-- brawl queue exists?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index]) then
-		-- not rejected?
-		if (NS.CommFlare.CF.LocalQueues[index].status ~= "rejected") then
-			-- missed queue pop
-			NS.CommFlare.CF.LocalQueues[index].status = "failed"
-		end
+	-- valid brawl queue?
+	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
+			-- queued for brawl?
+			local category = select(8, GetLFGInfoServer(LE_LFG_CATEGORY_BATTLEFIELD))
+			if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
+				-- set queued
+				NS.CommFlare.CF.LocalQueues["Brawl"].status = "queued"
+				NS.CommFlare.CF.LocalQueues["Brawl"].popped = 0
+				NS.CommFlare.CF.SocialQueues["local"].popped = 0
+			else
+				-- set failed
+				NS.CommFlare.CF.LocalQueues["Brawl"].status = "failed"
+			end
 
-		-- update brawl status
-		NS:Update_Brawl_Status()
+			-- update queue status
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
+		end
+	end
+
+	-- valid dungeon queue?
+	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
+			-- queued for brawl?
+			local category = select(8, GetLFGInfoServer(LE_LFG_CATEGORY_LFD))
+			if (category == LE_LFG_CATEGORY_LFD) then
+				-- set queued
+				NS.CommFlare.CF.LocalQueues["Dungeon"].status = "queued"
+				NS.CommFlare.CF.LocalQueues["Dungeon"].popped = 0
+				NS.CommFlare.CF.SocialQueues["local"].popped = 0
+			else
+				-- set failed
+				NS.CommFlare.CF.LocalQueues["Dungeon"].status = "failed"
+			end
+
+			-- update queue status
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+		end
 	end
 end
 
 -- process lfg proposal show
 function NS.CommFlare:LFG_PROPOSAL_SHOW(msg)
-	-- brawl queue exists?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index]) then
-		-- update brawl status
-		NS.CommFlare.CF.LocalQueues[index].status = "popped"
-		NS:Update_Brawl_Status()
+	-- found proposal?
+	local proposalExists, id, typeID, subtypeID, name, texture, role, hasResponded, totalEncounters, completedEncounters, numMembers, isLeader, isHoliday, proposalCategory = GetLFGProposal()
+	if (proposalExists and proposalCategory) then
+		-- dungeon?
+		local index = nil
+		if (proposalCategory == LE_LFG_CATEGORY_LFD) then
+			-- dungeon
+			index = "Dungeon"
+		elseif (proposalCategory == LE_LFG_CATEGORY_BATTLEFIELD) then
+			-- brawl
+			index = "Brawl"
+		end
+
+		-- found?
+		if (index) then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues[index].status = "popped"
+			NS:Update_Queue_Status(proposalCategory)
+		end
 	end
 end
 
 -- process lfg proposal succeeded
 function NS.CommFlare:LFG_PROPOSAL_SUCCEEDED(msg)
-	-- brawl queue exists?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index]) then
-		-- update brawl status
-		NS.CommFlare.CF.LocalQueues[index].status = "entered"
-		NS:Update_Brawl_Status()
+	-- valid brawl queue?
+	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues["Brawl"].status = "entered"
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
+		end
+	end
+
+	-- valid dungeon queue?
+	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "entered"
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+		end
 	end
 end
 
 -- process lfg queue status update
 function NS.CommFlare:LFG_QUEUE_STATUS_UPDATE(msg)
-	-- update brawl status
-	NS:Update_Brawl_Status()
+	-- update lfg status
+	NS:Update_LFG_Status()
 end
 
 -- process lfg role check role chosen
@@ -1268,8 +1309,8 @@ end
 
 -- process lfg update
 function NS.CommFlare:LFG_UPDATE(msg)
-	-- update brawl status
-	NS:Update_Brawl_Status()
+	-- update lfg status
+	NS:Update_LFG_Status()
 end
 
 -- process name plate unit added
@@ -1485,26 +1526,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS:CommunityGuild_SetupHooks()
 	NS:REPorter_SetupHooks()
 
-	-- hide cooldown manage while mounted?
-	if (NS.db.global.cdmHideWhileMounted == true) then
-		-- is mounted?
-		if (IsMounted()) then
-			-- cooldown manager enabled?
-			NS.CommFlare.CF.CDMPersistent = true
-			NS.CommFlare.CF.CDMEnabled = GetCVar("cooldownViewerEnabled")
-			if (NS.CommFlare.CF.CDMEnabled) then
-				-- disable cooldown manager
-				SetCVar("cooldownViewerEnabled", 0)
-			end
-
-			-- disable later
-			TimerAfter(5, function()
-				-- disable
-				NS.CommFlare.CF.CDMPersistent = false
-			end)
-		end
-	end
-
 	-- add get range check spell/s
 	NS:AddRangeCheckSpell("DEATHKNIGHT", "Friend", 410358)
 
@@ -1719,28 +1740,6 @@ function NS.CommFlare:PLAYER_MAP_CHANGED(msg, ...)
 	if (NS.CommFlare.CF.InActiveDelve == true) then
 		-- exited
 		NS.CommFlare.CF.InActiveDelve = false
-	end
-end
-
--- process player mount display changed
-function NS.CommFlare:PLAYER_MOUNT_DISPLAY_CHANGED(msg)
-	-- hide cooldown manage while mounted?
-	if (NS.db.global.cdmHideWhileMounted == true) then
-		-- is mounted?
-		if (IsMounted()) then
-			-- cooldown manager enabled?
-			NS.CommFlare.CF.CDMEnabled = GetCVar("cooldownViewerEnabled")
-			if (NS.CommFlare.CF.CDMEnabled) then
-				-- disable cooldown manager
-				SetCVar("cooldownViewerEnabled", 0)
-			end
-		else
-			-- cooldown manager enabled?
-			if (NS.CommFlare.CF.CDMEnabled) then
-				-- enable cooldown manager
-				SetCVar("cooldownViewerEnabled", 1)
-			end
-		end
 	end
 end
 
@@ -2393,8 +2392,8 @@ function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 
 			-- is everyone ready?
 			if (isEveryoneReady == true) then
-				-- community reporter enabled?
-				if (NS.charDB.profile.communityReporter == true) then
+				-- should report queue?
+				if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 					-- are you group leader?
 					if (NS:IsGroupLeader() == true) then
 						-- alliance faction?
@@ -2920,7 +2919,6 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CLUB_MEMBERS_UPDATED")
 	self:RegisterEvent("CLUB_STREAMS_LOADED")
 	self:RegisterEvent("CURRENCY_DISPLAY_UPDATE")
-	self:RegisterEvent("CVAR_UPDATE")
 	self:RegisterEvent("GROUP_FORMED")
 	self:RegisterEvent("GROUP_INVITE_CONFIRMATION")
 	self:RegisterEvent("GROUP_JOINED")
@@ -2944,7 +2942,6 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
 	self:RegisterEvent("PLAYER_MAP_CHANGED")
-	self:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
@@ -3002,7 +2999,6 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CLUB_MEMBERS_UPDATED")
 	self:UnregisterEvent("CLUB_STREAMS_LOADED")
 	self:UnregisterEvent("CURRENCY_DISPLAY_UPDATE")
-	self:UnregisterEvent("CVAR_UPDATE")
 	self:UnregisterEvent("GROUP_FORMED")
 	self:UnregisterEvent("GROUP_INVITE_CONFIRMATION")
 	self:UnregisterEvent("GROUP_JOINED")
@@ -3026,7 +3022,6 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
 	self:UnregisterEvent("PLAYER_MAP_CHANGED")
-	self:UnregisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")

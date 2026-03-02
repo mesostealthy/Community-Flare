@@ -162,7 +162,7 @@ function NS:AssistButtonNamePlateAdded(...)
 			local player1, unitToken1 = CommunityFlare_GetMainAssist()
 			if (player1) then
 				-- set main assist
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\damager.tga")
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
 				namePlate.CF.frame:SetAlpha(1)
 				namePlate.CF.frame:Show()
 			else
@@ -404,7 +404,7 @@ function NS:CreateAssistButton()
 	NS.AssistButton.Button:SetSize(width, width)
 	NS.AssistButton.Button.texture = NS.AssistButton.Button:CreateTexture(nil, "OVERLAY")
 	NS.AssistButton.Button.texture:SetAllPoints()
-	NS.AssistButton.Button.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
+	NS.AssistButton.Button.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\kos.tga")
 	NS.AssistButton.ResizeButton = CreateFrame("Button", nil, NS.AssistButton, "PanelResizeButtonTemplate")
 	NS.AssistButton.ResizeButton:RegisterForClicks("AnyUp", "AnyDown")
 	NS.AssistButton.ResizeButton:SetFrameLevel(10)

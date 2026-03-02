@@ -9,6 +9,7 @@ local _G                                          = _G
 local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
 local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
+local GetLFGProposal                              = _G.GetLFGProposal
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsInGroup                                   = _G.IsInGroup
@@ -90,8 +91,8 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 
 					-- are you group leader?
 					if (NS:IsGroupLeader() == true) then
-						-- community reporter enabled?
-						if (NS.charDB.profile.communityReporter == true) then
+						-- should report queue?
+						if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 							-- send to community
 							NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
 						end
@@ -141,25 +142,59 @@ end
 
 -- securely hook accept proposal
 local function hook_AcceptProposal()
-	-- has queue popped?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped > 0)) then
-		-- has name?
-		if (NS.CommFlare.CF.LocalQueues[index].name and (NS.CommFlare.CF.LocalQueues[index].name ~= "")) then
-			-- are you in a party / raid?
-			if (IsInGroup()) then
-				-- are you in a raid?
-				local mapName = NS.CommFlare.CF.LocalQueues[index].name
-				if (IsInRaid()) then
-					-- send raid message
-					NS:SendMessage("RAID", strformat(L["Accepted Queue For Popped %s!"], mapName))
-				else
-					-- send party message
-					NS:SendMessage("PARTY", strformat(L["Accepted Queue For Popped %s!"], mapName))
+	-- valid brawl queue?
+	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+		-- has queue popped?
+		if (NS.CommFlare.CF.LocalQueues["Brawl"] and NS.CommFlare.CF.LocalQueues["Brawl"].popped and (NS.CommFlare.CF.LocalQueues["Brawl"].popped > 0)) then
+			-- has name?
+			local instanceName = NS.CommFlare.CF.LocalQueues["Brawl"].name
+			if (instanceName and (instanceName ~= "")) then
+				-- are you in a party / raid?
+				if (IsInGroup()) then
+					-- are you in a raid?
+					if (IsInRaid()) then
+						-- send raid message
+						NS:SendMessage("RAID", strformat(L["Accepted Queue For Popped %s!"], instanceName))
+					else
+						-- send party message
+						NS:SendMessage("PARTY", strformat(L["Accepted Queue For Popped %s!"], instanceName))
+					end
 				end
 			end
+
+			-- success
+			return true
 		end
 	end
+
+	-- valid dungeon queue?
+	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
+		-- has queue popped?
+		if (NS.CommFlare.CF.LocalQueues["Dungeon"] and NS.CommFlare.CF.LocalQueues["Dungeon"].popped and (NS.CommFlare.CF.LocalQueues["Dungeon"].popped > 0)) then
+			-- has name?
+			local instanceName = NS.CommFlare.CF.LocalQueues["Dungeon"].name
+			if (instanceName and (instanceName ~= "")) then
+				-- are you in a party / raid?
+				if (IsInGroup()) then
+					-- are you in a raid?
+					local instanceName = NS.CommFlare.CF.LocalQueues["Dungeon"].name
+					if (IsInRaid()) then
+						-- send raid message
+						NS:SendMessage("RAID", strformat(L["Accepted Queue For Popped %s!"], instanceName))
+					else
+						-- send party message
+						NS:SendMessage("PARTY", strformat(L["Accepted Queue For Popped %s!"], instanceName))
+					end
+				end
+			end
+
+			-- success
+			return true
+		end
+	end
+
+	-- failed
+	return false
 end
 
 -- securely hook leave battlefield
@@ -195,12 +230,24 @@ end
 
 -- securely hook reject proposal
 local function hook_RejectProposal()
-	-- has brawl queue?
-	local index = "Brawl"
-	if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped > 0)) then
-		-- update brawl status
-		NS.CommFlare.CF.LocalQueues[index].status = "rejected"
-		NS:Update_Brawl_Status()
+	-- valid brawl queue?
+	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues["Brawl"].status = "rejected"
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
+		end
+	end
+
+	-- valid dungeon queue?
+	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
+		-- popped?
+		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "rejected"
+			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+		end
 	end
 end
 

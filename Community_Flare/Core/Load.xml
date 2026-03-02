@@ -10,12 +10,13 @@
 	<Script file="BlockGameMenus.lua" />
 	<Script file="Communication.lua" />
 	<Script file="Database.lua" />
-	<Script file="Events.lua" />
+	<Script file="LFGQueues.lua" />
 	<Script file="Hooks.lua" />
 	<Script file="History.lua" />
 	<Script file="Menus.lua" />
 	<Script file="SlashCmd.lua" />
 	<Script file="Specialization.lua" />
 	<Script file="StaticPopups.lua" />
+	<Script file="Events.lua" />
 	<Script file="Timers.lua" />
 </Ui>
