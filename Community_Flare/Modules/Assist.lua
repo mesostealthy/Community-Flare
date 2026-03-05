@@ -95,8 +95,8 @@ function NS:SaveButtonPosition()
 	local scale = NS.AssistButton:GetScale()
 	local maxheight = mfloor(GetScreenHeight())
 	local maxwidth = mfloor(GetScreenWidth())
-	local height = NS.AssistButton:GetHeight()
 	local width = NS.AssistButton:GetWidth()
+	local height = NS.AssistButton:GetHeight() + width
 	local left, top = NS.AssistButton:GetLeft() * scale, NS.AssistButton:GetTop() * scale
 
 	-- sanity check for x position
@@ -120,6 +120,7 @@ function NS:SaveButtonPosition()
 	-- save positions
 	NS.db.global.AssistFrame.left = left
 	NS.db.global.AssistFrame.top = top
+	NS.db.global.AssistFrame.width = width
 
 	-- move assist button
 	NS.AssistButton:ClearAllPoints()
@@ -128,82 +129,95 @@ end
 
 -- name plate added
 function NS:AssistButtonNamePlateAdded(...)
-	-- nameplateX only
+	-- invalid unit?
 	local unitToken = ...
 	if (NS.faction ~= 0) then return end
-	if (unitToken:find("nameplate")) then
-		-- enemy player?
-		if (UnitIsEnemy(unitToken, "player")) then
-			-- get name plate
-			local namePlate = GetNamePlateForUnit(unitToken)
-			if (not namePlate) then
-				-- failed
-				return nil
-			end
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- finished
+		return
+	end
 
-			-- uninitialized?
-			if (not namePlate.CF) then
-				-- initialize
-				namePlate.CF = {}
-			end
+	-- get name plate
+	local namePlate = GetNamePlateForUnit(unitToken)
+	if (not namePlate) then
+		-- finished
+		return
+	end
 
-			-- create frame
-			namePlate.CF.frame = namePlate.CF.frame or CreateFrame("Frame", nil, namePlate)
-			namePlate.CF.frame:SetFrameStrata("HIGH")
-			namePlate.CF.frame:SetSize(50, 50)
-			namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
-			namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
-			namePlate.CF.frame.texture:SetAllPoints()
-			namePlate.CF.frame.texture:SetTexture(nil)
-			namePlate.CF.frame:SetAlpha(0)
-			namePlate.CF.frame:Hide()
+	-- uninitialized?
+	if (not namePlate.CF) then
+		-- initialize
+		namePlate.CF = {}
+	end
 
-			-- get main assist
-			local player1, unitToken1 = CommunityFlare_GetMainAssist()
-			if (player1) then
-				-- set main assist
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
-				namePlate.CF.frame:SetAlpha(1)
-				namePlate.CF.frame:Show()
-			else
-				-- check class base
-				local className, classID = UnitClassBase(unitToken)
-				if (className == "MONK") then
-					-- check power type
-					local powerType = UnitPowerType(unitToken)
-					if (powerType == 0) then
-						-- set healer
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-						namePlate.CF.frame:SetAlpha(1)
-						namePlate.CF.frame:Show()
-					else
-						-- check power max
-						local powerMax = UnitPowerMax(unitToken, 12)
-						if (powerMax == 4) then
-							-- set tank
-							namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-							namePlate.CF.frame:SetAlpha(1)
-							namePlate.CF.frame:Show()
-						end
-					end
-				elseif (className == "PRIEST") then
-					-- check power type
-					local powerType = UnitPowerType(unitToken)
-					if (powerType ~= 13) then
-						-- set healer
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-						namePlate.CF.frame:SetAlpha(1)
-						namePlate.CF.frame:Show()
-					end
-				elseif (className == "SHAMAN") then
-					-- check power type
-					local powerType = UnitPowerType(unitToken)
-					if (powerType ~= 11) then
-						-- set healer
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+	-- frame uninitialized?
+	if (not namePlate.CF.frame) then
+		-- create frame
+		namePlate.CF.frame = CreateFrame("Frame", nil, namePlate)
+	end
+
+	-- no texture yet?
+	if (not namePlate.CF.frame.texture) then
+		-- create texture
+		namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
+	end
+
+	-- reset frame
+	namePlate.CF.frame:SetFrameStrata("HIGH")
+	namePlate.CF.frame:SetSize(50, 50)
+	namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
+	namePlate.CF.frame.texture:SetAllPoints()
+	namePlate.CF.frame.texture:SetTexture(nil)
+	namePlate.CF.frame:SetAlpha(0)
+	namePlate.CF.frame:Hide()
+
+	-- enemy player?
+	if (UnitIsEnemy(unitToken, "player")) then
+		-- get main assist
+		local player1, unitToken1 = CommunityFlare_GetMainAssist()
+		if (player1) then
+			-- set main assist
+			namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
+			namePlate.CF.frame:SetAlpha(1)
+			namePlate.CF.frame:Show()
+		else
+			-- check class base
+			local className, classID = UnitClassBase(unitToken)
+			if (className == "MONK") then
+				-- check power type
+				local powerType = UnitPowerType(unitToken)
+				if (powerType == 0) then
+					-- set healer
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+					namePlate.CF.frame:SetAlpha(1)
+					namePlate.CF.frame:Show()
+				else
+					-- check power max
+					local powerMax = UnitPowerMax(unitToken, 12)
+					if (powerMax == 4) then
+						-- set tank
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
 						namePlate.CF.frame:SetAlpha(1)
 						namePlate.CF.frame:Show()
 					end
+				end
+			elseif (className == "PRIEST") then
+				-- check power type
+				local powerType = UnitPowerType(unitToken)
+				if (powerType ~= 13) then
+					-- set healer
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+					namePlate.CF.frame:SetAlpha(1)
+					namePlate.CF.frame:Show()
+				end
+			elseif (className == "SHAMAN") then
+				-- check power type
+				local powerType = UnitPowerType(unitToken)
+				if (powerType ~= 11) then
+					-- set healer
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+					namePlate.CF.frame:SetAlpha(1)
+					namePlate.CF.frame:Show()
 				end
 			end
 		end
@@ -212,9 +226,15 @@ end
 
 -- name plate removed
 function NS:AssistButtonNamePlateRemoved(...)
-	-- get name plate
+	-- invalid unit?
 	local unitToken = ...
 	if (NS.faction ~= 0) then return end
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- finished
+		return
+	end
+
+	-- get name plate
 	local namePlate = GetNamePlateForUnit(unitToken)
 	if (not namePlate) then
 		-- failed
@@ -281,13 +301,12 @@ function NS:CreateAssistButton()
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- has position?
-			if (NS.db.global.AssistFrame and NS.db.global.AssistFrame.left and NS.db.global.AssistFrame.top) then
+			if (NS.db.global.AssistFrame and NS.db.global.AssistFrame.left and NS.db.global.AssistFrame.top and NS.db.global.AssistFrame.width) then
 				-- move window
 				local width = NS.db.global.AssistFrame.width or 120
 				self:ClearAllPoints()
 				self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", NS.db.global.AssistFrame.left, NS.db.global.AssistFrame.top)
-				self:SetWidth(width)
-				self:SetHeight(width + 20)
+				self:SetSize(width, 20)
 
 				-- update assist button
 				NS:UpdateAssistButton()
@@ -330,29 +349,35 @@ function NS:CreateAssistButton()
 		end
 	end)
 	NS.AssistButton:SetScript("OnEnter", function(self)
-		-- locked?
-		if (NS.db.global.AssistFrame.locked == true) then
-			-- show header background
-			self.Header.Background:SetAlpha(1)
-			self.Header.Text:SetAlpha(1)
-		end
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- locked?
+			if (NS.db.global.AssistFrame.locked == true) then
+				-- show header background
+				self.Header.Background:SetAlpha(1)
+				self.Header.Text:SetAlpha(1)
+			end
 
-		-- show tooltip
-		GameTooltip:SetOwner(self)
-		GameTooltip:AddLine("Main Assist Button")
-		GameTooltip:AddLine("-Right Click: Lock / Unlock Window Position", 1, 1, 1)
-		GameTooltip:Show()
+			-- show tooltip
+			GameTooltip:SetOwner(self)
+			GameTooltip:AddLine("Main Assist Button")
+			GameTooltip:AddLine("-Right Click: Lock / Unlock Window Position", 1, 1, 1)
+			GameTooltip:Show()
+		end
 	end)
 	NS.AssistButton:SetScript("OnLeave", function(self)
-		-- locked?
-		if (NS.db.global.AssistFrame.locked == true) then
-			-- show header background
-			self.Header.Background:SetAlpha(0)
-			self.Header.Text:SetAlpha(0)
-		end
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- locked?
+			if (NS.db.global.AssistFrame.locked == true) then
+				-- show header background
+				self.Header.Background:SetAlpha(0)
+				self.Header.Text:SetAlpha(0)
+			end
 
-		-- hide tooltip
-		GameTooltip:Hide()
+			-- hide tooltip
+			GameTooltip:Hide()
+		end
 	end)
 	NS.AssistButton:SetScript("OnMouseUp", function(self, button)
 		-- right click?
@@ -452,6 +477,9 @@ function NS:CreateAssistButton()
 		elseif (event == "NAME_PLATE_UNIT_REMOVED") then
 			-- assist button name plate removed
 			NS:AssistButtonNamePlateRemoved(...)
+		elseif (event == "PLAYER_TARGET_CHANGED") then
+			-- assist button update target
+			NS:AssistButtonUpdateTarget(...)
 		elseif (event == "UNIT_TARGET") then
 			-- assist button update target
 			NS:AssistButtonUpdateTarget(...)

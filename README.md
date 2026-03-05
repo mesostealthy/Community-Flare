@@ -21,6 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.12.001:
--Report Queues now shows level to let you know what bracket is being Queued.
--NEW SETTING: Report dungeon queue status to communities?
+v2.13.001:
+-Some less often happening bugs fixed.

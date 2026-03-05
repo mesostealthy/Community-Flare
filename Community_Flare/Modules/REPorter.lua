@@ -62,7 +62,7 @@ function NS:REPorter_Add_New_Overlay(name)
 			        frame.Overlay:SetAttribute("alt-macrotext2", macrotext5)
 			        frame.Overlay:SetScript("OnEnter", function(self)
 					-- has reporter + frame?
-					if (REPorter and frame) then
+					if (REPorter and frame and frame.name) then
 						-- show tooltip
 						REPorter:UnitOnEnterPOI(frame)
 						GameTooltip:AddLine("Left Click: INCOMING", 1, 1, 1)

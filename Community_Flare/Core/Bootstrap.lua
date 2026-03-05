@@ -179,6 +179,7 @@ NS.CommFlare.CF = {
 	DWG = {},
 	EOTS = {},
 	IOC = {},
+	SLR = {},
 	SSH = {},
 	SSM = {},
 	SSvTM = {},

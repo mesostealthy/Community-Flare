@@ -136,6 +136,10 @@ function NS:IsInEpicBG()
 	elseif (NS.CommFlare.CF.MapID == 169) then
 		-- yup
 		return true
+	-- slayer's rise?
+	elseif (NS.CommFlare.CF.MapID == 2397) then
+		-- yup
+		return true
 	-- southshore vs tarren mill?
 	elseif (NS.CommFlare.CF.MapID == 623) then
 		-- yup
@@ -311,6 +315,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.DWG = {}
 	NS.CommFlare.CF.EOTS = {}
 	NS.CommFlare.CF.IOC = {}
+	NS.CommFlare.CF.SLR = {}
 	NS.CommFlare.CF.SSH = {}
 	NS.CommFlare.CF.SSM = {}
 	NS.CommFlare.CF.SSvTM = {}
@@ -643,6 +648,21 @@ function NS:Get_Current_Battleground_Status()
 		if (NS.CommFlare.CF.WidgetInfo) then
 			-- set proper scores
 			NS.CommFlare.CF.IOC.Scores = { Alliance = NS.CommFlare.CF.WidgetInfo.leftBarValue, Horde = NS.CommFlare.CF.WidgetInfo.rightBarValue }
+		end
+
+		-- success
+		return true
+	-- slayer's rise?
+	elseif (NS.CommFlare.CF.MapID == 2397) then
+		-- initialize
+		NS.CommFlare.CF.SLR = NS.CommFlare.CF.SLR or {}
+		NS.CommFlare.CF.SLR.Scores = { Alliance = L["N/A"], Horde = L["N/A"] }
+
+		-- 7002 = widgetID for Score Remaining
+		NS.CommFlare.CF.WidgetInfo = NS:GetDoubleStatusBarWidgetVisualizationInfo(7002)
+		if (NS.CommFlare.CF.WidgetInfo) then
+			-- set proper scores
+			NS.CommFlare.CF.SLR.Scores = { Alliance = NS.CommFlare.CF.WidgetInfo.leftBarValue, Horde = NS.CommFlare.CF.WidgetInfo.rightBarValue }
 		end
 
 		-- success

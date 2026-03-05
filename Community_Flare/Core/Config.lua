@@ -945,7 +945,8 @@ local function SetAssistButtonYPos(info, value)
 			local scale = NS.AssistButton:GetScale()
 			local maxheight = mfloor(GetScreenHeight())
 			local left = NS.AssistButton:GetLeft() * scale
-			local height = NS.AssistButton:GetHeight()
+			local width = NS.AssistButton:GetWidth()
+			local height = NS.AssistButton:GetHeight() + width
 			local top = (NS.db.global.AssistFrame.top or NS.AssistButton:GetTop()) - value
 			if ((top - height) < 0) then
 				-- reset
@@ -971,6 +972,47 @@ local function SetAssistButtonYPos(info, value)
 
 			-- update previous
 			previousAssistButtonYPos = value
+		end
+	end
+end
+
+-- set assist button height / width
+local function SetAssistButtonHeightWidth(info, value)
+	-- adjust assist button height / width
+	if (info[#info] == "assistButtonHeightWidth") then
+		-- available?
+		if (NS.AssistButton and NS.SaveButtonPosition) then
+			-- save positions
+			local height = value
+			local width = value
+			NS.AssistButton:SetSize(width, height)
+			local scale = NS.AssistButton:GetScale()
+			local maxheight = mfloor(GetScreenHeight())
+			local maxwidth = mfloor(GetScreenWidth())
+			local left = NS.db.global.AssistFrame.left or NS.AssistButton:GetLeft()
+			local top = NS.db.global.AssistFrame.top or NS.AssistButton:GetTop()
+			if (left < 0) then
+				-- reset
+				left = 0
+			elseif ((left + width) > maxwidth) then
+				-- reset
+				left = maxwidth - width
+			end
+			if ((top - height) < 0) then
+				-- reset
+				top = height
+			elseif ((top - 20) > maxheight) then
+				-- reset
+				top = maxheight + 20
+			end
+
+			-- move assist button
+			NS.AssistButton:ClearAllPoints()
+			NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+
+			-- save button position
+			NS.db.global.assistButtonHeightWidth = value
+			NS:SaveButtonPosition()
 		end
 	end
 end
@@ -1064,6 +1106,31 @@ local AssistButtonGroup = {
 			end,
 			get = function(info) return NS.db.global.assistButtonYPos end,
 			set = SetAssistButtonYPos,
+		},
+		assistButtonHeightWidth = {
+			type = "range",
+			order = 5,
+			name = "Adjust Height / Width",
+			desc = "This will adjust the Assist Button height / weight size.",
+			min = 50,
+			max = 250,
+			step = 1,
+			disabled = function (info) return NS.db.global.AssistFrame.locked end,
+			hidden = function(info)
+				-- available?
+				if (NS.AssistButton) then
+					-- not in combat lockdown?
+					if (not InCombatLockdown()) then
+						-- not shown?
+						if (not NS.AssistButton:IsShown()) then
+							-- show
+							NS.AssistButton:Show()
+						end
+					end
+				end
+			end,
+			get = function(info) return NS.db.global.assistButtonHeightWidth end,
+			set = SetAssistButtonHeightWidth,
 		},
 	}
 }
