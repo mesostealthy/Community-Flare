@@ -20,6 +20,7 @@ local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunit
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
+local GetMaxLevelForLatestExpansion               = _G.GetMaxLevelForLatestExpansion
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                       = _G.GetNumSubgroupMembers
 local GetTime                                     = _G.GetTime
@@ -36,6 +37,7 @@ local SetBinding                                  = _G.SetBinding
 local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
+local UnitLevel                                   = _G.UnitLevel
 local UnitName                                    = _G.UnitName
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
@@ -1349,7 +1351,6 @@ end
 -- popup box
 function NS:PopupBox(dlg, ...)
 	-- requires community id?
-	local args = ...
 	local showPopup = true
 	if (dlg == "CommunityFlare_Send_Community_Dialog") then
 		-- setup report channels
@@ -1364,8 +1365,15 @@ function NS:PopupBox(dlg, ...)
 	-- show popup?
 	if (showPopup == true) then
 		-- show the popup box
-		local dialog = StaticPopup_Show(dlg, args)
+		local dialog = StaticPopup_Show(dlg, ...)
 		if (dialog) then
+			-- count args
+			local args = {...}
+			if (args and args[1] and (#args == 1)) then
+				-- always string
+				args = tostring(args[1])
+			end
+
 			-- save args
 			dialog.data = args
 		end
@@ -1537,32 +1545,51 @@ end
 -- process party states
 function NS:Process_Party_States(isDead, isOffline)
 	-- process all
+	local playerLevel = UnitLevel("player")
+	local maxLevel = GetMaxLevelForLatestExpansion()
 	for i=1, GetNumGroupMembers() do
+		-- exists?
+		local reason = nil
 		local kickPlayer = false
 		local unit = "party" .. i
-		local player, realm = UnitName(unit)
-		if (player and (player ~= "")) then
-			-- realm name was given?
-			if (realm and (realm ~= "")) then
-				player = strformat("%s-%s", player, realm)
-			end
+		if (UnitExists(unit)) then
+			-- process player
+			local level = UnitLevel(unit)
+			local player, realm = UnitName(unit)
+			if (player and (player ~= "")) then
+				-- realm name was given?
+				if (realm and (realm ~= "")) then
+					player = strformat("%s-%s", player, realm)
+				end
 
-			-- are they dead/ghost?
-			if ((isDead == true) and (NS:UnitIsDeadOrGhost(unit) == true)) then
-				-- kick them
-				kickPlayer = true
-			-- are they offline?
-			elseif ((isOffline == true) and (NS:UnitIsConnected(unit) ~= true)) then
-				-- kick them
-				kickPlayer = true
-			end
+				-- are they dead/ghost?
+				if ((isDead == true) and (NS:UnitIsDeadOrGhost(unit) == true)) then
+					-- kick them
+					reason = L["being dead"]
+					kickPlayer = true
+				-- are they offline?
+				elseif ((isOffline == true) and (NS:UnitIsConnected(unit) ~= true)) then
+					-- kick them
+					reason = L["being offline"]
+					kickPlayer = true
+				-- player level max?
+				elseif (playerLevel == maxLevel) then
+					-- player in lower bracket?
+					if (level < maxLevel) then
+						-- kick them
+						reason = L["not being max level"]
+						kickPlayer = true
+					end
+				end
 
-			-- should kick?
-			if (kickPlayer == true) then
-				-- are you leader?
-				if (NS:IsGroupLeader() == true) then
-					-- ask to kick?
-					NS:PopupBox("CommunityFlare_Kick_Dialog", player)
+				-- should kick?
+				if (reason and (kickPlayer == true)) then
+					-- are you leader?
+					if (NS:IsGroupLeader() == true) then
+						-- ask to kick?
+						NS:PopupBox("CommunityFlare_Kick_Dialog", player, reason)
+						return
+					end
 				end
 			end
 		end
@@ -1611,7 +1638,7 @@ function NS:Queue_Check_Role_Chosen()
 				-- are you leader?
 				if (NS:IsGroupLeader() == true) then
 					-- ask to kick?
-					NS:PopupBox("CommunityFlare_Kick_Dialog", player)
+					NS:PopupBox("CommunityFlare_Kick_Dialog", player, L["role not being chosen"])
 				end
 			end
 		end

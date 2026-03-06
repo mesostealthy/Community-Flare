@@ -282,6 +282,10 @@ L["Protection"] = true
 L["Rebuilding community database member list."] = true
 L["Restoration"] = true
 L["Vengeance"] = true
+L["being dead"] = true
+L["being offline"] = true
+L["not being max level"] = true
+L["role not being chosen"] = true
 
 -- Menus.lua
 L["Applicant"] = true
@@ -337,6 +341,7 @@ L["Are you sure you delete %s Community?"] = true
 L["Are you sure you delete %s Member?"] = true
 L["Copy Player Name for %s [Use Ctrl+c]:"] = true
 L["Kick: %s?"] = true
+L["Kick: %s for %s?"] = true
 L["Send"] = true
 L["Send: %s?"] = true
 L["Set Community Note for %s:"] = true
@@ -345,6 +350,7 @@ L["Set Player Note for %s:"] = true
 L["Uninviting ..."] = true
 L["Whisper me INV and if a spot is still available, you'll be readded to the party."] = true
 L["You've been removed from the party for being AFK."] = true
+L["You've been removed from the party for %s."] = true
 
 -- AlteracValley.lua
 L["Captain Balinda Stonehearth"] = true

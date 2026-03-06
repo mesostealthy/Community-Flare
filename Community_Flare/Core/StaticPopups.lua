@@ -121,23 +121,40 @@ StaticPopupDialogs["CommunityFlare_Delete_Member_Dialog"] = {
 
 -- kick dialog box
 StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
-	text = L["Kick: %s?"],
+	text = L["Kick: %s for %s?"],
 	button1 = L["Yes"],
 	button2 = L["No"],
-	OnAccept = function(dialog, player)
-		-- uninvite user
-		print(strformat("%s %s", L["Uninviting ..."], player))
-		UninviteUnit(player, L["AFK"])
+	OnAccept = function(dialog, args)
+		-- sanity checks
+		local player, reason = args[1], args[2]
+		if (player and reason and (player ~= "") and (reason ~= "")) then
+			-- uninvite user
+			print(strformat("%s %s", L["Uninviting ..."], player))
+			UninviteUnit(player, reason or L["AFK"])
 
-		-- community auto invite enabled?
-		local text = L["You've been removed from the party for being AFK."]
-		if (NS.charDB.profile.communityAutoInvite == true) then
-			-- update text for info about being reinvited
-			text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
+			-- community auto invite enabled?
+			local text = strformat(L["You've been removed from the party for %s."], reason)
+			if (NS.charDB.profile.communityAutoInvite == true) then
+				-- can reinvite?
+				local canReinvite = false
+				if (reason == L["being dead"]) then
+					-- can reinvite
+					canReinvite = true
+				elseif (reason == L["role not being chosen"]) then
+					-- can reinvite
+					canReinvite = true
+				end
+
+				-- can reinvite?
+				if (canReinvite == true) then
+					-- update text for info about being reinvited
+					text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
+				end
+			end
+
+			-- send message
+			NS:SendMessage(player, text)
 		end
-
-		-- send message
-		NS:SendMessage(player, text)
 	end,
 	timeout = 0,
 	whileDead = true,

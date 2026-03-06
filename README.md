@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.13.001:
--Some less often happening bugs fixed.
+v2.14.001:
+-When Queuing up as Max Level, will ask to KICK players in your party who are NOT max level!
