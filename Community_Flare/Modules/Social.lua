@@ -10,7 +10,6 @@ local GetBattlefieldStatus                        = _G.GetBattlefieldStatus
 local GetBattlefieldTimeWaited                    = _G.GetBattlefieldTimeWaited
 local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local UnitName                                    = _G.UnitName
@@ -268,7 +267,7 @@ function NS:Update_Group(groupGUID)
 		end
 
 		-- get leader name / realm
-		local leaderName, leaderRealm = select(6, GetPlayerInfoByGUID(leaderGUID))
+		local leaderName, leaderRealm = select(6, NS:GetPlayerInfoByGUID(leaderGUID))
 		if (not leaderName) then
 			-- display results in 1.5 seconds
 			TimerAfter(1.5, function()
@@ -391,7 +390,7 @@ function NS:Update_Group(groupGUID)
 				for i=1, #members do
 					-- get player info
 					local playerGUID = members[i].guid
-					local playerName, playerRealm = select(6, GetPlayerInfoByGUID(playerGUID))
+					local playerName, playerRealm = select(6, NS:GetPlayerInfoByGUID(playerGUID))
 					if (playerName) then
 						-- has no player realm?
 						if (not playerRealm or (playerRealm == "")) then

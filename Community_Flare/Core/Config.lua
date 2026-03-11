@@ -41,6 +41,7 @@ local GlobalDefaults = {
 		MemberNotes = {},
 		SocialQueues = {},
 		WarCrateLocations = {},
+		WindowPositions = {},
 
 		-- booleans
 		alwaysRequestPartyLead = false,

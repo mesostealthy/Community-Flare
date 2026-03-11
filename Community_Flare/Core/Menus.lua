@@ -6,7 +6,6 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGroup                                   = _G.IsInGroup
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
@@ -31,7 +30,7 @@ function NS:Show_Applicant_Info(owner, rootDescription)
 	-- get name / server
 	local data = owner:GetData()
 	print(strformat("%s: %s", L["Applicant"], guid))
-	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = NS:GetPlayerInfoByGUID(guid)
 	if (name) then
 		-- no realm?
 		if (not realm or (realm == "")) then

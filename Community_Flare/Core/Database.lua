@@ -11,7 +11,6 @@ local CopyTable                                   = _G.CopyTable
 local GetChannelName                              = _G.GetChannelName
 local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunitiesChannel
 local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsInGuild                                   = _G.IsInGuild
 local MergeTable                                  = _G.MergeTable
 local UnitName                                    = _G.UnitName
@@ -519,7 +518,7 @@ function NS:Verify_MemberGUID(guid)
 	end
 
 	-- cache player info
-	local name, realm = select(6, GetPlayerInfoByGUID(guid))
+	local name, realm = select(6, NS:GetPlayerInfoByGUID(guid))
 	if (not name and not realm) then
 		-- refresh 1 second
 		TimerAfter(1, function()
@@ -1257,7 +1256,7 @@ function NS:Add_Member(clubId, info, rebuild)
 	local player = strformat("%s", info.name)
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
-		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+		local name, realm = select(6, NS:GetPlayerInfoByGUID(info.guid))
 		if (not name or not realm) then
 			-- try again, 1 second later
 			TimerAfter(1, function()
@@ -1439,7 +1438,7 @@ function NS:Remove_Member(clubId, info)
 	local player = info.name
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
-		local name, realm = select(6, GetPlayerInfoByGUID(info.guid))
+		local name, realm = select(6, NS:GetPlayerInfoByGUID(info.guid))
 		if (not name or not realm) then
 			-- try again, 1 second later
 			TimerAfter(1, function()
@@ -1803,7 +1802,7 @@ function NS:Club_Member_Removed(clubId, memberId)
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
-			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
+			local name, realm = select(6, NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
 			if (not name or not realm) then
 				-- try again, 1 second later
 				TimerAfter(1, function()
@@ -1882,7 +1881,7 @@ function NS:Club_Member_Updated(clubId, memberId)
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
-			local name, realm = select(6, GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
+			local name, realm = select(6, NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
 			if (not name or not realm) then
 				-- try again, 1 second later
 				TimerAfter(1, function()
@@ -1973,7 +1972,7 @@ function NS:Find_ExCommunity_Members(clubId)
 			local player = mi.name
 			if (not strmatch(player, "-")) then
 				-- get player info by guid
-				local name, realm = select(6, GetPlayerInfoByGUID(mi.guid))
+				local name, realm = select(6, NS:GetPlayerInfoByGUID(mi.guid))
 				if (not name) then
 					-- do nothing
 				elseif (name and realm and (realm ~= "")) then
@@ -2209,7 +2208,7 @@ function NS:Find_Community_Member_By_GUID(guid)
 	end
 
 	-- get player info by guid?
-	local player, realm = select(6, GetPlayerInfoByGUID(guid))
+	local player, realm = select(6, NS:GetPlayerInfoByGUID(guid))
 	if (not player or (player == "")) then
 		-- failed
 		return nil
@@ -2346,7 +2345,7 @@ function NS.CommFlare:Prune_Database()
 		-- has guid?
 		if (v.guid) then
 			-- get info
-			local name, realm = select(6, GetPlayerInfoByGUID(v.guid))
+			local name, realm = select(6, NS:GetPlayerInfoByGUID(v.guid))
 			if (name and (name ~= "")) then
 				-- no realm?
 				if (not realm or (realm == "")) then

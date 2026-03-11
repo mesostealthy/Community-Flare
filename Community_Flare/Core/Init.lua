@@ -680,7 +680,6 @@ function NS:LoadSession()
 	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus or 0
 	NS.CommFlare.CF.ActiveTimers = NS.charDB.profile.ActiveTimers or {}
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
-	NS.CommFlare.CF.VehicleDeaths = NS.charDB.profile.VehicleDeaths or {}
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 
 	-- load match log stuff
@@ -740,7 +739,6 @@ function NS:SaveSession()
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
 	NS.charDB.profile.ActiveTimers = NS.CommFlare.CF.ActiveTimers or {}
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
-	NS.charDB.profile.VehicleDeaths = NS.CommFlare.CF.VehicleDeaths or {}
 	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
 
 	-- in battleground?
@@ -775,6 +773,102 @@ function NS:SaveSession()
 	if (NS.db.global.debugMode == true) then
 		-- save CF
 		NS.charDB.profile.CF = NS.CommFlare.CF
+	end
+end
+
+-- load window position
+function NS:LoadWindowPosition(frame)
+	-- has settings?
+	local name = frame:GetName()
+	if (NS.db.global.WindowPositions[name]) then
+		-- save settings
+		local maxheight = mfloor(GetScreenHeight())
+		local maxwidth = mfloor(GetScreenWidth())
+		local left = NS.db.global.WindowPositions[name].left
+		local height = NS.db.global.WindowPositions[name].height
+		local scale = NS.db.global.WindowPositions[name].scale
+		local top = NS.db.global.WindowPositions[name].top
+		local width = NS.db.global.WindowPositions[name].width
+
+		-- sanity checks
+		if (left < 0) then
+			-- move window
+			left = 0
+			reposition = true
+		elseif ((left + width) > maxwidth) then
+			-- move window
+			left = maxwidth - width
+			reposition = true
+		end
+		if (top < height) then
+			-- move window
+			top = height
+			reposition = true
+		elseif (top > maxheight) then
+			-- move window
+			top = maxheight
+			reposition = true
+		end
+
+		-- reposition
+		frame:SetHeight(height)
+		frame:SetWidth(width)
+		frame:SetScale(scale)
+		frame:ClearAllPoints()
+		frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+	end
+end
+
+-- save window position
+function NS:SaveWindowPosition(frame)
+	-- get settings
+	local reposition = false
+	local scale = frame:GetScale()
+	local width = frame:GetWidth()
+	local height = frame:GetHeight()
+	local maxheight = mfloor(GetScreenHeight())
+	local maxwidth = mfloor(GetScreenWidth())
+	local left, top = frame:GetLeft() * scale, frame:GetTop() * scale
+
+	-- sanity checks
+	if (left < 0) then
+		-- move window
+		left = 0
+		reposition = true
+	elseif ((left + width) > maxwidth) then
+		-- move window
+		left = maxwidth - width
+		reposition = true
+	end
+	if (top < height) then
+		-- move window
+		top = height
+		reposition = true
+	elseif (top > maxheight) then
+		-- move window
+		top = maxheight
+		reposition = true
+	end
+
+	-- no settings yet?
+	local name = frame:GetName()
+	if (not NS.db.global.WindowPositions[name]) then
+		-- initialize
+		NS.db.global.WindowPositions[name] = {}
+	end
+
+	-- save settings
+	NS.db.global.WindowPositions[name].left = left
+	NS.db.global.WindowPositions[name].height = height
+	NS.db.global.WindowPositions[name].scale = scale
+	NS.db.global.WindowPositions[name].top = top
+	NS.db.global.WindowPositions[name].width = width
+
+	-- reposition?
+	if (reposition) then
+		-- reposition
+		frame:ClearAllPoints()
+		frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
 	end
 end
 

@@ -38,6 +38,7 @@ function CF_POIListFrameMixin:OnLoad()
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 	self:RegisterEvent("AREA_POIS_UPDATED")
+	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
@@ -45,6 +46,9 @@ end
 
 -- on show
 function CF_POIListFrameMixin:OnShow()
+	-- load window position
+	NS:LoadWindowPosition(self)
+
 	-- refresh list
 	self:RefreshList()
 end
@@ -61,6 +65,9 @@ function CF_POIListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+
+	-- save window position
+	NS:SaveWindowPosition(self)
 end
 
 -- on event
@@ -435,6 +442,10 @@ function CF_POIListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_POIListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end
 
@@ -456,5 +467,9 @@ function CF_POIListResizeBottomRightButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_POIListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end

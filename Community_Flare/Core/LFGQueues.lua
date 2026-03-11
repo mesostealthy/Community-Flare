@@ -139,18 +139,18 @@ function NS:Update_Queue_Status(typeCategory)
 							end
 						end
 
-						-- delay some
-						TimerAfter(0.5, function()
-							-- should report queue?
-							if (NS:Should_Report_Queue(category)) then
-								-- are you group leader?
-								if (NS:IsGroupLeader() == true) then
+						-- should report queue?
+						if (NS:Should_Report_Queue(category)) then
+							-- are you group leader?
+							if (NS:IsGroupLeader() == true) then
+								-- delay some
+								TimerAfter(0.5, function()
 									-- report joined queue with estimated time
 									NS.CommFlare.CF.EstimatedWaitTime = 0
 									NS:Report_Joined_With_Estimated_Time(index)
-								end
+								end)
 							end
-						end)
+						end
 					end
 				-- queue exists?
 				elseif (NS.CommFlare.CF.LocalQueues[index]) then

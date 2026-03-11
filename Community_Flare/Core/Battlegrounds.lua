@@ -329,7 +329,6 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.LogListPlayers = {}
 	NS.CommFlare.CF.MapInfo = {}
 	NS.CommFlare.CF.RosterList = {}
-	NS.CommFlare.CF.VehicleDeaths = {}
 	NS.CommFlare.CF.KosRefreshTime = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchEndDate = ""

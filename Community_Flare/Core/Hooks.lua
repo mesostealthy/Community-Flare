@@ -379,8 +379,9 @@ end
 local function hook_GameTooltip_OnShow()
 	-- game tooltips blocked?
 	if (NS.db.global.blockGameTooltips == true) then
-		-- inside PVP content?
-		if (NS.CommFlare.CF.MatchStatus > 0) then
+		-- inside pvp?
+		local inInstance, instanceType = IsInInstance()
+		if (inInstance and (instanceType == "pvp")) then
 			-- not holding shift?
 			if (not IsShiftKeyDown()) then
 				-- hide

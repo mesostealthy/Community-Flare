@@ -12,6 +12,7 @@ local GetTrainingGrounds                          = _G.C_PvP.GetTrainingGrounds
 local GetSpellName                                = _G.C_Spell.GetSpellName
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
+local select                                      = _G.select
 local tinsert                                     = _G.table.insert
 
 -- epic battlegrounds
@@ -92,6 +93,7 @@ NS.CommFlare.HearthStoneSpells = {
 	[1220729] = "Explosive Hearthstone",
 	[1240219] = "P.O.S.T. Master's Express Hearthstone",
 	[1242509] = "Cosmic Hearthstone",
+	[1270583] = "Naaru's Enfold",
 }
 
 -- teleport spells
@@ -394,22 +396,36 @@ function NS:Build_Training_Grounds()
 		-- is lfg dungeon joinable? 
 		local _, isAvailableForPlayer = IsLFGDungeonJoinable(v.lfgDungeonID)
 		if (isAvailableForPlayer) then
-			-- random training grounds?
-			if (v.lfgDungeonID == 3204) then
+			-- get instance ID
+			local info = {GetLFGDungeonInfo(v.lfgDungeonID)}
+			if (info) then
+				-- has instance ID?
+				local prefix = nil
+				local instanceID = info[22]
+				if (instanceID) then
+					-- arathi basin?
+					if (instanceID == 2107) then
+						-- set prefix
+						prefix = "TGAB"
+					-- battle for gilneas?
+					elseif (instanceID == 761) then
+						-- set prefix
+						prefix = "TGBFG"
+					-- silvershard mines?
+					elseif (instanceID == 727) then
+						-- set prefix
+						prefix = "TGSSM"
+					else
+						-- TODO
+						print("TODO: New Training Grounds Map added!")
+					end
+				else
+					-- random
+					prefix = "RTG"
+				end
+
 				-- insert
-				tinsert(NS.CommFlare.Brawls, { name = v.name, id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = "RTG" })
-			-- battle for gilneas?
-			elseif (v.lfgDungeonID == 3207) then
-				-- insert
-				tinsert(NS.CommFlare.Brawls, { name = v.name, id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = "TGBFG" })
-			-- silvershard mines?
-			elseif (v.lfgDungeonID == 3209) then
-				-- insert
-				tinsert(NS.CommFlare.Brawls, { name = v.name, id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = "TGSSM" })
-			-- arathi basin?
-			elseif (v.lfgDungeonID == 3210) then
-				-- insert
-				tinsert(NS.CommFlare.Brawls, { name = v.name, id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = "TGAB" })
+				tinsert(NS.CommFlare.Brawls, { name = info[1], id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = prefix })
 			end
 		end
 	end

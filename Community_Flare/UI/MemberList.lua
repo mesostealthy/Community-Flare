@@ -10,7 +10,6 @@ local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                               = _G.DevTools_Dump
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                           = _G.IsMouseButtonDown
 local PlayerLocation                              = _G.PlayerLocation
 local StaticPopup_Show                            = _G.StaticPopup_Show
@@ -42,6 +41,7 @@ function CF_MemberListFrameMixin:OnLoad()
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 	self:EnableKeyboard(true)
+	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
@@ -127,6 +127,8 @@ end
 
 -- on show
 function CF_MemberListFrameMixin:OnShow()
+	-- load window position
+	NS:LoadWindowPosition(self)
 end
 
 -- on drag start
@@ -141,6 +143,9 @@ function CF_MemberListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+
+	-- save window position
+	NS:SaveWindowPosition(self)
 end
 
 -- update list
@@ -397,8 +402,6 @@ end
 
 -- on show
 function CF_MemberListMixin:OnShow()
-	-- update member list
-	self:UpdateMemberList()
 end
 
 -- on update
@@ -518,6 +521,38 @@ function CF_MemberListEntryMixin:OnEnter()
 			if (member.guid) then
 				-- add guid
 				GameTooltip:AddLine(strformat("GUID: %s", tostring(member.guid)), 1, 1, 1)
+			end
+
+			-- get player info by GUID
+			local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = NS:GetPlayerInfoByGUID(self.guid)
+			if (name) then
+				-- has localized class?
+				if (localizedClass and (localizedClass ~= "")) then
+					-- add localized class
+					GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
+				end
+
+				-- has localized race?
+				if (localizedRace and (localizedRace ~= "")) then
+					-- add localized race
+					GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+				end
+
+				-- has sex?
+				if (sex and (sex ~= "")) then
+					-- male?
+					if (sex == 2) then
+						-- add sex
+						GameTooltip:AddLine("Sex: Male", 1, 1, 1)
+					-- female?
+					elseif (sex == 3) then
+						-- add sex
+						GameTooltip:AddLine("Sex: Female", 1, 1, 1)
+					else
+						-- add sex
+						GameTooltip:AddLine("Sex: Unknown", 1, 1, 1)
+					end
+				end
 			end
 
 			-- has honor level?
@@ -769,6 +804,10 @@ function CF_MemberListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_MemberListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end
 
@@ -790,5 +829,9 @@ function CF_MemberListResizeBottomRightButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_MemberListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end

@@ -16,6 +16,7 @@ local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
 local time                                        = _G.time
+local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
 local strsplit                                    = _G.string.split
@@ -37,6 +38,7 @@ function CF_VignetteListFrameMixin:OnLoad()
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 	self:RegisterEvent("VIGNETTES_UPDATED")
+	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
@@ -44,6 +46,9 @@ end
 
 -- on show
 function CF_VignetteListFrameMixin:OnShow()
+	-- load window position
+	NS:LoadWindowPosition(self)
+
 	-- refresh list
 	self:RefreshList()
 end
@@ -60,6 +65,9 @@ function CF_VignetteListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+
+	-- save window position
+	NS:SaveWindowPosition(self)
 end
 
 -- on event
@@ -422,6 +430,10 @@ function CF_VignetteListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_VignetteListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end
 
@@ -443,5 +455,9 @@ function CF_VignetteListResizeBottomRightButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_VignetteListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end

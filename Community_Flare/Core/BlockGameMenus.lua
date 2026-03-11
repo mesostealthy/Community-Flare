@@ -23,6 +23,7 @@ local print                                       = _G.print
 local hook_GroupFinder_installed = false
 local hook_MainMenuMicroButton_installed = false
 local hook_ToggleAchievementFrame_installed = false
+local hook_ToggleBags_installed = false
 local hook_ToggleCharacter_installed = false
 local hook_ToggleCollectionsJournal_installed = false
 local hook_ToggleEncounterJournal_installed = false
@@ -41,7 +42,7 @@ local function hook_LFDMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[LFDMicroButton].OnClick(self, ...)
 	else
@@ -75,7 +76,7 @@ local function hook_PVEFrame_ToggleFrame(sidePanelName, selection)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["PVEFrame_ToggleFrame"](sidePanelName, selection)
 	end
@@ -111,7 +112,7 @@ local function hook_GameMenuFrame_OnShow()
 			-- blocked?
 			if (NS.CommFlare.CF.AllowMainMenu ~= true) then
 				-- not in combat?
-				if (InCombatLockdown() ~= true) then
+				if (not InCombatLockdown()) then
 					-- hide
 					HideUIPanel(GameMenuFrame)
 				end
@@ -141,7 +142,7 @@ local function hook_AchievementMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[AchievementMicroButton].OnClick(self, ...)
 	else
@@ -181,7 +182,7 @@ local function hook_ToggleAchievementFrame(stats)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleAchievementFrame"](stats)
 	end
@@ -196,13 +197,76 @@ local function hook_CharacterMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[CharacterMicroButton].OnClick(self, ...)
 	else
 		-- always normal
 		CharacterMicroButton:SetNormal()
 	end
+end
+
+-- process toggle backpack
+local function hook_ToggleBackpack()
+	-- inside pvp content?
+	local isArena = PvPIsArena()
+	local isBrawl = PvPIsInBrawl()
+	local isBattleground = NS:IsInBattleground()
+	if (isArena or isBattleground or isBrawl) then
+		-- not combat lockdown?
+		if (InCombatLockdown()) then
+			-- shift key not down?
+			if (not IsShiftKeyDown()) then
+				-- finished
+				return
+			end
+		end
+	end
+
+	-- call original
+	NS.CommFlare.hooks["ToggleBackpack"]()
+end
+
+-- process toggle bag
+local function hook_ToggleBag(slotID)
+	-- inside pvp content?
+	local isArena = PvPIsArena()
+	local isBrawl = PvPIsInBrawl()
+	local isBattleground = NS:IsInBattleground()
+	if (isArena or isBattleground or isBrawl) then
+		-- not combat lockdown?
+		if (InCombatLockdown()) then
+			-- shift key not down?
+			if (not IsShiftKeyDown()) then
+				-- finished
+				return
+			end
+		end
+	end
+
+	-- call original
+	NS.CommFlare.hooks["ToggleBag"](slotID)
+end
+
+-- process toggle all bags
+local function hook_ToggleAllBags(slotID)
+	-- inside pvp content?
+	local isArena = PvPIsArena()
+	local isBrawl = PvPIsInBrawl()
+	local isBattleground = NS:IsInBattleground()
+	if (isArena or isBattleground or isBrawl) then
+		-- not combat lockdown?
+		if (InCombatLockdown()) then
+			-- shift key not down?
+			if (not IsShiftKeyDown()) then
+				-- finished
+				return
+			end
+		end
+	end
+
+	-- call original
+	NS.CommFlare.hooks["ToggleAllBags"]()
 end
 
 -- process character toggle
@@ -230,7 +294,7 @@ local function hook_ToggleCharacter(tab, onlyShow)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleCharacter"](tab, onlyShow)
 	end
@@ -245,7 +309,7 @@ local function hook_CollectionsMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[CollectionsMicroButton].OnClick(self, ...)
 	else
@@ -285,7 +349,7 @@ local function hook_ToggleCollectionsJournal(tabIndex)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleCollectionsJournal"](tabIndex)
 	end
@@ -300,7 +364,7 @@ local function hook_EJMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[EJMicroButton].OnClick(self, ...)
 	else
@@ -340,7 +404,7 @@ local function hook_ToggleEncounterJournal(tabIndex)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleEncounterJournal"](tabIndex)
 	end
@@ -371,7 +435,7 @@ local function hook_ToggleFriendsFrame(tab)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleFriendsFrame"](tab)
 	end
@@ -386,7 +450,7 @@ local function hook_GuildMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[GuildMicroButton].OnClick(self, ...)
 	else
@@ -426,7 +490,7 @@ local function hook_ToggleGuildFrame()
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleGuildFrame"]()
 	end
@@ -441,7 +505,7 @@ local function hook_HousingMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[HousingMicroButton].OnClick(self, ...)
 	else
@@ -475,7 +539,7 @@ local function hook_HousingFramesUtil_ToggleHousingDashboard()
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[HousingFramesUtil].ToggleHousingDashboard()
 	end
@@ -490,7 +554,7 @@ local function hook_PlayerSpellsMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[PlayerSpellsMicroButton].OnClick(self, ...)
 	else
@@ -524,7 +588,7 @@ local function hook_PlayerSpellsUtil_TogglePlayerSpellsFrame(suggestedTab, inspe
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		return NS.CommFlare.hooks[PlayerSpellsUtil].TogglePlayerSpellsFrame(suggestedTab, inspectUnit)
 	end
@@ -555,7 +619,7 @@ local function hook_PlayerSpellsUtil_ToggleSpellBookFrame(spellBookCategory)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[PlayerSpellsUtil].ToggleSpellBookFrame(spellBookCategory)
 	end
@@ -586,7 +650,7 @@ local function hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame()
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[PlayerSpellsUtil].ToggleClassTalentOrSpecFrame()
 	end
@@ -601,7 +665,7 @@ local function hook_ProfessionMicroButton_OnClick(self, ...)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks[ProfessionMicroButton].OnClick(self, ...)
 	else
@@ -641,7 +705,7 @@ local function hook_ToggleProfessionsBook(bookType)
 	end
 
 	-- not in combat lockdown?
-	if (InCombatLockdown() ~= true) then
+	if (not InCombatLockdown()) then
 		-- call original
 		NS.CommFlare.hooks["ToggleProfessionsBook"](bookType)
 	end
@@ -687,6 +751,15 @@ function NS:Setup_BlockGameMenuHooks()
 		NS.CommFlare:RawHook("ToggleAchievementFrame", hook_ToggleAchievementFrame, true)
 		NS.CommFlare:RawHookScript(AchievementMicroButton, "OnClick", hook_AchievementMicroButton_OnClick, true)
 		hook_ToggleAchievementFrame_installed = true
+	end
+
+	-- not installed?
+	if (hook_ToggleBags_installed == false) then
+		-- hooks to block bags while in combat inside pvp content
+		NS.CommFlare:RawHook("ToggleBackpack", hook_ToggleBackpack, true)
+		NS.CommFlare:RawHook("ToggleBag", hook_ToggleBag, true)
+		NS.CommFlare:RawHook("ToggleAllBags", hook_ToggleAllBags, true)
+		hook_ToggleBags_installed = true
 	end
 
 	-- not installed?

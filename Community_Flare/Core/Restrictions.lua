@@ -6,6 +6,7 @@ if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
+local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
@@ -55,6 +56,7 @@ local GetMapInfo                                  = _G.C_Map.GetMapInfo
 local CanSetUserWaypointOnMap                     = _G.C_Map.CanSetUserWaypointOnMap
 local SetUserWaypoint                             = _G.C_Map.SetUserWaypoint
 local GetPOITextureCoords                         = _G.C_Minimap.GetPOITextureCoords
+local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
 local GetInviteReferralInfo                       = _G.C_PartyInfo.GetInviteReferralInfo
 local InviteUnit                                  = _G.C_PartyInfo.InviteUnit
 local IsPartyFull                                 = _G.C_PartyInfo.IsPartyFull
@@ -79,7 +81,19 @@ local GetVignettePosition                         = _G.C_VignetteInfo.GetVignett
 local issecretvalue                               = _G.issecretvalue
 local type                                        = _G.type
 
--- unit exists
+-- get player info by guid
+function NS:GetPlayerInfoByGUID(guid)
+	-- sanity checks
+	if (not guid or (not issecretvalue(guid) and (guid == ""))) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return GetPlayerInfoByGUID(guid)
+end
+
+-- get specialization info for class id
 function NS:GetSpecializationInfoForClassID(classID, index, ...)
 	-- sanity checks
 	if (not classID or not index or issecretvalue(classID) or issecretvalue(index)) then
@@ -542,7 +556,7 @@ end
 -- has active delve
 function NS:HasActiveDelve(mapID)
 	-- sanity checks
-	if (not mapID or issecretvalue(mapID)) then
+	if (mapID and issecretvalue(mapID)) then
 		-- failed
 		return nil
 	end
@@ -689,6 +703,28 @@ function NS:GetPOITextureCoords(index)
 
 	-- success
 	return GetPOITextureCoords(index)
+end
+
+----------------------------------------------------------------------------------------------------------
+-- C_NamePlate
+----------------------------------------------------------------------------------------------------------
+
+-- get name plate for unit
+function NS:GetNamePlateForUnit(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- not boss?
+	if (unitToken:find("boss")) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return GetNamePlateForUnit(unitToken)
 end
 
 ----------------------------------------------------------------------------------------------------------

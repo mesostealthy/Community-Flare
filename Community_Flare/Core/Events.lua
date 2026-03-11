@@ -25,7 +25,6 @@ local GetNextPendingInviteConfirmation            = _G.GetNextPendingInviteConfi
 local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                       = _G.GetNumSubgroupMembers
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local GetQuestID                                  = _G.GetQuestID
 local GetRealmName                                = _G.GetRealmName
@@ -419,7 +418,7 @@ function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 	local list = NS:ReturnClubApplicantList(clubId)
 	for k,v in ipairs(list) do
 		-- get name / server
-		local name, realm = select(6, GetPlayerInfoByGUID(v.playerGUID))
+		local name, realm = select(6, NS:GetPlayerInfoByGUID(v.playerGUID))
 		if (name) then
 			-- no realm?
 			if (not realm or (realm == "")) then
@@ -1404,8 +1403,8 @@ function NS.CommFlare:PARTY_KILL(msg, ...)
 
 	-- has attacker name?
 	local message = nil
-	local attackerName, attackerRealm = select(6, GetPlayerInfoByGUID(attackerGUID))
-	local targetName, targetRealm = select(6, GetPlayerInfoByGUID(targetGUID))
+	local attackerName, attackerRealm = select(6, NS:GetPlayerInfoByGUID(attackerGUID))
+	local targetName, targetRealm = select(6, NS:GetPlayerInfoByGUID(targetGUID))
 	if (attackerName) then
 		-- debug print enabled?
 		if (NS.db.global.debugPrint == true) then
@@ -1571,11 +1570,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			end
 
 			-- match state is active?
-			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Active) then
+			local duration = PvPGetActiveMatchDuration()
+			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
 				-- match is active state?
 				NS.CommFlare.CF.MatchStatus = 1
 				NS.CommFlare.CF.PassLeadWarning = 0
-				if (PvPGetActiveMatchDuration() > 0) then
+				if (duration > 0) then
 					-- match started
 					NS.CommFlare.CF.MatchStatus = 2
 				end
@@ -1587,6 +1587,21 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 						-- show assist button
 						NS:ShowAssistButton()
 					end
+				end
+			end
+
+			-- match has active duration?
+			if (duration > 0) then
+				-- no start time?
+				if (NS.CommFlare.CF.MatchStartTime == 0) then
+					-- calculate
+					NS.CommFlare.CF.MatchStartTime = time() - mfloor(duration)
+				end
+
+				-- no start date?
+				if (NS.CommFlare.CF.MatchStartDate == "") then
+					-- calculate
+					NS.CommFlare.CF.MatchStartDate = date(nil, NS.CommFlare.CF.MatchStartTime)
 				end
 			end
 
@@ -1691,10 +1706,14 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		local clubs = NS:Get_Enabled_Clubs()
 		NS:Verify_Club_Streams(clubs)
 	else
-		-- match is active state?
-		if (PvPGetActiveMatchDuration() > 0) then
-			-- match started
-			NS.CommFlare.CF.MatchStatus = 2
+		-- in instance?
+		local inInstance, instanceType = IsInInstance()
+		if (inInstance == true) then
+			-- not pvp?
+			if (instanceType ~= "pvp") then
+				-- always reset
+				NS.CommFlare.CF.MatchStatus = 0
+			end
 		end
 	end
 
@@ -1824,18 +1843,25 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 		-- match started
 		NS.CommFlare.CF.MatchStatus = 2
 
-		-- reload variables
-		NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
-		NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
-		NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
-	end
+		-- has previous?
+		if ((NS.charDB.profile.MatchStartDate) and (NS.charDB.profile.MatchStartDate ~= "")) then
+			-- use previous
+			NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate
+		end
 
-	-- display queue entry time left enabled?
-	if (NS.db.global.displayQueueEntryTimeLeft == true) then
-		-- match started?
-		if (NS.CommFlare.CF.MatchStatus ~= 1) then
-			-- report queue entry time left
-			NS:Report_Queue_Entry_Time_Left()
+		-- has previous?
+		if ((NS.charDB.profile.MatchStartTime) and (NS.charDB.profile.MatchStartTime > 0)) then
+			-- use previous
+			NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime
+		end
+	else
+		-- display queue entry time left enabled?
+		if (NS.db.global.displayQueueEntryTimeLeft == true) then
+			-- match not started?
+			if (NS.CommFlare.CF.MatchStatus < 2) then
+				-- report queue entry time left
+				NS:Report_Queue_Entry_Time_Left()
+			end
 		end
 	end
 
@@ -1895,6 +1921,22 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 		-- reset default speed
 		NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
 		SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
+	end
+
+	-- match has active duration?
+	local duration = PvPGetActiveMatchDuration()
+	if (duration > 0) then
+		-- no start time?
+		if (NS.CommFlare.CF.MatchStartTime == 0) then
+			-- calculate
+			NS.CommFlare.CF.MatchStartTime = time() - mfloor(duration)
+		end
+
+		-- no start date?
+		if (NS.CommFlare.CF.MatchStartDate == "") then
+			-- calculate
+			NS.CommFlare.CF.MatchStartDate = date(nil, NS.CommFlare.CF.MatchStartTime)
+		end
 	end
 
 	-- match finished
@@ -2525,7 +2567,7 @@ function NS.CommFlare:UNIT_DIED(msg, ...)
 		-- isle of conquest?
 		if (NS.CommFlare.CF.MapID == 169) then
 			-- non-player?
-			local name = select(6, GetPlayerInfoByGUID(unitGUID))
+			local name = select(6, NS:GetPlayerInfoByGUID(unitGUID))
 			if (not name) then
 				-- process IOC vehicles
 				NS:Process_IsleOfConquest_Vehicles(NS.CommFlare.CF.MapID)
@@ -2811,6 +2853,16 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 
 	-- enforce binding rules
 	NS:Enforce_Binding_Rules()
+
+	-- in instance?
+	local inInstance, instanceType = IsInInstance()
+	if (inInstance == true) then
+		-- not pvp?
+		if (instanceType ~= "pvp") then
+			-- always reset
+			NS.CommFlare.CF.MatchStatus = 0
+		end
+	end
 
 	-- is tracked pvp?
 	local mapName = NS.CommFlare.CF.MapInfo.name

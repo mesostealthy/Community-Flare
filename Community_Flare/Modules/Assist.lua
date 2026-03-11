@@ -13,7 +13,6 @@ local InCombatLockdown                            = _G.InCombatLockdown
 local IsInRaid                                    = _G.IsInRaid
 local UnitIsEnemy                                 = _G.UnitIsEnemy
 local UnitIsPlayer                                = _G.UnitIsPlayer
-local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
 local GetNamePlates                               = _G.C_NamePlate.GetNamePlates
 local mfloor                                      = _G.math.floor
 local strsplit                                    = _G.string.split
@@ -59,6 +58,33 @@ function CommunityFlare_GetMainTank()
 		end
 	end
 	return nil
+end
+
+-- get player details from battleground enemies
+function NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
+	-- not installed?
+	if (NS.faction ~= 0) then return end
+	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
+		-- failed
+		return nil
+	end
+
+	-- get player button by unit
+	local playerButton = BattleGroundEnemies:GetPlayerbuttonByUnitID(unitToken, "Enemies")
+	if (not playerButton or not playerButton.PlayerDetails) then
+		-- failed
+		return nil
+	end
+
+	-- no player role?
+	local playerDetails = playerButton.PlayerDetails
+	if (not playerDetails or not playerDetails.PlayerRole) then
+		-- failed
+		return nil
+	end
+
+	-- return player role
+	return playerDetails.PlayerRole
 end
 
 -- update assist button
@@ -129,16 +155,10 @@ end
 
 -- name plate added
 function NS:AssistButtonNamePlateAdded(...)
-	-- invalid unit?
+	-- get name plate
 	local unitToken = ...
 	if (NS.faction ~= 0) then return end
-	if (not unitToken or issecretvalue(unitToken)) then
-		-- finished
-		return
-	end
-
-	-- get name plate
-	local namePlate = GetNamePlateForUnit(unitToken)
+	local namePlate = NS:GetNamePlateForUnit(unitToken)
 	if (not namePlate) then
 		-- finished
 		return
@@ -173,52 +193,86 @@ function NS:AssistButtonNamePlateAdded(...)
 
 	-- enemy player?
 	if (UnitIsEnemy(unitToken, "player")) then
-		-- get main assist
-		local player1, unitToken1 = CommunityFlare_GetMainAssist()
-		if (player1) then
-			-- set main assist
-			namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
-			namePlate.CF.frame:SetAlpha(1)
-			namePlate.CF.frame:Show()
+		-- check class base
+		namePlate.CF.markerSet = nil
+		local className, classID = UnitClassBase(unitToken)
+		if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
+			-- skip further checks
+		elseif (className == "MONK") then
+			-- check power type
+			local powerType = UnitPowerType(unitToken)
+			if (powerType == 0) then
+				-- set healer
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+				namePlate.CF.frame:SetAlpha(1)
+				namePlate.CF.frame:Show()
+				namePlate.CF.markerSet = true
+			else
+				-- check power max
+				local powerMax = UnitPowerMax(unitToken, 12)
+				if (powerMax == 4) then
+					-- set tank
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
+					namePlate.CF.frame:SetAlpha(1)
+					namePlate.CF.frame:Show()
+					namePlate.CF.markerSet = true
+				end
+			end
+		elseif (className == "PRIEST") then
+			-- check power type
+			local powerType = UnitPowerType(unitToken)
+			if (powerType ~= 13) then
+				-- set healer
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+				namePlate.CF.frame:SetAlpha(1)
+				namePlate.CF.frame:Show()
+				namePlate.CF.markerSet = true
+			end
+		elseif (className == "SHAMAN") then
+			-- check power type
+			local powerType = UnitPowerType(unitToken)
+			if (powerType ~= 11) then
+				-- set healer
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+				namePlate.CF.frame:SetAlpha(1)
+				namePlate.CF.frame:Show()
+				namePlate.CF.markerSet = true
+			end
 		else
-			-- check class base
-			local className, classID = UnitClassBase(unitToken)
-			if (className == "MONK") then
-				-- check power type
-				local powerType = UnitPowerType(unitToken)
-				if (powerType == 0) then
+			-- try getting from battleground enemies
+			local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
+			if (role) then
+				-- healer?
+				if (role == "HEALER") then
 					-- set healer
 					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
 					namePlate.CF.frame:SetAlpha(1)
 					namePlate.CF.frame:Show()
-				else
-					-- check power max
-					local powerMax = UnitPowerMax(unitToken, 12)
-					if (powerMax == 4) then
-						-- set tank
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-						namePlate.CF.frame:SetAlpha(1)
-						namePlate.CF.frame:Show()
-					end
-				end
-			elseif (className == "PRIEST") then
-				-- check power type
-				local powerType = UnitPowerType(unitToken)
-				if (powerType ~= 13) then
-					-- set healer
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+					namePlate.CF.markerSet = true
+				-- tank?
+				elseif (role == "TANK") then
+					-- set tank
+					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
 					namePlate.CF.frame:SetAlpha(1)
 					namePlate.CF.frame:Show()
+					namePlate.CF.markerSet = true
 				end
-			elseif (className == "SHAMAN") then
-				-- check power type
-				local powerType = UnitPowerType(unitToken)
-				if (powerType ~= 11) then
-					-- set healer
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-					namePlate.CF.frame:SetAlpha(1)
-					namePlate.CF.frame:Show()
-				end
+			end
+		end
+
+		-- no marker set yet?
+		if (not namePlate.CF.markerSet) then
+			-- get main assist
+			local player1, unitToken1 = CommunityFlare_GetMainAssist()
+			if (player1) then
+				-- set assist
+				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
+				namePlate.CF.frame:Show()
+
+				-- set alpha from boolean
+				local targetUnit = "raid" .. unitToken1 .. "target"
+				local isTarget = UnitIsUnit(targetUnit, unitToken)
+				namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
 			end
 		end
 	end
@@ -226,16 +280,10 @@ end
 
 -- name plate removed
 function NS:AssistButtonNamePlateRemoved(...)
-	-- invalid unit?
+	-- get name plate
 	local unitToken = ...
 	if (NS.faction ~= 0) then return end
-	if (not unitToken or issecretvalue(unitToken)) then
-		-- finished
-		return
-	end
-
-	-- get name plate
-	local namePlate = GetNamePlateForUnit(unitToken)
+	local namePlate = NS:GetNamePlateForUnit(unitToken)
 	if (not namePlate) then
 		-- failed
 		return nil
@@ -259,12 +307,18 @@ function NS:AssistButtonUpdateTarget(...)
 		-- process all
 		local targetUnit = "raid" .. unitToken1 .. "target"
 		for _, namePlate in ipairs(GetNamePlates()) do
-			-- get unit
+			-- exists?
 			local unit = namePlate:GetUnit()
-			if (namePlate.CF and namePlate.CF.frame) then
-				-- set alpha from boolean
-				local isTarget = UnitIsUnit(targetUnit, unit)
-				namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
+			if (unit and UnitExists(unit)) then
+				-- frame created?
+				if (namePlate.CF and namePlate.CF.frame) then
+					-- no marker set yet?
+					if (not namePlate.CF.markerSet) then
+						-- set alpha from boolean
+						local isTarget = UnitIsUnit(targetUnit, unit)
+						namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
+					end
+				end
 			end
 		end
 	end

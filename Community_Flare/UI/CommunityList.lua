@@ -10,7 +10,6 @@ local CreateDataProvider                          = _G.CreateDataProvider
 local CreateFromMixins                            = _G.CreateFromMixins
 local CreateScrollBoxListLinearView               = _G.CreateScrollBoxListLinearView
 local DevTools_Dump                               = _G.DevTools_Dump
-local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local IsMouseButtonDown                           = _G.IsMouseButtonDown
 local PlayerLocation                              = _G.PlayerLocation
 local StaticPopup_Show                            = _G.StaticPopup_Show
@@ -42,6 +41,7 @@ function CF_CommunityListFrameMixin:OnLoad()
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 	self:EnableKeyboard(true)
+	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
@@ -127,6 +127,8 @@ end
 
 -- on show
 function CF_CommunityListFrameMixin:OnShow()
+	-- load window position
+	NS:LoadWindowPosition(self)
 end
 
 -- on drag start
@@ -141,6 +143,9 @@ function CF_CommunityListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+
+	-- save window position
+	NS:SaveWindowPosition(self)
 end
 
 -- update list
@@ -375,8 +380,6 @@ end
 
 -- on show
 function CF_CommunityListMixin:OnShow()
-	-- update community list
-	self:UpdateCommunityList()
 end
 
 -- on update
@@ -793,6 +796,10 @@ function CF_CommunityListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_CommunityListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end
 
@@ -814,5 +821,9 @@ function CF_CommunityListResizeBottomRightButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_CommunityListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end

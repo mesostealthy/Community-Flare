@@ -36,6 +36,7 @@ function CF_VehicleListFrameMixin:OnLoad()
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
 	self:RegisterEvent("PVP_VEHICLE_INFO_UPDATED")
+	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
 	--tinsert(UISpecialFrames, self:GetName())
@@ -43,6 +44,9 @@ end
 
 -- on show
 function CF_VehicleListFrameMixin:OnShow()
+	-- load window position
+	NS:LoadWindowPosition(self)
+
 	-- refresh list
 	self:RefreshList()
 end
@@ -59,6 +63,9 @@ function CF_VehicleListFrameMixin:OnDragStop()
 	-- stop moving
 	self:StopMovingOrSizing()
 	self.moving = nil
+
+	-- save window position
+	NS:SaveWindowPosition(self)
 end
 
 -- on event
@@ -397,6 +404,10 @@ function CF_VehicleListResizeBottomLeftButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_VehicleListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end
 
@@ -418,5 +429,9 @@ function CF_VehicleListResizeBottomRightButtonMixin:OnMouseUp(button)
 	if (button == "LeftButton") then
 		-- stop sizing
 		CF_VehicleListFrame:StopMovingOrSizing("BOTTOMRIGHT")
+
+		-- save window position
+		local parent = self:GetParent()
+		NS:SaveWindowPosition(parent)
 	end
 end

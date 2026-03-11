@@ -158,7 +158,6 @@ NS.CommFlare.CF = {
 	StreamsLoaded = {},
 	TeamUnits = {},
 	TransmissionCheck = {},
-	VehicleDeaths = {},
 	VehicleList = {},
 	VignetteWarnings = {},
 	WaitForUpdate = {},

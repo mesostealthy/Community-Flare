@@ -21,5 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.14.001:
--When Queuing up as Max Level, will ask to KICK players in your party who are NOT max level!
+v2.15.001:
+-Block game menu hotkeys inside PVP content will now block opening your bags while in combat. (Hold SHIFT to override.)
+-Custom windows have protections to save and load the positions. Should prevent them from going offscreen.
