@@ -1,3 +1,0 @@
-v2.15.001:
--Block game menu hotkeys inside PVP content will now block opening your bags while in combat. (Hold SHIFT to override.)
--Custom windows have protections to save and load the positions. Should prevent them from going offscreen.
