@@ -1,0 +1,5 @@
+v2.17.001:
+-NEW SETTING: Will save a log of key War Supply Crate locations while in War Mode.
+-FEATURE: Detects crate farming addon and will not send party/raid locations.
+-FEATURE: PVP Equipment Set will now only equip entering PVP content.
+--Will also re-equip previous set after exiting PVP content.
