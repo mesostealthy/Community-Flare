@@ -61,8 +61,8 @@ function NS:REPorter_Add_New_Overlay(name)
 					local macrotext6 = "/i ON MY WAY: " .. info.name
 				        frame.Overlay:SetAttribute("alt-macrotext2", macrotext6)
 				        frame.Overlay:SetScript("OnEnter", function(self)
-						-- has reporter + frame?
-						if (REPorter and frame and frame.name) then
+						-- has reporter + frame + IsShown + has node?
+						if (REPorter and frame and frame.name and frame:IsShown() and REPorter.POINodes[frame.name]) then
 							-- show tooltip
 							REPorter:UnitOnEnterPOI(frame)
 							GameTooltip:AddLine("Left Click: INCOMING", 1, 1, 1)
@@ -76,6 +76,7 @@ function NS:REPorter_Add_New_Overlay(name)
 					end)
 				        frame.Overlay:SetScript("OnLeave", function() GameTooltip:Hide() end)
 					NS.REPorterOverlayCache[name] = frame
+					frame.Overlay:Show()
 					return true
 				end
 			end
@@ -147,10 +148,13 @@ function NS:REPorter_SetupHooks()
 		if (not REPorter_hooks_installed) then
 			-- process all
 			for i=1, REPorter.POINumber do
-				-- create overlay frame
+				-- disable REPorter default tooltip
 				local frame = _G["REPorterFrameCorePOI" .. i]
-				local overlayName = "REPorterFrameCorePOI" .. i .. "Overlay"
-				frame.Overlay = CreateFrame("Button", overlayName, REPorterFrame, "SecureActionButtonTemplate")
+				frame:SetScript("OnEnter", function(self) end)
+				frame:SetScript("OnLeave", function() end)
+
+				-- create overlay frame
+				frame.Overlay = CreateFrame("Button", nil, REPorterFrame, "SecureActionButtonTemplate")
 			        frame.Overlay:SetFrameLevel(128)
 			        frame.Overlay:RegisterForClicks("AnyUp", "AnyDown")
 			        frame.Overlay:SetHeight(REPorter.POIIconSize)
@@ -167,5 +171,27 @@ function NS:REPorter_SetupHooks()
 			-- installed
 			REPorter_hooks_installed = true
 		end
+
+		-- process all
+		for i=1, REPorter.POINumber do
+			-- valid frame?
+			local frame = _G["REPorterFrameCorePOI" .. i]
+			if (frame) then
+				-- not shown?
+				if (not frame:IsShown()) then
+					-- has overlay?
+					if (frame.Overlay) then
+						-- disable + hide
+						frame.Overlay:SetScript("OnEnter", nil)
+						frame.Overlay:SetScript("OnLeave", nil)
+						frame.Overlay:Hide()
+					end
+				else
+					-- show
+					frame.Overlay:Show()
+				end
+			end
+		end
+
 	end
 end

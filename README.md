@@ -21,8 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.16.001:
--Added REPorter callouts for Slayer's Rise.
--Added Slayer's Rise alerts when mini bosses have been defeated.
--BUGFIX: Fixed protected CVar's from being called in combat.
--BUGFIX: Lua error fixed for random REPorter error.
+v2.18.001:
+-BUGFIX: Fixed LUA error with REPorter callouts after multiple Battlegrounds.
