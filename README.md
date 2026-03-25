@@ -21,5 +21,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.18.001:
--BUGFIX: Fixed LUA error with REPorter callouts after multiple Battlegrounds.
+v2.19.001:
+-BUGFIX: Adjust Vehicle Turn Speed was setting Turn Speed while not inside PVP matches.
+-NEW SETTING: Report raid queue status to communities? added to report queues for raids to communities.
+-WAR MODE: Better tracking for incoming War Supply Crates while in War Mode.

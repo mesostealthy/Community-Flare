@@ -37,7 +37,6 @@ function CF_VignetteListFrameMixin:OnLoad()
 	-- register stuff
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
-	self:RegisterEvent("VIGNETTES_UPDATED")
 	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
@@ -51,6 +50,15 @@ function CF_VignetteListFrameMixin:OnShow()
 
 	-- refresh list
 	self:RefreshList()
+
+	-- register events
+	self:RegisterEvent("VIGNETTES_UPDATED")
+end
+
+-- on hide
+function CF_VignetteListFrameMixin:OnHide()
+	-- un register events
+	self:UnregisterEvent("VIGNETTES_UPDATED")
 end
 
 -- on drag start
@@ -346,16 +354,61 @@ function CF_VignetteListEntryMixin:OnEnter()
 	if (not name or (name == "")) then name = tostring(info.atlasName) end
 	GameTooltip:AddLine(name)
 
-	-- add vignette ID
-	GameTooltip:AddLine(strformat("Vignette ID: %d", tonumber(info.vignetteID)), 1, 1, 1)
-
-	-- add vignette guid
-	GameTooltip:AddLine(strformat("Vignette GUID: %s", tostring(info.vignetteGUID)), 1, 1, 1)
+	-- has vignetteID?
+	if (info.vignetteID) then
+		-- add vignetteID
+		GameTooltip:AddLine(strformat("Vignette ID: %d", tonumber(info.vignetteID)), 1, 1, 1)
+	end
 
 	-- has position?
 	if (info.x and info.y) then
 		-- add position
 		GameTooltip:AddLine(strformat("Position: %s, %s", tostring(info.x), tostring(info.y)), 1, 1, 1)
+	end
+
+	-- add vignetteGUID
+	GameTooltip:AddLine(strformat("Vignette GUID: %s", tostring(info.vignetteGUID)), 1, 1, 1)
+
+	-- has objectGUID?
+	if (info.objectGUID and (info.objectGUID ~= "")) then
+		-- add objectGUID
+		GameTooltip:AddLine(strformat("Object GUID: %s", tostring(info.objectGUID)), 1, 1, 1)
+	end
+
+	-- has atlasName?
+	if (info.atlasName and (info.atlasName ~= "")) then
+		-- add atlasName
+		GameTooltip:AddLine(strformat("Atlas Name: %s", tostring(info.atlasName)), 1, 1, 1)
+	end
+
+	-- has type?
+	if (info.type) then
+		-- add type
+		GameTooltip:AddLine(strformat("Type: %d", tonumber(info.type)), 1, 1, 1)
+	end
+
+	-- has rewardQuestID?
+	if (info.rewardQuestID) then
+		-- add rewardQuestID
+		GameTooltip:AddLine(strformat("Reward Quest ID: %d", tonumber(info.rewardQuestID)), 1, 1, 1)
+	end
+
+	-- has tooltipWidgetSet?
+	if (info.tooltipWidgetSet) then
+		-- add tooltipWidgetSet
+		GameTooltip:AddLine(strformat("Tooltip Widget Set: %d", tonumber(info.tooltipWidgetSet)), 1, 1, 1)
+	end
+
+	-- has iconWidgetSet?
+	if (info.iconWidgetSet) then
+		-- add iconWidgetSet
+		GameTooltip:AddLine(strformat("Icon Widget Set: %d", tonumber(info.iconWidgetSet)), 1, 1, 1)
+	end
+
+	-- has objectiveType?
+	if (info.objectiveType) then
+		-- add objectiveType
+		GameTooltip:AddLine(strformat("Objective Type: %d", tonumber(info.objectiveType)), 1, 1, 1)
 	end
 
 	-- show tooltip
@@ -459,5 +512,23 @@ function CF_VignetteListResizeBottomRightButtonMixin:OnMouseUp(button)
 		-- save window position
 		local parent = self:GetParent()
 		NS:SaveWindowPosition(parent)
+	end
+end
+
+-- toggle vignette list
+function NS.ToggleVignetteList()
+	-- shown?
+	if (CF_VignetteListFrame:IsShown()) then
+		-- hide
+		CF_VignetteListFrame:Hide()
+	else
+		-- debug print enabled?
+		if (NS.db.global.debugPrint == true) then
+			-- list vignettes
+			NS:List_Vignettes()
+		end
+
+		-- show
+		CF_VignetteListFrame:Show()
 	end
 end

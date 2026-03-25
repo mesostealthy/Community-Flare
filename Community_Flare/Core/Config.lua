@@ -7,9 +7,11 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunitiesChannel
+local GetCVarDefault                              = _G.GetCVarDefault
 local GetScreenHeight                             = _G.GetScreenHeight
 local GetScreenWidth                              = _G.GetScreenWidth
 local InCombatLockdown                            = _G.InCombatLockdown
+local SetCVar                                     = _G.SetCVar
 local StaticPopupDialogs                          = _G.StaticPopupDialogs
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
@@ -51,6 +53,7 @@ local GlobalDefaults = {
 		bnetAutoQueue = true,
 		cdmHideInVehiclesPvP = false,
 		communityReportDungeons = false,
+		communityReportRaids = false,
 		debugMode = false,
 		debugPrint = false,
 		displayPoppedGroups = false,
@@ -601,6 +604,34 @@ local function Community_List_Set_Item(info, key, value)
 
 		-- setup report channels
 		NS:Setup_Report_Channels()
+	end
+end
+
+-- adjust vehicle turn speed
+local function Adjust_Vehicle_Turn_Speed(info, value)
+	-- sanity check?
+	if ((value < 0) or (value > 3)) then
+		-- disabled
+		value = 0
+	end
+
+	-- save value
+	NS.db.global.adjustVehicleTurnSpeed = value
+
+	-- not in battleground?
+	if (not NS:IsInBattleground()) then
+		-- not disabled?
+		if (NS.db.global.adjustVehicleTurnSpeed > 0) then
+			-- not in combat lockdown?
+			NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
+			if (not InCombatLockdown()) then
+				-- set turn speed
+				SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
+			else
+				-- set turn speed later
+				NS.CommFlare.CF.RegenJobs["TurnSpeed"] = NS.CommFlare.CF.TurnSpeed
+			end
+		end
 	end
 end
 
@@ -1786,9 +1817,18 @@ local ReportGroup = {
 			get = function(info) return NS.charDB.profile.communityReporter end,
 			set = Community_Set_Reporter,
 		},
-		communityReportDungeons = {
+		communityReportRaids = {
 			type = "toggle",
 			order = 3,
+			name = L["Report raid queue status to communities?"],
+			desc = L["This will provide a quick popup message for you to send your raid queue status to the Community chat."],
+			width = "full",
+			get = function(info) return NS.db.global.communityReportRaids end,
+			set = function(info, value) NS.db.global.communityReportRaids = value end,
+		},
+		communityReportDungeons = {
+			type = "toggle",
+			order = 4,
 			name = L["Report dungeon queue status to communities?"],
 			desc = L["This will provide a quick popup message for you to send your dungeon queue status to the Community chat."],
 			width = "full",
@@ -1797,7 +1837,7 @@ local ReportGroup = {
 		},
 		communityReportList = {
 			type = "multiselect",
-			order = 4,
+			order = 5,
 			name = L["Communities to Report to?"],
 			desc = L["Choose the communities that you want to report info to."],
 			values = Setup_Community_List,
@@ -1832,7 +1872,7 @@ local VehicleGroup = {
 				[3] = L["Max (540)"],
 			},
 			get = function(info) return NS.db.global.adjustVehicleTurnSpeed end,
-			set = function(info, value) NS.db.global.adjustVehicleTurnSpeed = value end,
+			set = Adjust_Vehicle_Turn_Speed,
 		},
 		cdmHideInVehiclesPvP = {
 			type = "toggle",

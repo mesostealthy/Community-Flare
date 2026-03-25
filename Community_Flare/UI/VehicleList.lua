@@ -35,7 +35,6 @@ function CF_VehicleListFrameMixin:OnLoad()
 	-- register stuff
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
-	self:RegisterEvent("PVP_VEHICLE_INFO_UPDATED")
 	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
@@ -49,6 +48,15 @@ function CF_VehicleListFrameMixin:OnShow()
 
 	-- refresh list
 	self:RefreshList()
+
+	-- register events
+	self:RegisterEvent("PVP_VEHICLE_INFO_UPDATED")
+end
+
+-- on hide
+function CF_VehicleListFrameMixin:OnHide()
+	-- unregister events
+	self:UnregisterEvent("PVP_VEHICLE_INFO_UPDATED")
 end
 
 -- on drag start
@@ -433,5 +441,23 @@ function CF_VehicleListResizeBottomRightButtonMixin:OnMouseUp(button)
 		-- save window position
 		local parent = self:GetParent()
 		NS:SaveWindowPosition(parent)
+	end
+end
+
+-- toggle vehicle list
+function NS.ToggleVehicleList()
+	-- shown?
+	if (CF_VehicleListFrame:IsShown()) then
+		-- hide
+		CF_VehicleListFrame:Hide()
+	else
+		-- debug print enabled?
+		if (NS.db.global.debugPrint == true) then
+			-- list vehicles
+			NS:List_Vehicles()
+		end
+
+		-- show
+		CF_VehicleListFrame:Show()
 	end
 end

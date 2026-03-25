@@ -3,6 +3,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale(ADDON_NAME, "frFR")
 if not L then return end
 
 -- Bootstrap.lua
+L["%s is out of date. Download the latest version from Curseforge or Wago!"] = "%s est obsolète. Téléchargez la dernière version sur Curseforge ou Wago !"
 L["N/A"] = "N/A"
 L["Sorry, can not accept invites while currently queued as a mercenary."] = "Désolé, je ne peux pas accepter les invitations alors que je suis actuellement en file d'attente en tant que mercenaire."
 
@@ -10,7 +11,7 @@ L["Sorry, can not accept invites while currently queued as a mercenary."] = "Dé
 L["%s has %s %s (%s)"] = "%s a %s %s (%s)"
 L["%s has changed zones to %s."] = "%s a changé les zones en %s."
 L["%s is under attack!"] = "%s se fait attaqué!"
-L["%s version %s update available. Download the latest version from curseforge!"] = "La mise à jour %s version %s est disponible. Téléchargez la dernière version depuis Curseforge!"
+L["%s version %s update available. Download the latest version from Curseforge or Wago!"] = "Une mise à jour de %s (version %s) est disponible. Téléchargez la dernière version sur Curseforge ou Wago !"
 L["Catapult"] = "Catapulte"
 L["Demolisher"] = "Démolisseur"
 L["Glaive Thrower"] = "Lanceur de glaive"
@@ -126,6 +127,7 @@ L["Rebuild Members?"] = "Reconstruction des membres ?"
 L["Refresh Members?"] = "Actualiser les membres ?"
 L["Report Options"] = "Options de rapport"
 L["Report dungeon queue status to communities?"] = "Signaler l'état de la file d'attente des donjons aux communautés ?"
+L["Report raid queue status to communities?"] = "Signaler l'état de la file d'attente de raid aux communautés ?"
 L["Report queue status to communities?"] = "Signaler l’état de la file d’attente aux communautés ?"
 L["Restrict /ping system to?"] = "Restreindre le système /ping à ?"
 L["Slayer's Rise Options"] = "Options de Slayer's Rise"
@@ -158,6 +160,7 @@ L["This will hide the Primary & Second Resource Bars while inside vehicles in Pv
 L["This will log some debug event messages into a debug window to help MESO fix bugs."] = "Cela enregistrera certains messages d'événements de débogage dans une fenêtre de débogage pour aider MESO à corriger les bogues."
 L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."] = "Cela affichera périodiquement un message indiquant combien de secondes il reste aux joueurs de votre groupe pour entrer dans le match, lors de leur entrée dans le match."
 L["This will provide a quick popup message for you to send your dungeon queue status to the Community chat."] = "Cela vous permettra de recevoir rapidement un message contextuel vous invitant à envoyer votre statut de file d'attente pour les donjons au chat de la communauté."
+L["This will provide a quick popup message for you to send your raid queue status to the Community chat."] = "Cela fera apparaître un message contextuel rapide vous permettant d'envoyer le statut de votre file d'attente de raid au chat de la communauté."
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = "Ceci fournira un message contextuel rapide pour envoyer votre statut de file d'attente dans le chat de la Communauté."
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = "Ceci fournira un message d'avertissement ou une fenêtre contextuelle pour les chefs de groupe lorsque leur file d'attente est mise en pause."
 L["This will provide a warning message when you are honor capped, or close to it when queuing."] = "Cela fournira un message d'avertissement lorsque vous êtes en limite d'honneur, ou presque lorsque vous faites la queue."

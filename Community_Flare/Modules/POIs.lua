@@ -6,6 +6,7 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
+local issecretvalue                               = _G.issecretvalue
 local print                                       = _G.print
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
@@ -13,7 +14,7 @@ local type                                        = _G.type
 local strformat                                   = _G.string.format
 
 -- get current POI's
-function NS:Get_Current_POIs()
+function NS:Get_Current_POIs(name)
 	-- get map id
 	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 	if (not NS.CommFlare.CF.MapID) then
@@ -30,19 +31,32 @@ function NS:Get_Current_POIs()
 			-- get area poi info
 			local info = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
 			if (info and info.areaPoiID) then
-				-- has position?
-				if (info.position) then
-					-- validate position
-					local x, y = info.position:GetXY()
-					if (x and y) then
-						-- add position
-						info.x = x
-						info.y = y
+				-- has name?
+				local logged = true
+				if (name and not issecretvalue(name) and (name ~= "")) then
+					-- name does not match?
+					if (not info.name:find(name)) then
+						-- not logged
+						logged = false
 					end
 				end
 
-				-- save poi info
-				list[info.areaPoiID] = info
+				-- logged?
+				if (logged) then
+					-- has position?
+					if (info.position) then
+						-- validate position
+						local x, y = info.position:GetXY()
+						if (x and y) then
+							-- add position
+							info.x = x
+							info.y = y
+						end
+					end
+
+					-- save poi info
+					list[info.areaPoiID] = info
+				end
 			end
 		end
 

@@ -27,7 +27,7 @@ function NS:TomTomRemoveWaypoints(title)
 			-- process zone waypoints
 			for _, waypoint in pairs(entries) do
 				-- title matches?
-				if (waypoint.title and (waypoint.title == title)) then
+				if (waypoint.title and waypoint.title:find(title)) then
 					-- remove waypoint
 					securecallfunction(TT.RemoveWaypoint, TT, waypoint)
 				end

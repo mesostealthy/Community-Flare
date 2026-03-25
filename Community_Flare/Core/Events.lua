@@ -19,6 +19,7 @@ local GetCVar                                     = _G.GetCVar
 local GetCVarDefault                              = _G.GetCVarDefault
 local GetHomePartyInfo                            = _G.GetHomePartyInfo
 local GetInviteConfirmationInfo                   = _G.GetInviteConfirmationInfo
+local GetLFGMode                                  = _G.GetLFGMode
 local GetLFGProposal                              = _G.GetLFGProposal
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
 local GetLFGRoleUpdateBattlegroundInfo            = _G.GetLFGRoleUpdateBattlegroundInfo
@@ -249,14 +250,21 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 		return
 	end
 
-	-- ruffious?
-	if (sender == "Ruffious") then
-		-- notify when war crate is inbound?
-		if (NS.db.global.notifyWarCrateInbound == true) then
-			-- war mode enabled?
-			if (PvPIsWarModeFeatureEnabled() == true) then
+	-- notify when war crate is inbound?
+	if (NS.db.global.notifyWarCrateInbound == true) then
+		-- war mode enabled?
+		if (PvPIsWarModeFeatureEnabled() == true) then
+			-- Malicia?
+			local incoming = false
+			if (sender == "Malicia") then
 				-- crate incoming message?
-				local incoming = false
+				if (text:find("all use some resources")) then
+					-- incoming
+					incoming = true
+				end
+			-- Ruffious?
+			elseif (sender == "Ruffious") then
+				-- crate incoming message?
 				if (text:find("cache of resources nearby")) then
 					-- incoming
 					incoming = true
@@ -270,21 +278,50 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 					-- incoming
 					incoming = true
 				end
+			-- Vidious?
+			elseif (sender == "Vidious") then
+				-- crate incoming message?
+				if (text:find("like goods don't you")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("eye out for opportunities for loot")) then
+					-- incoming
+					incoming = true
+				end
+			-- Ziadan?
+			elseif (sender == "Ziadan") then
+				-- crate incoming message?
+				if (text:find("get your spoils")) then
+					-- incoming
+					incoming = true
+				elseif (text:find("looks like a treasure")) then
+					-- incoming
+					incoming = true
+				end
+			end
 
-				-- incoming?
-				if (incoming == true) then
-					-- needs to issue raid warning?
-					if (NS.CommFlare.CF.LastRaidWarning == 0) then
-						-- update last raid warning
-						NS.CommFlare.CF.LastRaidWarning = time()
-						TimerAfter(150, function()
-							-- clear last raid warning
-							NS.CommFlare.CF.LastRaidWarning = 0
-						end)
+			-- incoming?
+			if (incoming == true) then
+				-- real war supply crate
+				NS.CommFlare.CF.RealWarSupplyCrate = true
 
-						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
-					end
+				-- needs to issue raid warning?
+				if (NS.CommFlare.CF.LastRaidWarning == 0) then
+					-- save announcement times
+					local timestamp = time()
+					local crateID = strformat("%s:%d", NS.WAR_SUPPLY_CRATE, 3689)
+					NS.CommFlare.CF.Announcements[crateID] = timestamp
+					NS.CommFlare.CF.LastRaidWarning = timestamp
+
+					-- update last raid warning
+					TimerAfter(150, function()
+						-- clear last raid warning
+						NS.CommFlare.CF.Announcements[crateID] = nil
+						NS.CommFlare.CF.LastRaidWarning = 0
+					end)
+
+					-- issue local raid warning (with raid warning audio sound)
+					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
 				end
 			end
 		end
@@ -1047,119 +1084,57 @@ end
 
 -- process lfg proposal done
 function NS.CommFlare:LFG_PROPOSAL_DONE(msg)
-	-- valid brawl queue?
-	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+	-- process all
+	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Brawl"].status ~= "rejected") then
-			-- entered queue pop
-			NS.CommFlare.CF.LocalQueues["Brawl"].status = "entered"
+		if (NS.CommFlare.CF.LocalQueues[index].status == "popped") then
+			-- update queue status
+			NS.CommFlare.CF.LocalQueues[index].status = "entered"
+			NS:Update_Queue_Status(v.category, index)
 		end
-
-		-- update queue status
-		NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
-	end
-
-	-- valid dungeon queue?
-	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
-		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status ~= "rejected") then
-			-- entered queue pop
-			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "entered"
-		end
-
-		-- update queue status
-		NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
 	end
 end
 
 -- process lfg proposal failed
 function NS.CommFlare:LFG_PROPOSAL_FAILED(msg)
-	-- valid brawl queue?
-	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+	-- process all
+	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
-			-- queued for brawl?
-			local category = select(8, GetLFGInfoServer(LE_LFG_CATEGORY_BATTLEFIELD))
-			if (category == LE_LFG_CATEGORY_BATTLEFIELD) then
-				-- set queued
-				NS.CommFlare.CF.LocalQueues["Brawl"].status = "queued"
-				NS.CommFlare.CF.LocalQueues["Brawl"].popped = 0
-				NS.CommFlare.CF.SocialQueues["local"].popped = 0
-			else
-				-- set failed
-				NS.CommFlare.CF.LocalQueues["Brawl"].status = "failed"
-			end
-
+		if (NS.CommFlare.CF.LocalQueues[index].status == "popped") then
 			-- update queue status
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
-		end
-	end
-
-	-- valid dungeon queue?
-	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
-		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
-			-- queued for brawl?
-			local category = select(8, GetLFGInfoServer(LE_LFG_CATEGORY_LFD))
-			if (category == LE_LFG_CATEGORY_LFD) then
-				-- set queued
-				NS.CommFlare.CF.LocalQueues["Dungeon"].status = "queued"
-				NS.CommFlare.CF.LocalQueues["Dungeon"].popped = 0
-				NS.CommFlare.CF.SocialQueues["local"].popped = 0
-			else
-				-- set failed
-				NS.CommFlare.CF.LocalQueues["Dungeon"].status = "failed"
-			end
-
+			NS.CommFlare.CF.LocalQueues[index].status = "failed"
+			NS:Update_Queue_Status(v.category, index)
+		-- rejected?
+		elseif (NS.CommFlare.CF.LocalQueues[index].status == "rejected") then
 			-- update queue status
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+			NS:Update_Queue_Status(v.category, index)
 		end
 	end
 end
 
 -- process lfg proposal show
 function NS.CommFlare:LFG_PROPOSAL_SHOW(msg)
-	-- found proposal?
-	local proposalExists, id, typeID, subtypeID, name, texture, role, hasResponded, totalEncounters, completedEncounters, numMembers, isLeader, isHoliday, proposalCategory = GetLFGProposal()
-	if (proposalExists and proposalCategory) then
-		-- dungeon?
-		local index = nil
-		if (proposalCategory == LE_LFG_CATEGORY_LFD) then
-			-- dungeon
-			index = "Dungeon"
-		elseif (proposalCategory == LE_LFG_CATEGORY_BATTLEFIELD) then
-			-- brawl
-			index = "Brawl"
-		end
-
-		-- found?
-		if (index) then
+	-- get lfg proposal
+	local exists, index, typeID, subtypeID, name, texture, role, hasResponded, totalEncounters, completedEncounters, numMembers, isLeader, isHoliday, category = GetLFGProposal()
+	if (exists and category) then
+		-- has queue?
+		if (NS.CommFlare.CF.LocalQueues[index]) then
 			-- update queue status
 			NS.CommFlare.CF.LocalQueues[index].status = "popped"
-			NS:Update_Queue_Status(proposalCategory)
+			NS:Update_Queue_Status(category, index)
 		end
 	end
 end
 
 -- process lfg proposal succeeded
 function NS.CommFlare:LFG_PROPOSAL_SUCCEEDED(msg)
-	-- valid brawl queue?
-	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+	-- process all
+	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
+		if (NS.CommFlare.CF.LocalQueues[index].status == "popped") then
 			-- update queue status
-			NS.CommFlare.CF.LocalQueues["Brawl"].status = "entered"
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
-		end
-	end
-
-	-- valid dungeon queue?
-	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
-		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
-			-- update queue status
-			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "entered"
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+			NS.CommFlare.CF.LocalQueues[index].status = "entered"
+			NS:Update_Queue_Status(v.category, index)
 		end
 	end
 end
@@ -1167,7 +1142,7 @@ end
 -- process lfg queue status update
 function NS.CommFlare:LFG_QUEUE_STATUS_UPDATE(msg)
 	-- update lfg status
-	NS:Update_LFG_Status()
+	NS:Update_LFG_Status(msg)
 end
 
 -- process lfg role check role chosen
@@ -1309,7 +1284,7 @@ end
 -- process lfg update
 function NS.CommFlare:LFG_UPDATE(msg)
 	-- update lfg status
-	NS:Update_LFG_Status()
+	NS:Update_LFG_Status(msg)
 end
 
 -- process name plate unit added
@@ -1690,6 +1665,19 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				-- enable block game menu hooks
 				NS:Setup_BlockGameMenuHooks()
 			end
+		else
+			-- not disabled?
+			if (NS.db.global.adjustVehicleTurnSpeed > 0) then
+				-- not in combat lockdown?
+				NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
+				if (not InCombatLockdown()) then
+					-- set turn speed
+					SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
+				else
+					-- set turn speed later
+					NS.CommFlare.CF.RegenJobs["TurnSpeed"] = NS.CommFlare.CF.TurnSpeed
+				end
+			end
 		end
 
 		-- initialize login?
@@ -1753,6 +1741,22 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 			-- refresh active timers
 			NS:Refresh_Active_Timers()
+
+			-- process all
+			for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
+				-- skip battleground
+				if (v.type ~= "BATTLEGROUND") then
+					-- queued?
+					if (v.status == "queued") then
+						-- no mode or suspended?
+						local mode, submode = GetLFGMode(v.category, index)
+						if (not mode or (mode == "suspended")) then
+							-- clear local queue
+							NS.CommFlare.CF.LocalQueues[index] = nil
+						end
+					end
+				end
+			end
 		end
 
 		-- has position?
@@ -2680,23 +2684,26 @@ function NS.CommFlare:UNIT_ENTERED_VEHICLE(msg, ...)
 	if (unitTarget == "player") then
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
-			-- sanity check
-			if ((NS.db.global.adjustVehicleTurnSpeed < 1) or (NS.db.global.adjustVehicleTurnSpeed > 3)) then
-				-- force default
-				NS.db.global.adjustVehicleTurnSpeed = 1
-			end
+			-- adjust vehicle turn speed enabled?
+			if (NS.db.global.adjustVehicleTurnSpeed > 0) then
+				-- sanity check
+				if ((NS.db.global.adjustVehicleTurnSpeed < 1) or (NS.db.global.adjustVehicleTurnSpeed > 3)) then
+					-- force default
+					NS.db.global.adjustVehicleTurnSpeed = 1
+				end
 
-			-- save old turn speed
-			NS.CommFlare.CF.TurnSpeed = GetCVar("TurnSpeed")
+				-- save old turn speed
+				NS.CommFlare.CF.TurnSpeed = GetCVar("TurnSpeed")
 
-			-- not in combat lockdown?
-			local speed = NS.db.global.adjustVehicleTurnSpeed * 180
-			if (not InCombatLockdown()) then
-				-- set turn speed
-				SetCVar("TurnSpeed", speed)
-			else
-				-- set turn speed later
-				NS.CommFlare.CF.RegenJobs["TurnSpeed"] = speed
+				-- not in combat lockdown?
+				local speed = NS.db.global.adjustVehicleTurnSpeed * 180
+				if (not InCombatLockdown()) then
+					-- set turn speed
+					SetCVar("TurnSpeed", speed)
+				else
+					-- set turn speed later
+					NS.CommFlare.CF.RegenJobs["TurnSpeed"] = speed
+				end
 			end
 
 			-- hide stuff in vehicles
@@ -2713,19 +2720,22 @@ function NS.CommFlare:UNIT_EXITED_VEHICLE(msg, ...)
 	if (unitTarget == "player") then
 		-- in battleground?
 		if (NS:IsInBattleground() == true) then
-			-- default?
-			if (NS.db.global.adjustVehicleTurnSpeed == 1) then
-				-- reset default speed?
-				NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
-			end
+			-- adjust vehicle turn speed enabled?
+			if (NS.db.global.adjustVehicleTurnSpeed > 0) then
+				-- default?
+				if (NS.db.global.adjustVehicleTurnSpeed == 1) then
+					-- reset default speed?
+					NS.CommFlare.CF.TurnSpeed = GetCVarDefault("TurnSpeed")
+				end
 
-			-- not in combat lockdown?
-			if (not InCombatLockdown()) then
-				-- set turn speed
-				SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
-			else
-				-- set turn speed later
-				NS.CommFlare.CF.RegenJobs["TurnSpeed"] = NS.CommFlare.CF.TurnSpeed
+				-- not in combat lockdown?
+				if (not InCombatLockdown()) then
+					-- set turn speed
+					SetCVar("TurnSpeed", NS.CommFlare.CF.TurnSpeed)
+				else
+					-- set turn speed later
+					NS.CommFlare.CF.RegenJobs["TurnSpeed"] = NS.CommFlare.CF.TurnSpeed
+				end
 			end
 
 			-- show stuff in vehicles
@@ -2926,16 +2936,65 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 			end
 		end
 	else
-		-- notify when war crate is inbound?
-		if (NS.db.global.notifyWarCrateInbound == true) then
-			-- war mode enabled?
-			if (PvPIsWarModeFeatureEnabled() == true) then
-				-- get current vignettes
-				local list = NS:Get_Current_Vignettes()
-				if (list) then
+		-- war mode enabled?
+		if (PvPIsWarModeFeatureEnabled() == true) then
+			-- get current war supply crates
+			local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
+			if (list) then
+				-- process all
+				for vignetteID,info in pairs(list) do
+					-- first seen?
+					if (not NS.CommFlare.CF.WarSupplyCrates[vignetteID]) then
+						-- crate flying in?
+						if (vignetteID == 3689) then
+							-- real war supply crate?
+							if (NS.CommFlare.CF.RealWarSupplyCrate) then
+								-- found
+								NS.CommFlare.CF.WarSupplyCrates[vignetteID] = time()
+
+								-- send transmission
+								local timestamp = time()
+								local mapID = NS:GetBestMapForUnit("player")
+								local message = strformat("!CommFlare@%s@WAR_SUPPLY_CRATE@%s,%s,%s,%s,%s", NS.CommFlare.Version, tostring(mapID), tostring(timestamp), tostring(info.vignetteGUID), tostring(info.x), tostring(info.y))
+								NS:SendTransmission(message)
+							end
+						-- drop locations?
+						elseif ((vignetteID == 2967) or (vignetteID == 6066)) then
+							-- found
+							NS.CommFlare.CF.WarSupplyCrates[vignetteID] = time()
+
+							-- send transmission
+							local timestamp = time()
+							local mapID = NS:GetBestMapForUnit("player")
+							local message = strformat("!CommFlare@%s@WAR_SUPPLY_CRATE@%s,%s,%s,%s,%s", NS.CommFlare.Version, tostring(mapID), tostring(timestamp), tostring(info.vignetteGUID), tostring(info.x), tostring(info.y))
+							NS:SendTransmission(message)
+						else
+							-- found
+							NS.CommFlare.CF.WarSupplyCrates[vignetteID] = time()
+						end
+					end
+				end
+
+				-- remove stale entries
+				for vignetteID,timestamp in pairs(NS.CommFlare.CF.WarSupplyCrates) do
+					-- not currently in list?
+					if (not list[vignetteID]) then
+						-- delete
+						NS.CommFlare.CF.WarSupplyCrates[vignetteID] = nil
+					end
+				end
+
+				-- notify when war crate is inbound?
+				if (NS.db.global.notifyWarCrateInbound == true) then
 					-- check for alerts
 					NS:VignetteCheckForAlerts(list)
 				end
+
+				-- reset
+				NS.CommFlare.CF.RealWarSupplyCrate = false
+			else
+				-- reset
+				NS.CommFlare.CF.WarSupplyCrates = {}
 			end
 		end
 	end

@@ -1998,78 +1998,14 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		return
 	end
 
-	-- brawl / dungeon?
-	if ((index == "Brawl") or (index == "Dungeon")) then
-		-- brawl?
-		local isTracked = true
-		local instanceName = NS.CommFlare.CF.LocalQueues[index].name
-		if (index == "Brawl") then
-			-- is tracked PVP?
-			isTracked = NS:IsTrackedPVP(instanceName)
-		end
+	-- no local queue?
+	if (not NS.CommFlare.CF.LocalQueues[index]) then
+		-- finished
+		return
+	end
 
-		-- is tracked?
-		if (isTracked == true) then
-			-- get lfg queue stats
-			local category = NS.CommFlare.CF.LocalQueues[index].category
-			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(category)
-			if (hasData and averageWait) then
-				-- get estimated time
-				NS.CommFlare.CF.Timer.MilliSeconds = averageWait * 1000
-
-				-- calculate minutes / seconds
-				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
-				-- player is horde?
-				local faction = L["N/A"]
-				if (NS.faction == Enum.PvPFaction.Horde) then
-					-- horde
-					faction = FACTION_HORDE
-				else
-					-- alliance
-					faction = FACTION_ALLIANCE
-				end
-
-				-- finalize text
-				local text = nil
-				local count = NS:GetGroupCountText()
-				local level = NS:UnitLevel("player")
-				if (level < GetMaxLevelForLatestExpansion()) then
-					-- add with level
-					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], instanceName)
-				else
-					-- add without level
-					text = strformat("%s %s %s %s!", count, faction, L["Joined Queue for"], instanceName)
-				end
-
-				-- add time waited
-				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
-				text = strformat("%s %s: %s!", text, L["Estimated Wait"], time_waited)
-
-				-- add tanks / heals / dps counts
-				NS:Verify_Role_Counts()
-				if ((NS.CommFlare.CF.LocalData.NumTanks > 0) or (NS.CommFlare.CF.LocalData.NumHealers > 0) or (NS.CommFlare.CF.LocalData.NumDPS > 0)) then
-					-- add counts
-					text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
-				end
-
-				-- check if group has room for more
-				local maxCount = NS:GetMaxGroupCount()
-				if (GetNumGroupMembers() < maxCount) then
-					-- community auto invite enabled?
-					if (NS.charDB.profile.communityAutoInvite == true) then
-						-- update text
-						text = strformat("%s (%s)", text, L["For auto invite, whisper me INV"])
-					end
-				end
-
-				-- send to community
-				NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
-			end
-		end
-	else
+	-- battleground?
+	if (NS.CommFlare.CF.LocalQueues[index].type == "BATTLEGROUND") then
 		-- is tracked pvp?
 		local status, mapName = GetBattlefieldStatus(index)
 		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
@@ -2117,7 +2053,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 			else
 				-- increase
 				NS.CommFlare.CF.EstimatedWaitTime = NS.CommFlare.CF.EstimatedWaitTime + 1
-
+	
 				-- should try again?
 				if (NS.CommFlare.CF.EstimatedWaitTime < 5) then
 					-- try again
@@ -2178,6 +2114,79 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 			-- send to community
 			NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
+		end
+	else
+		-- brawl?
+		local isTracked = true
+		local name = NS.CommFlare.CF.LocalQueues[index].name
+		if (index == "Brawl") then
+			-- is tracked PVP?
+			isTracked = NS:IsTrackedPVP(name)
+		end
+
+		-- is tracked?
+		if (isTracked == true) then
+			-- get lfg queue stats
+			local category = NS.CommFlare.CF.LocalQueues[index].category
+			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(category)
+			if (hasData and averageWait) then
+				-- get estimated time
+				NS.CommFlare.CF.Timer.MilliSeconds = averageWait * 1000
+
+				-- calculate minutes / seconds
+				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
+				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
+				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
+
+				-- player is horde?
+				local faction = L["N/A"]
+				if (NS.faction == Enum.PvPFaction.Horde) then
+					-- horde
+					faction = FACTION_HORDE
+				else
+					-- alliance
+					faction = FACTION_ALLIANCE
+				end
+
+				-- finalize text
+				local text = nil
+				local count = NS:GetGroupCountText()
+				local level = NS:UnitLevel("player")
+				if (level < GetMaxLevelForLatestExpansion()) then
+					-- add with level
+					text = strformat("[%s %d] %s %s %s %s!", L["Level"], level, count, faction, L["Joined Queue for"], name)
+				else
+					-- add without level
+					text = strformat("%s %s %s %s!", count, faction, L["Joined Queue for"], name)
+				end
+
+				-- add time waited
+				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
+				text = strformat("%s %s: %s!", text, L["Estimated Wait"], time_waited)
+
+				-- add tanks / heals / dps counts
+				NS:Verify_Role_Counts()
+				if ((NS.CommFlare.CF.LocalData.NumTanks > 0) or (NS.CommFlare.CF.LocalData.NumHealers > 0) or (NS.CommFlare.CF.LocalData.NumDPS > 0)) then
+					-- add counts
+					text = strformat(L["%s [%d Tanks, %d Healers, %d DPS]"], text, NS.CommFlare.CF.LocalData.NumTanks, NS.CommFlare.CF.LocalData.NumHealers, NS.CommFlare.CF.LocalData.NumDPS)
+				end
+
+				-- check if group has room for more
+				local maxCount = NS:GetMaxGroupCount()
+				if (GetNumGroupMembers() < maxCount) then
+					-- community auto invite enabled?
+					if (NS.charDB.profile.communityAutoInvite == true) then
+						-- update text
+						text = strformat("%s (%s)", text, L["For auto invite, whisper me INV"])
+					end
+				end
+
+				-- static popup not already shown?
+				if (not StaticPopup_FindVisible("CommunityFlare_Send_Community_Dialog")) then
+					-- send to community
+					NS:PopupBox("CommunityFlare_Send_Community_Dialog", text)
+				end
+			end
 		end
 	end
 end

@@ -69,14 +69,8 @@ local function Community_Flare_Slash_Command(input)
 			print(strformat(L["Found %d Auras."], numauras))
 		end
 	elseif (lower == "clm") then
-		-- shown?
-		if (CF_CommunityListFrame:IsShown()) then
-			-- hide
-			CF_CommunityListFrame:Hide()
-		else
-			-- show
-			CF_CommunityListFrame:Show()
-		end
+		-- toggle community list
+		NS.ToggleCommunityList()
 	elseif (lower == "debug") then
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then
@@ -130,6 +124,10 @@ local function Community_Flare_Slash_Command(input)
 
 		-- display results
 		print(strformat(L["%s: %d Community Leaders found."], NS.CommFlare.Title, count))
+	elseif (lower == "mapid") then
+		-- get map id
+		local mapID = NS:GetBestMapForUnit("player")
+		print(strformat("MapID: %d", mapID))
 	elseif (lower == "options") then
 		-- open settings
 		Settings_OpenToCategory(NS.optionsID)
@@ -137,29 +135,11 @@ local function Community_Flare_Slash_Command(input)
 		-- run performance tests
 		NS:Run_Performance_Tests()
 	elseif (lower == "plm") then
-		-- shown?
-		if (CF_PlayerListFrame:IsShown()) then
-			-- hide
-			CF_PlayerListFrame:Hide()
-		else
-			-- show
-			CF_PlayerListFrame:Show()
-		end
+		-- toggle player list
+		NS.TogglePlayerList()
 	elseif (lower == "pois") then
-		-- shown?
-		if (CF_POIListFrame:IsShown()) then
-			-- hide
-			CF_POIListFrame:Hide()
-		else
-			-- debug print enabled?
-			if (NS.db.global.debugPrint == true) then
-				-- list pois
-				NS:List_POIs()
-			end
-
-			-- show
-			CF_POIListFrame:Show()
-		end
+		-- toggle poi list
+		NS.TogglePOIList()
 	elseif (lower == "prune") then
 		-- prune database
 		local count = NS.CommFlare:Prune_Database()
@@ -189,35 +169,11 @@ local function Community_Flare_Slash_Command(input)
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["CPU Usage"], GetAddOnCPUUsage(ADDON_NAME)))
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["Memory Usage"], GetAddOnMemoryUsage(ADDON_NAME)))
 	elseif (lower == "vehicles") then
-		-- shown?
-		if (CF_VehicleListFrame:IsShown()) then
-			-- hide
-			CF_VehicleListFrame:Hide()
-		else
-			-- debug print enabled?
-			if (NS.db.global.debugPrint == true) then
-				-- list vehicles
-				NS:List_Vehicles()
-			end
-
-			-- show
-			CF_VehicleListFrame:Show()
-		end
+		-- toggle vehicle list
+		NS.ToggleVehicleList()
 	elseif (lower == "vignettes") then
-		-- shown?
-		if (CF_VignetteListFrame:IsShown()) then
-			-- hide
-			CF_VignetteListFrame:Hide()
-		else
-			-- debug print enabled?
-			if (NS.db.global.debugPrint == true) then
-				-- list vignettes
-				NS:List_Vignettes()
-			end
-
-			-- show
-			CF_VignetteListFrame:Show()
-		end
+		-- toggle vignette list
+		NS.ToggleVignetteList()
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)

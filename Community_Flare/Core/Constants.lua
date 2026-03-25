@@ -416,7 +416,7 @@ function NS:Build_Training_Grounds()
 						-- set prefix
 						prefix = "TGSSM"
 					else
-						-- TODO
+						-- new training grounds map
 						print("TODO: New Training Grounds Map added!")
 					end
 				else
@@ -433,3 +433,37 @@ function NS:Build_Training_Grounds()
 	-- successfully built
 	built_training_grounds = true
 end
+
+-- war supply crate stuff
+NS.WAR_SUPPLY_CRATE = "War Supply Crate"
+NS.WAR_SUPPLY_CRATES = {
+	[6067] = L["War Supply Crate has been looted for the Alliance!"],
+	[6068] = L["War Supply Crate has been looted for the Horde!"],
+	[6066] = L["War Supply Crate has fully dropped to the ground!"],
+	[2967] = L["War Supply Crate is dropping in now!"],
+	[3689] = L["War Supply Crate is flying in now!"],
+}
+
+-- war crate locations
+NS.WarCrateLocations = {
+	[2022] = { x = "0.76880621910095", y = "0.637091755867"    }, -- The Waking Shores
+	-- TODO: [2023] = { x = "", y = "" }, -- Ohn'ahran Plains
+	[2024] = { x = "0.03717565536499", y = "0.46731340885162"  }, -- The Azure Span
+	[2025] = { x = "0.87474071979523", y = "0.48299998044968"  }, -- Thaldraszus
+	[2133] = { x = "0.36190092563629", y = "0.86571890115738"  }, -- Zaralek Cavern
+	[2151] = { x = "0.22268164157867", y = "0.9735621213913"   }, -- The Forbidden Reach
+	[2200] = { x = "0.45427918434143", y = "0.97500061988831"  }, -- Emerald Dream
+	[2213] = { x = "0.88039982318878", y = "0.62741839885712"  }, -- Azj-Kahet - City of Threads
+	[2214] = { x = "0.62094902992249", y = "0.97968757152557"  }, -- The Ringing Deeps
+	[2215] = { x = "0.32797354459763", y = "0.21520841121674"  }, -- Hallowfall
+	[2248] = { x = "0.69920414686203", y = "0.75819730758667"  }, -- Isle of Dorn
+	[2255] = { x = "0.62041199207306", y = "0.86914432048798"  }, -- Azj-Kahet
+	[2346] = { x = "0.22974973917007", y = "0.50090676546097"  }, -- Undermine
+	[2369] = { x = "0.95618790388107", y = "0.53979897499084"  }, -- Siren Isle
+	[2371] = { x = "0.69890224933624", y = "0.051990866661072" }, -- K'aresh
+	[2395] = { respawnTime = 1099, x = "0.34156793355942", y = "0.65242040157318"  }, -- Eversong Woods
+	[2405] = { x = "0.62206393480301", y = "0.93465489149094"  }, -- Voidstorm
+	[2413] = { x = "0.47352916002274", y = "0.15127623081207"  }, -- Harandar
+	[2437] = { x = "0.38124132156372", y = "0.21004492044449"  }, -- Zul'Aman
+	[2444] = { x = "0.58755004405975", y = "0.31229323148727"  }, -- Slayer's Rise
+}

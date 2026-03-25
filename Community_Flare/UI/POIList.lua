@@ -37,7 +37,6 @@ function CF_POIListFrameMixin:OnLoad()
 	-- register stuff
 	self:SetResizeBounds(250, 250)
 	self:RegisterForDrag("LeftButton")
-	self:RegisterEvent("AREA_POIS_UPDATED")
 	self:SetDontSavePosition(true)
 
 	-- closes when you press Escape
@@ -51,6 +50,15 @@ function CF_POIListFrameMixin:OnShow()
 
 	-- refresh list
 	self:RefreshList()
+
+	-- register events
+	self:RegisterEvent("AREA_POIS_UPDATED")
+end
+
+-- on hide
+function CF_POIListFrameMixin:OnHide()
+	-- unregister events
+	self:UnregisterEvent("AREA_POIS_UPDATED")
 end
 
 -- on drag start
@@ -343,8 +351,11 @@ function CF_POIListEntryMixin:OnEnter()
 	if (not name or (name == "")) then name = tostring(info.atlasName) end
 	GameTooltip:AddLine(name)
 
-	-- add area poi ID
-	GameTooltip:AddLine(strformat("Area POI ID: %d", tonumber(info.areaPoiID)), 1, 1, 1)
+	-- has areaPoiID?
+	if (info.areaPoiID) then
+		-- add areaPoiID
+		GameTooltip:AddLine(strformat("Area POI ID: %d", tonumber(info.areaPoiID)), 1, 1, 1)
+	end
 
 	-- has position?
 	if (info.position and info.position.x and info.position.y) then
@@ -358,10 +369,40 @@ function CF_POIListEntryMixin:OnEnter()
 		GameTooltip:AddLine(strformat("Description: %s", tostring(info.description)), 1, 1, 1)
 	end
 
+	-- has linkedUiMapID?
+	if (info.linkedUiMapID) then
+		-- add linkedUiMapID
+		GameTooltip:AddLine(strformat("Linked UI Map ID: %d", tonumber(info.linkedUiMapID)), 1, 1, 1)
+	end
+
 	-- has textureIndex?
 	if (info.textureIndex) then
-		-- add texture index
+		-- add textureIndex
 		GameTooltip:AddLine(strformat("Texture Index: %d", tonumber(info.textureIndex)), 1, 1, 1)
+	end
+
+	-- has tooltipWidgetSet?
+	if (info.tooltipWidgetSet) then
+		-- add tooltipWidgetSet
+		GameTooltip:AddLine(strformat("Tooltip Widget Set: %d", tonumber(info.tooltipWidgetSet)), 1, 1, 1)
+	end
+
+	-- has iconWidgetSet?
+	if (info.iconWidgetSet) then
+		-- add iconWidgetSet
+		GameTooltip:AddLine(strformat("Icon Widget Set: %d", tonumber(info.iconWidgetSet)), 1, 1, 1)
+	end
+
+	-- has atlasName?
+	if (info.atlasName and (info.atlasName ~= "")) then
+		-- add atlasName
+		GameTooltip:AddLine(strformat("Atlas Name: %s", tostring(info.atlasName)), 1, 1, 1)
+	end
+
+	-- has uiTextureKit?
+	if (info.uiTextureKit) then
+		-- add uiTextureKit
+		GameTooltip:AddLine(strformat("UI Texture Kit: %d", tonumber(info.uiTextureKit)), 1, 1, 1)
 	end
 
 	-- has factionID?
@@ -471,5 +512,23 @@ function CF_POIListResizeBottomRightButtonMixin:OnMouseUp(button)
 		-- save window position
 		local parent = self:GetParent()
 		NS:SaveWindowPosition(parent)
+	end
+end
+
+-- toggle poi list
+function NS.TogglePOIList()
+	-- shown?
+	if (CF_POIListFrame:IsShown()) then
+		-- hide
+		CF_POIListFrame:Hide()
+	else
+		-- debug print enabled?
+		if (NS.db.global.debugPrint == true) then
+			-- list pois
+			NS:List_POIs()
+		end
+
+		-- show
+		CF_POIListFrame:Show()
 	end
 end

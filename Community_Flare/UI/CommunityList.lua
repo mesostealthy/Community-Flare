@@ -485,6 +485,18 @@ function CF_CommunityListEntryMixin:OnEnter()
 			GameTooltip:SetOwner(self)
 			GameTooltip:AddLine(club.name)
 
+			-- has owner?
+			if (club.owner) then
+				-- add faction
+				GameTooltip:AddLine(strformat("Owner: %s", tostring(club.owner)), 1, 1, 1)
+			end
+
+			-- has owner GUID?
+			if (club.ownerGUID) then
+				-- add faction
+				GameTooltip:AddLine(strformat("Owner GUID: %s", tostring(club.ownerGUID)), 1, 1, 1)
+			end
+
 			-- has faction?
 			if (club.faction) then
 				-- add faction
@@ -825,5 +837,17 @@ function CF_CommunityListResizeBottomRightButtonMixin:OnMouseUp(button)
 		-- save window position
 		local parent = self:GetParent()
 		NS:SaveWindowPosition(parent)
+	end
+end
+
+-- toggle community list
+function NS.ToggleCommunityList()
+	-- shown?
+	if (CF_CommunityListFrame:IsShown()) then
+		-- hide
+		CF_CommunityListFrame:Hide()
+	else
+		-- show
+		CF_CommunityListFrame:Show()
 	end
 end

@@ -34,6 +34,7 @@ local hook_RejectProposal_installed = false
 local hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed = false
 local hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed = false
 local hook_HonorFrameQueueButton_OnEnter_installed = false
+local hook_LeaveLFG_installed = false
 local hook_PVPMatchResults_OnUpdate_installed = false
 local hook_QuickJoinRoleSelectionFrame_OnShow_installed = false
 local hook_GameTooltip_OnShow_installed = false
@@ -230,23 +231,12 @@ end
 
 -- securely hook reject proposal
 local function hook_RejectProposal()
-	-- valid brawl queue?
-	if (NS.CommFlare.CF.LocalQueues["Brawl"]) then
+	-- process all
+	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Brawl"].status == "popped") then
+		if (NS.CommFlare.CF.LocalQueues[index].status == "popped") then
 			-- update queue status
-			NS.CommFlare.CF.LocalQueues["Brawl"].status = "rejected"
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_BATTLEFIELD)
-		end
-	end
-
-	-- valid dungeon queue?
-	if (NS.CommFlare.CF.LocalQueues["Dungeon"]) then
-		-- popped?
-		if (NS.CommFlare.CF.LocalQueues["Dungeon"].status == "popped") then
-			-- update queue status
-			NS.CommFlare.CF.LocalQueues["Dungeon"].status = "rejected"
-			NS:Update_Queue_Status(LE_LFG_CATEGORY_LFD)
+			NS.CommFlare.CF.LocalQueues[index].status = "rejected"
 		end
 	end
 end
@@ -327,6 +317,26 @@ local function hook_HonorFrameQueueButton_OnEnter(self)
 
 	-- check for dead / offline players
 	NS:Process_Party_States(true, true)
+end
+
+-- secure hook leave lfg
+local function hook_LeaveLFG(category)
+	-- save how many queues found
+	local list = GetLFGQueuedList(category)
+	if (not list) then
+		-- none
+		NS.CommFlare.CF.LeftQueueCount = 0
+	else
+		-- process all
+		local count = 0
+		for k,v in pairs(list) do
+			-- increase
+			count = count + 1
+		end
+
+		-- save count
+		NS.CommFlare.CF.LeftQueueCount = count
+	end
 end
 
 -- securely hook PVPMatchResults OnUpdate
@@ -455,6 +465,13 @@ function NS:Battlefield_SetupHooks()
 			HonorFrameQueueButton:HookScript("OnEnter", hook_HonorFrameQueueButton_OnEnter)
 			hook_HonorFrameQueueButton_OnEnter_installed = true
 		end
+	end
+
+	-- LeaveLFG() not hooked?
+	if (hook_LeaveLFG_installed ~= true) then
+		-- hook LeaveLFG
+		hooksecurefunc("LeaveLFG", hook_LeaveLFG)
+		hook_LeaveLFG_installed = true
 	end
 
 	-- QuickJoinRoleSelectionFrame:OnShow() not hooked?

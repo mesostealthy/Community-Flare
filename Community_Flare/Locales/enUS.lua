@@ -2,6 +2,7 @@ local ADDON_NAME, NS = ...
 local L = LibStub("AceLocale-3.0"):NewLocale(ADDON_NAME, "enUS", true)
 
 -- Bootstrap.lua
+L["%s is out of date. Download the latest version from Curseforge or Wago!"] = true
 L["N/A"] = true
 L["Sorry, can not accept invites while currently queued as a mercenary."] = true
 
@@ -9,7 +10,7 @@ L["Sorry, can not accept invites while currently queued as a mercenary."] = true
 L["%s has %s %s (%s)"] = true
 L["%s has changed zones to %s."] = true
 L["%s is under attack!"] = true
-L["%s version %s update available. Download the latest version from curseforge!"] = true
+L["%s version %s update available. Download the latest version from Curseforge or Wago!"] = true
 L["Catapult"] = true
 L["Demolisher"] = true
 L["Glaive Thrower"] = true
@@ -125,6 +126,7 @@ L["Rebuild Members?"] = true
 L["Refresh Members?"] = true
 L["Report Options"] = true
 L["Report dungeon queue status to communities?"] = true
+L["Report raid queue status to communities?"] = true
 L["Report queue status to communities?"] = true
 L["Restrict /ping system to?"] = true
 L["Slayer's Rise Options"] = true
@@ -158,6 +160,7 @@ L["This will lock the Assist Button to the current position."] = "Cela verrouill
 L["This will log some debug event messages into a debug window to help MESO fix bugs."] = true
 L["This will periodically display a message showing how many seconds players in your party have left to enter the match, upon entering the match."] = true
 L["This will provide a quick popup message for you to send your dungeon queue status to the Community chat."] = true
+L["This will provide a quick popup message for you to send your raid queue status to the Community chat."] = true
 L["This will provide a quick popup message for you to send your queue status to the Community chat."] = true
 L["This will provide a warning message or popup message for Group Leaders, if/when their queue becomes paused."] = true
 L["This will provide a warning message when you are honor capped, or close to it when queuing."] = true

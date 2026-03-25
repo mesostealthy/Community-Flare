@@ -19,6 +19,7 @@ local GetChannelName                              = _G.GetChannelName
 local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetCVar                                     = _G.GetCVar
+local GetLFGQueuedList                            = _G.GetLFGQueuedList
 local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
 local GetMaxLevelForLatestExpansion               = _G.GetMaxLevelForLatestExpansion
@@ -627,6 +628,16 @@ function NS:IsInvisible()
 			for _,v2 in ipairs(members) do
 				local mi = NS:GetClubMemberInfo(clubId, v2)
 				if (mi and mi.name) then
+					-- owner?
+					if (mi.role and (mi.role == Enum.ClubRoleIdentifier.Owner)) then
+						-- has club data?
+						if (NS.db.global.clubs[clubId]) then
+							-- save club owner / guid
+							NS.db.global.clubs[clubId].owner = mi.name
+							NS.db.global.clubs[clubId].ownerGUID = mi.guid
+						end
+					end
+
 					-- found player?
 					if (mi.name == player) then
 						-- offline?
@@ -1166,7 +1177,10 @@ function NS:GetPartyGUID()
 				-- get group for player
 				local partyGUID = NS:GetGroupForPlayer(playerGUID)
 				if (partyGUID and (partyGUID ~= "")) then
-					-- return party guid
+					-- save party GUID
+					NS.CommFlare.CF.PartyGUID = partyGUID
+
+					-- return party GUID
 					return partyGUID
 				end
 			end
@@ -1180,7 +1194,7 @@ function NS:GetPartyGUID()
 		partyGUID = NS.CommFlare.CF.PartyGUID
 	end
 
-	-- return party guid
+	-- return party GUID
 	return partyGUID
 end
 
@@ -2180,4 +2194,25 @@ function NS:GetCurrentEquipmentSetID()
 
 	-- failed
 	return nil
+end
+
+-- is community member online?
+function NS:IsCommunityMemberOnline(clubId, player)
+	-- process all
+	local club = NS:GetClubInfo(clubId)
+	local members = NS:GetClubMembers(clubId)
+	for _,v in ipairs(members) do
+		-- get club member info
+		local mi = NS:GetClubMemberInfo(clubId, v)
+		if (mi and mi.name and (mi.name == player)) then
+			-- online?
+			if (mi.presence == Enum.ClubMemberPresence.Online) then
+				-- yes
+				return true
+			end
+		end
+	end
+
+	-- no
+	return false
 end

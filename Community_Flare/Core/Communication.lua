@@ -6,7 +6,10 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                        = _G
+local IsGuildMember                             = _G.IsGuildMember
+local IsInGroup                                 = _G.IsInGroup
 local IsInRaid                                  = _G.IsInRaid
+local UnitClass                                 = _G.UnitClass
 local UnitName                                  = _G.UnitName
 local print                                     = _G.print
 local time                                      = _G.time
@@ -65,12 +68,19 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 						local updated = NS:Compare_Version(args[2])
 						if (updated == true) then
 							-- updated version
-							print(strformat(L["%s version %s update available. Download the latest version from curseforge!"], NS.CommFlare.Title, args[2]))
+							print(strformat(L["%s version %s update available. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title, args[2]))
 
 							-- displayed
 							NS.CommFlare.CF.UpgradeDisplayed = true
 						end
 					end
+				end
+			-- war supply crate?
+			elseif (args[3] == "WAR_SUPPLY_CRATE") then
+				-- debug print enabled?
+				if (NS.db.global.debugPrint == true) then
+					-- debug print
+					NS:Debug_Print(strformat("%s: WAR_SUPPLY_CRATE = %s; %s = %s", NS.CommFlare.Title, tostring(sender), tostring(distribution), tostring(args[4])))
 				end
 			-- zone changed new area?
 			elseif (args[3] == "ZONE_CHANGED_NEW_AREA") then
@@ -167,6 +177,84 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 				if ((distribution == "INSTANCE_CHAT") or (distribution == "PARTY") or (distribution == "RAID")) then
 					-- process pass leadership
 					NS:Process_Pass_Leadership(sender)
+				end
+			end
+		end
+	end
+end
+
+-- send transmission
+function NS:SendTransmission(message)
+	-- send guild addon message
+	NS:SendAddonMessage(ADDON_NAME, message, "GUILD")
+
+	-- are you in a party / raid?
+	if (IsInGroup()) then
+		-- are you in a raid?
+		if (IsInRaid()) then
+			-- send raid addon message
+			NS:SendAddonMessage(ADDON_NAME, message, "RAID")
+		else
+			-- send party addon message
+			NS:SendAddonMessage(ADDON_NAME, message, "PARTY")
+		end
+	end
+
+	-- setup report channels
+	local count = NS:Setup_Report_Channels()
+	if (count > 0) then
+		-- process all
+		local list = {}
+		for k,v in pairs(NS.CommFlare.CF.ReportChannels) do
+			-- find club owner
+			local club = NS.db.global.clubs[k]
+			if (club and club.owner) then
+				-- not checked yet?
+				if (not list[club.owner]) then
+					-- checked
+					list[club.owner] = time()
+
+					-- no need to transmit to yourself
+					local yourself = false
+					if (club.owner == NS.CommFlare.CF.PlayerFullName) then
+						-- yourself
+						yourself = true
+					end
+
+					-- not yourself?
+					local transmitted = yourself
+					if (not transmitted) then
+						-- check if already transmitted to
+						if (club.ownerGUID) then
+							-- player in your guild?
+							if (IsGuildMember(club.ownerGUID)) then
+								-- transmitted
+								transmitted = true
+							end
+						end
+
+						-- not in guild?
+						if (not transmitted) then
+							-- are you in a party / raid?
+							if (IsInGroup()) then
+								-- get unit class
+								local className, classFilename, classId = UnitClass(club.owner)
+								if (classFilename and classId) then
+									-- transmitted
+									transmitted = true
+								end
+							end
+						end
+					end
+
+					-- not already transmitted?
+					if (not transmitted) then
+						-- is player online?
+						if (NS:IsCommunityMemberOnline(k, club.owner)) then
+							-- send whisper addon message
+							NS:SendAddonMessage(ADDON_NAME, message, "WHISPER", club.owner)
+						end
+					end
 				end
 			end
 		end

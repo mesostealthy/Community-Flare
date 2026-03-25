@@ -1677,6 +1677,16 @@ function NS:Process_Club_Members()
 							-- get club member info
 							local mi = NS:GetClubMemberInfo(clubId, v)
 							if (mi and mi.name) then
+								-- has club data?
+								if (NS.db.global.clubs[clubId]) then
+									-- owner?
+									if (mi.role and (mi.role == Enum.ClubRoleIdentifier.Owner)) then
+										-- save club owner / guid
+										NS.db.global.clubs[clubId].owner = mi.name
+										NS.db.global.clubs[clubId].ownerGUID = mi.guid
+									end
+								end
+
 								-- online?
 								if (mi.presence and (mi.presence == Enum.ClubMemberPresence.Online)) then
 									-- get community member

@@ -59,6 +59,7 @@ NS.CommFlare.CF = {
 	PvpLoggingCombat = false,
 	QueuePopped = false,
 	RaidLeadPassed = false,
+	RealWarSupplyCrate = false,
 	Reloaded = false,
 	RunOnce = false,
 	UpgradeDisplayed = false,
@@ -88,6 +89,7 @@ NS.CommFlare.CF = {
 	KosRefreshTime = 0,
 	LastRaidWarning = 0,
 	LastRestrictPingTime = 0,
+	LeftQueueCount = 0,
 	LeftTime = 0,
 	LogListCount = 0,
 	MapID = 0,
@@ -122,6 +124,7 @@ NS.CommFlare.CF = {
 	-- tables
 	ActiveWidgets = {},
 	ActiveTimers = {},
+	Announcements = {},
 	AuraData = {},
 	CappingBars = {},
 	Clubs = {},
@@ -164,6 +167,7 @@ NS.CommFlare.CF = {
 	VignetteWarnings = {},
 	WaitForUpdate = {},
 	WarCrateLocations = {},
+	WarSupplyCrates = {},
 	WidgetInfo = {},
 
 	-- misc tables
@@ -211,8 +215,8 @@ NS.CommFlare.InterfaceVersion = select(4, GetBuildInfo())
 function NS:IsOutdatedVersion()
 	-- past supported version?
 	if (NS.CommFlare.InterfaceVersion > 120001) then
-		-- TODO: localize warning?
-		print(strformat("%s: WoW Interface Version beyond %d detected! Please UPGRADE from Curseforge or Wago!", NS.CommFlare.Title, NS.CommFlare.InterfaceVersion))
+		-- out of date
+		print(strformat(L["%s is out of date. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title))
 		return true
 	end
 	return false

@@ -148,17 +148,14 @@ function NS:REPorter_SetupHooks()
 		if (not REPorter_hooks_installed) then
 			-- process all
 			for i=1, REPorter.POINumber do
-				-- disable REPorter default tooltip
-				local frame = _G["REPorterFrameCorePOI" .. i]
-				frame:SetScript("OnEnter", function(self) end)
-				frame:SetScript("OnLeave", function() end)
-
 				-- create overlay frame
+				local frame = _G["REPorterFrameCorePOI" .. i]
 				frame.Overlay = CreateFrame("Button", nil, REPorterFrame, "SecureActionButtonTemplate")
 			        frame.Overlay:SetFrameLevel(128)
 			        frame.Overlay:RegisterForClicks("AnyUp", "AnyDown")
 			        frame.Overlay:SetHeight(REPorter.POIIconSize)
 			        frame.Overlay:SetWidth(REPorter.POIIconSize)
+				frame.Overlay:Hide()
 			end
 
 			-- REPorter:OnPOIUpdate() not hooked?
@@ -181,9 +178,7 @@ function NS:REPorter_SetupHooks()
 				if (not frame:IsShown()) then
 					-- has overlay?
 					if (frame.Overlay) then
-						-- disable + hide
-						frame.Overlay:SetScript("OnEnter", nil)
-						frame.Overlay:SetScript("OnLeave", nil)
+						-- hide
 						frame.Overlay:Hide()
 					end
 				else
