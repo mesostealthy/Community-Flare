@@ -240,23 +240,26 @@ function NS:AssistButtonNamePlateAdded(...)
 				namePlate.CF.markerSet = true
 			end
 		else
-			-- try getting from battleground enemies
-			local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
-			if (role) then
-				-- healer?
-				if (role == "HEALER") then
-					-- set healer
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-					namePlate.CF.frame:SetAlpha(1)
-					namePlate.CF.frame:Show()
-					namePlate.CF.markerSet = true
-				-- tank?
-				elseif (role == "TANK") then
-					-- set tank
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-					namePlate.CF.frame:SetAlpha(1)
-					namePlate.CF.frame:Show()
-					namePlate.CF.markerSet = true
+			-- player?
+			if (UnitIsPlayer("target")) then
+				-- try getting from battleground enemies
+				local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
+				if (role) then
+					-- healer?
+					if (role == "HEALER") then
+						-- set healer
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+						namePlate.CF.frame:SetAlpha(1)
+						namePlate.CF.frame:Show()
+						namePlate.CF.markerSet = true
+					-- tank?
+					elseif (role == "TANK") then
+						-- set tank
+						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
+						namePlate.CF.frame:SetAlpha(1)
+						namePlate.CF.frame:Show()
+						namePlate.CF.markerSet = true
+					end
 				end
 			end
 		end

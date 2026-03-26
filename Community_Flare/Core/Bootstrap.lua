@@ -170,6 +170,11 @@ NS.CommFlare.CF = {
 	WarSupplyCrates = {},
 	WidgetInfo = {},
 
+	-- zone specific data
+	instanceID = nil,
+	serverID = nil,
+	zoneUID = nil,
+
 	-- misc tables
 	Alliance = { Count = 0, Healers = 0, Tanks = 0 },
 	Horde = { Count = 0, Healers = 0, Tanks = 0 },

@@ -5,17 +5,19 @@ local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
-local _G                                        = _G
-local IsGuildMember                             = _G.IsGuildMember
-local IsInGroup                                 = _G.IsInGroup
-local IsInRaid                                  = _G.IsInRaid
-local UnitClass                                 = _G.UnitClass
-local UnitName                                  = _G.UnitName
-local print                                     = _G.print
-local time                                      = _G.time
-local tonumber                                  = _G.tonumber
-local strformat                                 = _G.string.format
-local strsplit                                  = _G.string.split
+local _G                                          = _G
+local IsGuildMember                               = _G.IsGuildMember
+local IsInGroup                                   = _G.IsInGroup
+local IsInRaid                                    = _G.IsInRaid
+local MergeTable                                  = _G.MergeTable
+local UnitClass                                   = _G.UnitClass
+local UnitName                                    = _G.UnitName
+local print                                       = _G.print
+local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local strformat                                   = _G.string.format
+local strsplit                                    = _G.string.split
+local tinsert                                     = _G.table.insert
 
 -- process on communication received
 function NS:Process_OnCommReceived(prefix, message, distribution, sender)
@@ -81,6 +83,63 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 				if (NS.db.global.debugPrint == true) then
 					-- debug print
 					NS:Debug_Print(strformat("%s: WAR_SUPPLY_CRATE = %s; %s = %s", NS.CommFlare.Title, tostring(sender), tostring(distribution), tostring(args[4])))
+				end
+
+				-- logging war crate locations?
+				if (NS.db.global.logWarCrateLocations == true) then
+					-- found all data?
+					local mapID, timestamp, vignetteGUID, x, y = strsplit(",", args[4])
+					if (mapID and timestamp and vignetteGUID and x and y) then
+						-- clean values
+						mapID = tonumber(mapID)
+						timestamp = tonumber(timestamp)
+						vignetteGUID = tostring(vignetteGUID)
+						x = tonumber(x)
+						y = tonumber(y)
+
+						-- extract zoneUID / vignetteID
+						local creatureType, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", vignetteGUID)
+						serverID = tonumber(serverID)
+						instanceID = tonumber(instanceID)
+						zoneUID = tonumber(zoneUID)
+						vignetteID = tonumber(vignetteID)
+						spawnUID = tonumber(spawnUID, 16)
+
+						-- process all
+						local logged = false
+						for k,v in pairs(NS.CommFlare.CF.WarCrateLocations) do
+							-- already logged?
+							if ((v.mapID == mapID) and (v.serverID == serverID) and (v.instanceID == instanceID) and (v.zoneUID == zoneUID) and (v.vignetteID and vignetteID) and (v.spawnUID == spawnUID)) then
+								-- finished
+								logged = true
+								break
+							end
+						end
+
+						-- not logged?
+						if (not logged) then
+							-- create location
+							local location = {
+								["mapID"] = mapID,
+								["serverID"] = serverID,
+								["instanceID"] = instanceID,
+								["zoneUID"] = zoneUID,
+								["vignetteID"] = vignetteID,
+								["spawnUID"] = spawnUID,
+								["guid"] = vignetteGUID,
+								["x"] = x,
+								["y"] = y,
+								["datetamp"] = date(nil, timestamp),
+								["timestamp"] = timestamp,
+							}
+
+							-- only actually log for other players
+							if (player ~= sender) then
+								-- insert
+								tinsert(NS.CommFlare.CF.WarCrateLocations, location)
+							end
+						end
+					end
 				end
 			-- zone changed new area?
 			elseif (args[3] == "ZONE_CHANGED_NEW_AREA") then
@@ -203,60 +262,43 @@ function NS:SendTransmission(message)
 	-- setup report channels
 	local count = NS:Setup_Report_Channels()
 	if (count > 0) then
+		-- get owner + leaders online
+		local players = {}
+		for clubId,_ in pairs(NS.CommFlare.CF.ReportChannels) do
+			-- get online community members
+			local members = NS:GetOnlineCommunityMembers(clubId)
+			if (members) then
+				-- merge tables
+				MergeTable(players, members)
+			end
+		end
+
 		-- process all
-		local list = {}
-		for k,v in pairs(NS.CommFlare.CF.ReportChannels) do
-			-- find club owner
-			local club = NS.db.global.clubs[k]
-			if (club and club.owner) then
-				-- not checked yet?
-				if (not list[club.owner]) then
-					-- checked
-					list[club.owner] = time()
-
-					-- no need to transmit to yourself
-					local yourself = false
-					if (club.owner == NS.CommFlare.CF.PlayerFullName) then
-						-- yourself
-						yourself = true
-					end
-
-					-- not yourself?
-					local transmitted = yourself
-					if (not transmitted) then
-						-- check if already transmitted to
-						if (club.ownerGUID) then
-							-- player in your guild?
-							if (IsGuildMember(club.ownerGUID)) then
-								-- transmitted
-								transmitted = true
-							end
-						end
-
-						-- not in guild?
-						if (not transmitted) then
-							-- are you in a party / raid?
-							if (IsInGroup()) then
-								-- get unit class
-								local className, classFilename, classId = UnitClass(club.owner)
-								if (classFilename and classId) then
-									-- transmitted
-									transmitted = true
-								end
-							end
-						end
-					end
-
-					-- not already transmitted?
-					if (not transmitted) then
-						-- is player online?
-						if (NS:IsCommunityMemberOnline(k, club.owner)) then
-							-- send whisper addon message
-							NS:SendAddonMessage(ADDON_NAME, message, "WHISPER", club.owner)
-						end
+		for player,guid in pairs(players) do
+			-- found yourself?
+			if (player == NS.CommFlare.CF.PlayerFullName) then
+				-- delete
+				players[player] = nil
+			else
+				-- player in your guild?
+				if (IsGuildMember(guid)) then
+					-- delete
+					players[player] = nil
+				else
+					-- get unit class
+					local className, classFilename, classId = UnitClass(player)
+					if (className and classId) then
+						-- delete
+						players[player] = nil
 					end
 				end
 			end
+		end
+
+		-- process all
+		for player,guid in pairs(players) do
+			-- send whisper addon message
+			NS:SendAddonMessage(ADDON_NAME, message, "WHISPER", player)
 		end
 	end
 end

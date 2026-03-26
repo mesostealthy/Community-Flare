@@ -445,7 +445,7 @@ function CF_VehicleListResizeBottomRightButtonMixin:OnMouseUp(button)
 end
 
 -- toggle vehicle list
-function NS.ToggleVehicleList()
+function NS:ToggleVehicleList()
 	-- shown?
 	if (CF_VehicleListFrame:IsShown()) then
 		-- hide

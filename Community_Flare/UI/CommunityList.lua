@@ -841,7 +841,7 @@ function CF_CommunityListResizeBottomRightButtonMixin:OnMouseUp(button)
 end
 
 -- toggle community list
-function NS.ToggleCommunityList()
+function NS:ToggleCommunityList()
 	-- shown?
 	if (CF_CommunityListFrame:IsShown()) then
 		-- hide

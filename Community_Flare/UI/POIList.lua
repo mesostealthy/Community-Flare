@@ -516,7 +516,7 @@ function CF_POIListResizeBottomRightButtonMixin:OnMouseUp(button)
 end
 
 -- toggle poi list
-function NS.TogglePOIList()
+function NS:TogglePOIList()
 	-- shown?
 	if (CF_POIListFrame:IsShown()) then
 		-- hide

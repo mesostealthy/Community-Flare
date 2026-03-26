@@ -93,7 +93,11 @@ NS.CommFlare.HearthStoneSpells = {
 	[1220729] = "Explosive Hearthstone",
 	[1240219] = "P.O.S.T. Master's Express Hearthstone",
 	[1242509] = "Cosmic Hearthstone",
+	[1255801] = "Personal Key to the Arcantina",
+	[1261979] = "Lightcalled Hearthstone",
 	[1270583] = "Naaru's Enfold",
+	[1270814] = "Preyseeker's Hearthstone",
+	[1273401] = "Corewarden's Hearthstone",
 }
 
 -- teleport spells
@@ -456,8 +460,8 @@ NS.WarCrateLocations = {
 	[2213] = { x = "0.88039982318878", y = "0.62741839885712"  }, -- Azj-Kahet - City of Threads
 	[2214] = { x = "0.62094902992249", y = "0.97968757152557"  }, -- The Ringing Deeps
 	[2215] = { x = "0.32797354459763", y = "0.21520841121674"  }, -- Hallowfall
-	[2248] = { x = "0.69920414686203", y = "0.75819730758667"  }, -- Isle of Dorn
-	[2255] = { x = "0.62041199207306", y = "0.86914432048798"  }, -- Azj-Kahet
+	[2248] = { respawnTime = 1098, x = "0.69920414686203", y = "0.75819730758667"  }, -- Isle of Dorn
+	[2255] = { respawnTime = 1092, x = "0.62041199207306", y = "0.86914432048798"  }, -- Azj-Kahet
 	[2346] = { x = "0.22974973917007", y = "0.50090676546097"  }, -- Undermine
 	[2369] = { x = "0.95618790388107", y = "0.53979897499084"  }, -- Siren Isle
 	[2371] = { x = "0.69890224933624", y = "0.051990866661072" }, -- K'aresh

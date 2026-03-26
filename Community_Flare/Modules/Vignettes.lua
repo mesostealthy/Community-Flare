@@ -23,6 +23,7 @@ local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
 local strformat                                   = _G.string.format
+local strsplit                                    = _G.string.split
 local tinsert                                     = _G.table.insert
 
 -- check for invalid war crate position
@@ -57,11 +58,21 @@ function NS:Get_Current_Vignettes(name)
 	local guids = VignetteInfoGetVignettes()
 	if (guids and (#guids > 0)) then
 		-- display infos
+		local count = 0
 		local vignettes = {}
 		for _,v in ipairs(guids) do
 			-- get vignette info
 			local info = NS:GetVignetteInfo(v)
 			if (info and info.vignetteID) then
+				-- get zone specific data
+				local creatureType, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", info.vignetteGUID)
+				if (spawnUID) then
+					-- save data specific data
+					NS.CommFlare.CF.serverID = tonumber(serverID)
+					NS.CommFlare.CF.instanceID = tonumber(instanceID)
+					NS.CommFlare.CF.zoneUID = tonumber(zoneUID)
+				end
+
 				-- has name?
 				local logged = true
 				if (name and not issecretvalue(name) and (name ~= "")) then
@@ -98,12 +109,16 @@ function NS:Get_Current_Vignettes(name)
 					-- add to table
 					local id = info.vignetteID
 					vignettes[id] = info
+					count = count + 1
 				end
 			end
 		end
 
-		-- return table
-		return vignettes
+		-- found some?
+		if (count > 0) then
+			-- return table
+			return vignettes
+		end
 	end
 
 	-- none
@@ -122,7 +137,7 @@ function NS:List_Vignettes(list)
 	end
 
 	-- get map info
-	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
+	print(strformat(L["Map ID: %d"], NS.CommFlare.CF.MapID))
 	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found
@@ -160,6 +175,15 @@ function NS:List_Vignettes(list)
 				-- get vignette info
 				local info = NS:GetVignetteInfo(v)
 				if (info and info.vignetteID) then
+					-- get zone specific data
+					local creatureType, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", info.vignetteGUID)
+					if (spawnUID) then
+						-- save data specific data
+						NS.CommFlare.CF.serverID = tonumber(serverID)
+						NS.CommFlare.CF.instanceID = tonumber(instanceID)
+						NS.CommFlare.CF.zoneUID = tonumber(zoneUID)
+					end
+
 					-- get position
 					local pos = NS:GetVignettePosition(v, NS.CommFlare.CF.MapID)
 					if (pos) then
@@ -201,157 +225,298 @@ function NS:VignetteCheckForAlerts(list)
 		return
 	end
 
-	-- process all
+	-- has list?
 	local count = 0
-	for vignetteID,info in pairs(list) do
-		-- war supply crate?
-		if (NS.WAR_SUPPLY_CRATES[vignetteID]) then
-			-- needs to issue raid warning?
-			if (not NS.CommFlare.CF.VignetteWarnings[vignetteID]) then
-				-- create pin?
-				if (vignetteID ~= 3689) then
-					-- create pin
-					createPin = true
-				end
-
-				-- has coordinates?
-				if (info.x and info.y) then
-					-- not invalid location?
-					local mapID = NS:GetBestMapForUnit("player")
-					NS:Debug_Print(strformat("War Crate: %d = %s, %s", mapID, tostring(info.x), tostring(info.y)))
-					if (not NS:Check_For_Invalid_War_Crate_Position(mapID, info.x, info.y)) then
-						-- logging war crate locations?
-						NS.CommFlare.CF.VignetteWarnings[vignetteID] = time()
-						if (NS.db.global.logWarCrateLocations == true) then
-							-- new war crate detection?
-							local datestamp = date()
-							if (not NS.CommFlare.CF.WarCrateLocations[datestamp]) then
-								-- save location
-								NS.CommFlare.CF.WarCrateLocations[datestamp] = {}
-								NS.CommFlare.CF.WarCrateLocations[datestamp].mapID = mapID
-								NS.CommFlare.CF.WarCrateLocations[datestamp].guid = info.vignetteGUID
-								NS.CommFlare.CF.WarCrateLocations[datestamp].x = info.x
-								NS.CommFlare.CF.WarCrateLocations[datestamp].y = info.y
-								NS.CommFlare.CF.WarCrateLocations[datestamp].datetamp = datestamp
-								NS.CommFlare.CF.WarCrateLocations[datestamp].timestamp = time()
-							end
-						end
-
-						-- no ready crate tracker?
-						if (not NS.Libs.RCT) then
-							-- needs 10 minutes?
-							local timer = 300
-							if (vignetteID == 6066) then
-								-- set 10-minute timer
-								timer = 600
-							end
-
-							-- remove waypoints later
-							TimerAfter(timer, function()
-								-- clear last raid warning
-								NS.CommFlare.CF.VignetteWarnings[vignetteID] = nil
-
-								-- remove all war supply crate waypoints
-								NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
-							end)
-
-							-- remove all war supply crate waypoints
-							NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
-
-							-- add tom tom way point
-							local name = strformat("%s (%d)", info.name, vignetteID)
-							local uid = NS:TomTomAddWaypoint(name, info.x, info.y)
-
-							-- create pin?
-							local hyperLink = nil
-							if (createPin == true) then
-								-- can set user waypoint?
-								if (NS:CanSetUserWaypointOnMap(mapID)) then
-									-- create position from x/y
-									local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
-									NS:SetUserWaypoint(point)
-									hyperLink = MapGetUserWaypointHyperlink()
-
-									-- not already tracked?
-									if (not uid) then
-										-- set super tracked
-										NS:SetSuperTrackedUserWaypoint(true)
-									end
-								end
-							end
-
-							-- not announced yet?
-							local crateID = strformat("%s:%d", NS.WAR_SUPPLY_CRATE, tonumber(vignetteID))
-							if (not NS.CommFlare.CF.Announcements[crateID]) then
-								-- save announcement time
-								NS.CommFlare.CF.Announcements[crateID] = timestamp
-
-								-- clear announcement later
-								TimerAfter(150, function()
-									-- clear last raid warning
-									NS.CommFlare.CF.Announcements[crateID] = nil
-								end)
-
-								-- issue local raid warning (with raid warning audio sound)
-								local message = NS.WAR_SUPPLY_CRATES[vignetteID]
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
-
-								-- has hyper link?
-								if (hyperLink) then
-									-- add to message
-									message = strformat("%s %s", message, hyperLink)
-								end
-
-								-- in raid?
-								if (IsInRaid()) then
-									-- display raid message
-									NS:SendMessage("RAID", message)
-								-- in party?
-								elseif (IsInGroup()) then
-									-- display party message
-									NS:SendMessage("PARTY", message)
-								end
-							end
-						end
-					end
-				end
-			else
-				-- only found crate flying in currently?
-				if ((count == 0) and (vignetteID == 3689)) then
+	local mapID = NS:GetBestMapForUnit("player")
+	if (list and next(list)) then
+		-- process all
+		for vignetteID,info in pairs(list) do
+			-- war supply crate?
+			if (NS.WAR_SUPPLY_CRATES[vignetteID]) then
+				-- needs to issue raid warning?
+				if (not NS.CommFlare.CF.VignetteWarnings[vignetteID]) then
 					-- has coordinates?
 					if (info.x and info.y) then
-						-- no ready crate tracker?
-						if (not NS.Libs.RCT) then
-							-- no create pin?
-							if (createPin ~= true) then
-								-- remove all war supply crate waypoints
-								NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
+						-- not invalid location?
+						NS:Debug_Print(strformat("War Crate: %d = %s, %s", mapID, tostring(info.x), tostring(info.y)))
+						if (not NS:Check_For_Invalid_War_Crate_Position(mapID, info.x, info.y)) then
+							-- logging war crate locations?
+							NS.CommFlare.CF.VignetteWarnings[vignetteID] = time()
+							if (NS.db.global.logWarCrateLocations == true) then
+								-- create location
+								local creatureType, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", info.vignetteGUID)
+								local location = {
+									["mapID"] = mapID,
+									["serverID"] = tonumber(serverID),
+									["instanceID"] = tonumber(instanceID),
+									["zoneUID"] = tonumber(zoneUID),
+									["vignetteID"] = tonumber(vignetteID),
+									["spawnUID"] = tonumber(spawnUID, 16),
+									["guid"] = tostring(info.vignetteGUID),
+									["x"] = tonumber(info.x),
+									["y"] = tonumber(info.y),
+									["datetamp"] = date(),
+									["timestamp"] = time(),
+								}
 
-								-- add tom tom way point
-								local name = strformat("%s (%d)", info.name, vignetteID)
-								local uid = NS:TomTomAddWaypoint(name, info.x, info.y)
+								-- insert
+								tinsert(NS.CommFlare.CF.WarCrateLocations, location)
+							end
 
-								-- can set user waypoint?
-								local mapID = NS:GetBestMapForUnit("player")
-								if (NS:CanSetUserWaypointOnMap(mapID)) then
-									-- create position from x/y
-									local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
-									NS:SetUserWaypoint(point)
+							-- notify when war crate is inbound?
+							if (NS.db.global.notifyWarCrateInbound == true) then
+								-- no ready crate tracker?
+								if (not NS.Libs.RCT) then
+									-- needs 10 minutes?
+										local timer = 300
+									if (vignetteID == 6066) then
+										-- set 10-minute timer
+										timer = 600
+									end
 
-									-- not already tracked?
-									if (not uid) then
-										-- set super tracked
-										NS:SetSuperTrackedUserWaypoint(true)
+									-- remove waypoints later
+									TimerAfter(timer, function()
+										-- clear last raid warning
+										NS.CommFlare.CF.VignetteWarnings[vignetteID] = nil
+
+										-- remove all war supply crate waypoints
+										NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
+
+										-- can set user waypoint?
+										if (NS:CanSetUserWaypointOnMap(mapID)) then
+											-- clear user waypoint
+											MapClearUserWaypoint()
+										end
+									end)
+
+									-- remove all war supply crate waypoints
+									NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
+
+									-- add tom tom way point
+									local name = strformat("%s (%d)", info.name, vignetteID)
+									local uid = NS:TomTomAddWaypoint(name, info.x, info.y)
+
+									-- can set user waypoint?
+									local hyperLink = nil
+									if (NS:CanSetUserWaypointOnMap(mapID)) then
+										-- create position from x/y
+										local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
+										NS:SetUserWaypoint(point)
+										hyperLink = MapGetUserWaypointHyperlink()
+
+										-- not already tracked?
+										if (not uid) then
+											-- set super tracked
+											NS:SetSuperTrackedUserWaypoint(true)
+										end
+									end
+
+									-- not announced yet?
+									local crateID = strformat("%s:%d", NS.WAR_SUPPLY_CRATE, tonumber(vignetteID))
+									if (not NS.CommFlare.CF.Announcements[crateID]) then
+										-- save announcement time
+										NS.CommFlare.CF.Announcements[crateID] = timestamp
+
+										-- clear announcement later
+										TimerAfter(150, function()
+											-- clear last raid warning
+											NS.CommFlare.CF.Announcements[crateID] = nil
+										end)
+
+										-- issue local raid warning (with raid warning audio sound)
+										local message = NS.WAR_SUPPLY_CRATES[vignetteID]
+										RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+
+										-- has hyper link?
+										if (hyperLink) then
+											-- add to message
+											message = strformat("%s %s", message, hyperLink)
+										end
+
+										-- in raid?
+										if (IsInRaid()) then
+											-- display raid message
+											NS:SendMessage("RAID", message)
+										-- in party?
+										elseif (IsInGroup()) then
+											-- display party message
+											NS:SendMessage("PARTY", message)
+										end
+									end
+								end
+							end
+						end
+					end
+				else
+					-- only found crate flying in currently?
+					if ((count == 0) and (vignetteID == 3689)) then
+						-- has coordinates?
+						if (info.x and info.y) then
+							-- notify when war crate is inbound?
+							if (NS.db.global.notifyWarCrateInbound == true) then
+								-- no ready crate tracker?
+								if (not NS.Libs.RCT) then
+									-- remove all war supply crate waypoints
+									NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
+
+									-- add tom tom way point
+									local name = strformat("%s (%d)", info.name, vignetteID)
+									local uid = NS:TomTomAddWaypoint(name, info.x, info.y)
+
+									-- can set user waypoint?
+									local mapID = NS:GetBestMapForUnit("player")
+									if (NS:CanSetUserWaypointOnMap(mapID)) then
+										-- create position from x/y
+										local point = UiMapPoint.CreateFromCoordinates(mapID, info.x, info.y)
+										NS:SetUserWaypoint(point)
+
+										-- not already tracked?
+										if (not uid) then
+											-- set super tracked
+											NS:SetSuperTrackedUserWaypoint(true)
+										end
 									end
 								end
 							end
 						end
 					end
 				end
-			end
 
-			-- increase
-			count = count + 1
+				-- increase
+				count = count + 1
+			end
 		end
 	end
+
+	-- none found?
+	if (count == 0) then
+		-- no ready crate tracker?
+		if (not NS.Libs.RCT) then
+			-- clear all raid warnings
+			NS.CommFlare.CF.VignetteWarnings = {}
+
+			-- remove all war supply crate waypoints
+			NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)
+
+			-- can set user waypoint?
+			if (NS:CanSetUserWaypointOnMap(mapID)) then
+				-- clear user waypoint
+				MapClearUserWaypoint()
+			end
+		end
+	end
+end
+
+-- purge war supply crates
+function NS:PurgeWarSupplyCrates()
+	-- process all
+	local currentTime = time()
+	for k,v in pairs(NS.CommFlare.CF.WarCrateLocations) do
+		-- over 7 days ago?
+		if ((currentTime - v.timestamp) > (7 * 86400)) then
+			-- delete
+			NS.CommFlare.CF.WarCrateLocations[k] = nil
+		-- has guid?
+		elseif (v.guid) then
+			-- check vignetteID
+			local _, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", v.guid)
+			if (not v.serverID) then
+				-- save serverID
+				NS.CommFlare.CF.WarCrateLocations[k].serverID = tonumber(serverID)
+			end
+			if (not v.instanceID) then
+				-- save instanceID
+				NS.CommFlare.CF.WarCrateLocations[k].instanceID = tonumber(instanceID)
+			end
+			if (not v.zoneUID) then
+				-- save zoneUID
+				NS.CommFlare.CF.WarCrateLocations[k].zoneUID = tonumber(zoneUID)
+			end
+			if (not v.vignetteID) then
+				-- save vignetteID
+				NS.CommFlare.CF.WarCrateLocations[k].vignetteID = tonumber(vignetteID)
+			end
+			if (not v.spawnUID) then
+				-- save spawnUID
+				NS.CommFlare.CF.WarCrateLocations[k].spawnUID = tonumber(spawnUID, 16)
+			end
+		end
+	end
+end
+
+-- find war supply crate data
+function NS:FindWarSupplyCrateData(_zoneUID)
+	-- string?
+	if (type(_zoneUID)) then
+		-- convert
+		_zoneUID = tonumber(_zoneUID)
+	end
+
+	-- process all
+	local count = 0
+	local crates = {}
+	local mapID = NS:GetBestMapForUnit("player")
+	print(strformat(L["Map ID: %d"], mapID))
+	print(strformat(L["Instance ID: %d"], NS.CommFlare.CF.instanceID))
+	print(strformat(L["Zone UID: %d"], NS.CommFlare.CF.zoneUID))
+	for k,v in pairs(NS.CommFlare.CF.WarCrateLocations) do
+		-- no timestamp?
+		if (v.timestamp == 0) then
+			-- delete
+			NS.CommFlare.CF.WarCrateLocations[k] = nil
+		-- has guid?
+		elseif (v.guid) then
+			-- check vignetteID
+			local _, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", v.guid)
+			if (not v.serverID) then
+				-- save serverID
+				NS.CommFlare.CF.WarCrateLocations[k].serverID = tonumber(serverID)
+			end
+			if (not v.instanceID) then
+				-- save instanceID
+				NS.CommFlare.CF.WarCrateLocations[k].instanceID = tonumber(instanceID)
+			end
+			if (not v.zoneUID) then
+				-- save zoneUID
+				NS.CommFlare.CF.WarCrateLocations[k].zoneUID = tonumber(zoneUID)
+			end
+			if (not v.vignetteID) then
+				-- save vignetteID
+				NS.CommFlare.CF.WarCrateLocations[k].vignetteID = tonumber(vignetteID)
+			end
+			if (not v.spawnUID) then
+				-- save spawnUID
+				NS.CommFlare.CF.WarCrateLocations[k].spawnUID = tonumber(spawnUID, 16)
+			end
+
+			-- matches mapID + vignetteID?
+			if ((v.mapID == mapID) and (v.vignetteID == 3689)) then
+				-- matching specific?
+				local matched = false
+				if (_zoneUID) then
+					-- matches?
+					if (v.zoneUID == _zoneUID) then
+						-- matched
+						matched = true
+					end
+				else
+					-- matches current?
+					if ((v.serverID == NS.CommFlare.CF.serverID) and (v.instanceID == NS.CommFlare.CF.instanceID) and (v.zoneUID == NS.CommFlare.CF.zoneUID)) then
+						-- matched
+						matched = true
+					end
+				end
+
+				-- matched?
+				if (matched) then
+					-- add to crates
+					tinsert(crates, v)
+					count = count + 1
+				end
+			end
+		end
+	end
+
+	-- return crates
+	return crates
 end

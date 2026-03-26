@@ -340,7 +340,13 @@ L["Cleared members database!"] = "Base de données des membres effacée!"
 L["Found %d Auras."] = "%d auras trouvées."
 L["Harmful Auras:"] = "Auras nocives :"
 L["Helpful Auras:"] = "Auras utiles :"
+L["Instance ID: %d"] = "ID d'instance : %d"
+L["Last Recorded Spawn Time: %s"] = "Dernière heure d'apparition enregistrée : %s"
+L["Map ID: %d"] = "ID de la carte : %d"
 L["Memory Usage"] = "Usage de mémoire"
+L["Next Estimated Spawn Time: %s"] = "Prochaine heure d'apparition estimée : %s"
+L["Time Between"] = "Intervalle de temps"
+L["Zone UID: %d"] = "UID de zone : %d"
 
 -- StaticPopups.lua
 L["AFK"] = "LDC"

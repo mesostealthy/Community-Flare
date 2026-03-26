@@ -14,6 +14,7 @@ local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
+local bitband                                     = _G.bit.band
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
 local strsplit                                    = _G.string.split
@@ -70,7 +71,7 @@ local function Community_Flare_Slash_Command(input)
 		end
 	elseif (lower == "clm") then
 		-- toggle community list
-		NS.ToggleCommunityList()
+		NS:ToggleCommunityList()
 	elseif (lower == "debug") then
 		-- debug mode enabled?
 		if (NS.db.global.debugMode == true) then
@@ -127,7 +128,7 @@ local function Community_Flare_Slash_Command(input)
 	elseif (lower == "mapid") then
 		-- get map id
 		local mapID = NS:GetBestMapForUnit("player")
-		print(strformat("MapID: %d", mapID))
+		print(strformat(L["Map ID: %d"], mapID))
 	elseif (lower == "options") then
 		-- open settings
 		Settings_OpenToCategory(NS.optionsID)
@@ -136,10 +137,10 @@ local function Community_Flare_Slash_Command(input)
 		NS:Run_Performance_Tests()
 	elseif (lower == "plm") then
 		-- toggle player list
-		NS.TogglePlayerList()
+		NS:TogglePlayerList()
 	elseif (lower == "pois") then
 		-- toggle poi list
-		NS.TogglePOIList()
+		NS:TogglePOIList()
 	elseif (lower == "prune") then
 		-- prune database
 		local count = NS.CommFlare:Prune_Database()
@@ -170,10 +171,10 @@ local function Community_Flare_Slash_Command(input)
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["Memory Usage"], GetAddOnMemoryUsage(ADDON_NAME)))
 	elseif (lower == "vehicles") then
 		-- toggle vehicle list
-		NS.ToggleVehicleList()
+		NS:ToggleVehicleList()
 	elseif (lower == "vignettes") then
 		-- toggle vignette list
-		NS.ToggleVignetteList()
+		NS:ToggleVignetteList()
 	else
 		-- split words
 		local first, second, third = strsplit(" ", input)
@@ -238,6 +239,62 @@ local function Community_Flare_Slash_Command(input)
 				-- reset player list frame position
 				CF_PlayerListFrame:ClearAllPoints()
 				CF_PlayerListFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+			end
+		-- crate?
+		elseif (first == "crate") then
+			-- found crates?
+			local crates = NS:FindWarSupplyCrateData(second)
+			local spawnUID = nil
+			if (crates and (#crates > 0)) then
+				-- process all
+				crates = NS:SortTableValueKey(crates, "timestamp")
+				for k,v in pairs(crates) do
+					-- first?
+					if (not spawnUID) then
+						-- initialize
+						spawnUID = v.spawnUID
+					else
+						-- newer?
+						if (v.spawnUID > spawnUID) then
+							-- debug print enabled?
+							if (NS.db.global.debugPrint == true) then
+								-- display time between crates
+								print(strformat("%s: %d", L["Time Between"], v.spawnUID - spawnUID))
+							end
+
+							-- update
+							spawnUID = v.spawnUID
+						end
+					end
+				end
+			end
+
+			-- has spawnUID?
+			local timestamp = nil
+			if (spawnUID) then
+				-- calulate current
+				local currentTime = time()
+				currentTime = bitband(currentTime, -8388608)
+				timestamp = currentTime + bitband(spawnUID, 8388607)
+			end
+	
+			-- found?
+			if (timestamp) then
+				-- display
+				print(strformat(L["Last Recorded Spawn Time: %s"], date(nil, timestamp)))
+
+				-- calculate next crate time
+				local currentTime = time()
+				while (timestamp < currentTime) do
+					-- increase
+					timestamp = timestamp + 1100
+				end
+
+				-- display
+				print(strformat(L["Next Estimated Spawn Time: %s"], date(nil, timestamp)))
+			else
+				-- display
+				print(strformat(L["Last Recorded Spawn Time: %s"], L["N/A"]))
 			end
 		else
 			-- in battleground?

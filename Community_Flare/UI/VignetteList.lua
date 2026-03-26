@@ -516,7 +516,7 @@ function CF_VignetteListResizeBottomRightButtonMixin:OnMouseUp(button)
 end
 
 -- toggle vignette list
-function NS.ToggleVignetteList()
+function NS:ToggleVignetteList()
 	-- shown?
 	if (CF_VignetteListFrame:IsShown()) then
 		-- hide

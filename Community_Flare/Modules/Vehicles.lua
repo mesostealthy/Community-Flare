@@ -51,6 +51,15 @@ function NS:List_Vehicles()
 		return
 	end
 
+	-- get map info
+	print(strformat(L["Map ID: %d"], NS.CommFlare.CF.MapID))
+	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
+	if (not NS.CommFlare.CF.MapInfo) then
+		-- not found
+		print(L["Map ID: Not Found"])
+		return
+	end
+
 	-- process any vehicles
 	local vehicles = NS:GetBattlefieldVehicles(NS.CommFlare.CF.MapID)
 	if (vehicles and (#vehicles > 0)) then

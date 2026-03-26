@@ -340,7 +340,13 @@ L["Cleared members database!"] = true
 L["Found %d Auras."] = true
 L["Harmful Auras:"] = true
 L["Helpful Auras:"] = true
+L["Instance ID: %d"] = true
+L["Last Recorded Spawn Time: %s"] = true
+L["Map ID: %d"] = true
 L["Memory Usage"] = true
+L["Next Estimated Spawn Time: %s"] = true
+L["Time Between"] = true
+L["Zone UID: %d"] = true
 
 -- StaticPopups.lua
 L["AFK"] = true

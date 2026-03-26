@@ -80,7 +80,7 @@ function NS:List_POIs()
 	end
 
 	-- get map info
-	print(strformat("MapID: %d", NS.CommFlare.CF.MapID))
+	print(strformat(L["Map ID: %d"], NS.CommFlare.CF.MapID))
 	NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 	if (not NS.CommFlare.CF.MapInfo) then
 		-- not found

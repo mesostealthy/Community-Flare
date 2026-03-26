@@ -1253,7 +1253,7 @@ function CF_PlayerListResizeBottomRightButtonMixin:OnMouseUp(button)
 end
 
 -- toggle player list
-function NS.TogglePlayerList()
+function NS:TogglePlayerList()
 	-- shown?
 	if (CF_PlayerListFrame:IsShown()) then
 		-- hide

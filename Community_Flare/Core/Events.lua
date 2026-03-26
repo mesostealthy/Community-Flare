@@ -163,6 +163,11 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	end
 end
 
+-- process chat bg system horde
+function NS.CommFlare:CHAT_MSG_BG_SYSTEM_HORDE(msg, ...)
+	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+end
+
 -- process chat battle net whisper
 function NS.CommFlare:CHAT_MSG_BN_WHISPER(msg, ...)
 	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
@@ -250,61 +255,61 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 		return
 	end
 
-	-- notify when war crate is inbound?
-	if (NS.db.global.notifyWarCrateInbound == true) then
-		-- war mode enabled?
-		if (PvPIsWarModeFeatureEnabled() == true) then
-			-- Malicia?
-			local incoming = false
-			if (sender == "Malicia") then
-				-- crate incoming message?
-				if (text:find("all use some resources")) then
-					-- incoming
-					incoming = true
-				end
-			-- Ruffious?
-			elseif (sender == "Ruffious") then
-				-- crate incoming message?
-				if (text:find("cache of resources nearby")) then
-					-- incoming
-					incoming = true
-				elseif (text:find("that means treasure hunters")) then
-					-- incoming
-					incoming = true
-				elseif (text:find("valuable resources in the area")) then
-					-- incoming
-					incoming = true
-				elseif (text:find("valuables waiting to be won")) then
-					-- incoming
-					incoming = true
-				end
-			-- Vidious?
-			elseif (sender == "Vidious") then
-				-- crate incoming message?
-				if (text:find("like goods don't you")) then
-					-- incoming
-					incoming = true
-				elseif (text:find("eye out for opportunities for loot")) then
-					-- incoming
-					incoming = true
-				end
-			-- Ziadan?
-			elseif (sender == "Ziadan") then
-				-- crate incoming message?
-				if (text:find("get your spoils")) then
-					-- incoming
-					incoming = true
-				elseif (text:find("looks like a treasure")) then
-					-- incoming
-					incoming = true
-				end
+	-- war mode enabled?
+	if (PvPIsWarModeFeatureEnabled() == true) then
+		-- Malicia?
+		local incoming = false
+		if (sender == "Malicia") then
+			-- crate incoming message?
+			if (text:find("all use some resources")) then
+				-- incoming
+				incoming = true
 			end
+		-- Ruffious?
+		elseif (sender == "Ruffious") then
+			-- crate incoming message?
+			if (text:find("cache of resources nearby")) then
+				-- incoming
+				incoming = true
+			elseif (text:find("that means treasure hunters")) then
+				-- incoming
+				incoming = true
+			elseif (text:find("valuable resources in the area")) then
+				-- incoming
+				incoming = true
+			elseif (text:find("valuables waiting to be won")) then
+				-- incoming
+				incoming = true
+			end
+		-- Vidious?
+		elseif (sender == "Vidious") then
+			-- crate incoming message?
+			if (text:find("like goods don't you")) then
+				-- incoming
+				incoming = true
+			elseif (text:find("eye out for opportunities for loot")) then
+				-- incoming
+				incoming = true
+			end
+		-- Ziadan?
+		elseif (sender == "Ziadan") then
+			-- crate incoming message?
+			if (text:find("get your spoils")) then
+				-- incoming
+				incoming = true
+			elseif (text:find("looks like a treasure")) then
+				-- incoming
+				incoming = true
+			end
+		end
 
-			-- incoming?
-			if (incoming == true) then
-				-- real war supply crate
-				NS.CommFlare.CF.RealWarSupplyCrate = true
+		-- incoming?
+		if (incoming == true) then
+			-- real war supply crate
+			NS.CommFlare.CF.RealWarSupplyCrate = true
 
+			-- notify when war crate is inbound?
+			if (NS.db.global.notifyWarCrateInbound == true) then
 				-- needs to issue raid warning?
 				if (NS.CommFlare.CF.LastRaidWarning == 0) then
 					-- save announcement times
@@ -1589,17 +1594,17 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			NS:CreateAssistButton()
 		end
 
+		-- get MapID
+		NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
+		if (NS.CommFlare.CF.MapID) then
+			-- get map info
+			NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
+		end
+
 		-- in battleground?
 		NS.CommFlare.CF.MatchStatus = 0
 		NS.CommFlare.CF.TurnSpeed = GetCVar("TurnSpeed")
 		if (NS:IsInBattleground() == true) then
-			-- get MapID
-			NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
-			if (NS.CommFlare.CF.MapID) then
-				-- get map info
-				NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
-			end
-
 			-- match state is active?
 			local duration = PvPGetActiveMatchDuration()
 			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
@@ -1770,6 +1775,16 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		NS.CommFlare.CF.StreamsRetryCount = 0
 		local clubs = NS:Get_Enabled_Clubs()
 		NS:Verify_Club_Streams(clubs)
+
+		-- notify when war crate is inbound?
+		if (NS.db.global.notifyWarCrateInbound == true) then
+			-- check for alerts
+			local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
+			NS:VignetteCheckForAlerts(list)
+		end
+
+		-- purge war supply crates
+		NS:PurgeWarSupplyCrates()
 	else
 		-- in instance?
 		if (inInstance == true) then
@@ -2937,9 +2952,9 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 		end
 	else
 		-- war mode enabled?
+		local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
 		if (PvPIsWarModeFeatureEnabled() == true) then
-			-- get current war supply crates
-			local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
+			-- found crate?
 			if (list) then
 				-- process all
 				for vignetteID,info in pairs(list) do
@@ -2983,19 +2998,16 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 						NS.CommFlare.CF.WarSupplyCrates[vignetteID] = nil
 					end
 				end
-
-				-- notify when war crate is inbound?
-				if (NS.db.global.notifyWarCrateInbound == true) then
-					-- check for alerts
-					NS:VignetteCheckForAlerts(list)
-				end
-
-				-- reset
-				NS.CommFlare.CF.RealWarSupplyCrate = false
 			else
 				-- reset
 				NS.CommFlare.CF.WarSupplyCrates = {}
 			end
+
+			-- check for alerts
+			NS:VignetteCheckForAlerts(list)
+
+			-- reset
+			NS.CommFlare.CF.RealWarSupplyCrate = false
 		end
 	end
 end
@@ -3120,6 +3132,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("AREA_POIS_UPDATED")
 	self:RegisterEvent("CHAT_MSG_ADDON")
+	self:RegisterEvent("CHAT_MSG_BG_SYSTEM_HORDE")
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
 	self:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
@@ -3201,6 +3214,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("ADDON_LOADED")
 	self:UnregisterEvent("AREA_POIS_UPDATED")
 	self:UnregisterEvent("CHAT_MSG_ADDON")
+	self:UnregisterEvent("CHAT_MSG_BG_SYSTEM_HORDE")
 	self:UnregisterEvent("CHAT_MSG_BN_WHISPER")
 	self:UnregisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_SAY")

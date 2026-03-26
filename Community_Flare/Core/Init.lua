@@ -186,6 +186,42 @@ function NS:SortTableValues(tbl, bReversed)
 	return list
 end
 
+-- sort table by value key
+function NS:SortTableValueKey(tbl, key, bReversed)
+	-- invalid?
+	if (not tbl or not key) then
+		-- failed
+		return nil
+	end
+
+	-- create keys / values
+	local keys = {}
+	local values = {}
+	for k,v in pairs(tbl) do
+		-- save key / value
+		local id = v[key]
+		tinsert(keys, id)
+		values[id] = v
+	end
+
+	-- sort keys
+	tsort(keys)
+
+	-- finalize
+	local list = {}
+	for k,v in pairs(keys) do
+		-- insert
+		tinsert(list, values[v])
+	end
+
+	-- wipe
+	wipe(keys)
+	wipe(values)
+
+	-- return list
+	return list
+end
+
 -- check for table additions
 function NS:CheckForTableAdditions(tabletype, name, table1, table2, basename)
 	-- check for added fields
@@ -2199,7 +2235,6 @@ end
 -- is community member online?
 function NS:IsCommunityMemberOnline(clubId, player)
 	-- process all
-	local club = NS:GetClubInfo(clubId)
 	local members = NS:GetClubMembers(clubId)
 	for _,v in ipairs(members) do
 		-- get club member info
@@ -2215,4 +2250,65 @@ function NS:IsCommunityMemberOnline(clubId, player)
 
 	-- no
 	return false
+end
+
+-- get online community members
+function NS:GetOnlineCommunityMembers(clubId, ...)
+	-- process all
+	local list = {}
+	local bOwner, bLeader, bModerator, bMember = ...
+	local members = NS:GetClubMembers(clubId)
+	for _,v in ipairs(members) do
+		-- get club member info
+		local mi = NS:GetClubMemberInfo(clubId, v)
+		if (mi and mi.name and mi.guid) then
+			-- online?
+			if (mi.presence == Enum.ClubMemberPresence.Online) then
+				-- specific roles?
+				if (bOwner or bLeader or bModerator or bMember) then
+					-- needs owner?
+					if (bOwner) then
+						-- owner?
+						if (mi.role == Enum.ClubRoleIdentifier.Owner) then
+							-- add to list
+							list[mi.name] = mi.guid
+						end
+					end
+
+					-- needs leader?
+					if (bLeader) then
+						-- leader?
+						if (mi.role == Enum.ClubRoleIdentifier.Leader) then
+							-- add to list
+							list[mi.name] = mi.guid
+						end
+					end
+
+					-- needs moderator?
+					if (bModerator) then
+						-- moderator?
+						if (mi.role == Enum.ClubRoleIdentifier.Moderator) then
+							-- add to list
+							list[mi.name] = mi.guid
+						end
+					end
+
+					-- needs member?
+					if (bModerator) then
+						-- member?
+						if (mi.role == Enum.ClubRoleIdentifier.Member) then
+							-- add to list
+							list[mi.name] = mi.guid
+						end
+					end
+				else
+					-- add to list
+					list[mi.name] = mi.guid
+				end
+			end
+		end
+	end
+
+	-- finished
+	return list
 end

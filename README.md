@@ -21,7 +21,8 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.19.001:
--BUGFIX: Adjust Vehicle Turn Speed was setting Turn Speed while not inside PVP matches.
--NEW SETTING: Report raid queue status to communities? added to report queues for raids to communities.
--WAR MODE: Better tracking for incoming War Supply Crates while in War Mode.
+v2.20.001:
+-WAR SUPPLY CRATE: Updated the tracking + logging system.
+-WARNING ADDED: When using Arcantina Key, Corewarden's, Lightcalled or Preyseeker's Hearthstones inside PVP content.
+-NEW SLASH COMMAND: /comf crate <zoneUID> - will attempt to find spawn time for War Supply Crate per shard.
+--Just use /comf crate to check the current shard.
