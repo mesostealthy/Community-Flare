@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Widgets"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -38,7 +39,6 @@ local IsInInstance                                = _G.IsInInstance
 local IsMounted                                   = _G.IsMounted
 local IsInRaid                                    = _G.IsInRaid
 local LoggingCombat                               = _G.LoggingCombat
-local PromoteToAssistant                          = _G.PromoteToAssistant
 local PVPMatchScoreboard                          = _G.PVPMatchScoreboard
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
@@ -347,15 +347,17 @@ function NS:Event_Chat_Message_Party(...)
 	if (NS.CommFlare.CF.PlayerFullName ~= sender) then
 		-- version check?
 		local lower = strlower(text)
-		if (lower:find("!cf")) then
-			-- strip (name2chat):
-			lower = strgsub(lower, "[\(](.+)[\)\:] ", "")
-
-			-- exact matches only
-			if (lower == "!cf") then
-				-- send community flare version number
-				NS:SendMessage("PARTY", strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
-			end
+		if (lower == "!cf") then
+			-- send community flare version number
+			NS:SendMessage("PARTY", strformat("%s: %s (%s)", NS.CommFlare.Title, NS.CommFlare.Version, NS.CommFlare.Build))
+		-- pass leadership?
+		elseif (lower == "!pl") then
+			-- process pass leadership
+			NS:Process_Pass_Leadership(sender)
+		-- talents check?
+		elseif (lower == "!talents") then
+			-- process talents check
+			NS:Process_Talents_Check(sender)
 		end
 	end
 end
@@ -981,7 +983,7 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 									-- auto promote?
 									if (bAutoPromote == true) then
 										-- promote
-										PromoteToAssistant(name)
+										NS:PromoteToAssistant(name)
 									end
 
 									-- processed
@@ -1893,6 +1895,54 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 					NS:ShowAssistButton()
 				end
 			end
+		end
+
+		-- DemoteAssistant?
+		if (NS.CommFlare.CF.RegenJobs["DemoteAssistant"]) then
+			-- sanity check
+			local list = NS.CommFlare.CF.RegenJobs["DemoteAssistant"]
+			if (list and next(list)) then
+				-- process all
+				for player,_ in pairs(list) do
+					-- demote assistant
+					NS:DemoteAssistant(player)
+				end
+			end
+
+			-- all promtoed
+			NS.CommFlare.CF.RegenJobs["DemoteAssistant"] = nil
+		end
+
+		-- PromoteToAssistant?
+		if (NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]) then
+			-- sanity check
+			local list = NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]
+			if (list and next(list)) then
+				-- process all
+				for player,_ in pairs(list) do
+					-- promote to assistant
+					NS:PromoteToAssistant(player)
+				end
+			end
+
+			-- all promtoed
+			NS.CommFlare.CF.RegenJobs["PromoteToAssistant"] = nil
+		end
+
+		-- PromoteToLeader?
+		if (NS.CommFlare.CF.RegenJobs["PromoteToLeader"]) then
+			-- process pass leadership
+			local player = NS.CommFlare.CF.RegenJobs["PromoteToLeader"]
+			NS:PromoteToLeader(player)
+			NS.CommFlare.CF.RegenJobs["PromoteToLeader"] = nil
+		end
+
+		-- SetRestrictPings?
+		if (NS.CommFlare.CF.RegenJobs["SetRestrictPings"]) then
+			-- process pass leadership
+			local restrictTo = NS.CommFlare.CF.RegenJobs["SetRestrictPings"]
+			NS:SetRestrictPings(restrictTo)
+			NS.CommFlare.CF.RegenJobs["SetRestrictPings"] = nil
 		end
 
 		-- TurnSpeed?
@@ -3297,3 +3347,7 @@ end
 
 -- register addon communication
 NS.CommFlare:RegisterComm(ADDON_NAME, Community_Flare_OnCommReceived)
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Events"] = NS.LoadCount

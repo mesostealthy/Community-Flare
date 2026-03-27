@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Restrictions"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -25,8 +26,6 @@ local InCombatLockdown                            = _G.InCombatLockdown
 local IsAddOnLoaded                               = _G.C_AddOns.IsAddOnLoaded
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local PromoteToAssistant                          = _G.PromoteToAssistant
-local PromoteToLeader                             = _G.PromoteToLeader
 local PVPReadyDialog                              = _G.PVPReadyDialog
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local UnitIsMercenary                             = _G.UnitIsMercenary
@@ -397,39 +396,6 @@ function NS:GetRaidRank(player)
 
 	-- not available
 	return nil
-end
-
--- promote player to raid leader
-function NS:PromoteToRaidLeader(player)
-	-- not available?
-	if (not player) then
-		-- failed
-		return
-	end
-
-	-- is player full name in raid?
-	if (NS:UnitInRaid(player)) then
-		-- promote to leader
-		PromoteToLeader(player)
-		return true
-	end
-
-	-- try using short name
-	local name, realm = strsplit("-", player)
-	if (realm == NS.CommFlare.CF.PlayerServerName) then
-		-- set player to short name
-		player = name
-	end
-
-	-- unit is in raid?
-	if (NS:UnitInRaid(player)) then
-		-- promote to leader
-		PromoteToLeader(player)
-		return true
-	end
-
-	-- failed
-	return false
 end
 
 -- get current battleground status
@@ -1200,7 +1166,7 @@ function NS:Promote_Battleground_Player(info, player)
 		-- auto promote?
 		if (bAutoPromote == true) then
 			-- promote
-			PromoteToAssistant(info.name)
+			NS:PromoteToAssistant(info.name)
 		end
 	end
 end
@@ -2650,3 +2616,7 @@ function NS:Report_Queue_Entry_Time_Left()
 		TimerAfter(1, function() NS:Report_Queue_Entry_Time_Left() end)
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Battlegrounds"] = NS.LoadCount

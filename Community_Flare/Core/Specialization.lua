@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Social"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -69,3 +70,7 @@ function NS:Get_SpecID(className, specName)
 	-- failed
 	return 0
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Specialization"] = NS.LoadCount

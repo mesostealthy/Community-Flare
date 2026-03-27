@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["REPorter"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -113,3 +114,7 @@ function NS:TomTomAddWaypointByMapID(mapID, title, x, y)
 	-- not enabled
 	return nil
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["TomTom"] = NS.LoadCount

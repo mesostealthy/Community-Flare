@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Database"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -506,3 +507,7 @@ function NS:Update_LFG_Status(event)
 		end
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["LFGQueues"] = NS.LoadCount

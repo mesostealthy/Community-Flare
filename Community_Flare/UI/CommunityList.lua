@@ -851,3 +851,7 @@ function NS:ToggleCommunityList()
 		CF_CommunityListFrame:Show()
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["CommunityList"] = NS.LoadCount

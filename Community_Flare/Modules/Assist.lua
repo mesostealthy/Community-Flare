@@ -621,3 +621,7 @@ function NS:ToggleAssistButton()
 		end
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Assist"] = NS.LoadCount

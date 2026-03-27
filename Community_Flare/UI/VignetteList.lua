@@ -532,3 +532,7 @@ function NS:ToggleVignetteList()
 		CF_VignetteListFrame:Show()
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["VignetteList"] = NS.LoadCount

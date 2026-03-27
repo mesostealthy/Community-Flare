@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Debug"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
  
@@ -31,7 +32,6 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInGuild                                   = _G.IsInGuild
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
-local PromoteToLeader                             = _G.PromoteToLeader
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RemoveCommunitiesChannel                    = _G.ChatFrameUtil.RemoveCommunitiesChannel
 local SaveBindings                                = _G.SaveBindings
@@ -700,7 +700,7 @@ end
 function NS:PromoteToPartyLeader(player)
 	-- is player full name in party?
 	if (NS:UnitInParty(player) == true) then
-		PromoteToLeader(player)
+		NS:PromoteToLeader(player)
 		return true
 	end
 
@@ -712,9 +712,42 @@ function NS:PromoteToPartyLeader(player)
 
 	-- unit is in party?
 	if (NS:UnitInParty(player) == true) then
-		PromoteToLeader(player)
+		NS:PromoteToLeader(player)
 		return true
 	end
+	return false
+end
+
+-- promote player to raid leader
+function NS:PromoteToRaidLeader(player)
+	-- not available?
+	if (not player) then
+		-- failed
+		return
+	end
+
+	-- is player full name in raid?
+	if (NS:UnitInRaid(player)) then
+		-- promote to leader
+		NS:PromoteToLeader(player)
+		return true
+	end
+
+	-- try using short name
+	local name, realm = strsplit("-", player)
+	if (realm == NS.CommFlare.CF.PlayerServerName) then
+		-- set player to short name
+		player = name
+	end
+
+	-- unit is in raid?
+	if (NS:UnitInRaid(player)) then
+		-- promote to leader
+		NS:PromoteToLeader(player)
+		return true
+	end
+
+	-- failed
 	return false
 end
 
@@ -2312,3 +2345,7 @@ function NS:GetOnlineCommunityMembers(clubId, ...)
 	-- finished
 	return list
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Init"] = NS.LoadCount

@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["TomTom"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -128,3 +129,7 @@ function NS:REPorter_SlayersRise_Add_Callouts()
 	NS:REPorter_Add_New_Overlay("Stareater Pavilion")
 	NS:REPorter_Add_New_Overlay("The Husk")
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["SlayersRise"] = NS.LoadCount

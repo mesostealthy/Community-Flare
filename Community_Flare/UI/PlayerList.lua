@@ -1263,3 +1263,7 @@ function NS:TogglePlayerList()
 		CF_PlayerListFrame:Show()
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["PlayerList"] = NS.LoadCount

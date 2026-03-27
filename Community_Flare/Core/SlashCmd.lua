@@ -1,12 +1,12 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Quests"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local DemoteAssistant                             = _G.DemoteAssistant
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
@@ -104,7 +104,7 @@ local function Community_Flare_Slash_Command(input)
 				local name, rank = GetRaidRosterInfo(i)
 				if (name and rank and (rank == 1)) then
 					-- demote
-					DemoteAssistant(name)
+					NS:DemoteAssistant(name)
 				end
 			end
 		end
@@ -323,3 +323,7 @@ end
 
 -- register slash command
 NS.CommFlare:RegisterChatCommand("comf", Community_Flare_Slash_Command)
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["SlashCmd"] = NS.LoadCount

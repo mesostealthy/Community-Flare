@@ -21,8 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.20.001:
--WAR SUPPLY CRATE: Updated the tracking + logging system.
--WARNING ADDED: When using Arcantina Key, Corewarden's, Lightcalled or Preyseeker's Hearthstones inside PVP content.
--NEW SLASH COMMAND: /comf crate <zoneUID> - will attempt to find spawn time for War Supply Crate per shard.
---Just use /comf crate to check the current shard.
+v2.21.001:
+-Updated some API calls to not work during combat due to Blizzard's v12.0.1 hotfix!

@@ -835,3 +835,7 @@ function CF_MemberListResizeBottomRightButtonMixin:OnMouseUp(button)
 		NS:SaveWindowPosition(parent)
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["MemberList"] = NS.LoadCount

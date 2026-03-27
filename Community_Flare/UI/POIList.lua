@@ -532,3 +532,7 @@ function NS:TogglePOIList()
 		CF_POIListFrame:Show()
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["POIList"] = NS.LoadCount

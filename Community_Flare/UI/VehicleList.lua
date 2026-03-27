@@ -461,3 +461,7 @@ function NS:ToggleVehicleList()
 		CF_VehicleListFrame:Show()
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["VehicleList"] = NS.LoadCount

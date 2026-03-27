@@ -13,10 +13,17 @@
 	<Script file="LFGQueues.lua" />
 	<Script file="Hooks.lua" />
 	<Script file="History.lua" />
+	<Script file="KOS.lua" />
 	<Script file="Menus.lua" />
+	<Script file="POIs.lua" />
+	<Script file="Quests.lua" />
 	<Script file="SlashCmd.lua" />
+	<Script file="Social.lua" />
 	<Script file="Specialization.lua" />
 	<Script file="StaticPopups.lua" />
+	<Script file="Vehicles.lua" />
+	<Script file="Vignettes.lua" />
+	<Script file="Widgets.lua" />
 	<Script file="Events.lua" />
 	<Script file="Timers.lua" />
 </Ui>

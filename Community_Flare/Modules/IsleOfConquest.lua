@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["TomTom"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -288,3 +289,7 @@ function NS:REPorter_IsleOfConquest_Add_Callouts()
 	NS:REPorter_Add_New_Overlay("Refinery")
 	NS:REPorter_Add_New_Overlay("Workshop")
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["IsleOfConquest"] = NS.LoadCount

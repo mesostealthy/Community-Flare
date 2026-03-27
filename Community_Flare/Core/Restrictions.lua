@@ -1,15 +1,19 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Init"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
+local DemoteAssistant                             = _G.DemoteAssistant
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
+local PromoteToAssistant                          = _G.PromoteToAssistant
+local PromoteToLeader                             = _G.PromoteToLeader
 local UnitExists                                  = _G.UnitExists
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitFullName                                = _G.UnitFullName
@@ -81,6 +85,37 @@ local GetVignettePosition                         = _G.C_VignetteInfo.GetVignett
 local issecretvalue                               = _G.issecretvalue
 local type                                        = _G.type
 
+-- demote assistant
+function NS:DemoteAssistant(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- not initialized?
+		if (not NS.CommFlare.CF.RegenJobs["DemoteAssistant"]) then
+			-- initialize
+			NS.CommFlare.CF.RegenJobs["DemoteAssistant"] = {}
+		end
+
+		-- not already set for demote?
+		local list = NS.CommFlare.CF.RegenJobs["DemoteAssistant"]
+		if (not list[player]) then
+			-- save for demote later
+			list[player] = true
+		end			
+
+		-- finished
+		return nil
+	end
+
+	-- success
+	return DemoteAssistant(player)
+end
+
 -- get player info by guid
 function NS:GetPlayerInfoByGUID(guid)
 	-- sanity checks
@@ -103,6 +138,56 @@ function NS:GetSpecializationInfoForClassID(classID, index, ...)
 
 	-- success
 	return GetSpecializationInfoForClassID(classID, index, ...)
+end
+
+-- promote to assistant
+function NS:PromoteToAssistant(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- not initialized?
+		if (not NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]) then
+			-- initialize
+			NS.CommFlare.CF.RegenJobs["PromoteToAssistant"] = {}
+		end
+
+		-- not already set for promote?
+		local list = NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]
+		if (not list[player]) then
+			-- save for promote later
+			list[player] = true
+		end			
+
+		-- finished
+		return nil
+	end
+
+	-- success
+	return PromoteToAssistant(player)
+end
+
+-- promote to leader
+function NS:PromoteToLeader(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- promote to leader later
+		NS.CommFlare.CF.RegenJobs["PromoteToLeader"] = player
+		return nil
+	end
+
+	-- success
+	return PromoteToLeader(player)
 end
 
 -- unit exists
@@ -787,6 +872,13 @@ function NS:SetRestrictPings(restrictTo)
 		return nil
 	end
 
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- set retrict pings later
+		NS.CommFlare.CF.RegenJobs["SetRestrictPings"] = restrictTo
+		return nil
+	end
+
 	-- success
 	return SetRestrictPings(restrictTo)
 end
@@ -1074,3 +1166,7 @@ function NS:SendMessage(sender, msg, channel)
 		SendWhisper(sender, msg)
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Restrictions"] = NS.LoadCount

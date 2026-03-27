@@ -1,6 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Bootstrap"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -471,3 +472,7 @@ NS.WarCrateLocations = {
 	[2437] = { x = "0.38124132156372", y = "0.21004492044449"  }, -- Zul'Aman
 	[2444] = { x = "0.58755004405975", y = "0.31229323148727"  }, -- Slayer's Rise
 }
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Constants"] = NS.LoadCount

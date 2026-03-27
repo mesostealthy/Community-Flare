@@ -37,6 +37,8 @@ NS.Libs = {
 }
 
 -- initialize
+NS.Loaded = {}
+NS.LoadCount = 0
 NS.faction = (UnitFactionGroup("player") == FACTION_HORDE) and 0 or 1
 NS.CommFlare = NS.Libs.AceAddon:NewAddon(ADDON_NAME, "AceComm-3.0", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 if (not NS.CommFlare) then return end
@@ -297,3 +299,7 @@ function CommunityFlare_AddonCompartmentOnClick(addonName, buttonName)
 		Settings_OpenToCategory(NS.optionsID)
 	end
 end
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Bootstrap"] = NS.LoadCount
