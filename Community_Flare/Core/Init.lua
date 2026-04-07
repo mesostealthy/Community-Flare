@@ -758,10 +758,16 @@ function NS:LoadSession()
 	NS.CommFlare.CF.WarCrateLocations = NS.db.global.WarCrateLocations or {}
 
 	-- load profile stuff
+	NS.CommFlare.CF.zoneUID = NS.charDB.profile.zoneUID or nil
+	NS.CommFlare.CF.serverID = NS.charDB.profile.serverID or nil
+	NS.CommFlare.CF.spawnUID = NS.charDB.profile.spawnUID or nil
 	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID or nil
+	NS.CommFlare.CF.instanceID = NS.charDB.profile.instanceID or nil
 	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus or 0
-	NS.CommFlare.CF.ActiveTimers = NS.charDB.profile.ActiveTimers or {}
+	NS.CommFlare.CF.ExtCrateTracker = NS.charDB.profile.ExtCrateTracker
+	NS.CommFlare.CF.TeamUnits = NS.charDB.profile.TeamUnits or {}
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
+	NS.CommFlare.CF.ActiveTimers = NS.charDB.profile.ActiveTimers or {}
 	NS.CommFlare.CF.PlayerScoreCache = NS.charDB.profile.PlayerScoreCache or {}
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 	NS.CommFlare.CF.PreviousEquipSetID = NS.charDB.profile.PreviousEquipSetID or -1
@@ -820,10 +826,16 @@ function NS:SaveSession()
 
 	-- save profile stuff
 	NS.charDB.profile.SavedTime = time()
+	NS.charDB.profile.zoneUID = NS.CommFlare.CF.zoneUID
+	NS.charDB.profile.serverID = NS.CommFlare.CF.serverID
+	NS.charDB.profile.spawnUID = NS.CommFlare.CF.spawnUID
 	NS.charDB.profile.PartyGUID = NS.CommFlare.CF.PartyGUID
+	NS.charDB.profile.instanceID = NS.CommFlare.CF.instanceID
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
-	NS.charDB.profile.ActiveTimers = NS.CommFlare.CF.ActiveTimers or {}
+	NS.charDB.profile.ExtCrateTracker = NS.CommFlare.CF.ExtCrateTracker
+	NS.charDB.profile.TeamUnits = NS.CommFlare.CF.TeamUnits or {}
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
+	NS.charDB.profile.ActiveTimers = NS.CommFlare.CF.ActiveTimers or {}
 	NS.charDB.profile.PlayerScoreCache = NS.CommFlare.CF.PlayerScoreCache or {}
 	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
 	NS.charDB.profile.PreviousEquipSetID = NS.CommFlare.CF.PreviousEquipSetID or -1

@@ -9,10 +9,15 @@ if (UnitFactionGroup("player") == FACTION_ALLIANCE) then return end
 local _G                                          = _G
 local CreateFrame                                 = _G.CreateFrame
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
+local GetScreenHeight                             = _G.GetScreenHeight
+local GetScreenWidth                              = _G.GetScreenWidth
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsInRaid                                    = _G.IsInRaid
+local UnitClassBase                               = _G.UnitClassBase
 local UnitIsEnemy                                 = _G.UnitIsEnemy
 local UnitIsPlayer                                = _G.UnitIsPlayer
+local UnitPowerMax                                = _G.UnitPowerMax
+local UnitPowerType                               = _G.UnitPowerType
 local GetNamePlates                               = _G.C_NamePlate.GetNamePlates
 local mfloor                                      = _G.math.floor
 local strsplit                                    = _G.string.split
@@ -48,7 +53,7 @@ function CommunityFlare_GetMainTank()
 	if (IsInRaid()) then
 		-- process all
 		for i=1, MAX_RAID_MEMBERS do
-			-- get player / role
+			-- get player / roled
 			local name, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
 			if (player and ((role == "maintank") or (role == "MAINTANK"))) then
 				-- return name
@@ -263,22 +268,6 @@ function NS:AssistButtonNamePlateAdded(...)
 				end
 			end
 		end
-
-		-- no marker set yet?
-		if (not namePlate.CF.markerSet) then
-			-- get main assist
-			local player1, unitToken1 = CommunityFlare_GetMainAssist()
-			if (player1) then
-				-- set assist
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\assist.tga")
-				namePlate.CF.frame:Show()
-
-				-- set alpha from boolean
-				local targetUnit = "raid" .. unitToken1 .. "target"
-				local isTarget = UnitIsUnit(targetUnit, unitToken)
-				namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
-			end
-		end
 	end
 end
 
@@ -299,32 +288,6 @@ function NS:AssistButtonNamePlateRemoved(...)
 		namePlate.CF.frame.texture:SetTexture(nil)
 		namePlate.CF.frame:SetAlpha(0)
 		namePlate.CF.frame:Hide()
-	end
-end
-
--- assist button update target
-function NS:AssistButtonUpdateTarget(...)
-	-- get main assist
-	if (NS.faction ~= 0) then return end
-	local player1, unitToken1 = CommunityFlare_GetMainAssist()
-	if (player1) then
-		-- process all
-		local targetUnit = "raid" .. unitToken1 .. "target"
-		for _, namePlate in ipairs(GetNamePlates()) do
-			-- exists?
-			local unit = namePlate:GetUnit()
-			if (unit and UnitExists(unit)) then
-				-- frame created?
-				if (namePlate.CF and namePlate.CF.frame) then
-					-- no marker set yet?
-					if (not namePlate.CF.markerSet) then
-						-- set alpha from boolean
-						local isTarget = UnitIsUnit(targetUnit, unit)
-						namePlate.CF.frame:SetAlphaFromBoolean(isTarget, 1, 0)
-					end
-				end
-			end
-		end
 	end
 end
 
@@ -522,7 +485,6 @@ function NS:CreateAssistButton()
 	-- event handler
 	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-	NS.AssistButton:RegisterEvent("UNIT_TARGET")
 	NS.AssistButton:SetScript("OnEvent", function(self, event, ...)
 		-- name plate unit added?
 		if (event == "NAME_PLATE_UNIT_ADDED") then
@@ -531,12 +493,6 @@ function NS:CreateAssistButton()
 		elseif (event == "NAME_PLATE_UNIT_REMOVED") then
 			-- assist button name plate removed
 			NS:AssistButtonNamePlateRemoved(...)
-		elseif (event == "PLAYER_TARGET_CHANGED") then
-			-- assist button update target
-			NS:AssistButtonUpdateTarget(...)
-		elseif (event == "UNIT_TARGET") then
-			-- assist button update target
-			NS:AssistButtonUpdateTarget(...)
 		end
 	end)
 

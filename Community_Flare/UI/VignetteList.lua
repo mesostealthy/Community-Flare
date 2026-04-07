@@ -16,6 +16,8 @@ local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
 local time                                        = _G.time
+local tonumber                                    = _G.tonumber
+local bitband                                     = _G.bit.band
 local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
@@ -368,6 +370,19 @@ function CF_VignetteListEntryMixin:OnEnter()
 
 	-- add vignetteGUID
 	GameTooltip:AddLine(strformat("Vignette GUID: %s", tostring(info.vignetteGUID)), 1, 1, 1)
+
+	-- calculate spawn time
+	local creatureType, _, serverID, instanceID, zoneUID, vignetteID, spawnUID = strsplit("-", info.vignetteGUID)
+	if (spawnUID) then
+		-- calulate current
+		local currentTime = time()
+		spawnUID = tonumber(spawnUID, 16)
+		currentTime = bitband(currentTime, -8388608)
+		local timestamp = currentTime + bitband(spawnUID, 8388607)
+
+		-- add spawn time
+		GameTooltip:AddLine(strformat("Spawn Time: %s", date(nil, timestamp)), 1, 1, 1)
+	end
 
 	-- has objectGUID?
 	if (info.objectGUID and (info.objectGUID ~= "")) then

@@ -1,7 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
-if (not NS.Loaded or not NS.Loaded["Widgets"]) then return end
+if (not NS.Loaded or not NS.Loaded["SlashCmd"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -309,24 +309,42 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 			NS.CommFlare.CF.RealWarSupplyCrate = true
 
 			-- notify when war crate is inbound?
-			if (NS.db.global.notifyWarCrateInbound == true) then
-				-- needs to issue raid warning?
-				if (NS.CommFlare.CF.LastRaidWarning == 0) then
-					-- save announcement times
-					local timestamp = time()
-					local crateID = strformat("%s:%d", NS.WAR_SUPPLY_CRATE, 3689)
-					NS.CommFlare.CF.Announcements[crateID] = timestamp
-					NS.CommFlare.CF.LastRaidWarning = timestamp
+			if (NS.db.global.notifyWarCrateInbound) then
+				-- no ready crate tracker?
+				if ((not NS.Libs.RCT) and (NS.CommFlare.CF.ExtCrateTracker == false)) then
+					-- needs to issue raid warning?
+					if (NS.CommFlare.CF.LastRaidWarning == 0) then
+						-- save announcement times
+						local timestamp = time()
+						local crateID = strformat("%s:%d", NS.WAR_SUPPLY_CRATE, 3689)
+						NS.CommFlare.CF.Announcements[crateID] = timestamp
+						NS.CommFlare.CF.LastRaidWarning = timestamp
 
-					-- update last raid warning
-					TimerAfter(150, function()
-						-- clear last raid warning
-						NS.CommFlare.CF.Announcements[crateID] = nil
-						NS.CommFlare.CF.LastRaidWarning = 0
-					end)
+						-- update last raid warning
+						TimerAfter(150, function()
+							-- clear last raid warning
+							NS.CommFlare.CF.Announcements[crateID] = nil
+							NS.CommFlare.CF.LastRaidWarning = 0
+						end)
 
-					-- issue local raid warning (with raid warning audio sound)
-					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["War Supply Crate is flying in now!"])
+						-- issue local raid warning (with raid warning audio sound)
+						FlashClientIcon()
+						local message = L["War Supply Crate is flying in now!"]
+						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+
+						-- notify group?
+						if (NS.db.global.notifyGroupWarCrates) then
+							-- in raid?
+							if (IsInRaid()) then
+								-- display raid message
+								NS:SendMessage("RAID", message)
+							-- in party?
+							elseif (IsInGroup()) then
+								-- display party message
+								NS:SendMessage("PARTY", message)
+							end
+						end
+					end
 				end
 			end
 		end
@@ -406,6 +424,48 @@ function NS.CommFlare:CHAT_MSG_WHISPER(msg, ...)
 			NS:Process_Auto_Invite(sender)
 		end
 	end
+end
+
+-- handle chat raid message events
+function NS:Event_Chat_Message_Raid(...)
+	local text, sender = ...
+
+	-- in chat messaging lockdown?
+	if (InChatMessagingLockdown()) then
+		-- finished
+		return
+	end
+
+	-- are you in a raid?
+	if (IsInRaid()) then
+		-- search for crate trackers
+		local lower = strlower(text)
+		if (lower:find("hatedgaming")) then
+			-- crate tracker found
+			NS.CommFlare.CF.ExtCrateTracker = true
+		elseif (lower:find("next crate")) then
+			-- crate tracker found
+			NS.CommFlare.CF.ExtCrateTracker = true
+		end
+	end
+end
+
+-- process chat raid message
+function NS.CommFlare:CHAT_MSG_RAID(msg, ...)
+	-- process chat message raid event
+	NS:Event_Chat_Message_Raid(...)
+end
+
+-- process chat raid leader message
+function NS.CommFlare:CHAT_MSG_RAID_LEADER(msg, ...)
+	-- process chat message raid event
+	NS:Event_Chat_Message_Raid(...)
+end
+
+-- process chat raid warning message
+function NS.CommFlare:CHAT_MSG_RAID_WARNING(msg, ...)
+	-- process chat message raid event
+	NS:Event_Chat_Message_Raid(...)
 end
 
 -- process club added
@@ -662,7 +722,7 @@ function NS.CommFlare:CURRENCY_DISPLAY_UPDATE(msg, ...)
 	-- conquest?
 	if (currencyType == 1602) then
 		-- notify when war crate is inbound?
-		if (NS.db.global.notifyWarCrateInbound == true) then
+		if (NS.db.global.notifyWarCrateInbound) then
 			-- war mode enabled?
 			if (PvPIsWarModeFeatureEnabled() == true) then
 				-- remove all war supply crate waypoints
@@ -862,8 +922,9 @@ end
 function NS.CommFlare:GROUP_JOINED(msg, ...)
 	local category, partyGUID = ...
 
-	-- save partyGUID
+	-- setup stuff
 	NS.CommFlare.CF.PartyGUID = partyGUID
+	NS.CommFlare.CF.ExtCrateTracker = false
 
 	-- are you in a party?
 	if (IsInGroup()) then
@@ -905,7 +966,8 @@ end
 function NS.CommFlare:GROUP_LEFT(msg, ...)
 	local category, partyGUID = ...
 
-	-- disable community party leader
+	-- setup stuff
+	NS.CommFlare.CF.ExtCrateTracker = false
 	NS.charDB.profile.communityPartyLeader = false
 
 	-- delete partyGUID
@@ -1779,10 +1841,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		NS:Verify_Club_Streams(clubs)
 
 		-- notify when war crate is inbound?
-		if (NS.db.global.notifyWarCrateInbound == true) then
-			-- check for alerts
+		if (NS.db.global.notifyWarCrateInbound) then
+			-- check for war supply crate alerts
 			local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
-			NS:VignetteCheckForAlerts(list)
+			NS:CheckForWarSupplyCrateAlerts(list)
 		end
 
 		-- purge war supply crates
@@ -2931,6 +2993,30 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 			end
 		end
 
+		-- update raid roster
+		local bLockdown = InChatMessagingLockdown()
+		NS:Update_Raid_Roster_Stuff(bLockdown, true)
+
+		-- get current players
+		local numScores = GetNumBattlefieldScores()
+		if (numScores < NS.CommFlare.CF.PreviousNumScores) then
+			-- process all
+			local timestamp = time()
+			for player,data in pairs(NS.CommFlare.CF.TeamUnits) do
+				-- not already left?
+				if (not data.left) then
+					-- unit not in raid anymore?
+					if (not NS:UnitInRaid(data.name)) then
+						-- player left
+						data.left = timestamp
+					end		
+				end
+			end
+		end
+
+		-- save previous numscores
+		NS.CommFlare.CF.PreviousNumScores = numScores
+
 		-- check score board for KOS
 		NS:CheckScoreBoardForKos()
 	end
@@ -3053,8 +3139,8 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 				NS.CommFlare.CF.WarSupplyCrates = {}
 			end
 
-			-- check for alerts
-			NS:VignetteCheckForAlerts(list)
+			-- check for war supply crate alerts
+			NS:CheckForWarSupplyCrateAlerts(list)
 
 			-- reset
 			NS.CommFlare.CF.RealWarSupplyCrate = false
@@ -3148,6 +3234,7 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 		end
 
 		-- reset stuff
+		NS.CommFlare.CF.spawnUID = nil
 		NS.CommFlare.CF.VersionSent = false
 		NS.CommFlare.CF.LastRaidWarning = 0
 	end
@@ -3189,6 +3276,9 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("CHAT_MSG_PARTY")
 	self:RegisterEvent("CHAT_MSG_PARTY_LEADER")
 	self:RegisterEvent("CHAT_MSG_WHISPER")
+	self:RegisterEvent("CHAT_MSG_RAID")
+	self:RegisterEvent("CHAT_MSG_RAID_LEADER")
+	self:RegisterEvent("CHAT_MSG_RAID_WARNING")
 	self:RegisterEvent("CLUB_ADDED")
 	self:RegisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
 	self:RegisterEvent("CLUB_MEMBER_ADDED")
@@ -3271,6 +3361,9 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("CHAT_MSG_PARTY")
 	self:UnregisterEvent("CHAT_MSG_PARTY_LEADER")
 	self:UnregisterEvent("CHAT_MSG_WHISPER")
+	self:UnregisterEvent("CHAT_MSG_RAID")
+	self:UnregisterEvent("CHAT_MSG_RAID_LEADER")
+	self:UnregisterEvent("CHAT_MSG_RAID_WARNING")
 	self:UnregisterEvent("CLUB_ADDED")
 	self:UnregisterEvent("CLUB_INVITATIONS_RECEIVED_FOR_CLUB")
 	self:UnregisterEvent("CLUB_MEMBER_ADDED")

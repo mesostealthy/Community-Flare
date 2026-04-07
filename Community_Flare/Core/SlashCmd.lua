@@ -1,7 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
-if (not NS.Loaded or not NS.Loaded["Quests"]) then return end
+if (not NS.Loaded or not NS.Loaded["Widgets"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -11,6 +11,7 @@ local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
 local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
+local DateAndTimeGetServerTimeLocal               = _G.C_DateAndTime.GetServerTimeLocal
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
@@ -177,7 +178,7 @@ local function Community_Flare_Slash_Command(input)
 		NS:ToggleVignetteList()
 	else
 		-- split words
-		local first, second, third = strsplit(" ", input)
+		local first, second, third, fourth = strsplit(" ", input)
 		first = strlower(first)
 		if (first == "find") then
 			-- has third?
@@ -242,6 +243,49 @@ local function Community_Flare_Slash_Command(input)
 			end
 		-- crate?
 		elseif (first == "crate") then
+			-- list?
+			if (second == "list") then
+				-- zone?
+				local mapID = nil
+				if (third == "mapid") then
+					-- get mapID
+					mapID = tonumber(fourth)
+				else
+					-- use current
+					mapID = NS:GetBestMapForUnit("player")
+				end
+
+				-- process all
+				local count = 0
+				print(strformat(L["Map ID: %d"], mapID))
+				for k,v in pairs(NS.CommFlare.CF.WarCrateLocations) do
+					-- matching all?
+					local matched = false
+					if (third == "all") then
+						-- matches mapID?
+						if (v.mapID == mapID) then
+							-- matched
+							matched = true
+						end
+					-- matches mapID + dropped location?
+					elseif ((v.mapID == mapID) and (v.vignetteID == 6066)) then
+						-- matched
+						matched = treue
+					end
+
+					-- matched?
+					if (matched) then
+						-- display
+						print(strformat("vignetteID: %s, X: %s, Y: %s; Degree: %s", tostring(v.vignetteID), tostring(v.x), tostring(v.y), tostring(v.degree)))
+						count = count + 1
+					end
+				end
+
+				-- display count
+				print(strformat(L["Found: %d War Supply Crate Locations."], count))
+				return
+			end
+
 			-- found crates?
 			local crates = NS:FindWarSupplyCrateData(second)
 			local spawnUID = nil
@@ -271,30 +315,44 @@ local function Community_Flare_Slash_Command(input)
 
 			-- has spawnUID?
 			local timestamp = nil
+			local currentTime = time()
 			if (spawnUID) then
 				-- calulate current
-				local currentTime = time()
 				currentTime = bitband(currentTime, -8388608)
 				timestamp = currentTime + bitband(spawnUID, 8388607)
 			end
 	
 			-- found?
 			if (timestamp) then
-				-- display
-				print(strformat(L["Last Recorded Spawn Time: %s"], date(nil, timestamp)))
-
 				-- calculate next crate time
-				local currentTime = time()
 				while (timestamp < currentTime) do
 					-- increase
 					timestamp = timestamp + 1100
 				end
 
 				-- display
+				print(strformat(L["Last Recorded Spawn Time: %s"], date(nil, timestamp - 1100)))
 				print(strformat(L["Next Estimated Spawn Time: %s"], date(nil, timestamp)))
 			else
-				-- display
-				print(strformat(L["Last Recorded Spawn Time: %s"], L["N/A"]))
+				-- has spawnUID?
+				if ((NS.faction == 0) and (NS.CommFlare.CF.spawnUID)) then
+					-- calulate spawn time
+					timestamp = DateAndTimeGetServerTimeLocal()
+					timestamp = bitband(timestamp, -8388608) + bitband(NS.CommFlare.CF.spawnUID, 8388607)
+
+					-- calculate next crate time
+					while (timestamp < currentTime) do
+						-- increase
+						timestamp = timestamp + 1100
+					end
+
+					-- display
+					print(strformat(L["Last Estimated Spawn Time: %s"], date(nil, timestamp - 1100)))
+					print(strformat(L["Next Estimated Spawn Time: %s"], date(nil, timestamp)))
+				else
+					-- display
+					print(strformat(L["Last Recorded Spawn Time: %s"], L["N/A"]))
+				end
 			end
 		else
 			-- in battleground?

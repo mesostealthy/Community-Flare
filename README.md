@@ -21,5 +21,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.21.001:
--Updated some API calls to not work during combat due to Blizzard's v12.0.1 hotfix!
+v2.22.001:
+-NEW SETTING: World Options -> Notify your group about incoming War Supply Crates?
+-- If Enabled: This will send notification messages to your Party/Raid about incoming War Supply Crates.
+-NEW SETTING: World Options -> Purge logged War Supply Crate Locations timeframe?
+-- This will purge the log of War Supply Crates based on how many days you have selected.
+-BUGFIX: Blizzard blocked more UnitIsUnit calls due to RWF non-sense trash!

@@ -121,6 +121,7 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 						if (not logged) then
 							-- create location
 							local location = {
+								["from"] = sender,
 								["mapID"] = mapID,
 								["serverID"] = serverID,
 								["instanceID"] = instanceID,

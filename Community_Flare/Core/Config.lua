@@ -62,6 +62,7 @@ local GlobalDefaults = {
 		housingAddQuestWayPoints = true,
 		iocVehicleAlertSystem = false,
 		logWarCrateLocations = false,
+		notifyGroupWarCrates = false,
 		notifyPartyZoneChanges = false,
 		notifyWarCrateInbound = false,
 		pvpCombatLogging = false,
@@ -78,6 +79,7 @@ local GlobalDefaults = {
 		iocNotifications = 2,
 		partyLeaderNotify = 2,
 		purgeLogTime = 2,
+		purgeWarCrateLocationsTime = 2,
 		restrictPings = 0,
 		slrNotifications = 2,
 		uninvitePlayersAFK = 0,
@@ -91,9 +93,14 @@ local CharDefaults = {
 	profile = {
 		-- variables
 		InActiveDelve = false,
+		instanceID = nil,
+		PartyGUID = nil,
 		SavedTime = 0,
+		serverID = nil,
+		spawnUID = nil,
+		zoneUID = nil,
 
-		-- profile only options
+		-- profile settings
 		addGuildMembers = false,
 		alwaysAutoQueue = false,
 		alwaysReaddChannels = false,
@@ -119,7 +126,7 @@ local CharDefaults = {
 		communityReportList = nil,
 		membersCount = "",
 
-		-- match related stuff
+		-- match stuff
 		MatchEndDate = "",
 		MatchEndTime = 0,
 		MatchStartDate = "",
@@ -134,6 +141,7 @@ local CharDefaults = {
 		LocalQueues = {},
 		PlayerScoreCache = {},
 		Queues = {},
+		TeamUnits = {},
 	}
 }
 
@@ -1908,14 +1916,37 @@ local WorldGroup = {
 			get = function(info) return NS.db.global.notifyWarCrateInbound end,
 			set = function(info, value) NS.db.global.notifyWarCrateInbound = value end,
 		},
-		logWarCrateLocations = {
+		notifyGroupWarCrates = {
 			type = "toggle",
 			order = 3,
+			name = L["Notify your group about incoming War Supply Crates?"],
+			desc = L["This will send messages to your group about incoming War Supply Crates."],
+			width = "full",
+			get = function(info) return NS.db.global.notifyGroupWarCrates end,
+			set = function(info, value) NS.db.global.notifyGroupWarCrates = value end,
+		},
+		logWarCrateLocations = {
+			type = "toggle",
+			order = 4,
 			name = L["Log key War Supply Crate Locations?"],
 			desc = L["This will save some key locations when a War Supply Crate is detected."],
 			width = "full",
 			get = function(info) return NS.db.global.logWarCrateLocations end,
 			set = function(info, value) NS.db.global.logWarCrateLocations = value end,
+		},
+		purgeWarCrateLocationsTime = {
+			type = "select",
+			order = 5,
+			name = L["Purge logged War Supply Crate Locations timeframe?"],
+			desc = L["This is the amount of time before it starts purging logged roster list for matches."],
+			values = {
+				[0] = L["Never"],
+				[1] = L["7 Days"],
+				[2] = L["14 Days"],
+				[3] = L["30 Days"],
+			},
+			get = function(info) return NS.db.global.purgeWarCrateLocationsTime end,
+			set = function(info, value) NS.db.global.purgeWarCrateLocationsTime = value end,
 		},
 	}
 }

@@ -48,8 +48,10 @@ NS.CommFlare.CF = {
 	CDMEnabled = false,
 	CDMPersistent = false,
 	ChannelStreamsLoaded = false,
+	CrateHasDropped = false,
 	DefaultVerified = false,
 	Disabled = false,
+	ExtCrateTracker = false,
 	InActiveDelve = false,
 	InitialLogin = false,
 	Invisible = false,
@@ -107,6 +109,7 @@ NS.CommFlare.CF = {
 	PlayerRank = 0,
 	Position = 0,
 	PreviousCount = 0,
+	PreviousNumScores = 0,
 	PreviousEquipSetID = -1,
 	RegenOptions = 0,
 	QuestID = 0,
@@ -175,6 +178,7 @@ NS.CommFlare.CF = {
 	-- zone specific data
 	instanceID = nil,
 	serverID = nil,
+	spawnUID = nil,
 	zoneUID = nil,
 
 	-- misc tables

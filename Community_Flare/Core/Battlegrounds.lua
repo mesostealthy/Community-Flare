@@ -327,6 +327,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.LogListPlayers = {}
 	NS.CommFlare.CF.MapInfo = {}
 	NS.CommFlare.CF.RosterList = {}
+	NS.CommFlare.CF.TeamUnits = {}
 	NS.CommFlare.CF.KosRefreshTime = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchEndDate = ""
@@ -337,6 +338,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.NumAllyGlaives = 0
 	NS.CommFlare.CF.NumHordeGlaives = 0
 	NS.CommFlare.CF.PassLeadWarning = 0
+	NS.CommFlare.CF.PreviousNumScores = 0
 	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.Reloaded = false
 
@@ -908,7 +910,7 @@ function NS:Print_Community_Stuff(isPrint, timer)
 			-- build member list
 			local list = nil
 			for k,v in pairs(NS.CommFlare.CF.CommNamesList) do
-				-- list still empty? start it!
+				-- first?
 				if (list == nil) then
 					list = tostring(v)
 				else
@@ -931,6 +933,39 @@ function NS:Print_Community_Stuff(isPrint, timer)
 				else
 					-- display community members
 					print(strformat(L["Community Members: %s"], list))
+				end
+			end
+
+			-- build left list
+			local left = nil
+			for player,data in pairs(NS.CommFlare.CF.TeamUnits) do
+				-- left?
+				if (data.left) then
+					-- first?
+					if (left == nil) then
+						left = player
+					else
+						left = strformat("%s, %s", left, player)
+					end
+				end
+			end
+
+			-- found left?
+			if (left ~= nil) then
+				-- has timer?
+				local faction = NS:UnitFactionGroup("player")
+				if (timer) then
+					-- display results staggered
+					TimerAfter(timer, function()
+						-- display community members
+						print(strformat(L["%s Players that left: %s"], faction, left))
+					end)
+
+					-- next
+					timer = timer + 0.1
+				else
+					-- display community members
+					print(strformat(L["%s Players that left: %s"], faction, left))
 				end
 			end
 		end
@@ -1165,8 +1200,11 @@ function NS:Promote_Battleground_Player(info, player)
 
 		-- auto promote?
 		if (bAutoPromote == true) then
-			-- promote
-			NS:PromoteToAssistant(info.name)
+			-- not left?
+			if (not NS.CommFlare.CF.TeamUnits[player].left) then
+				-- promote
+				NS:PromoteToAssistant(info.name)
+			end
 		end
 	end
 end
@@ -1208,18 +1246,18 @@ function NS:Reset_Battleground_Stuff()
 	NS.CommFlare.CF.Alliance.HealingDone = 0
 end
 
--- count stuff in battlegrounds and promote to assists
-function NS:Update_Battleground_Stuff(isPrint, bPromote)
+-- update raid roster stuff
+function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 	-- reset battleground stuff
 	NS:Reset_Battleground_Stuff()
 
 	-- get player rank
 	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
 
-	-- process all raid members
-	NS.CommFlare.CF.TeamUnits = {}
+	-- process all
+	local timestamp = time()
 	NS.CommFlare.CF.RaidLeader = L["N/A"]
-	local bLockdown = InChatMessagingLockdown()
+	local mercenary = UnitIsMercenary("player")
 	for i=1, MAX_RAID_MEMBERS do
 		-- found player / rank?
 		local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, assignedRole = GetRaidRosterInfo(i)
@@ -1237,9 +1275,21 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				NS.CommFlare.CF.RaidLeader = player
 			end
 
-			-- save friendly unit
+			-- not initialized?
+			if (not NS.CommFlare.CF.TeamUnits[player]) then
+				--- initialize
+				NS.CommFlare.CF.TeamUnits[player] = {}
+			end
+
+			-- save team player
 			local unit = "raid" .. i
-			NS.CommFlare.CF.TeamUnits[player] = { ["unit"] = unit, ["rank"] = rank }
+			NS.CommFlare.CF.TeamUnits[player].unit = unit
+			NS.CommFlare.CF.TeamUnits[player].name = name
+			NS.CommFlare.CF.TeamUnits[player].rank = rank
+			if (not NS.CommFlare.CF.TeamUnits[player].joined) then
+				-- just joined
+				NS.CommFlare.CF.TeamUnits[player].joined = timestamp
+			end
 
 			-- in chat lock down?
 			if (bLockdown) then
@@ -1270,7 +1320,6 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 				-- get community member
 				local playerGUID = UnitGUID(unit)
 				NS:Process_MemberGUID(playerGUID, player)
-				local mercenary = UnitIsMercenary("player")
 				local member = NS:Get_Community_Member(player)
 				if (member and member.clubs) then
 					-- mercenary?
@@ -1346,261 +1395,274 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 			end
 		end
 	end
+end
 
-	-- not in chat lock down?
-	if (not bLockdown) then
-		-- get player score info
-		local playerGUID = NS:UnitGUID("player")
-		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
+-- update scoreboard stuff
+function NS:Update_Scoreboard_Stuff(bPromote)
+	-- reset battleground stuff
+	NS:Reset_Battleground_Stuff()
 
-		-- reset battleground stuff
-		NS:Reset_Battleground_Stuff()
+	-- get player score info
+	local playerGUID = NS:UnitGUID("player")
+	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
 
-		-- process all scores
-		for i=1, GetNumBattlefieldScores() do
-			-- get score info (if capable)
-			local info = NS:GetScoreInfo(i)
-			if (info and info.name and not issecretvalue(info.name)) then
-				-- force name-realm format
-				local player = info.name
-				if (not strmatch(player, "-")) then
-					-- player is NOT AI?
-					if (info.honorLevel > 0) then
-						-- add realm name
-						player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
-					end
-				end
-
-				-- new player score cache?
-				if (not NS.CommFlare.CF.PlayerScoreCache[player]) then
-					-- initialize
-					NS.CommFlare.CF.PlayerScoreCache[player] = {}
-				end
-
-				-- copy info
-				NS.CommFlare.CF.PlayerScoreCache[player] = CopyTable(info)
-
-				-- has talent specialization?
-				NS.CommFlare.CF.IsTank = false
-				NS.CommFlare.CF.IsHealer = false
-				if (info.talentSpec and (info.talentSpec ~= "")) then
-					-- is healer or tank?
-					NS.CommFlare.CF.IsTank = NS:IsTank(info.talentSpec)
-					NS.CommFlare.CF.IsHealer = NS:IsHealer(info.talentSpec)
-				-- has tank role?
-				elseif (info.roleAssigned and (info.roleAssigned == 2)) then
-					-- tank found
-					NS.CommFlare.CF.IsTank = true
-				-- has healer role?
-				elseif (info.roleAssigned and (info.roleAssigned == 4)) then
-					-- healer found
-					NS.CommFlare.CF.IsHealer = true
-				end
-
-				-- alliance faction?
-				local mercenary = false
-				if (info.faction == Enum.PvPFaction.Alliance) then
-					-- increase alliance counts
-					NS.CommFlare.CF.Alliance.Count = NS.CommFlare.CF.Alliance.Count + 1
-						if (NS.CommFlare.CF.IsHealer == true) then
-						-- add to alliance healers
-						NS.CommFlare.CF.Alliance.Healers = NS.CommFlare.CF.Alliance.Healers + 1
-					elseif (NS.CommFlare.CF.IsTank == true) then
-						-- add to alliance tanks
-						NS.CommFlare.CF.Alliance.Tanks = NS.CommFlare.CF.Alliance.Tanks + 1
-					end
-
-					-- player is horde?
-					if (NS.faction == Enum.PvPFaction.Horde) then
-						-- mercenary
-						mercenary = true
-					end
-
-					-- has damage done?
-					if (info.damageDone) then
-						-- add to alliance damage done
-						NS.CommFlare.CF.Alliance.DamageDone = NS.CommFlare.CF.Alliance.DamageDone + info.damageDone
-					end
-
-					-- has healing done?
-					if (info.healingDone) then
-						-- add to alliance healing done
-						NS.CommFlare.CF.Alliance.HealingDone = NS.CommFlare.CF.Alliance.HealingDone + info.healingDone
-					end
-				-- horde faction?
-				elseif (info.faction == Enum.PvPFaction.Horde) then
-					-- increase horde counts
-					NS.CommFlare.CF.Horde.Count = NS.CommFlare.CF.Horde.Count + 1
-					if (NS.CommFlare.CF.IsHealer == true) then
-						-- add to horde healers
-						NS.CommFlare.CF.Horde.Healers = NS.CommFlare.CF.Horde.Healers + 1
-					elseif (NS.CommFlare.CF.IsTank == true) then
-						-- add to horde tanks
-						NS.CommFlare.CF.Horde.Tanks = NS.CommFlare.CF.Horde.Tanks + 1
-					end
-
-					-- player is alliance?
-					if (NS.faction == Enum.PvPFaction.Alliance) then
-						-- mercenary
-						mercenary = true
-					end
-
-					-- has damage done?
-					if (info.damageDone) then
-						-- add to horde damage done
-						NS.CommFlare.CF.Horde.DamageDone = NS.CommFlare.CF.Horde.DamageDone + info.damageDone
-					end
-
-					-- has healing done?
-					if (info.healingDone) then
-						-- add to horde healing done
-						NS.CommFlare.CF.Horde.HealingDone = NS.CommFlare.CF.Horde.HealingDone + info.healingDone
-					end
-				end
-
+	-- process all scores
+	for i=1, GetNumBattlefieldScores() do
+		-- get score info (if capable)
+		local info = NS:GetScoreInfo(i)
+		if (info and info.name and not issecretvalue(info.name)) then
+			-- force name-realm format
+			local player = info.name
+			if (not strmatch(player, "-")) then
 				-- player is NOT AI?
 				if (info.honorLevel > 0) then
-					-- get community member
-					NS:Process_MemberGUID(info.guid, player)
-					local member = NS:Get_Community_Member(player)
-					if (member and member.clubs) then
-						-- same faction as player?
-						local community = false
-						if (NS.faction == info.faction) then
-							-- mercenary?
-							if (mercenary == true) then
-								-- process all clubs
-								for k,v in pairs(member.clubs) do
-									-- mercenary counts setup?
-									if (not NS.CommFlare.CF.MercCounts[k]) then
-										-- initialize
-										NS.CommFlare.CF.MercCounts[k] = 0
-									end
+					-- add realm name
+					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+				end
+			end
 
-									-- increase
-									NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+			-- new player score cache?
+			if (not NS.CommFlare.CF.PlayerScoreCache[player]) then
+				-- initialize
+				NS.CommFlare.CF.PlayerScoreCache[player] = {}
+			end
 
-									-- mercenary names setup?
-									if (not NS.CommFlare.CF.MercNames[k]) then
-										-- initialize
-										NS.CommFlare.CF.MercNames[k] = {}
-									end
+			-- copy info
+			NS.CommFlare.CF.PlayerScoreCache[player] = CopyTable(info)
 
-									-- insert
-									tinsert(NS.CommFlare.CF.MercNames[k], player)
+			-- has talent specialization?
+			NS.CommFlare.CF.IsTank = false
+			NS.CommFlare.CF.IsHealer = false
+			if (info.talentSpec and (info.talentSpec ~= "")) then
+				-- is healer or tank?
+				NS.CommFlare.CF.IsTank = NS:IsTank(info.talentSpec)
+				NS.CommFlare.CF.IsHealer = NS:IsHealer(info.talentSpec)
+			-- has tank role?
+			elseif (info.roleAssigned and (info.roleAssigned == 2)) then
+				-- tank found
+				NS.CommFlare.CF.IsTank = true
+			-- has healer role?
+			elseif (info.roleAssigned and (info.roleAssigned == 4)) then
+				-- healer found
+				NS.CommFlare.CF.IsHealer = true
+			end
+
+			-- alliance faction?
+			local mercenary = false
+			if (info.faction == Enum.PvPFaction.Alliance) then
+				-- increase alliance counts
+				NS.CommFlare.CF.Alliance.Count = NS.CommFlare.CF.Alliance.Count + 1
+					if (NS.CommFlare.CF.IsHealer == true) then
+					-- add to alliance healers
+					NS.CommFlare.CF.Alliance.Healers = NS.CommFlare.CF.Alliance.Healers + 1
+				elseif (NS.CommFlare.CF.IsTank == true) then
+					-- add to alliance tanks
+					NS.CommFlare.CF.Alliance.Tanks = NS.CommFlare.CF.Alliance.Tanks + 1
+				end
+
+				-- player is horde?
+				if (NS.faction == Enum.PvPFaction.Horde) then
+					-- mercenary
+					mercenary = true
+				end
+
+				-- has damage done?
+				if (info.damageDone) then
+					-- add to alliance damage done
+					NS.CommFlare.CF.Alliance.DamageDone = NS.CommFlare.CF.Alliance.DamageDone + info.damageDone
+				end
+
+				-- has healing done?
+				if (info.healingDone) then
+					-- add to alliance healing done
+					NS.CommFlare.CF.Alliance.HealingDone = NS.CommFlare.CF.Alliance.HealingDone + info.healingDone
+				end
+			-- horde faction?
+			elseif (info.faction == Enum.PvPFaction.Horde) then
+				-- increase horde counts
+				NS.CommFlare.CF.Horde.Count = NS.CommFlare.CF.Horde.Count + 1
+				if (NS.CommFlare.CF.IsHealer == true) then
+					-- add to horde healers
+					NS.CommFlare.CF.Horde.Healers = NS.CommFlare.CF.Horde.Healers + 1
+				elseif (NS.CommFlare.CF.IsTank == true) then
+					-- add to horde tanks
+					NS.CommFlare.CF.Horde.Tanks = NS.CommFlare.CF.Horde.Tanks + 1
+				end
+
+				-- player is alliance?
+				if (NS.faction == Enum.PvPFaction.Alliance) then
+					-- mercenary
+					mercenary = true
+				end
+
+				-- has damage done?
+				if (info.damageDone) then
+					-- add to horde damage done
+					NS.CommFlare.CF.Horde.DamageDone = NS.CommFlare.CF.Horde.DamageDone + info.damageDone
+				end
+
+				-- has healing done?
+				if (info.healingDone) then
+					-- add to horde healing done
+					NS.CommFlare.CF.Horde.HealingDone = NS.CommFlare.CF.Horde.HealingDone + info.healingDone
+				end
+			end
+
+			-- player is NOT AI?
+			if (info.honorLevel > 0) then
+				-- get community member
+				NS:Process_MemberGUID(info.guid, player)
+				local member = NS:Get_Community_Member(player)
+				if (member and member.clubs) then
+					-- same faction as player?
+					local community = false
+					if (NS.faction == info.faction) then
+						-- mercenary?
+						if (mercenary == true) then
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- mercenary counts setup?
+								if (not NS.CommFlare.CF.MercCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercCounts[k] = 0
 								end
 
-								-- update stuff
-								NS.CommFlare.CF.PlayerMercenary = true
-								tinsert(NS.CommFlare.CF.MercNamesList, player)
-								NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
-							else
-								-- process all clubs
-								for k,v in pairs(member.clubs) do
-									-- community counts setup?
-									if (not NS.CommFlare.CF.CommCounts[k]) then
-										-- initialize
-										NS.CommFlare.CF.CommCounts[k] = 0
-									end
+								-- increase
+								NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
 
-									-- increase
-									NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
-
-									-- community names setup?
-									if (not NS.CommFlare.CF.CommNames[k]) then
-										-- initialize
-										NS.CommFlare.CF.CommNames[k] = {}
-									end
-
-									-- insert
-									tinsert(NS.CommFlare.CF.CommNames[k], player)
+								-- mercenary names setup?
+								if (not NS.CommFlare.CF.MercNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercNames[k] = {}
 								end
 
-								-- update stuff
-								NS.CommFlare.CF.PlayerMercenary = false
-								tinsert(NS.CommFlare.CF.CommNamesList, player)
-								NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
-
-								-- should promote?
-								if (bPromote == true) then
-									-- promote battleground player
-									NS:Promote_Battleground_Player(info, player)
-								end
+								-- insert
+								tinsert(NS.CommFlare.CF.MercNames[k], player)
 							end
+
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = true
+							tinsert(NS.CommFlare.CF.MercNamesList, player)
+							NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
 						else
-							-- mercenary?
-							if (mercenary == true) then
-								-- process all clubs
-								for k,v in pairs(member.clubs) do
-									-- mercenary counts setup?
-									if (not NS.CommFlare.CF.MercCounts[k]) then
-										-- initialize
-										NS.CommFlare.CF.MercCounts[k] = 0
-									end
-
-									-- increase
-									NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
-
-									-- mercenary names setup?
-									if (not NS.CommFlare.CF.MercNames[k]) then
-										-- initialize
-										NS.CommFlare.CF.MercNames[k] = {}
-									end
-
-									-- insert
-									tinsert(NS.CommFlare.CF.MercNames[k], player)
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- community counts setup?
+								if (not NS.CommFlare.CF.CommCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommCounts[k] = 0
 								end
 
-								-- update stuff
-								NS.CommFlare.CF.PlayerMercenary = true
-								tinsert(NS.CommFlare.CF.MercNamesList, player)
-								NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
-							else
-								-- process all clubs
-								for k,v in pairs(member.clubs) do
-									-- community counts setup?
-									if (not NS.CommFlare.CF.CommCounts[k]) then
-										-- initialize
-										NS.CommFlare.CF.CommCounts[k] = 0
-									end
+								-- increase
+								NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
 
-									-- increase
-									NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
-
-									-- community names setup?
-									if (not NS.CommFlare.CF.CommNames[k]) then
-										-- initialize
-										NS.CommFlare.CF.CommNames[k] = {}
-									end
-
-									-- insert
-									tinsert(NS.CommFlare.CF.CommNames[k], player)
+								-- community names setup?
+								if (not NS.CommFlare.CF.CommNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommNames[k] = {}
 								end
 
-								-- update stuff
-								NS.CommFlare.CF.PlayerMercenary = false
-								tinsert(NS.CommFlare.CF.CommNamesList, player)
-								NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+								-- insert
+								tinsert(NS.CommFlare.CF.CommNames[k], player)
+							end
 
-								-- should promote?
-								if (bPromote == true) then
-									-- promote battleground player
-									NS:Promote_Battleground_Player(info, player)
-								end
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = false
+							tinsert(NS.CommFlare.CF.CommNamesList, player)
+							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+
+							-- should promote?
+							if (bPromote == true) then
+								-- promote battleground player
+								NS:Promote_Battleground_Player(info, player)
 							end
 						end
+					else
+						-- mercenary?
+						if (mercenary == true) then
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- mercenary counts setup?
+								if (not NS.CommFlare.CF.MercCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercCounts[k] = 0
+								end
 
-						-- should log list / i.e. has shared community?
-						if (NS:Get_LogList_Status(player) == true) then
-							-- update
-							NS.CommFlare.CF.LogListPlayers[player] = true
-							tinsert(NS.CommFlare.CF.LogListNamesList, player)
-							NS.CommFlare.CF.LogListCount = NS.CommFlare.CF.LogListCount + 1
+								-- increase
+								NS.CommFlare.CF.MercCounts[k] = NS.CommFlare.CF.MercCounts[k] + 1
+
+								-- mercenary names setup?
+								if (not NS.CommFlare.CF.MercNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.MercNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.MercNames[k], player)
+							end
+
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = true
+							tinsert(NS.CommFlare.CF.MercNamesList, player)
+							NS.CommFlare.CF.MercCount = NS.CommFlare.CF.MercCount + 1
+						else
+							-- process all clubs
+							for k,v in pairs(member.clubs) do
+								-- community counts setup?
+								if (not NS.CommFlare.CF.CommCounts[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommCounts[k] = 0
+								end
+
+								-- increase
+								NS.CommFlare.CF.CommCounts[k] = NS.CommFlare.CF.CommCounts[k] + 1
+
+								-- community names setup?
+								if (not NS.CommFlare.CF.CommNames[k]) then
+									-- initialize
+									NS.CommFlare.CF.CommNames[k] = {}
+								end
+
+								-- insert
+								tinsert(NS.CommFlare.CF.CommNames[k], player)
+							end
+
+							-- update stuff
+							NS.CommFlare.CF.PlayerMercenary = false
+							tinsert(NS.CommFlare.CF.CommNamesList, player)
+							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
+
+							-- should promote?
+							if (bPromote == true) then
+								-- promote battleground player
+								NS:Promote_Battleground_Player(info, player)
+							end
 						end
+					end
+
+					-- should log list / i.e. has shared community?
+					if (NS:Get_LogList_Status(player) == true) then
+						-- update
+						NS.CommFlare.CF.LogListPlayers[player] = true
+						tinsert(NS.CommFlare.CF.LogListNamesList, player)
+						NS.CommFlare.CF.LogListCount = NS.CommFlare.CF.LogListCount + 1
 					end
 				end
 			end
 		end
+	end
+end
+
+-- count stuff in battlegrounds and promote to assists
+function NS:Update_Battleground_Stuff(isPrint, bPromote)
+	-- process raid roster
+	local bLockdown = InChatMessagingLockdown()
+	NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
+
+	-- not in chat lock down?
+	if (not bLockdown) then
+		-- update scoreboard stuff
+		NS:Update_Scoreboard_Stuff(bPromote)
 	end
 
 	-- has mercenaries?
