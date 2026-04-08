@@ -2459,6 +2459,8 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 								[72723] = true, -- A Call to Battle
 								[80186] = true, -- Preserving in War
 								[83345] = true, -- A Call to Battle (Weekend Event)
+								[93505] = true, -- Enshrouded in War (Weekend Event)
+								[94457] = true, -- Midnight: Battlegrounds (Weekly Spark)
 							}
 
 							-- allowed quest?
@@ -2472,6 +2474,9 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 								[39040] = true, -- A Call to Battle (Weekend Event)
 								[47148] = true, -- Something Different (Seasonal)
 								[83345] = true, -- A Call to Battle (Weekend Event)
+								[93503] = true, -- Enshrouded in Teamwork (Weekend Event)
+								[93506] = true, -- Enshrouded in Battle (Weekend Event)
+								[94457] = true, -- Midnight: Battlegrounds (Weekly Spark)
 							}
 
 							-- allowed quest?

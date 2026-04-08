@@ -1,6 +1,2 @@
-v2.22.001:
--NEW SETTING: World Options -> Notify your group about incoming War Supply Crates?
--- If Enabled: This will send notification messages to your Party/Raid about incoming War Supply Crates.
--NEW SETTING: World Options -> Purge logged War Supply Crate Locations timeframe?
--- This will purge the log of War Supply Crates based on how many days you have selected.
--BUGFIX: Blizzard blocked more UnitIsUnit calls due to RWF non-sense trash!
+v2.22.002:
+-Added Midnight relevant PVP Quests to allowed list to be shared in PVP Content.
