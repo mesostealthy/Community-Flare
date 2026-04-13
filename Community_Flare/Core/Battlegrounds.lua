@@ -367,7 +367,7 @@ function NS:Initialize_Battleground_Status()
 		elseif (NS.CommFlare.CF.MapID == 1478) then
 			-- initialize
 			NS:Ashran_Initialize()
-		-- slayers rise?
+		-- slayer's rise?
 		elseif (NS.CommFlare.CF.MapID == 2397) then
 			-- process stuff
 			NS:SlayersRise_Initialize()

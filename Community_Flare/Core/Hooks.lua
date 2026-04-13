@@ -38,7 +38,6 @@ local hook_HonorFrameQueueButton_OnEnter_installed = false
 local hook_LeaveLFG_installed = false
 local hook_PVPMatchResults_OnUpdate_installed = false
 local hook_QuickJoinRoleSelectionFrame_OnShow_installed = false
-local hook_GameTooltip_OnShow_installed = false
 local hook_SettingsPanel_OnHide_installed = false
 
 -- securely hook accept battlefield port
@@ -386,22 +385,6 @@ local function hook_QuickJoinRoleSelectionFrame_OnShow()
 	end
 end
 
--- securely hook game tooltip on show
-local function hook_GameTooltip_OnShow()
-	-- game tooltips blocked?
-	if (NS.db.global.blockGameTooltips == true) then
-		-- inside pvp?
-		local inInstance, instanceType = IsInInstance()
-		if (inInstance and (instanceType == "pvp")) then
-			-- not holding shift?
-			if (not IsShiftKeyDown()) then
-				-- hide
-				GameTooltip:Hide()
-			end
-		end
-	end
-end
-
 -- securely hook settings panel on hide
 local function hook_SettingsPanel_OnHide()
 	-- not inside pvp?
@@ -482,16 +465,6 @@ function NS:Battlefield_SetupHooks()
 			-- hook QuickJoinRoleSelectionFrame:OnShow
 			QuickJoinRoleSelectionFrame:HookScript("OnShow", hook_QuickJoinRoleSelectionFrame_OnShow)
 			hook_QuickJoinRoleSelectionFrame_OnShow_installed = true
-		end
-	end
-
-	-- GameTooltip:OnShow() not hooked?
-	if (hook_GameTooltip_OnShow_installed ~= true) then
-		--- game tooltip loaded?
-		if (GameTooltip) then
-			-- hook GameTooltip:OnShow
-			GameTooltip:HookScript("OnShow", hook_GameTooltip_OnShow)
-			hook_GameTooltip_OnShow_installed = true
 		end
 	end
 

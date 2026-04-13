@@ -26,6 +26,23 @@ local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local tinsert                                     = _G.table.insert
 
+-- group orders
+local ORDER = {
+	COMMUNITY = 1,
+	ASSIST = 2,
+	BATTLEGROUND = 3,
+	DATABASE = 4,
+	HOUSING = 5,
+	INVITE = 6,
+	KILLSHOT = 7,
+	PARTY = 8,
+	QUEUE = 9,
+	REPORT = 10,
+	VEHICLE = 11,
+	WORLD = 12,
+	DEBUG = 20,
+}
+
 -- local variables
 local settings_that_require_reload = {}
 
@@ -61,6 +78,8 @@ local GlobalDefaults = {
 		displayQueueEntryTimeLeft = false,
 		housingAddQuestWayPoints = true,
 		iocVehicleAlertSystem = false,
+		killShotPlaySound = false,
+		killShotScreenShot = false,
 		logWarCrateLocations = false,
 		notifyGroupWarCrates = false,
 		notifyPartyZoneChanges = false,
@@ -127,6 +146,7 @@ local CharDefaults = {
 		membersCount = "",
 
 		-- match stuff
+		KillingBlows = 0,
 		MatchEndDate = "",
 		MatchEndTime = 0,
 		MatchStartDate = "",
@@ -1069,7 +1089,7 @@ end
 local AssistButtonGroup = {
 	name = L["Assist Button Options"],
 	type = "group",
-	order = 2,
+	order = ORDER.ASSIST,
 	hidden = function() return (NS.faction ~= 0) end,
 	args = {
 		assistButtonTitle = {
@@ -1187,7 +1207,7 @@ local AssistButtonGroup = {
 local BattlegroundGroup = {
 	name = L["Battleground Options"],
 	type = "group",
-	order = 3,
+	order = ORDER.BATTLEGROUND,
 	args = {
 		battlegroundTitle = {
 			name = L["Battleground Options"],
@@ -1432,7 +1452,7 @@ local BattlegroundGroup = {
 local CommunityGroup = {
 	name = L["Community Options"],
 	type = "group",
-	order = 1,
+	order = ORDER.COMMUNITY,
 	args = {
 		generalTitle = {
 			name = L["Community Options"],
@@ -1529,7 +1549,7 @@ local CommunityGroup = {
 local DatabaseGroup = {
 	name = L["Database Options"],
 	type = "group",
-	order = 4,
+	order = ORDER.DATABASE,
 	args = {
 		generalTitle = {
 			name = L["Database Options"],
@@ -1558,7 +1578,7 @@ local DatabaseGroup = {
 local HousingGroup = {
 	name = L["Housing Options"],
 	type = "group",
-	order = 5,
+	order = ORDER.HOUSING,
 	args = {
 		worldTitle = {
 			name = L["Housing Options"],
@@ -1582,7 +1602,7 @@ local HousingGroup = {
 local InviteGroup = {
 	name = L["Invite Options"],
 	type = "group",
-	order = 6,
+	order = ORDER.INVITE,
 	args = {
 		inviteTitle = {
 			name = L["Invite Options"],
@@ -1611,11 +1631,44 @@ local InviteGroup = {
 	}
 }
 
+-- killshot group
+local KillShotGroup = {
+	name = L["Killshot Options"],
+	type = "group",
+	order = ORDER.KILLSHOT,
+	args = {
+		killshotTitle = {
+			name = L["Killshot Options"],
+			type = "header",
+			order = 1,
+			width = "full",
+		},
+		killShotPlaySound = {
+			type = "toggle",
+			order = 2,
+			name = L["Automatically play a sound upon getting a Killing Blow?"],
+			desc = L["This will automatically play a sound when you score a Killing Blow."],
+			width = "full",
+			get = function(info) return NS.db.global.killShotPlaySound end,
+			set = function(info, value) NS.db.global.killShotPlaySound = value end,
+		},
+		killShotScreenShot = {
+			type = "toggle",
+			order = 3,
+			name = L["Automatically take a screenshot upon getting a Killing Blow?"],
+			desc = L["This will automatically take a screenshot when you score a Killing Blow."],
+			width = "full",
+			get = function(info) return NS.db.global.killShotScreenShot end,
+			set = function(info, value) NS.db.global.killShotScreenShot = value end,
+		}
+	},
+}
+
 -- party group
 local PartyGroup = {
 	name = L["Party Options"],
 	type = "group",
-	order = 7,
+	order = ORDER.PARTY,
 	args = {
 		partyTitle = {
 			name = L["Party Options"],
@@ -1675,7 +1728,7 @@ local PartyGroup = {
 local QueueGroup = {
 	name = L["Queue Options"],
 	type = "group",
-	order = 8,
+	order = ORDER.QUEUE,
 	args = {
 		queueTitle = {
 			name = L["Queue Options"],
@@ -1809,7 +1862,7 @@ local QueueGroup = {
 local ReportGroup = {
 	name = L["Report Options"],
 	type = "group",
-	order = 9,
+	order = ORDER.REPORT,
 	args = {
 		generalTitle = {
 			name = L["Report Options"],
@@ -1861,7 +1914,7 @@ local ReportGroup = {
 local VehicleGroup = {
 	name = L["Vehicle Options"],
 	type = "group",
-	order = 10,
+	order = ORDER.VEHICLE,
 	args = {
 		generalTitle = {
 			name = L["Vehicle Options"],
@@ -1899,7 +1952,7 @@ local VehicleGroup = {
 local WorldGroup = {
 	name = L["World Options"],
 	type = "group",
-	order = 11,
+	order = ORDER.WORLD,
 	args = {
 		worldTitle = {
 			name = L["World Options"],
@@ -1955,7 +2008,7 @@ local WorldGroup = {
 local DebugGroup = {
 	name = L["Debug Options"],
 	type = "group",
-	order = 20,
+	order = ORDER.DEBUG,
 	args = {
 		debugTitle = {
 			name = L["Debug Options"],
@@ -2039,6 +2092,7 @@ function NS:CreateConfigOptions()
 			DebugGroup = DebugGroup,
 			HousingGroup = HousingGroup,
 			InviteGroup = InviteGroup,
+			KillShotGroup = KillShotGroup,
 			PartyGroup = PartyGroup,
 			QueueGroup = QueueGroup,
 			ReportGroup = ReportGroup,

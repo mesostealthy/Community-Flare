@@ -21,9 +21,9 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.22.001:
--NEW SETTING: World Options -> Notify your group about incoming War Supply Crates?
--- If Enabled: This will send notification messages to your Party/Raid about incoming War Supply Crates.
--NEW SETTING: World Options -> Purge logged War Supply Crate Locations timeframe?
--- This will purge the log of War Supply Crates based on how many days you have selected.
--BUGFIX: Blizzard blocked more UnitIsUnit calls due to RWF non-sense trash!
+v2.23.001:
+-NEW FEATURE: GameObjects now show a text percent for the health left upon mouse over.
+-- i.e. Gates / Walls in Isle of Conquest / Wintergrasp Battlegrounds!
+-NEW SETTINGS GROUP: Killshot Options
+--NEW SETTING: Killshot Options -> Automatically play a sound upon getting a Killing Blow?
+--NEW SETTING: KillShot Options -> Automatically take a screenshot upon getting a Killing Blow?

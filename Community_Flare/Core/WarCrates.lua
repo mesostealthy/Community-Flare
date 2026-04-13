@@ -24,10 +24,12 @@ local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
-local mdeg                                        = _G.math.deg
+local mabs                                        = _G.math.abs
 local matan2                                      = _G.math.atan2
+local mdeg                                        = _G.math.deg
 local strformat                                   = _G.string.format
 local strsplit                                    = _G.string.split
+local strsub                                      = _G.string.sub
 local tinsert                                     = _G.table.insert
 local tremove                                     = _G.table.remove
 
@@ -38,7 +40,7 @@ function NS:Check_For_Invalid_War_Crate_Position(mapID, x, y)
 	local posY = tostring(y)
 
 	-- process all
-	for k,v in pairs(NS.WarCrateLocations) do
+	for k,v in pairs(NS.WarCrateStartLocations) do
 		-- location matches?
 		if ((posX == v.x) and (posY == v.y)) then
 			-- invalid
@@ -50,20 +52,49 @@ function NS:Check_For_Invalid_War_Crate_Position(mapID, x, y)
 	return false
 end
 
+-- find war supply drop locations
+function NS:FindWarSupplyCrateDropLocation(mapID, x, y, degree)
+	-- has locations?
+	if (NS.WarCrateStartLocations[mapID] and NS.WarCrateDropLocations[mapID]) then
+		-- remove decimals
+		degree = strsplit(".", tostring(degree))
+		if (degree) then
+			-- not starting location?
+			local xString = tostring(x)
+			local xPos = strsub(NS.WarCrateStartLocations[mapID].x, 1, 9)
+			if (not xString:find(xPos)) then
+				-- process drop locations
+				degree = tonumber(degree)
+				for k,v in pairs(NS.WarCrateDropLocations[mapID]) do
+					-- matches range?
+					if ((degree >= v.dl) and (degree <= v.dh)) then
+						-- return drop location
+						return v.x, v.y
+					end
+				end
+			end
+		end
+	end
+
+	-- failed
+	return nil, nil
+end
+
 -- get war supply crate angle
 function NS:GetWarSupplyCrateAngle(mapID, x2, y2)
 	-- has location data?
-	if (NS.WarCrateLocations[mapID]) then
+	if (NS.WarCrateStartLocations[mapID]) then
 		-- calculate angle degree
-		local x1 = NS.WarCrateLocations[mapID].x * 100.0
-		local y1 = NS.WarCrateLocations[mapID].y * 100.0
+		local x1 = NS.WarCrateStartLocations[mapID].x * 100.0
+		local y1 = NS.WarCrateStartLocations[mapID].y * 100.0
 		local dx = (x2 * 100.0) - x1
 		local dy = (y2 * 100.0) - y1
-		local angle_rad = matan2(dy, dx) 
-		local angle_deg = mdeg(angle_rad)
-
-		-- return angle degree
-		return angle_deg
+		local absX = mabs(dx)
+		local absY = mabs(dy)
+		if ((absX > 0.001) and (absY > 0.001)) then
+			-- calculate angle degree
+			return mdeg(matan2(dy, dx))
+		end
 	end
 
 	-- failed
@@ -167,12 +198,8 @@ function NS:PurgeWarSupplyCrates()
 		if (v.mapID and v.x and v.y) then
 			-- no degree yet?
 			if (not v.degree) then
-				-- get war supply crate angle
-				local degree = NS:GetWarSupplyCrateAngle(v.mapID, v.x, v.y)
-				if (degree) then
-					-- save degree
-					NS.CommFlare.CF.WarCrateLocations[k].degree = tonumber(degree)
-				end
+				-- save degree
+				NS.CommFlare.CF.WarCrateLocations[k].degree = NS:GetWarSupplyCrateAngle(v.mapID, v.x, v.y)
 			end
 		end
 	end

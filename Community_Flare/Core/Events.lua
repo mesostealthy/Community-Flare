@@ -12,6 +12,7 @@ local CreateDataProvider                          = _G.CreateDataProvider
 local DeclineQuest                                = _G.DeclineQuest
 local FlashClientIcon                             = _G.FlashClientIcon
 local GenericTraitUI_LoadUI                       = _G.GenericTraitUI_LoadUI
+local GetAchievementCriteriaInfoByID              = _G.GetAchievementCriteriaInfoByID
 local GetAddOnCPUUsage                            = _G.GetAddOnCPUUsage
 local GetAddOnMemoryUsage                         = _G.GetAddOnMemoryUsage
 local GetAutoCompletePresenceID                   = _G.GetAutoCompletePresenceID
@@ -43,6 +44,7 @@ local PVPMatchScoreboard                          = _G.PVPMatchScoreboard
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local RespondToInviteConfirmation                 = _G.RespondToInviteConfirmation
+local Screenshot                                  = _G.Screenshot
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
 local SetCVar                                     = _G.SetCVar
 local SocialQueueUtil_GetRelationshipInfo         = _G.SocialQueueUtil_GetRelationshipInfo
@@ -51,8 +53,11 @@ local StaticPopup_Hide                            = _G.StaticPopup_Hide
 local StaticPopup1Text                            = _G.StaticPopup1Text
 local ToggleFrame                                 = _G.ToggleFrame
 local UnitName                                    = _G.UnitName
+local UnitNameFromGUID                            = _G.UnitNameFromGUID
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
+local ClassColorGetClassColor                     = _G.C_ClassColor.GetClassColor
+local ColorUtilWrapTextInColorCode                = _G.C_ColorUtil.WrapTextInColorCode
 local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
 local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
 local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
@@ -256,7 +261,7 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 	end
 
 	-- war mode enabled?
-	if (PvPIsWarModeFeatureEnabled() == true) then
+	if (PvPIsWarModeFeatureEnabled()) then
 		-- Malicia?
 		local incoming = false
 		if (sender == "Malicia") then
@@ -724,7 +729,7 @@ function NS.CommFlare:CURRENCY_DISPLAY_UPDATE(msg, ...)
 		-- notify when war crate is inbound?
 		if (NS.db.global.notifyWarCrateInbound) then
 			-- war mode enabled?
-			if (PvPIsWarModeFeatureEnabled() == true) then
+			if (PvPIsWarModeFeatureEnabled()) then
 				-- remove all war supply crate waypoints
 				NS:TomTomRemoveWaypoints("War Supply Crate")
 			end
@@ -1540,6 +1545,22 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 	end
 end
 
+-- process player dead
+function NS.CommFlare:PLAYER_DEAD(msg)
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- reset killing blows
+		NS.CommFlare.CF.KillingBlows = 0
+
+		-- build message
+		local message = ColorUtilWrapTextInColorCode(strformat("%s has died! Kill streak has been reset!", NS.CommFlare.CF.PlayerName), NS.KillStreakTextColorCode)
+		if (message) then
+			-- display
+			print(message)
+		end
+	end
+end
+
 -- process player entering battleground
 function NS.CommFlare:PLAYER_ENTERING_BATTLEGROUND(msg)
 	-- debug print enabled?
@@ -1565,8 +1586,16 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	end
 
 	-- setup player
+	local _, className, _ = UnitClass("player")
+	NS.CommFlare.CF.PlayerClass = className
+	NS.CommFlare.CF.PlayerName = UnitName("player")
+	NS.CommFlare.CF.PlayerGUID = NS:UnitGUID("player")
+	local classColor = ClassColorGetClassColor(className)
+	NS.CommFlare.CF.PlayerClassColor = classColor:GenerateHexColor()
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
+	NS.CommFlare.CF.TotalBGHKs = select(4, GetAchievementCriteriaInfoByID(382, 0))
+	NS.CommFlare.CF.TotalBGKBs = select(4, GetAchievementCriteriaInfoByID(1491, 0))
 
 	-- build stuff
 	NS:Build_Battlegrounds()
@@ -1866,6 +1895,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	-- run once only?
 	if (NS.CommFlare.CF.RunOnce == false) then
 		-- setup context menus
+		NS:CreateTooltipFrame()
 		NS:Setup_Context_Menus()
 
 		-- has now run once
@@ -1902,6 +1932,47 @@ function NS.CommFlare:PLAYER_MAP_CHANGED(msg, ...)
 	if (NS.CommFlare.CF.InActiveDelve == true) then
 		-- exited
 		NS.CommFlare.CF.InActiveDelve = false
+	end
+end
+
+-- process player pvp kills changed
+function NS.CommFlare:PLAYER_PVP_KILLS_CHANGED(msg, ...)
+	local unitTarget = ...
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- player?
+		local totalBGHKs = select(4, GetAchievementCriteriaInfoByID(382, 0))
+		local totalBGKBs = select(4, GetAchievementCriteriaInfoByID(1491, 0))
+		if (not issecretvalue(unitTarget) and (unitTarget == "player")) then
+			-- verify honorable killing blow
+			if ((totalBGHKs > NS.CommFlare.CF.TotalBGHKs) and (totalBGKBs > NS.CommFlare.CF.TotalBGKBs)) then
+				-- increase killing blows
+				local numKills = (totalBGKBs - NS.CommFlare.CF.TotalBGKBs)
+				NS.CommFlare.CF.KillingBlows = NS.CommFlare.CF.KillingBlows + numKills
+
+				-- build message
+				local player = ColorUtilWrapTextInColorCode(NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerClassColor)
+				local message = ColorUtilWrapTextInColorCode(strformat("%s has pwned %d player/s! Kill streak of %d!", player, numKills, NS.CommFlare.CF.KillingBlows), NS.KillStreakTextColorCode)
+				if (message) then
+					-- display
+					print(message)
+				end
+
+				-- play killing blow sound
+				NS:PlayKillingBlowSound()
+
+				-- take a screenshot?
+				if (NS.db.global.killShotScreenShot) then
+					-- screenshot
+					Screenshot()
+				end
+			end
+		end
+
+		-- update
+		NS.CommFlare.CF.TotalBGHKs = totalBGHKs
+		NS.CommFlare.CF.TotalBGKBs = totalBGKBs
 	end
 end
 
@@ -2013,6 +2084,32 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 			SetCVar("TurnSpeed", NS.CommFlare.CF.RegenJobs["TurnSpeed"])
 			NS.CommFlare.CF.RegenJobs["TurnSpeed"] = nil
 		end
+
+		-- HideTomTomBlock?
+		if (NS.CommFlare.CF.RegenJobs["HideTomTomBlock"]) then
+			-- TomTom?
+			NS.CommFlare.CF.RegenJobs["HideTomTomBlock"]  = nil
+			if (TomTom and TomTomBlock) then
+				-- shown?
+				if (TomTomBlock:IsShown()) then
+					-- hide
+					TomTomBlock:Hide()
+				end
+			end
+		end
+
+		-- ShowTomTomBlock?
+		if (NS.CommFlare.CF.RegenJobs["ShowTomTomBlock"]) then
+			-- TomTom?
+			NS.CommFlare.CF.RegenJobs["ShowTomTomBlock"]  = nil
+			if (TomTom and TomTomBlock) then
+				-- not shown?
+				if (not TomTomBlock:IsShown()) then
+					-- show
+					TomTomBlock:Show()
+				end
+			end
+		end
 	end
 end
 
@@ -2105,6 +2202,27 @@ function NS.CommFlare:PVP_MATCH_ACTIVE(msg)
 				else
 					-- set regen options bit
 					NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
+				end
+			end
+		end
+	end
+
+	-- TomTom?
+	if (TomTom and TomTom.profile and TomTom.profile.block and TomTomBlock) then
+		-- enabled?
+		if (TomTom.profile.block.enable) then
+			-- not in combat lockdown?
+			if (InCombatLockdown() == false) then
+				-- shown?
+				if (TomTomBlock:IsShown()) then
+					-- hide
+					TomTomBlock:Hide()
+				end
+			else
+				-- visible?
+				if (NS.charDB.profile.visible == true) then
+					-- hide when available
+					NS.CommFlare.CF.RegenJobs["HideTomTomBlock"] = true
 				end
 			end
 		end
@@ -2749,6 +2867,28 @@ function NS.CommFlare:UI_INFO_MESSAGE(msg, ...)
 	elseif (lower:find(L["joined the queue for"])) then
 		-- update local group
 		NS:Update_Group("local")
+	-- group has been disbanded?
+	elseif (text:find("you have been removed from the group") or text:find("group has been disbanded")) then
+		-- TomTom?
+		if (TomTom and TomTom.profile and TomTom.profile.block and TomTomBlock) then
+			-- enabled?
+			if (TomTom.profile.block.enable) then
+				-- not in combat lockdown?
+				if (InCombatLockdown() == false) then
+					-- not shown?
+					if (not TomTomBlock:IsShown()) then
+						-- show
+						TomTomBlock:Show()
+					end
+				else
+					-- visible?
+					if (NS.charDB.profile.visible == true) then
+						-- show when available
+						NS.CommFlare.CF.RegenJobs["ShowTomTomBlock"] = true
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -3041,6 +3181,22 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_STATUS(msg, ...)
 	NS:Update_Battlefield_Status(index)
 end
 
+-- process update mouseover unit
+function NS.CommFlare:UPDATE_MOUSEOVER_UNIT(msg)
+	-- game tooltips blocked?
+	if (NS.db.global.blockGameTooltips == true) then
+		-- inside pvp?
+		local inInstance, instanceType = IsInInstance()
+		if (inInstance and (instanceType == "pvp")) then
+			-- not holding shift?
+			if (not IsShiftKeyDown()) then
+				-- hide
+				GameTooltip:Hide()
+			end
+		end
+	end
+end
+
 -- process update ui widget
 function NS.CommFlare:UPDATE_UI_WIDGET(msg, ...)
 	local widgetInfo = ...
@@ -3094,7 +3250,7 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 	else
 		-- war mode enabled?
 		local list = NS:Get_Current_Vignettes(NS.WAR_SUPPLY_CRATE)
-		if (PvPIsWarModeFeatureEnabled() == true) then
+		if (PvPIsWarModeFeatureEnabled()) then
 			-- found crate?
 			if (list) then
 				-- process all
@@ -3313,11 +3469,13 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PARTY_INVITE_REQUEST")
 	self:RegisterEvent("PARTY_KILL")
 	self:RegisterEvent("PARTY_LEADER_CHANGED")
+	self:RegisterEvent("PLAYER_DEAD")
 	self:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
 	self:RegisterEvent("PLAYER_MAP_CHANGED")
+	self:RegisterEvent("PLAYER_PVP_KILLS_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
@@ -3341,6 +3499,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
+	self:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 	self:RegisterEvent("UPDATE_UI_WIDGET")
 	self:RegisterEvent("VIGNETTES_UPDATED")
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
@@ -3398,11 +3557,13 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PARTY_INVITE_REQUEST")
 	self:UnregisterEvent("PARTY_KILL")
 	self:UnregisterEvent("PARTY_LEADER_CHANGED")
+	self:UnregisterEvent("PLAYER_DEAD")
 	self:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
 	self:UnregisterEvent("PLAYER_MAP_CHANGED")
+	self:UnregisterEvent("PLAYER_PVP_KILLS_CHANGED")
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 	self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")
@@ -3426,6 +3587,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_SCORE")
 	self:UnregisterEvent("UPDATE_BATTLEFIELD_STATUS")
+	self:UnregisterEvent("UPDATE_MOUSEOVER_UNIT")
 	self:UnregisterEvent("UPDATE_UI_WIDGET")
 	self:UnregisterEvent("VIGNETTES_UPDATED")
 	self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")

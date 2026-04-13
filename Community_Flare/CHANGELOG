@@ -1,2 +1,6 @@
-v2.22.002:
--Added Midnight relevant PVP Quests to allowed list to be shared in PVP Content.
+v2.23.001:
+-NEW FEATURE: GameObjects now show a text percent for the health left upon mouse over.
+-- i.e. Gates / Walls in Isle of Conquest / Wintergrasp Battlegrounds!
+-NEW SETTINGS GROUP: Killshot Options
+--NEW SETTING: Killshot Options -> Automatically play a sound upon getting a Killing Blow?
+--NEW SETTING: KillShot Options -> Automatically take a screenshot upon getting a Killing Blow?

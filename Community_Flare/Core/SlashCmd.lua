@@ -178,7 +178,7 @@ local function Community_Flare_Slash_Command(input)
 		NS:ToggleVignetteList()
 	else
 		-- split words
-		local first, second, third, fourth = strsplit(" ", input)
+		local first, second, third, fourth, fifth = strsplit(" ", input)
 		first = strlower(first)
 		if (first == "find") then
 			-- has third?
@@ -255,6 +255,12 @@ local function Community_Flare_Slash_Command(input)
 					mapID = NS:GetBestMapForUnit("player")
 				end
 
+				-- has fifth?
+				if (fifth) then
+					-- force number
+					fifth = tonumber(fifth)
+				end
+
 				-- process all
 				local count = 0
 				print(strformat(L["Map ID: %d"], mapID))
@@ -267,10 +273,31 @@ local function Community_Flare_Slash_Command(input)
 							-- matched
 							matched = true
 						end
-					-- matches mapID + dropped location?
-					elseif ((v.mapID == mapID) and (v.vignetteID == 6066)) then
-						-- matched
-						matched = treue
+					-- matches mapID
+					elseif (v.mapID == mapID) then
+						-- has fifth?
+						if (fifth) then
+							-- matches vignetteID?
+							if (v.vignetteID == fifth) then
+								-- flying in?
+								if (v.vignetteID == 3689) then
+									-- has degree?
+									if (v.degree) then
+										-- matched
+										matched = true
+									end
+								else
+									-- matched
+									matched = true
+								end
+							end
+						else
+							-- matches dropped location?
+							if (v.vignetteID == 6066) then
+								-- matched
+								matched = true
+							end
+						end
 					end
 
 					-- matched?

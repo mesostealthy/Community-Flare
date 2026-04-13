@@ -20,6 +20,7 @@ local GetChannelName                              = _G.GetChannelName
 local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
 local GetCurrentBindingSet                        = _G.GetCurrentBindingSet
 local GetCVar                                     = _G.GetCVar
+local GetGuildInfo                                = _G.GetGuildInfo
 local GetLFGQueuedList                            = _G.GetLFGQueuedList
 local GetLFGRoles                                 = _G.GetLFGRoles
 local GetLFGRoleUpdate                            = _G.GetLFGRoleUpdate
@@ -32,6 +33,7 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInGuild                                   = _G.IsInGuild
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
+local PlaySoundFile                               = _G.PlaySoundFile
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RemoveCommunitiesChannel                    = _G.ChatFrameUtil.RemoveCommunitiesChannel
 local SaveBindings                                = _G.SaveBindings
@@ -55,7 +57,6 @@ local PartyInfoIsPartyWalkIn                      = _G.C_PartyInfo.IsPartyWalkIn
 local PvPIsBattleground                           = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
-local PvPIsWarModeFeatureEnabled                  = _G.C_PvP.IsWarModeFeatureEnabled
 local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -764,6 +765,7 @@ function NS:LoadSession()
 	NS.CommFlare.CF.PartyGUID = NS.charDB.profile.PartyGUID or nil
 	NS.CommFlare.CF.instanceID = NS.charDB.profile.instanceID or nil
 	NS.CommFlare.CF.MatchStatus = NS.charDB.profile.MatchStatus or 0
+	NS.CommFlare.CF.KillingBlows = NS.charDB.profile.KillingBlows or 0
 	NS.CommFlare.CF.ExtCrateTracker = NS.charDB.profile.ExtCrateTracker
 	NS.CommFlare.CF.TeamUnits = NS.charDB.profile.TeamUnits or {}
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
@@ -832,6 +834,7 @@ function NS:SaveSession()
 	NS.charDB.profile.PartyGUID = NS.CommFlare.CF.PartyGUID
 	NS.charDB.profile.instanceID = NS.CommFlare.CF.instanceID
 	NS.charDB.profile.MatchStatus = NS.CommFlare.CF.MatchStatus
+	NS.charDB.profile.KillingBlows = NS.CommFlare.CF.KillingBlows
 	NS.charDB.profile.ExtCrateTracker = NS.CommFlare.CF.ExtCrateTracker
 	NS.charDB.profile.TeamUnits = NS.CommFlare.CF.TeamUnits or {}
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
@@ -2356,6 +2359,84 @@ function NS:GetOnlineCommunityMembers(clubId, ...)
 
 	-- finished
 	return list
+end
+
+-- play killing blow sound
+function NS:PlayKillingBlowSound()
+	-- play sound effect on killing blow?
+	if (NS.db.global.killShotPlaySound) then
+		-- choose file
+		local effect = nil
+		if (NS.CommFlare.CF.KillingBlows >= 20) then
+			-- holy!
+			effect = "14.ogg"
+		elseif (NS.CommFlare.CF.KillingBlows >= 16) then
+			-- ludicrous
+			effect = "13.ogg"
+		elseif (NS.CommFlare.CF.KillingBlows >= 13) then
+			-- monster
+			effect = "12.ogg"
+		elseif (NS.CommFlare.CF.KillingBlows >= 11) then
+			-- ultra
+			effect = "11.ogg"
+		elseif (NS.CommFlare.CF.KillingBlows <= 10) then
+			-- 1-10 range
+			effect = strformat("%d.ogg", NS.CommFlare.CF.KillingBlows)
+		end
+
+		-- found effect?
+		if (effect and (effect ~= "")) then
+			-- play sound
+			local sound = "Interface\\AddOns\\Community_Flare\\Sounds\\" .. effect
+			PlaySoundFile(sound, "Master")
+		end
+	end
+end
+
+-- abbreviate float percentage (0 to 1 float value)
+function NS:AbbreviateFloatPercentage(value)
+	-- setup options
+	local options = {
+		breakpointData = {
+			{
+				breakpoint = 0.0001,
+				abbreviation = "%", 
+				significandDivisor = 0.01,
+				fractionDivisor = 1,
+				abbreviationIsGlobal = false,
+			},
+		}
+	}
+
+	-- abbreviate numbers
+	return AbbreviateNumbers(value, options)
+end
+
+-- get mouseover specialziation
+function NS:GetMouseoverSpecialization()
+	-- player?
+	local specialization = nil
+	if (UnitIsPlayer("mouseover")) then
+		-- has guild?
+		local guildName, rankName, rankID, guildRealm = GetGuildInfo("mouseover")
+		if (guildName) then
+			-- save specialization
+			specialization = GameTooltipTextLeft4:GetText()
+		else
+			-- check numlines
+			local numLines = GameTooltip:NumLines()
+			if (numLines == 5) then
+				-- save specialization
+				specialization = GameTooltipTextLeft3:GetText()
+			elseif (numLines == 6) then
+				-- save specialization
+				specialization = GameTooltipTextLeft4:GetText()
+			end
+		end
+	end
+
+	-- return specialization
+	return specialization
 end
 
 -- fully loaded
