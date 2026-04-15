@@ -21,9 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.23.001:
--NEW FEATURE: GameObjects now show a text percent for the health left upon mouse over.
--- i.e. Gates / Walls in Isle of Conquest / Wintergrasp Battlegrounds!
--NEW SETTINGS GROUP: Killshot Options
---NEW SETTING: Killshot Options -> Automatically play a sound upon getting a Killing Blow?
---NEW SETTING: KillShot Options -> Automatically take a screenshot upon getting a Killing Blow?
+v2.24.001:
+-DEBUG Window will not constantly re-create itself if you do not have Debug Print enabled.
