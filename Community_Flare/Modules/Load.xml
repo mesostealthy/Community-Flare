@@ -1,0 +1,16 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+	<Script file="Capping.lua" />
+	<Script file="REPorter.lua" />
+	<Script file="TomTom.lua" />
+	<Script file="Assist.lua" />
+	<Script file="AlteracValley.lua" />
+	<Script file="Ashran.lua" />
+	<Script file="ArathiBasin.lua" />
+	<Script file="DeepwindGorge.lua" />
+	<Script file="EyeOfTheStorm.lua" />
+	<Script file="Gilneas.lua" />
+	<Script file="IsleOfConquest.lua" />
+	<Script file="SlayersRise.lua" />
+	<Script file="Wintergrasp.lua" />
+</Ui>

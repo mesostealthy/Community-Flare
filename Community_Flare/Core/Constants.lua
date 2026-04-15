@@ -1,0 +1,585 @@
+-- initialize
+local LibStub = LibStub
+local ADDON_NAME, NS = ...
+if (not NS.Loaded or not NS.Loaded["Bootstrap"]) then return end
+local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
+if (not L or not NS.CommFlare) then return end
+
+-- localize stuff
+local _G                                          = _G
+local GetNumBattlegroundTypes                     = _G.GetNumBattlegroundTypes
+local IsLFGDungeonJoinable                        = _G.IsLFGDungeonJoinable
+local GetTrainingGrounds                          = _G.C_PvP.GetTrainingGrounds
+local GetSpellName                                = _G.C_Spell.GetSpellName
+local ipairs                                      = _G.ipairs
+local pairs                                       = _G.pairs
+local select                                      = _G.select
+local tinsert                                     = _G.table.insert
+
+-- kill streak settings
+NS.KillStreakTextColorCode = "ffd68d63"
+
+-- epic battlegrounds
+NS.CommFlare.EpicBattlegrounds = {}
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Random Epic Battleground"], id = 1, prefix = "EPIC" })
+tinsert(NS.CommFlare.EpicBattlegrounds, { name = L["Korrak's Revenge"], id = 6, prefix = "KR" })
+
+-- random battlegrounds
+NS.CommFlare.RandomBattlegrounds = {}
+
+-- brawls
+NS.CommFlare.Brawls = {
+	-- player queued strings?
+	["Arathi Basin Winter"] = { id = 1, prefix = "BLIZZ" },
+	["Classic Ashran"] = { id = 2, prefix = "CLASH" },
+	["Comp Stomp"] = { id = 3, prefix = "COMP" },
+	["Cooking: Impossible"] = { id = 4, prefix = "COOK" },
+	["Deep Six"] = { id = 5, prefix = "DEEP" },
+	["Deepwind Dunk"] = { id = 6, prefix = "DUNK" },
+	["Gravity Lapse"] = { id = 7, prefix = "GRAV" },
+	["All Arenas"] = { id = 8, prefix = "PACK" },
+	["Shado-Pan Showdown"] = { id = 9, prefix = "SHAD" },
+	["Temple of Hotmogu"] = { id = 11, prefix = "BRTOH" },
+	["Warsong Scramble"] = { id = 12, prefix = "BRWSG" },
+}
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Arathi Blizzard"], id = 1, prefix = "BLIZZ" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Classic Ashran"], id = 2, prefix = "CLASH" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Comp Stomp"], id = 3, prefix = "COMP" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Cooking: Impossible"], id = 4, prefix = "COOK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Deep Six"], id = 5, prefix = "DEEP" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Deepwind Dunk"], id = 6, prefix = "DUNK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Gravity Lapse"], id = 7, prefix = "GRAV" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Packed House"], id = 8, prefix = "PACK" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Shado-Pan Showdown"], id = 9, prefix = "SHAD" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Southshore vs. Tarren Mill"], id = 10, prefix = "SSvTM" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Temple of Hotmogu"], id = 11, prefix = "BRTOH" })
+tinsert(NS.CommFlare.Brawls, { name = L["Brawl: Warsong Scramble"], id = 12, prefix = "BRWSG" })
+
+-- hearth stone spells
+NS.CommFlare.HearthStoneSpells = {
+	[8690] = "Hearthstone",
+	[39937] = "There's No Place Like Home",
+	[59317] = "Teleporting",
+	[60321] = "Scroll of Recall",
+	[75136] = "Ethereal Portal",
+	[94719] = "The Innkeeper's Daughter",
+	[136508] = "Dark Portal",
+	[139432] = "Teleport: Brawl'gar Arena",
+	[171253] = "Garrison Hearthstone",
+	[222695] = "Dalaran Hearthstone",
+	[231504] = "Tome of Town Portal",
+	[278244] = "Greatfather Winter's Hearthstone",
+	[278559] = "Headless Horseman's Hearthstone",
+	[285362] = "Lunar Elder's Hearthstone",
+	[285424] = "Peddlefeet's Lovely Hearthstone",
+	[286031] = "Noble Gardener's Hearthstone",
+	[286331] = "Fire Eater's Hearthstone",
+	[286353] = "Brewfest Reveler's Hearthstone",
+	[298068] = "Holographic Digitalization Hearthstone",
+	[308742] = "Eternal Traveler's Hearthstone",
+	[326064] = "Night Fae Hearthstone",
+	[340200] = "Necrolord Hearthstone",
+	[342122] = "Venthyr Sinstone",
+	[345393] = "Kyrian Hearthstone",
+	[346060] = "Necrolord Hearthstone",
+	[363799] = "Dominated Hearthstone",
+	[366945] = "Enlightened Hearthstone",
+	[367013] = "Broker Translocation Matrix",
+	[375357] = "Timewalker's Hearthstone",
+	[391042] = "Ohn'ir Windsage's Hearthstone",
+	[401802] = "Stone of the Hearth",
+	[412555] = "Path of the Naaru",
+	[420418] = "Deepdweller's Earthen Hearthstone",
+	[422284] = "Hearthstone of the Flame",
+	[431644] = "Stone of the Hearth",
+	[438606] = "Draenic Hologem",
+	[463481] = "Notorious Thread's Hearthstone",
+	[1220729] = "Explosive Hearthstone",
+	[1240219] = "P.O.S.T. Master's Express Hearthstone",
+	[1242509] = "Cosmic Hearthstone",
+	[1255801] = "Personal Key to the Arcantina",
+	[1261979] = "Lightcalled Hearthstone",
+	[1270583] = "Naaru's Enfold",
+	[1270814] = "Preyseeker's Hearthstone",
+	[1273401] = "Corewarden's Hearthstone",
+}
+
+-- teleport spells
+NS.CommFlare.TeleportSpells = {
+	[556] = "Astral Recall",
+	[3561] = "Teleport: Stormwind",
+	[3562] = "Teleport: Ironforge",
+	[3563] = "Teleport: Undercity",
+	[3565] = "Teleport: Darnassus",
+	[3566] = "Teleport: Thunder Bluff",
+	[3567] = "Teleport: Orgrimmar",
+	[23442] = "Dimensional Ripper - Everlook",
+	[23453] = "Ultrasafe Transporter: Gadgetzan",
+	[26373] = "Lunar Invitation",
+	[28148] = "Portal: Karazhan",
+	[32271] = "Teleport: Exodar",
+	[32272] = "Teleport: Silvermoon",
+	[33690] = "Teleport: Shattrath",
+	[35715] = "Teleport: Shattrath",
+	[36890] = "Area 52 Transporter",
+	[36941] = "Toshley's Station Transporter",
+	[41234] = "Teleport: Black Temple",
+	[49358] = "Teleport: Stonard",
+	[49359] = "Teleport: Theramore",
+	[49844] = "Using Direbrew's Remote",
+	[53140] = "Teleport: Dalaran - Northrend",
+	[54406] = "Teleport: Dalaran",
+	[66238] = "Teleport: Argent Tournament",
+	[67833] = "Wormhole Generator: Northrend",
+	[71436] = "Teleport: Booty Bay",
+	[73324] = "Portal: Dalaran",
+	[80256] = "Teleport: Deepholm",
+	[82674] = "Teleport With Error",
+	[88342] = "Teleport: Tol Borad",
+	[88344] = "Teleport: Tol Borad",
+	[89157] = "Teleport: Stormwind",
+	[89158] = "Teleport: Orgrimmar",
+	[89597] = "Teleport: Tol Borad",
+	[89598] = "Teleport: Tol Borad",
+	[120146] = "Ancient Portal: Dalaran",
+	[126755] = "Wormhole: Pandaria",
+	[126956] = "Lorewalker's Lodestone",
+	[132621] = "Teleport: Vale of Eternal Blossoms",
+	[132627] = "Teleport: Vale of Eternal Blossoms",
+	[139437] = "Teleport: Bizmo's Brewpub",
+	[145430] = "Call of the Mists",
+	[163830] = "Wormhole Centrifuge",
+	[175604] = "Ascend to Bladespire",
+	[175608] = "Ascend to Karabor",
+	[176242] = "Teleport: Warspear",
+	[176248] = "Teleport: Stormshield",
+	[189838] = "Teleport to Shipyard",
+	[193669] = "Beginner's Guide to Dimensional Rifting",
+	[193759] = "Teleport: Hall of the Guardian",
+	[216138] = "Emblem of Margoss",
+	[220746] = "Scroll of Teleport: Ravenholdt",
+	[220989] = "Teleport: Dalaran",
+	[223805] = "Advanced Dimensional Rifting",
+	[224869] = "Teleport: Dalaran - Broken Isles",
+	[231054] = "Teleport: Karazhan",
+	[250796] = "Wormhole Generator: Argus",
+	[281403] = "Teleport: Boralus",
+	[281404] = "Teleport: Dazar'alor",
+	[289283] = "Teleport: Dazar'alor",
+	[289284] = "Teleport: Boralus",
+	[299083] = "Wormhome Generator: Kul Tiras",
+	[299084] = "Wormhome Generator: Zandalar",
+	[300047] = "Mountebank's Colorful Cloak",
+	[324031] = "Wormhole Generator: Shadowlands",
+	[335671] = "Scroll of Teleport: Theater of Pain",
+	[344587] = "Teleport: Oribos",
+	[386379] = "Wormhole Generator: Dragon Isles",
+	[395277] = "Teleport: Valdrakken",
+	[406714] = "Scroll of Teleport: Zskera Vaults",
+	[446540] = "Teleport: Dornogal",
+	[448126] = "Wormhole Generator: Khaz Algar",
+	[1221356] = "Teleport: Orgrimmar",
+	[1221357] = "Teleport: Orgrimmar",
+	[1221359] = "Teleport: Stormwind",
+	[1221360] = "Teleport: Stormwind",
+}
+
+-- hero talent specs
+NS.CommFlare.HeroTalentSpecs = {
+	-- Death Knight
+	[31] = "San'layn",
+	[32] = "Rider of the Apocalypse",
+	[33] = "Deathbringer",
+
+	-- Demon Hunter
+	[34] = "Fel-Scarred",
+	[35] = "Aldrachi Reaver",
+
+	-- Druid
+	[21] = "Druid of the Claw",
+	[22] = "Wildstalker",
+	[23] = "Keeper of the Grove",
+	[24] = "Elune's Chosen",
+
+	-- Evoker
+	[36] = "Scalecommander",
+	[37] = "Flameshaper",
+	[38] = "Chronowarden",
+
+	-- Hunter
+	[42] = "Sentinel",
+	[43] = "Pack Leader",
+	[44] = "Dark Ranger",
+ 		
+	-- Mage
+	[39] = "Sunfury",
+	[40] = "Spellslinger",
+	[41] = "Frostfire",
+
+	-- Monk
+	[64] = "Conduit of the Celestials",
+	[65] = "Shado-pan",
+	[66] = "Master of Harmony",
+
+	-- Paladin
+	[48] = "Templar",
+	[49] = "Lightsmith",
+	[50] = "Herald of the Sun",
+
+	-- Priest
+	[18] = "Voidweaver",
+	[19] = "Archon",
+	[20] = "Oracle", 		
+
+	-- Rogue
+	[51] = "Trickster",
+	[52] = "Fatebound",
+	[53] = "Deathstalker",
+
+	-- Shaman
+	[54] = "Totemic",
+	[55] = "Stormbringer",
+	[56] = "Farseer",
+
+	-- Warlock
+	[57] = "Soul Harvester",
+	[58] = "Hellcaller",
+	[59] = "Diabolist",
+
+	-- Warrior
+	[60] = "Slayer",
+	[61] = "Mountain Thane",
+	[62] = "Colossus",
+}
+
+-- report times left
+NS.CommFlare.ReportTimesLeft = {
+	[0] = true,
+	[5] = true,
+	[10] = true,
+	[15] = true,
+	[20] = true,
+	[25] = true,
+	[30] = true,
+	[45] = true,
+	[60] = true,
+}
+
+-- build battle grounds
+local built_battlegrounds = false
+function NS:Build_Battlegrounds()
+	-- already built?
+	if (built_battlegrounds) then
+		-- finished
+		return
+	end
+
+	-- initialize random battlegrounds
+	NS.CommFlare.RandomBattlegrounds = {}
+	tinsert(NS.CommFlare.RandomBattlegrounds, { name = RANDOM_BATTLEGROUND, id = 1, prefix = "RBG" })
+
+	-- process all
+	for i = 1, GetNumBattlegroundTypes() do
+		-- get info
+		local info = NS:GetBattlegroundInfo(i)
+		if (info) then
+			-- epic battleground?
+			if (info.maxPlayers > 15) then
+				-- alterac valley?
+				if (info.mapID == 30) then
+					-- insert
+					tinsert(NS.CommFlare.EpicBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "AV" })
+				-- isle of conquest?
+				elseif (info.mapID == 628) then
+					-- insert
+					tinsert(NS.CommFlare.EpicBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "IOC" })
+				-- ashran?
+				elseif (info.mapID == 1191) then
+					-- insert
+					tinsert(NS.CommFlare.EpicBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "ASH" })
+				-- battle for wintergrasp?
+				elseif (info.mapID == 2118) then
+					-- insert
+					tinsert(NS.CommFlare.EpicBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "WG" })
+				-- slayer's rise?
+				elseif (info.mapID == 2799) then
+					-- insert
+					tinsert(NS.CommFlare.EpicBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "SLR" })
+				end
+			else
+				-- eye of the storm?
+				if (info.mapID == 566) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "EOTS" })
+				-- twin peaks?
+				elseif (info.mapID == 726) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "TWP" })
+				-- silvershard mines?
+				elseif (info.mapID == 727) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "SSM" })
+				-- battle for gilneas?
+				elseif (info.mapID == 761) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "BFG" })
+				-- temple of kotmogu?
+				elseif (info.mapID == 998) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "TOK" })
+				-- seething shore?
+				elseif (info.mapID == 1803) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "SSH" })
+				-- warsong gulch?
+				elseif (info.mapID == 2106) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "WSG" })
+				-- arathi basin?
+				elseif (info.mapID == 2107) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "AB" })
+				-- deepwind gorge?
+				elseif (info.mapID == 2245) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "DWG" })
+				-- deephaul ravine
+				elseif (info.mapID == 2656) then
+					-- insert
+					tinsert(NS.CommFlare.RandomBattlegrounds, { name = info.name, battlegroundID = info.battlegroundID, mapID = info.mapID, maxPlayers = info.maxPlayers, prefix = "DHR" })
+				end
+			end
+		end
+	end
+
+	-- successfully built
+	built_battlegrounds = true
+end
+
+-- build spells
+local built_spells = false
+function NS:Build_Spells()
+	-- already built?
+	if (built_spells) then
+		-- finished
+		return
+	end
+
+	-- process hearth stone spells
+	for k,v in pairs(NS.CommFlare.HearthStoneSpells) do
+		-- get name
+		local name = GetSpellName(k)
+		if (name) then
+			-- update name
+			NS.CommFlare.HearthStoneSpells[k] = name
+		end
+	end
+
+	-- process teleport spells
+	for k,v in pairs(NS.CommFlare.TeleportSpells) do
+		-- get name
+		local name = GetSpellName(k)
+		if (name) then
+			-- update name
+			NS.CommFlare.TeleportSpells[k] = name
+		end
+	end
+
+	-- successfully built
+	built_spells = true
+end
+
+-- build training grounds
+local built_training_grounds = false
+function NS:Build_Training_Grounds()
+	-- already built?
+	if (built_training_grounds) then
+		-- finished
+		return
+	end
+
+	-- process all
+	local list = GetTrainingGrounds()
+	for k,v in ipairs(list) do
+		-- is lfg dungeon joinable? 
+		local _, isAvailableForPlayer = IsLFGDungeonJoinable(v.lfgDungeonID)
+		if (isAvailableForPlayer) then
+			-- get instance ID
+			local info = {GetLFGDungeonInfo(v.lfgDungeonID)}
+			if (info) then
+				-- has instance ID?
+				local prefix = nil
+				local instanceID = info[22]
+				if (instanceID) then
+					-- arathi basin?
+					if (instanceID == 2107) then
+						-- set prefix
+						prefix = "TGAB"
+					-- battle for gilneas?
+					elseif (instanceID == 761) then
+						-- set prefix
+						prefix = "TGBFG"
+					-- silvershard mines?
+					elseif (instanceID == 727) then
+						-- set prefix
+						prefix = "TGSSM"
+					else
+						-- new training grounds map
+						print("TODO: New Training Grounds Map added!")
+					end
+				else
+					-- random
+					prefix = "RTG"
+				end
+
+				-- insert
+				tinsert(NS.CommFlare.Brawls, { name = info[1], id = v.lfgDungeonID, maxPlayers = v.maxPlayers, prefix = prefix })
+			end
+		end
+	end
+
+	-- successfully built
+	built_training_grounds = true
+end
+
+-- war supply crate stuff
+NS.WAR_SUPPLY_CRATE = "War Supply Crate"
+NS.WAR_SUPPLY_CRATES = {
+	[6067] = L["War Supply Crate has been looted for the Alliance!"],
+	[6068] = L["War Supply Crate has been looted for the Horde!"],
+	[6066] = L["War Supply Crate has fully dropped to the ground!"],
+	[2967] = L["War Supply Crate is dropping in now!"],
+	[3689] = L["War Supply Crate is flying in now!"],
+}
+
+-- war crate start locations
+NS.WarCrateStartLocations = {
+	-- Battle For Azeroth
+	 [862] = { x = "0.20724302530289", y = "0.33030223846436"  }, -- Zuldazar
+	 [863] = { x = "0.50414979457855", y = "0.87141531705856"  }, -- Nazmir
+	 [864] = { x = "0.69152784347534", y = "0.2386766076088"   }, -- Vol'dun
+	 [895] = { x = "0.34339982271194", y = "0.20535910129547"  }, -- Tiragarde Sound
+	 [896] = { x = "0.33602023124695", y = "0.092845797538757" }, -- Drustvar
+	 [942] = { x = "0.68265008926392", y = "0.82041168212891"  }, -- Stormsong Valley
+	[1355] = { x = "0.51512289047241", y = "0.089830100536346" }, -- Nazjatar
+	--[1462] = { x = "", y = "" }, -- Mechagon Island? (NO CRATES?)
+
+	-- Dragonflight
+	[2022] = { x = "0.76880621910095", y = "0.637091755867"    }, -- The Waking Shores
+	[2024] = { x = "0.03717565536499", y = "0.46731340885162"  }, -- The Azure Span
+	[2025] = { x = "0.87474071979523", y = "0.48299998044968"  }, -- Thaldraszus
+	[2133] = { x = "0.36190092563629", y = "0.86571890115738"  }, -- Zaralek Cavern
+	[2151] = { x = "0.22268164157867", y = "0.9735621213913"   }, -- The Forbidden Reach
+	[2200] = { x = "0.45427918434143", y = "0.97500061988831"  }, -- Emerald Dream
+	--[2023] = { x = "", y = "" }, -- Ohn'ahran Plains (NO STARTING POINT RECORDED?)
+
+	-- The War Within
+	[2213] = { x = "0.88039982318878", y = "0.62741839885712"  }, -- Azj-Kahet - City of Threads
+	[2214] = { x = "0.62094902992249", y = "0.97968757152557"  }, -- The Ringing Deeps
+	[2215] = { x = "0.32797354459763", y = "0.21520841121674"  }, -- Hallowfall
+	[2248] = { respawnTime = 1098, x = "0.69920414686203", y = "0.75819730758667"  }, -- Isle of Dorn
+	[2255] = { respawnTime = 1092, x = "0.62041199207306", y = "0.86914432048798"  }, -- Azj-Kahet
+	[2346] = { x = "0.22974973917007", y = "0.50090676546097"  }, -- Undermine
+	[2369] = { x = "0.95618790388107", y = "0.53979897499084"  }, -- Siren Isle
+	[2371] = { x = "0.69890224933624", y = "0.051990866661072" }, -- K'aresh
+
+	-- Midnight
+	[2395] = { respawnTime = 1099, x = "0.34156793355942", y = "0.65242040157318"  }, -- Eversong Woods
+	[2405] = { x = "0.62206393480301", y = "0.93465489149094"  }, -- Voidstorm
+	[2413] = { x = "0.47352916002274", y = "0.15127623081207"  }, -- Harandar
+	[2437] = { x = "0.38124132156372", y = "0.21004492044449"  }, -- Zul'Aman
+	[2444] = { x = "0.58755004405975", y = "0.31229323148727"  }, -- Slayer's Rise
+}
+
+-- war crate drop locations
+NS.WarCrateDropLocations = {
+	-- TODO: Battle For Azeroth
+	-- [862] = { x = "0.20724302530289", y = "0.33030223846436"  }, -- Zuldazar
+	-- [863] = { x = "0.50414979457855", y = "0.87141531705856"  }, -- Nazmir
+	-- [864] = { x = "0.69152784347534", y = "0.2386766076088"   }, -- Vol'dun
+	-- [895] = { x = "0.34339982271194", y = "0.20535910129547"  }, -- Tiragarde Sound
+	-- [896] = { x = "0.33602023124695", y = "0.092845797538757" }, -- Drustvar
+	-- [942] = { x = "0.68265008926392", y = "0.82041168212891"  }, -- Stormsong Valley
+	--[1355] = { x = "0.51512289047241", y = "0.089830100536346" }, -- Nazjatar
+	--[1462] = { x = "", y = "" }, -- Mechagon Island? (NO CRATES?)
+
+	-- TODO: Dragonflight
+	--[2022] = { x = "0.76880621910095", y = "0.637091755867"    }, -- The Waking Shores
+	--[2024] = { x = "0.03717565536499", y = "0.46731340885162"  }, -- The Azure Span
+	--[2025] = { x = "0.87474071979523", y = "0.48299998044968"  }, -- Thaldraszus
+	--[2133] = { x = "0.36190092563629", y = "0.86571890115738"  }, -- Zaralek Cavern
+	--[2151] = { x = "0.22268164157867", y = "0.9735621213913"   }, -- The Forbidden Reach
+	--[2200] = { x = "0.45427918434143", y = "0.97500061988831"  }, -- Emerald Dream
+	--[2023] = { x = "", y = "" }, -- Ohn'ahran Plains (NO STARTING POINT RECORDED?)
+
+	-- TODO: The War Within
+	--[2213] = { x = "0.88039982318878", y = "0.62741839885712"  }, -- Azj-Kahet - City of Threads
+	--[2214] = { x = "0.62094902992249", y = "0.97968757152557"  }, -- The Ringing Deeps
+	--[2215] = { x = "0.32797354459763", y = "0.21520841121674"  }, -- Hallowfall
+	--[2248] = { respawnTime = 1098, x = "0.69920414686203", y = "0.75819730758667"  }, -- Isle of Dorn
+	--[2255] = { respawnTime = 1092, x = "0.62041199207306", y = "0.86914432048798"  }, -- Azj-Kahet
+	--[2346] = { x = "0.22974973917007", y = "0.50090676546097"  }, -- Undermine
+	--[2369] = { x = "0.95618790388107", y = "0.53979897499084"  }, -- Siren Isle
+	--[2371] = { x = "0.69890224933624", y = "0.051990866661072" }, -- K'aresh
+
+	-- Midnight: Eversong Woods
+	[2395] = {
+		{ x = 0.395, y = 0.157, dl =  -84.00, dh =  -83.50 },
+		{ x = 0.413, y = 0.481, dl =  -67.50, dh =  -67.00 },
+		{ x = 0.413, y = 0.577, dl =  -46.50, dh =  -45.50 },
+		{ x = 0.515, y = 0.509, dl =  -39.50, dh =  -39.00 },
+		{ x = 0.599, y = 0.507, dl =  -29.50, dh =  -29.00 },
+		{ x = 0.577, y = 0.727, dl =   17.25, dh =   18.00 },
+		{ x = 0.604, y = 0.753, dl =   20.75, dh =   21.50 },
+		{ x = 0.478, y = 0.753, dl =   36.25, dh =   37.00 },
+		{ x = 0.434, y = 0.872, dl =   66.75, dh =   67.50 },
+	},
+	-- Midnight: Voidstorm
+	[2405] = {
+		{ x = 0.347, y = 0.647, dl = -134.00, dh = -133.50 },
+		{ x = 0.382, y = 0.568, dl = -123.50, dh = -122.75 },
+		{ x = 0.397, y = 0.682, dl = -132.00, dh = -130.00 },
+		{ x = 0.463, y = 0.808, dl = -141.75, dh = -140.75 },
+		{ x = 0.538, y = 0.655, dl = -107.00, dh = -106.00 },
+		{ x = 0.595, y = 0.668, dl =  -96.00, dh =  -95.00 },
+	},
+	-- Midnight: Harandar
+	[2413] = {
+		{ x = 0.633, y = 0.392, dl =   56.00, dh =   56.75 },
+		{ x = 0.564, y = 0.413, dl =   70.50, dh =   71.50 },
+		{ x = 0.592, y = 0.526, dl =   72.00, dh =   72.75 },
+		{ x = 0.491, y = 0.728, dl =   88.00, dh =   88.50 },
+		{ x = 0.430, y = 0.615, dl =   95.00, dh =   95.75 },
+		{ x = 0.432, y = 0.468, dl =   97.00, dh =   97.75 },
+		{ x = 0.373, y = 0.678, dl =  100.25, dh =  101.00 },
+		{ x = 0.388, y = 0.506, dl =  103.00, dh =  103.75 },
+	},
+	-- Midnight: Zul'Aman
+	[2437] = {
+		{ x = 0.442, y = 0.297, dl =   54.75, dh =   55.50 },
+		{ x = 0.457, y = 0.377, dl =   65.00, dh =   66.00 },
+		{ x = 0.397, y = 0.275, dl =   75.25, dh =   76.00 },
+		{ x = 0.489, y = 0.692, dl =   77.00, dh =   77.50 },
+		{ x = 0.469, y = 0.622, dl =   77.60, dh =   78.00 },
+		{ x = 0.402, y = 0.783, dl =   87.50, dh =   88.00 },
+		{ x = 0.368, y = 0.678, dl =   91.25, dh =   91.75 },
+		{ x = 0.374, y = 0.341, dl =   92.50, dh =   93.00 },
+		{ x = 0.327, y = 0.775, dl =   95.00, dh =   95.75 },
+	},
+	-- Midnight: Slayer's Rise
+	[2444] = {
+		{ x = 0.714, y = 0.575, dl =   63.50, dh =   64.75 },
+		{ x = 0.594, y = 0.541, dl =   88.00, dh =   89.00 },
+		{ x = 0.522, y = 0.825, dl =   96.75, dh =   97.75 },
+		{ x = 0.483, y = 0.708, dl =  104.00, dh =  105.50 },
+		{ x = 0.507, y = 0.590, dl =  105.75, dh =  107.00 },
+		{ x = 0.455, y = 0.631, dl =  112.00, dh =  113.00 },
+		{ x = 0.535, y = 0.412, dl =  115.75, dh =  117.00 },
+		{ x = 0.454, y = 0.530, dl =  121.00, dh =  122.00 },
+		{ x = 0.294, y = 0.348, dl =  172.25, dh =  174.00 },
+	},
+}
+
+-- fully loaded
+NS.LoadCount = NS.LoadCount + 1
+NS.Loaded["Constants"] = NS.LoadCount

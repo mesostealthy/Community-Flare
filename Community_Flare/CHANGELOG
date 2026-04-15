@@ -1,0 +1,2 @@
+v2.24.001:
+-DEBUG Window will not constantly re-create itself if you do not have Debug Print enabled.
