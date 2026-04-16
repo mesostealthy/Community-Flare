@@ -77,6 +77,7 @@ L["Database members found: %s"] = true
 L["Debug Options"] = true
 L["Default (180)"] = true
 L["Disabled"] = true
+L["Display a message showing your Kill Streak upon getting a Killing Blow?"] = true
 L["Display community member names when running /comf command?"] = true
 L["Display how much time left for people in your group to enter the queue?"] = true
 L["Display notification for popped groups?"] = true
@@ -148,6 +149,7 @@ L["This will automatically accept group/party invites from Battle.NET friends."]
 L["This will automatically accept group/party invites from community members."] = true
 L["This will automatically bind your tab and shift+tab keys to only target enemy players inside PVP content."] = true
 L["This will automatically delete communities channels from general and re-add them upon login."] = true
+L["This will automatically display a message showing your Kill Stream upon getting a Killing Blow."] = true
 L["This will automatically display all community members found in the battleground when the /comf command is run."] = true
 L["This will automatically enable the combat logging to WowCombatLog while inside an arena or battleground."] = true
 L["This will automatically equip your PVP Gear Set inside PVP content."] = true

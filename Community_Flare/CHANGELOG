@@ -1,2 +1,3 @@
-v2.24.001:
--DEBUG Window will not constantly re-create itself if you do not have Debug Print enabled.
+v2.25.001:
+-NEW SETTING: Killshot Options -> Display a message showing your Kill Streak upon getting a Killing Blow?
+-TOC Updated to v12.0.5

@@ -1742,7 +1742,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				NS:Ashran_Initialize()
 				NS:Process_Ashran_POIs()
 				NS:Process_Ashran_Vignettes()
-			-- slayers rise?
+			-- slayer's rise?
 			elseif (NS.CommFlare.CF.MapID == 2397) then
 				-- process stuff
 				NS:SlayersRise_Initialize()
@@ -1942,18 +1942,24 @@ function NS.CommFlare:PLAYER_PVP_KILLS_CHANGED(msg, ...)
 				local numKills = (totalBGKBs - NS.CommFlare.CF.TotalBGKBs)
 				NS.CommFlare.CF.KillingBlows = NS.CommFlare.CF.KillingBlows + numKills
 
-				-- build message
-				local player = ColorUtilWrapTextInColorCode(NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerClassColor)
-				local message = ColorUtilWrapTextInColorCode(strformat("%s has pwned %d player/s! Kill streak of %d!", player, numKills, NS.CommFlare.CF.KillingBlows), NS.KillStreakTextColorCode)
-				if (message) then
-					-- display
-					print(message)
+				-- display kill shot message?
+				if (NS.db.global.killShotDisplayMsg) then
+					-- build message
+					local player = ColorUtilWrapTextInColorCode(NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerClassColor)
+					local message = ColorUtilWrapTextInColorCode(strformat("%s has pwned %d player/s! Kill streak of %d!", player, numKills, NS.CommFlare.CF.KillingBlows), NS.KillStreakTextColorCode)
+					if (message) then
+						-- display
+						print(message)
+					end
 				end
 
-				-- play killing blow sound
-				NS:PlayKillingBlowSound()
+				-- play kill shot sound?
+				if (NS.db.global.killShotPlaySound) then
+					-- play killing blow sound
+					NS:PlayKillingBlowSound()
+				end
 
-				-- take a screenshot?
+				-- take kill shot screenshot?
 				if (NS.db.global.killShotScreenShot) then
 					-- screenshot
 					Screenshot()
@@ -2413,7 +2419,7 @@ function NS.CommFlare:PVP_MATCH_STATE_CHANGED(msg)
 			elseif (NS.CommFlare.CF.MapID == 1576) then
 				-- add callouts
 				NS:REPorter_DeepwindGorge_Add_Callouts()
-			-- slayers rise?
+			-- slayer's rise?
 			elseif (NS.CommFlare.CF.MapID == 2397) then
 				-- add callouts
 				NS:REPorter_SlayersRise_Add_Callouts()
@@ -3201,7 +3207,7 @@ function NS.CommFlare:VIGNETTES_UPDATED(msg)
 			elseif (NS.CommFlare.CF.MapID == 1478) then
 				-- process stuff
 				NS:Process_Ashran_Vignettes()
-			-- slayers rise?
+			-- slayer's rise?
 			elseif (NS.CommFlare.CF.MapID == 2397) then
 				-- process stuff
 				NS:Process_SlayersRise_Vignettes()

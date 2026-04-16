@@ -78,6 +78,7 @@ local GlobalDefaults = {
 		displayQueueEntryTimeLeft = false,
 		housingAddQuestWayPoints = true,
 		iocVehicleAlertSystem = false,
+		killShotDisplayMsg = false,
 		killShotPlaySound = false,
 		killShotScreenShot = false,
 		logWarCrateLocations = false,
@@ -1643,9 +1644,18 @@ local KillShotGroup = {
 			order = 1,
 			width = "full",
 		},
-		killShotPlaySound = {
+		killShotDisplayMsg = {
 			type = "toggle",
 			order = 2,
+			name = L["Display a message showing your Kill Streak upon getting a Killing Blow?"],
+			desc = L["This will automatically display a message showing your Kill Stream upon getting a Killing Blow."],
+			width = "full",
+			get = function(info) return NS.db.global.killShotDisplayMsg end,
+			set = function(info, value) NS.db.global.killShotDisplayMsg = value end,
+		},
+		killShotPlaySound = {
+			type = "toggle",
+			order = 3,
 			name = L["Automatically play a sound upon getting a Killing Blow?"],
 			desc = L["This will automatically play a sound when you score a Killing Blow."],
 			width = "full",
@@ -1654,7 +1664,7 @@ local KillShotGroup = {
 		},
 		killShotScreenShot = {
 			type = "toggle",
-			order = 3,
+			order = 4,
 			name = L["Automatically take a screenshot upon getting a Killing Blow?"],
 			desc = L["This will automatically take a screenshot when you score a Killing Blow."],
 			width = "full",

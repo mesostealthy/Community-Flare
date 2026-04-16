@@ -2363,33 +2363,30 @@ end
 
 -- play killing blow sound
 function NS:PlayKillingBlowSound()
-	-- play sound effect on killing blow?
-	if (NS.db.global.killShotPlaySound) then
-		-- choose file
-		local effect = nil
-		if (NS.CommFlare.CF.KillingBlows >= 20) then
-			-- holy!
-			effect = "14.ogg"
-		elseif (NS.CommFlare.CF.KillingBlows >= 16) then
-			-- ludicrous
-			effect = "13.ogg"
-		elseif (NS.CommFlare.CF.KillingBlows >= 13) then
-			-- monster
-			effect = "12.ogg"
-		elseif (NS.CommFlare.CF.KillingBlows >= 11) then
-			-- ultra
-			effect = "11.ogg"
-		elseif (NS.CommFlare.CF.KillingBlows <= 10) then
-			-- 1-10 range
-			effect = strformat("%d.ogg", NS.CommFlare.CF.KillingBlows)
-		end
+	-- choose file
+	local effect = nil
+	if (NS.CommFlare.CF.KillingBlows >= 20) then
+		-- holy!
+		effect = "14.ogg"
+	elseif (NS.CommFlare.CF.KillingBlows >= 16) then
+		-- ludicrous
+		effect = "13.ogg"
+	elseif (NS.CommFlare.CF.KillingBlows >= 13) then
+		-- monster
+		effect = "12.ogg"
+	elseif (NS.CommFlare.CF.KillingBlows >= 11) then
+		-- ultra
+		effect = "11.ogg"
+	elseif (NS.CommFlare.CF.KillingBlows <= 10) then
+		-- 1-10 range
+		effect = strformat("%d.ogg", NS.CommFlare.CF.KillingBlows)
+	end
 
-		-- found effect?
-		if (effect and (effect ~= "")) then
-			-- play sound
-			local sound = "Interface\\AddOns\\Community_Flare\\Sounds\\" .. effect
-			PlaySoundFile(sound, "Master")
-		end
+	-- found effect?
+	if (effect and (effect ~= "")) then
+		-- play sound
+		local sound = "Interface\\AddOns\\Community_Flare\\Sounds\\" .. effect
+		PlaySoundFile(sound, "Master")
 	end
 end
 
