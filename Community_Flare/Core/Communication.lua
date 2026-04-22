@@ -12,7 +12,6 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local MergeTable                                  = _G.MergeTable
 local UnitClass                                   = _G.UnitClass
-local UnitName                                    = _G.UnitName
 local print                                       = _G.print
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
@@ -23,7 +22,7 @@ local tinsert                                     = _G.table.insert
 -- process on communication received
 function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 	-- get player name
-	local player = UnitName("player")
+	local player = NS.CommFlare.CF.PlayerName
 	if (player == sender) then
 		-- debug mode disabled?
 		if (NS.db.global.debugMode == false) then

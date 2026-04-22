@@ -30,7 +30,6 @@ local GetNextPendingInviteConfirmation            = _G.GetNextPendingInviteConfi
 local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetNumSubgroupMembers                       = _G.GetNumSubgroupMembers
-local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local GetQuestID                                  = _G.GetQuestID
 local GetRealmName                                = _G.GetRealmName
 local HideUIPanel                                 = _G.HideUIPanel
@@ -52,8 +51,6 @@ local StaticPopup_FindVisible                     = _G.StaticPopup_FindVisible
 local StaticPopup_Hide                            = _G.StaticPopup_Hide
 local StaticPopup1Text                            = _G.StaticPopup1Text
 local ToggleFrame                                 = _G.ToggleFrame
-local UnitName                                    = _G.UnitName
-local UnitNameFromGUID                            = _G.UnitNameFromGUID
 local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassColorGetClassColor                     = _G.C_ClassColor.GetClassColor
@@ -116,15 +113,15 @@ function NS.CommFlare:AREA_POIS_UPDATED(msg)
 	if (NS:IsInBattleground() == true) then
 		-- alterac valley?
 		if (NS.CommFlare.CF.MapID == 91) then
-			-- process alterac valley POIs
+			-- process stuff
 			NS:Process_AlteracValley_POIs()
 		-- isle of conquest?
 		elseif (NS.CommFlare.CF.MapID == 169) then
-			-- process isle of conquest POIs
+			-- process stuff
 			NS:Process_IsleOfConquest_POIs()
 		-- ashran?
 		elseif (NS.CommFlare.CF.MapID == 1478) then
-			-- process ashran POIs
+			-- process stuff
 			NS:Process_Ashran_POIs()
 		end
 	end
@@ -152,7 +149,7 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 		text = tostring(text)
 		if (text:find("REQUEST_RAID_LEADER")) then
 			-- are you raid leader?
-			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 			if (NS.CommFlare.CF.PlayerRank == 2) then
 				-- has shared community?
 				sender = NS:GetFullName(tostring(sender))
@@ -168,9 +165,46 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	end
 end
 
+-- process chat bg system alliance
+function NS.CommFlare:CHAT_MSG_BG_SYSTEM_ALLIANCE(msg, ...)
+	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- slayer's rise?
+		if (NS.CommFlare.CF.MapID == 2397) then
+			-- process stuff
+			NS:Process_SlayersRise_Messages(text)
+		end
+	end
+end
+
 -- process chat bg system horde
 function NS.CommFlare:CHAT_MSG_BG_SYSTEM_HORDE(msg, ...)
 	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- slayer's rise?
+		if (NS.CommFlare.CF.MapID == 2397) then
+			-- process stuff
+			NS:Process_SlayersRise_Messages(text)
+		end
+	end
+end
+
+-- process chat bg system neutral
+function NS.CommFlare:CHAT_MSG_BG_SYSTEM_NEUTRAL(msg, ...)
+	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- slayer's rise?
+		if (NS.CommFlare.CF.MapID == 2397) then
+			-- process stuff
+			NS:Process_SlayersRise_Messages(text)
+		end
+	end
 end
 
 -- process chat battle net whisper
@@ -1012,12 +1046,12 @@ function NS.CommFlare:GROUP_ROSTER_UPDATE(msg)
 		if (NS.CommFlare.CF.MatchStatus == 1) then
 			-- do you have lead?
 			local player = NS.CommFlare.CF.PlayerFullName
-			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+			NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 			if (NS.CommFlare.CF.PlayerRank == 2) then
 				-- process all raid members
 				for i=1, MAX_RAID_MEMBERS do
 					-- only process members not already promoted
-					local name, rank = GetRaidRosterInfo(i)
+					local name, rank = NS:GetRaidRosterInfo(i)
 					if (name and rank and (rank == 0)) then
 						-- force name-realm format
 						local full_name = name
@@ -1233,7 +1267,7 @@ function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 	-- are you group leader?
 	if (NS:IsGroupLeader() == true) then
 		-- is this your role?
-		if (name == UnitName("player")) then
+		if (name == NS.CommFlare.CF.PlayerName) then
 			-- reset counts
 			NS.CommFlare.CF.LocalData.NumDPS = 0
 			NS.CommFlare.CF.LocalData.NumHealers = 0
@@ -1579,12 +1613,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	-- setup player
 	local _, className, _ = UnitClass("player")
 	NS.CommFlare.CF.PlayerClass = className
-	NS.CommFlare.CF.PlayerName = UnitName("player")
+	NS.CommFlare.CF.PlayerName = NS:UnitName("player")
 	NS.CommFlare.CF.PlayerGUID = NS:UnitGUID("player")
 	local classColor = ClassColorGetClassColor(className)
 	NS.CommFlare.CF.PlayerClassColor = classColor:GenerateHexColor()
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
-	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", UnitName("player"), NS.CommFlare.CF.PlayerServerName)
+	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerServerName)
 	NS.CommFlare.CF.TotalBGHKs = select(4, GetAchievementCriteriaInfoByID(382, 0))
 	NS.CommFlare.CF.TotalBGKBs = select(4, GetAchievementCriteriaInfoByID(1491, 0))
 
@@ -2447,7 +2481,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 	local questStartItemID = ...
 
 	-- verify quest giver
-	local player, realm = UnitName("questnpc")
+	local player, realm = NS:UnitName("questnpc")
 	if (player and (player ~= "")) then
 		-- has realm?
 		if (realm and (realm ~= "")) then
@@ -2926,7 +2960,7 @@ function NS.CommFlare:UNIT_DIED(msg, ...)
 			-- non-player?
 			local name = select(6, NS:GetPlayerInfoByGUID(unitGUID))
 			if (not name) then
-				-- process IOC vehicles
+				-- process stuff
 				NS:Process_IsleOfConquest_Vehicles(NS.CommFlare.CF.MapID)
 			end
 		end
@@ -3178,15 +3212,15 @@ function NS.CommFlare:UPDATE_UI_WIDGET(msg, ...)
 
 		-- alterac valley?
 		if (NS.CommFlare.CF.MapID == 91) then
-			-- process alterac valley widget
+			-- process stuff
 			NS:Process_AlteracValley_Widget(widgetInfo)
 		-- isle of conquest?
 		elseif (NS.CommFlare.CF.MapID == 169) then
-			-- process isle of conquest widget
+			-- process stuff
 			NS:Process_IsleOfConquest_Widget(widgetInfo)
 		-- ashran?
 		elseif (NS.CommFlare.CF.MapID == 1478) then
-			-- process ashran widge
+			-- process stuff
 			NS:Process_Ashran_Widget(widgetInfo)
 		end
 	end
@@ -3396,7 +3430,9 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("ADDON_LOADED")
 	self:RegisterEvent("AREA_POIS_UPDATED")
 	self:RegisterEvent("CHAT_MSG_ADDON")
+	self:RegisterEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE")
 	self:RegisterEvent("CHAT_MSG_BG_SYSTEM_HORDE")
+	self:RegisterEvent("CHAT_MSG_BG_SYSTEM_NEUTRAL")
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
 	self:RegisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:RegisterEvent("CHAT_MSG_MONSTER_SAY")
@@ -3483,7 +3519,9 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("ADDON_LOADED")
 	self:UnregisterEvent("AREA_POIS_UPDATED")
 	self:UnregisterEvent("CHAT_MSG_ADDON")
+	self:UnregisterEvent("CHAT_MSG_BG_SYSTEM_ALLIANCE")
 	self:UnregisterEvent("CHAT_MSG_BG_SYSTEM_HORDE")
+	self:UnregisterEvent("CHAT_MSG_BG_SYSTEM_NEUTRAL")
 	self:UnregisterEvent("CHAT_MSG_BN_WHISPER")
 	self:UnregisterEvent("CHAT_MSG_COMMUNITIES_CHANNEL")
 	self:UnregisterEvent("CHAT_MSG_MONSTER_SAY")

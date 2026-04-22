@@ -14,7 +14,6 @@ local GetCommunitiesChannel                       = _G.ChatFrameUtil.GetCommunit
 local GetCommunitiesChannelName                   = _G.ChatFrameUtil.GetCommunitiesChannelName
 local IsInGuild                                   = _G.IsInGuild
 local MergeTable                                  = _G.MergeTable
-local UnitName                                    = _G.UnitName
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClubGetGuildClubId                          = _G.C_Club.GetGuildClubId
 local PvPIsArena                                  = _G.C_PvP.IsArena

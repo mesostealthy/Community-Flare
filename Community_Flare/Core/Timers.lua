@@ -27,7 +27,7 @@ function NS:Refresh_Active_Timers()
 				if ((seconds > 0) and (seconds < v.respawn_time)) then
 					-- add new capping bar
 					local respawn_time = v.respawn_time - seconds
-					NS:Capping_Add_New_Bar(v.name, respawn_time, v.factionColor, v.path)
+					NS:Capping_Add_New_Bar(v.name, respawn_time, v.path, v.factionColor)
 
 					-- start timer for respawn
 					NS.CommFlare.CF.ActiveTimers[k].timer = TimerNewTimer(respawn_time, function()

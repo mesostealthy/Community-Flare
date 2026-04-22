@@ -7,7 +7,6 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
 local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
@@ -97,12 +96,12 @@ local function Community_Flare_Slash_Command(input)
 	elseif (lower == "demote") then
 		-- do you have lead?
 		local player = NS.CommFlare.CF.PlayerFullName
-		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 		if (NS.CommFlare.CF.PlayerRank == 2) then
 			-- process all raid members
 			for i=1, MAX_RAID_MEMBERS do
 				-- player has assistant?
-				local name, rank = GetRaidRosterInfo(i)
+				local name, rank = NS:GetRaidRosterInfo(i)
 				if (name and rank and (rank == 1)) then
 					-- demote
 					NS:DemoteAssistant(name)

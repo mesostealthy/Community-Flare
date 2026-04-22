@@ -43,7 +43,6 @@ local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
 local UnitLevel                                   = _G.UnitLevel
-local UnitName                                    = _G.UnitName
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
@@ -654,7 +653,7 @@ function NS:IsInvisible()
 	end
 
 	-- process all clubs
-	local player = UnitName("player")
+	local player = NS.CommFlare.CF.PlayerName
 	local clubs = NS:GetSubscribedClubs()
 	for _,v in ipairs(clubs) do
 		-- community?
@@ -1304,7 +1303,7 @@ function NS:GetPartyUnit(player)
 			end
 
 			-- get unit name / realm (if available)
-			local name, realm = UnitName(unit)
+			local name, realm = NS:UnitName(unit)
 			if (name and (name ~= "")) then
 				-- no realm name?
 				if (not realm or (realm == "")) then
@@ -1344,7 +1343,7 @@ function NS:GetPartyLeader()
 			-- is group leader?
 			if (NS:UnitIsGroupLeader(unit)) then 
 				-- get unit name / realm (if available)
-				local name, realm = UnitName(unit)
+				local name, realm = NS:UnitName(unit)
 				if (name and (name ~= "")) then
 					-- no realm name?
 					if (not realm or (realm == "")) then
@@ -1755,7 +1754,7 @@ function NS:Process_Party_States(isDead, isOffline)
 		if (UnitExists(unit)) then
 			-- process player
 			local level = UnitLevel(unit)
-			local player, realm = UnitName(unit)
+			local player, realm = NS:UnitName(unit)
 			if (player and (player ~= "")) then
 				-- realm name was given?
 				if (realm and (realm ~= "")) then
@@ -1821,7 +1820,7 @@ function NS:Queue_Check_Role_Chosen()
 	-- process all
 	for i=1, GetNumGroupMembers() do
 		local unit = "party" .. i
-		local player, realm = UnitName(unit)
+		local player, realm = NS:UnitName(unit)
 		if (player and (player ~= "")) then
 			-- check relationship
 			local realmRelationship = NS:UnitRealmRelationship(unit)
@@ -1863,7 +1862,7 @@ function NS:VerifyPingStatus()
 			if (status ~= NS.db.global.restrictPings) then
 				-- do you have lead?
 				local player = NS.CommFlare.CF.PlayerFullName
-				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+				NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 				if (NS.CommFlare.CF.PlayerRank == 2) then
 					-- none?
 					if (NS.db.global.restrictPings == 0) then
@@ -2390,21 +2389,21 @@ function NS:PlayKillingBlowSound()
 	end
 end
 
+-- setup options
+local options = {
+	breakpointData = {
+		{
+			breakpoint = 0,
+			abbreviation = "%", 
+			significandDivisor = 0.0001,
+			fractionDivisor = 100,
+			abbreviationIsGlobal = false,
+		},
+	}
+}
+
 -- abbreviate float percentage (0 to 1 float value)
 function NS:AbbreviateFloatPercentage(value)
-	-- setup options
-	local options = {
-		breakpointData = {
-			{
-				breakpoint = 0.0001,
-				abbreviation = "%", 
-				significandDivisor = 0.01,
-				fractionDivisor = 1,
-				abbreviationIsGlobal = false,
-			},
-		}
-	}
-
 	-- abbreviate numbers
 	return AbbreviateNumbers(value, options)
 end

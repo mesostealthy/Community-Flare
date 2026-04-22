@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.25.001:
--NEW SETTING: Killshot Options -> Display a message showing your Kill Streak upon getting a Killing Blow?
+v2.26.001:
+-UPDATED for patch v12.0.5
 -TOC Updated to v12.0.5

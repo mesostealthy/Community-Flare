@@ -8,7 +8,6 @@ if (UnitFactionGroup("player") == FACTION_ALLIANCE) then return end
 -- localize stuff
 local _G                                          = _G
 local CreateFrame                                 = _G.CreateFrame
-local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local GetScreenHeight                             = _G.GetScreenHeight
 local GetScreenWidth                              = _G.GetScreenWidth
 local InCombatLockdown                            = _G.InCombatLockdown
@@ -35,7 +34,7 @@ function CommunityFlare_GetMainAssist()
 		-- process all
 		for i=1, MAX_RAID_MEMBERS do
 			-- get player / role
-			local player, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
+			local player, _, _, _, _, _, _, _, _, role = NS:GetRaidRosterInfo(i)
 			if (player and ((role == "mainassist") or (role == "MAINASSIST"))) then
 				-- return name
 				local name, realm = strsplit("-", player)
@@ -54,7 +53,7 @@ function CommunityFlare_GetMainTank()
 		-- process all
 		for i=1, MAX_RAID_MEMBERS do
 			-- get player / roled
-			local name, _, _, _, _, _, _, _, _, role = GetRaidRosterInfo(i)
+			local name, _, _, _, _, _, _, _, _, role = NS:GetRaidRosterInfo(i)
 			if (player and ((role == "maintank") or (role == "MAINTANK"))) then
 				-- return name
 				local name, realm = strsplit("-", player)

@@ -233,7 +233,7 @@ NS.CommFlare.InterfaceVersion = select(4, GetBuildInfo())
 -- is outdated version?
 function NS:IsOutdatedVersion()
 	-- past supported version?
-	if (NS.CommFlare.InterfaceVersion > 120001) then
+	if (NS.CommFlare.InterfaceVersion > 120005) then
 		-- out of date
 		print(strformat(L["%s is out of date. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title))
 		return true

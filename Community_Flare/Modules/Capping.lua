@@ -7,44 +7,24 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
-local IsAltKeyDown                                = _G.IsAltKeyDown
-local IsControlKeyDown                            = _G.IsControlKeyDown
-local IsInGroup                                   = _G.IsInGroup
+local CreateFrame                                 = _G.CreateFrame
+local InCombatLockdown                            = _G.InCombatLockdown
 local IsShiftKeyDown                              = _G.IsShiftKeyDown
+local next                                        = _G.next
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local type                                        = _G.type
-local unpack                                      = _G.unpack
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 
--- list bars
-function NS:Capping_List_Bars()
-	-- has capping?
-	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
-		-- process all
-		for bar,_ in pairs(CappingFrame.bars) do
-			-- print label
-			print(strformat("Bar: %s", bar:GetLabel()))
-		end
-	end
-end
-
--- refresh bars
-function NS:Capping_Refresh_Bars()
-	-- has capping?
-	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
-		-- rearrange bars
-		CappingFrame.RearrangeBars()
-	end
-end
+-- local variables
+local createOverlays = {}
 
 -- find bar
 function NS:Capping_Find_Bar(name, exact)
 	-- has capping?
 	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
+	if (CappingFrame and CappingFrame.bars) then
 		-- process all
 		for bar,_ in pairs(CappingFrame.bars) do
 			-- get label
@@ -76,7 +56,7 @@ end
 function NS:Capping_Stop_Bars(name)
 	-- has capping?
 	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
+	if (CappingFrame and CappingFrame.bars and CappingFrame.RearrangeBars) then
 		-- process all
 		local refresh = false
 		for bar,_ in pairs(CappingFrame.bars) do
@@ -100,59 +80,117 @@ function NS:Capping_Stop_Bars(name)
 	end
 end
 
--- report bar
-local function ReportBar(bar, channel)
-	-- sanity checks
-	if (NS.faction ~= 0) then return end
-	if (not bar) then return end
-	if ((channel == "INSTANCE_CHAT") and not IsInGroup(2)) then channel = "RAID" end -- LE_PARTY_CATEGORY_INSTANCE = 2
+-- create bar overlay
+function NS:Create_Bar_Overlay(bar)
+	-- not created yet?
+	if (not bar.Overlay) then
+		-- create frame
+		bar.Overlay = CreateFrame("Button", nil, bar, "InsecureActionButtonTemplate")
 
-	-- no custom chat message?
-	local custom = bar:Get("capping:customchat")
-	if (not custom) then
-		-- send chat message
-		local colorid = bar:Get("capping:colorid")
-		local faction = colorid == "colorHorde" and _G.FACTION_HORDE or colorid == "colorAlliance" and _G.FACTION_ALLIANCE or ""
-		local timeLeft = bar.candyBarDuration:GetText()
-		if (not timeLeft:find("[:%.]")) then timeLeft = "0:" .. timeLeft end
-		NS:SendMessage(channel, strformat("Report: %s - %s %s", bar:GetLabel(), timeLeft, faction == "" and faction or "(" .. faction .. ")"))
-	else
-		-- get custom message
-		local msg = custom(bar)
-		if (msg) then
-			-- send chat message
-			NS:SendMessage(channel, strformat("Report: %s", msg))
-		end
-	end
-end
+		-- handle tooltip
+		bar.Overlay:SetScript("OnEnter", function(self, bar)
+			-- in combat lockdown?
+			if (InCombatLockdown()) then
+				-- disable mouse
+				self:EnableMouse(false)
+			else
+				-- enable mouse
+				self:EnableMouse(true)
 
--- bar clicked script
-local function BarOnClick(bar, button)
-	-- has capping?
-	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.db and CappingFrame.db.profile) then
-		-- left button?
-		if (button == "LeftButton") then
-			-- shift key pressed / allowed?
-			if (IsShiftKeyDown() and (CappingFrame.db.profile.barOnShift ~= "NONE")) then
-				ReportBar(bar, CappingFrame.db.profile.barOnShift)
-			-- control key pressed / allowed?
-			elseif (IsControlKeyDown() and (CappingFrame.db.profile.barOnControl ~= "NONE")) then
-				ReportBar(bar, CappingFrame.db.profile.barOnControl)
-			-- alt key pressed / allowed?
-			elseif (IsAltKeyDown() and (CappingFrame.db.profile.barOnAlt ~= "NONE")) then
-				ReportBar(bar, CappingFrame.db.profile.barOnAlt)
+				-- show tooltip
+				GameTooltip:SetOwner(self)
+				GameTooltip:AddLine("Left Click: Send Status", 1, 1, 1)
+				GameTooltip:AddLine("Shift+Left Click: Say Status", 1, 1, 1)
+				GameTooltip:AddLine("Right Click: Hide Bar", 1, 1, 1)
+				GameTooltip:Show()
 			end
-		-- right button?
-		elseif (button == "RightButton") then
-			-- stop
-			bar:Stop()
-		end
+		end)
+		bar.Overlay:SetScript("OnLeave", function(self)
+			-- hide tooltip
+			GameTooltip:Hide()
+		end)
+
+		-- preclick handler
+		bar.Overlay:SetScript("PreClick", function(self, button, down)
+			-- not in combat lockdown?
+			if (not InCombatLockdown()) then
+				-- left button?
+				if (button == "LeftButton") then
+					-- button down?
+					if (down) then
+						-- build macrotext
+						local macrotext = nil
+						local timeLeft = bar.candyBarDuration:GetText()
+						if not timeLeft:find("[:%.]") then timeLeft = "0:"..timeLeft end
+						local text = strformat("Report: %s - %s", bar:GetLabel(), timeLeft)
+						if (IsShiftKeyDown()) then
+							-- say
+							macrotext = strformat("/s %s", text)
+						else
+							-- pvp instance?
+							local inInstance, instanceType = IsInInstance()
+							if (instanceType == "pvp") then
+								-- instance chat
+								macrotext = strformat("/i %s", text)
+							else
+								-- say
+								macrotext = strformat("/s %s", text)
+							end
+						end
+
+						-- set macrotext
+						self:SetAttribute("*type1", "macro")
+						self:SetAttribute("*macrotext1", macrotext)
+					end
+				end
+			end
+		end)
+
+		-- postclick handler
+		bar.Overlay:SetScript("PostClick", function(self, button, down)
+			-- not in combat lockdown?
+			if (not InCombatLockdown()) then
+				-- left button?
+				if (button == "LeftButton") then
+					-- button not down?
+					if (not down) then
+						-- clear macrotext
+						self:SetAttribute("*type1", "macro")
+						self:SetAttribute("*macrotext1", "")
+					end
+				-- right button?
+				elseif (button == "RightButton") then
+					-- hide / stop
+					self:Hide()
+					bar:Stop()
+				end
+			end
+		end)
+
+		-- register callback
+		NS.Libs.LibCandyBar.RegisterCallback(NS, "LibCandyBar_Stop", function(self, bar)
+			-- has overlay?
+			if (bar.Overlay) then
+				-- hide
+				bar.Overlay:Hide()
+			end
+		end)
 	end
+
+	-- finish setup
+	local width = bar:GetWidth()
+	local height = bar:GetHeight()
+	bar.Overlay:SetParent(bar)
+        bar.Overlay:RegisterForClicks("AnyUp", "AnyDown")
+       	bar.Overlay:SetFrameLevel(128)
+        bar.Overlay:SetSize(width, height)
+	bar.Overlay:ClearAllPoints()
+	bar.Overlay:SetPoint("CENTER", bar, "CENTER", 0, 0)
+	bar.Overlay:Show()
 end
 
 -- add new bar
-function NS:Capping_Add_New_Bar(name, remaining, colorid, icon, priority, maxBarTime)
+function NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBarTime)
 	-- no name given?
 	if (NS.faction ~= 0) then return end
 	if (not name or (name == "")) then
@@ -250,23 +288,48 @@ function NS:Capping_Add_New_Bar(name, remaining, colorid, icon, priority, maxBar
 		bar.candyBarLabel:SetFont(fontStr, fontSize, flags)
 		bar.candyBarDuration:SetFont(fontStr, fontSize, flags)
 
-		-- setup bar click script
-		bar:SetScript("OnMouseUp", BarOnClick)
-		if ((CappingFrame.db.profile.barOnShift ~= "NONE") or (CappingFrame.db.profile.barOnControl ~= "NONE") or (CappingFrame.db.profile.barOnAlt ~= "NONE")) then
-			-- enable mouse
-			bar:EnableMouse(true)
-		else
-			-- disable mouse
-			bar:EnableMouse(false)
-		end
-
 		-- start
 		bar:Start(maxBarTime)
 
 		-- rearrange bars
 		CappingFrame.RearrangeBars()
+
+		-- in combat lockdown?
+		if (InCombatLockdown()) then
+			-- create overlays later
+			createOverlays[bar] = true
+		else
+			-- create bar overlay
+			NS:Create_Bar_Overlay(bar)
+		end
 	end
 end
+
+-- event handler
+local function OnEvent(self, event, ...)
+	-- PLAYER_REGEN_ENABLED?
+	if (event == "PLAYER_REGEN_ENABLED") then
+		-- has overlays to create?
+		if (next(createOverlays)) then
+			-- process all
+			for bar,v in pairs(createOverlays) do
+				-- still shown?
+				if (bar:IsShown()) then
+					-- create bar overlay
+					NS:Create_Bar_Overlay(bar)
+				end
+			end
+
+			-- reset
+			wipe(createOverlays)
+		end
+	end
+end
+
+-- event frame
+local f = CreateFrame("Frame", nil, UIParent)
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
+f:SetScript("OnEvent", OnEvent)
 
 -- fully loaded
 NS.LoadCount = NS.LoadCount + 1

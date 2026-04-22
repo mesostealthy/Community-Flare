@@ -98,8 +98,14 @@ function NS:List_POIs()
 		for _,v in ipairs(pois) do
 			NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, v)
 			if (NS.CommFlare.CF.POIInfo and NS.CommFlare.CF.POIInfo.areaPoiID) then
-				-- has texture index?
+				-- has atlas name?
 				local text = strformat("%s: ID = %d", NS.CommFlare.CF.POIInfo.name, NS.CommFlare.CF.POIInfo.areaPoiID)
+				if (NS.CommFlare.CF.POIInfo.atlasName and (NS.CommFlare.CF.POIInfo.atlasName ~= "")) then
+					-- add atlas name
+					text = strformat("%s; atlasName = %d", text, NS.CommFlare.CF.POIInfo.atlasName)
+				end
+
+				-- has texture index?
 				if (NS.CommFlare.CF.POIInfo.textureIndex) then
 					-- add texture index
 					text = strformat("%s; textureIndex = %d", text, NS.CommFlare.CF.POIInfo.textureIndex)

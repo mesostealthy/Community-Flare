@@ -36,6 +36,10 @@ NS.AlteracValleyTrackedVignettes = {
 	[3694] = {
 		["name"] = L["Primalist Thurloga"],
 		["AlertDeath"] = true,
+		["BarColor"] = "colorHorde",
+		["CappingDeath"] = true,
+		["IconID"] = 41,
+		["RespawnTime"] = 3600,
 	},
 }
 
@@ -242,7 +246,7 @@ function NS:Process_AlteracValley_Vignettes()
 						-- add new capping bar
 						local path = {136441}
 						path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(info.IconID)
-						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, info.BarColor, path)
+						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, path, info.BarColor)
 					end
 
 					-- alert death?

@@ -13,7 +13,6 @@ local GetMaxBattlefieldID                         = _G.GetMaxBattlefieldID
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local UnitName                                    = _G.UnitName
 local TimerAfter                                  = _G.C_Timer.After
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -228,7 +227,7 @@ function NS:Update_Group(groupGUID)
 		if (count == 1) then
 			-- add leader + member
 			local playerGUID = NS:UnitGUID("player")
-			local playerName, playerRealm = UnitName("player")
+			local playerName, playerRealm = NS.CommFlare.CF.PlayerName
 			NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = 1
 			NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
 			NS:Add_Group_Member(groupGUID, 1, playerGUID, playerName, playerRealm)
@@ -248,7 +247,7 @@ function NS:Update_Group(groupGUID)
 
 				-- party leader?
 				local playerGUID = NS:UnitGUID(unit)
-				local playerName, playerRealm = UnitName(unit)
+				local playerName, playerRealm = NS:UnitName(unit)
 				if (NS:UnitIsGroupLeader(unit)) then
 					-- add leader
 					NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)

@@ -21,7 +21,6 @@ local GetMaxLevelForLatestExpansion               = _G.GetMaxLevelForLatestExpan
 local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
 local GetNumGroupMembers                          = _G.GetNumGroupMembers
 local GetPVPRoles                                 = _G.GetPVPRoles
-local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsAddOnLoaded                               = _G.C_AddOns.IsAddOnLoaded
 local IsInGroup                                   = _G.IsInGroup
@@ -29,7 +28,6 @@ local IsInRaid                                    = _G.IsInRaid
 local PVPReadyDialog                              = _G.PVPReadyDialog
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local UnitIsMercenary                             = _G.UnitIsMercenary
-local UnitName                                    = _G.UnitName
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
 local TimerAfter                                  = _G.C_Timer.After
@@ -388,7 +386,7 @@ function NS:GetRaidRank(player)
 		-- process all raid members
 		for i=1, MAX_RAID_MEMBERS do
 			-- get name / rank
-			local name, rank = GetRaidRosterInfo(i)
+			local name, rank = NS:GetRaidRosterInfo(i)
 			if (player == name) then
 				-- return rank
 				return rank
@@ -1252,7 +1250,7 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 	NS:Reset_Battleground_Stuff()
 
 	-- get player rank
-	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 
 	-- process all
 	local timestamp = time()
@@ -1260,7 +1258,7 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 	local mercenary = UnitIsMercenary("player")
 	for i=1, MAX_RAID_MEMBERS do
 		-- found player / rank?
-		local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, assignedRole = GetRaidRosterInfo(i)
+		local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, assignedRole = NS:GetRaidRosterInfo(i)
 		if (name and rank) then
 			-- force name-realm format
 			local player = name
@@ -1854,7 +1852,7 @@ function NS:Process_Pass_Leadership(sender)
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
 		-- does player have raid leadership?
-		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(UnitName("player"))
+		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 		if (NS.CommFlare.CF.PlayerRank == 2) then
 			-- raid leader not auto passed already?
 			if (NS.CommFlare.CF.RaidLeadPassed == false) then

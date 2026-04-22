@@ -9,6 +9,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local DemoteAssistant                             = _G.DemoteAssistant
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
+local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
@@ -126,6 +127,21 @@ function NS:GetPlayerInfoByGUID(guid)
 
 	-- success
 	return GetPlayerInfoByGUID(guid)
+end
+
+-- get raid roster info
+function NS:GetRaidRosterInfo(raidIndex)
+	-- get raid roster info
+	local results = {GetRaidRosterInfo(raidIndex)}
+
+	-- check for Unknown
+	if (results[1] == "Unknown") then
+		-- reset
+		results[1] = nil
+	end
+
+	-- return results
+	return results
 end
 
 -- get specialization info for class id
@@ -362,6 +378,18 @@ function NS:UnitLevel(unitId)
 
 	-- success
 	return UnitLevel(unitId)
+end
+
+-- unit name
+function NS:UnitName(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitName(unitToken)
 end
 
 -- unit realm relationship
@@ -1156,6 +1184,14 @@ function NS:SendMessage(sender, msg, channel)
 				-- send to raid warning
 				SendChatMessage(msg, "RAID_WARNING")
 			end
+		-- say?
+		elseif (sender == "SAY") then
+			-- send to say
+			SendChatMessage(msg, "SAY")
+		-- yell?
+		elseif (sender == "YELL") then
+			-- send to yell
+			SendChatMessage(msg, "YELL")
 		else
 			-- send to target whisper
 			SendChatMessage(msg, "WHISPER", nil, sender)

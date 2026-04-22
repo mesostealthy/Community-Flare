@@ -111,7 +111,7 @@ function NS:Process_Ashran_POIs()
 						-- add new capping bar
 						local path = {136441}
 						path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(info.IconID)
-						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, info.BarColor, path)
+						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, path, info.BarColor)
 					end
 
 					-- alert death?
@@ -173,7 +173,7 @@ function NS:Process_Ashran_Vignettes()
 						-- add new capping bar
 						local path = {136441}
 						path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(info.IconID)
-						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, info.BarColor, path)
+						NS:Capping_Add_New_Bar(info.name, info.RespawnTime, path, info.BarColor)
 					end
 
 					-- alert death?
@@ -214,7 +214,7 @@ function NS:Process_Ashran_Widget(info)
 					-- add new capping bar
 					local path = {136441}
 					path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(157)
-					NS:Capping_Add_New_Bar(L["Rylai Crestfall"], 3600, "colorAlliance", path)
+					NS:Capping_Add_New_Bar(L["Rylai Crestfall"], 3600, path, "colorAlliance")
 
 					-- notifications enabled?
 					if (NS.db.global.ashranNotifications ~= 1) then
@@ -240,7 +240,7 @@ function NS:Process_Ashran_Widget(info)
 					-- add new capping bar
 					local path = {136441}
 					path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(158)
-					NS:Capping_Add_New_Bar(L["Jeron Emberfall"], 3600, "colorHorde", path)
+					NS:Capping_Add_New_Bar(L["Jeron Emberfall"], 3600, path, "colorHorde")
 
 					-- notifications enabled?
 					if (NS.db.global.ashranNotifications ~= 1) then

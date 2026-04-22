@@ -145,7 +145,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 			local name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumHordeGlaives)
 
 			-- add new capping bar
-			NS:Capping_Add_New_Bar(name, 180, factionColor, path)
+			NS:Capping_Add_New_Bar(name, 180, path, factionColor)
 		elseif (numGlaives > NS.CommFlare.CF.IOC.HordeGlaivesUp) then
 			-- display message
 			print(strformat("NEW HORDE VEHICLE: %s should be spawned/spawning now!", L["Glaive Thrower"]))
@@ -171,7 +171,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 			local name = strformat("%s %d", L["Glaive Thrower"], NS.CommFlare.CF.NumAllyGlaives)
 
 			-- add new capping bar
-			NS:Capping_Add_New_Bar(name, 180, factionColor, path)
+			NS:Capping_Add_New_Bar(name, 180, path, factionColor)
 		elseif (numGlaives > NS.CommFlare.CF.IOC.AllianceGlaivesUp) then
 			-- display message
 			print(strformat("NEW ALLIANCE VEHICLE: %s should be spawned/spawning now!", L["Glaive Thrower"]))

@@ -12,10 +12,12 @@ local InCombatLockdown                            = _G.InCombatLockdown
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
+local issecretvalue                               = _G.issecretvalue
 local pairs                                       = _G.pairs
 local time                                        = _G.time
 local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
+local strlower                                    = _G.string.lower
 
 -- vignettes
 NS.SlayersRiseActiveVignettes = {}
@@ -46,7 +48,46 @@ function NS:SlayersRise_Initialize()
 	end
 end
 
--- process slayers rise vignettes
+-- process slayer's rise messages
+function NS:Process_SlayersRise_Messages(text)
+	-- secret?
+	if (issecretvalue(text)) then
+		-- finished
+		return
+	end
+
+	-- assaulted shadowridge outpost?
+	local path = {136441}
+	local lower = strlower(text)
+	if (lower:find("assaulted shadowridge outpost")) then
+		-- add new capping bar
+		path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(72)
+		NS:Capping_Add_New_Bar("Shadowridge Outpost [H]", 60, path, "colorHorde") -- name does not match AreaPOI on purpose!
+	-- assaulted stareater pavilion?
+	elseif (lower:find("assaulted stareater pavilion")) then
+		-- add new capping bar
+		path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(68)
+		NS:Capping_Add_New_Bar("Stareater Pavilion [A]", 60, path, "colorAlliance") -- name does not match AreaPOI on purpose!
+	-- defended shadowridge outpost?
+	elseif (lower:find("defended shadowridge outpost")) then
+		-- stop bars
+		NS:Capping_Stop_Bars("Shadowridge Outpost")
+	-- defended stareater pavilion?
+	elseif (lower:find("defended stareater pavilion")) then
+		-- stop bars
+		NS:Capping_Stop_Bars("Stareater Pavilion")
+	-- destroyed shadowridge outpost?
+	elseif (lower:find("destroyed shadowridge outpost")) then
+		-- stop bars
+		NS:Capping_Stop_Bars("Shadowridge Outpost")
+	-- destroyed stareater pavilion?
+	elseif (lower:find("destroyed stareater pavilion")) then
+		-- stop bars
+		NS:Capping_Stop_Bars("Stareater Pavilion")
+	end
+end
+
+-- process slayer's rise vignettes
 function NS:Process_SlayersRise_Vignettes()
 	-- found vignettes?
 	if (NS.faction ~= 0) then return end
