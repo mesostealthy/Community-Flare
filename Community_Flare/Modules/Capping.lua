@@ -305,6 +305,15 @@ function NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBar
 	end
 end
 
+-- add / update bar
+function NS:Capping_Add_Update_Bar(name, remaining, icon, colorid, priority, maxBarTime)
+	-- stop previous bars
+	NS:Capping_Stop_Bars(name)
+
+	-- add new bar
+	NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBarTime)
+end
+
 -- event handler
 local function OnEvent(self, event, ...)
 	-- PLAYER_REGEN_ENABLED?

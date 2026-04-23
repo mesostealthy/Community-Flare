@@ -85,6 +85,7 @@ local GetVignetteInfo                             = _G.C_VignetteInfo.GetVignett
 local GetVignettePosition                         = _G.C_VignetteInfo.GetVignettePosition
 local issecretvalue                               = _G.issecretvalue
 local type                                        = _G.type
+local unpack                                      = _G.unpack
 
 -- demote assistant
 function NS:DemoteAssistant(player)
@@ -141,7 +142,7 @@ function NS:GetRaidRosterInfo(raidIndex)
 	end
 
 	-- return results
-	return results
+	return unpack(results)
 end
 
 -- get specialization info for class id

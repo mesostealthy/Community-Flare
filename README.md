@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.26.001:
--UPDATED for patch v12.0.5
--TOC Updated to v12.0.5
+v2.27.001:
+-BUGFIX: Properly finds Raid Leader once again to pass Lead to Leaders.
+-Updated Embedded Libraries for those not installing them manually.
