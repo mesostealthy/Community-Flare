@@ -56,9 +56,8 @@ end
 function NS:Capping_Stop_Bars(name)
 	-- has capping?
 	if (NS.faction ~= 0) then return end
-	if (CappingFrame and CappingFrame.bars and CappingFrame.RearrangeBars) then
+	if (CappingFrame and CappingFrame.bars) then
 		-- process all
-		local refresh = false
 		for bar,_ in pairs(CappingFrame.bars) do
 			-- get label
 			local label = bar:GetLabel()
@@ -66,16 +65,9 @@ function NS:Capping_Stop_Bars(name)
 				-- matches?
 				if (label:find(name)) then
 					-- stop
-					refresh = true
 					bar:Stop()
 				end
 			end
-		end
-
-		-- should refresh?
-		if (refresh == true) then
-			-- rearrange bars
-			CappingFrame.RearrangeBars()
 		end
 	end
 end
@@ -85,7 +77,11 @@ function NS:Create_Bar_Overlay(bar)
 	-- not created yet?
 	if (not bar.Overlay) then
 		-- create frame
-		bar.Overlay = CreateFrame("Button", nil, bar, "InsecureActionButtonTemplate")
+		bar.Overlay = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
+		if (not bar.Overlay) then
+			-- failed
+			return nil
+		end
 
 		-- handle tooltip
 		bar.Overlay:SetScript("OnEnter", function(self, bar)
@@ -171,8 +167,14 @@ function NS:Create_Bar_Overlay(bar)
 		NS.Libs.LibCandyBar.RegisterCallback(NS, "LibCandyBar_Stop", function(self, bar)
 			-- has overlay?
 			if (bar.Overlay) then
-				-- hide
-				bar.Overlay:Hide()
+				-- disable mouse
+				bar.Overlay:EnableMouse(false)
+
+				-- not in combat lockdown?
+				if (not InCombatLockdown()) then
+					-- hide
+					bar.Overlay:Hide()
+				end
 			end
 		end)
 	end
@@ -187,6 +189,7 @@ function NS:Create_Bar_Overlay(bar)
 	bar.Overlay:ClearAllPoints()
 	bar.Overlay:SetPoint("CENTER", bar, "CENTER", 0, 0)
 	bar.Overlay:Show()
+	return bar.Overlay
 end
 
 -- add new bar
@@ -233,14 +236,12 @@ function NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBar
 		end
 
 		-- set parent / label
-		local alignText = CappingFrame.db.profile.alignText or "LEFT"
 		bar:SetParent(CappingFrame)
 		bar:SetLabel(name)
-		bar.candyBarLabel:SetJustifyH(alignText)
+		bar.candyBarLabel:SetJustifyH(CappingFrame.db.profile.alignText)
 
 		-- set duration
-		local alignTime = CappingFrame.db.profile.alignTime or "RIGHT"
-		bar.candyBarDuration:SetJustifyH(alignTime)
+		bar.candyBarDuration:SetJustifyH(CappingFrame.db.profile.alignTime)
 		bar:SetDuration(remaining)
 
 		-- has color value?
@@ -267,14 +268,11 @@ function NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBar
 		end
 
 		-- set visiblity / fill
-		local fill = CappingFrame.db.profile.fill or false
-		local timeText = CappingFrame.db.profile.timeText or true
-		bar:SetTimeVisibility(timeText)
-		bar:SetFill(fill)
+		bar:SetTimeVisibility(CappingFrame.db.profile.timeText)
+		bar:SetFill(CappingFrame.db.profile.fill)
 
 		-- get font settings
 		local flags = nil
-		local fontSize = CappingFrame.db.profile.fontSize or 10
 		local fontStr = NS.Libs.LibSharedMedia:Fetch("font", CappingFrame.db.profile.font) or "Fonts\\FRIZQT__.TTF"
 		if (CappingFrame.db.profile.monochrome and (CappingFrame.db.profile.outline ~= "NONE")) then
 			flags = "MONOCHROME," .. CappingFrame.db.profile.outline
@@ -285,8 +283,8 @@ function NS:Capping_Add_New_Bar(name, remaining, icon, colorid, priority, maxBar
 		end
 
 		-- set font
-		bar.candyBarLabel:SetFont(fontStr, fontSize, flags)
-		bar.candyBarDuration:SetFont(fontStr, fontSize, flags)
+		bar.candyBarLabel:SetFont(fontStr, CappingFrame.db.profile.fontSize, flags)
+		bar.candyBarDuration:SetFont(fontStr, CappingFrame.db.profile.fontSize, flags)
 
 		-- start
 		bar:Start(maxBarTime)
