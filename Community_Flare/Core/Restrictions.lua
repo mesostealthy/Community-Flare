@@ -216,7 +216,7 @@ function NS:UnitExists(unitToken)
 	end
 
 	-- success
-	return UnitExists(unitId)
+	return UnitExists(unitToken)
 end
 
 -- unit full name
@@ -228,31 +228,31 @@ function NS:UnitFullName(unitToken)
 	end
 
 	-- success
-	return UnitFullName(unitId)
+	return UnitFullName(unitToken)
 end
 
 -- unit faction group
-function NS:UnitFactionGroup(unitId)
+function NS:UnitFactionGroup(unitToken)
 	-- sanity checks
-	if (not unitId or issecretvalue(unitId)) then
+	if (not unitToken or issecretvalue(unitToken)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitFactionGroup(unitId)
+	return UnitFactionGroup(unitToken)
 end
 
 -- unit get available roles
-function NS:UnitGetAvailableRoles(unitId)
+function NS:UnitGetAvailableRoles(unitToken)
 	-- sanity checks
-	if (not unitId or issecretvalue(unitId)) then
+	if (not unitToken or issecretvalue(unitToken)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitGetAvailableRoles(unitId)
+	return UnitGetAvailableRoles(unitToken)
 end
 
 -- unit guid
@@ -322,15 +322,15 @@ function NS:UnitInVehicle(unitToken)
 end
 
 -- unit is connected
-function NS:UnitIsConnected(unitId)
+function NS:UnitIsConnected(unitToken)
 	-- sanity checks
-	if (not unitId or issecretvalue(unitId)) then
+	if (not unitToken or issecretvalue(unitToken)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitIsConnected(unitId)
+	return UnitIsConnected(unitToken)
 end
 
 -- unit is dead or ghost
@@ -346,15 +346,15 @@ function NS:UnitIsDeadOrGhost(unitToken)
 end
 
 -- unit is group leader
-function NS:UnitIsGroupLeader(unitId, ...)
+function NS:UnitIsGroupLeader(unitToken, ...)
 	-- sanity checks
-	if (not unitId or issecretvalue(unitId)) then
+	if (not unitToken or issecretvalue(unitToken)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitIsGroupLeader(unitId, ...)
+	return UnitIsGroupLeader(unitToken, ...)
 end
 
 -- unit is player
@@ -370,15 +370,15 @@ function NS:UnitIsPlayer(unitToken)
 end
 
 -- unit level
-function NS:UnitLevel(unitId)
+function NS:UnitLevel(unitToken)
 	-- sanity checks
-	if (not unitId or issecretvalue(unitId)) then
+	if (not unitToken or issecretvalue(unitToken)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitLevel(unitId)
+	return UnitLevel(unitToken)
 end
 
 -- unit name

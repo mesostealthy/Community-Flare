@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.28.001:
--BUGFIXES: Reverted some Insecure templates back to Secure to fix issues in-combat.
+v2.29.001:
+-BUGFIX: Capping callouts work again after entering and exiting combat.

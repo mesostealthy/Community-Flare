@@ -77,7 +77,7 @@ function NS:Create_Bar_Overlay(bar)
 	-- not created yet?
 	if (not bar.Overlay) then
 		-- create frame
-		bar.Overlay = CreateFrame("Button", nil, bar, "SecureActionButtonTemplate")
+		bar.Overlay = bar.Overlay or CreateFrame("Button", nil, bar, "InsecureActionButtonTemplate")
 		if (not bar.Overlay) then
 			-- failed
 			return nil
@@ -85,14 +85,8 @@ function NS:Create_Bar_Overlay(bar)
 
 		-- handle tooltip
 		bar.Overlay:SetScript("OnEnter", function(self, bar)
-			-- in combat lockdown?
-			if (InCombatLockdown()) then
-				-- disable mouse
-				self:EnableMouse(false)
-			else
-				-- enable mouse
-				self:EnableMouse(true)
-
+			-- not in combat lockdown?
+			if (not InCombatLockdown()) then
 				-- show tooltip
 				GameTooltip:SetOwner(self)
 				GameTooltip:AddLine("Left Click: Send Status", 1, 1, 1)
@@ -167,14 +161,8 @@ function NS:Create_Bar_Overlay(bar)
 		NS.Libs.LibCandyBar.RegisterCallback(NS, "LibCandyBar_Stop", function(self, bar)
 			-- has overlay?
 			if (bar.Overlay) then
-				-- disable mouse
-				bar.Overlay:EnableMouse(false)
-
-				-- not in combat lockdown?
-				if (not InCombatLockdown()) then
-					-- hide
-					bar.Overlay:Hide()
-				end
+				-- hide
+				bar.Overlay:Hide()
 			end
 		end)
 	end
@@ -319,6 +307,7 @@ local function OnEvent(self, event, ...)
 		-- has overlays to create?
 		if (next(createOverlays)) then
 			-- process all
+			GLOBAL_bars = {}
 			for bar,v in pairs(createOverlays) do
 				-- still shown?
 				if (bar:IsShown()) then
