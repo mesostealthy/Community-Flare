@@ -11,20 +11,21 @@ local CreateFrame                                 = _G.CreateFrame
 local InCombatLockdown                            = _G.InCombatLockdown
 
 -- local variables
-NS.REPorterOverlayCache = {}
+local createOverlays = {}
 local hook_REPorter_OnPOIUpdate_installed = false
 
 -- add new overlay
 function NS:REPorter_Add_New_Overlay(name)
-	-- REPorter not loaded?
+	-- in combat lockdown?
 	if (NS.faction ~= 0) then return end
-	if (not REPorter) then
-		-- failed
+	if (InCombatLockdown()) then
+		-- create overlays later
+		createOverlays[name] = true
 		return false
 	end
 
-	-- not in combat lockdown?
-	if (not InCombatLockdown()) then
+	-- has REPorter?
+	if (REPorter and REPorter.POINodes and REPorterFrameCore) then
 		-- has REPorter POINodes?
 		if (REPorter.POINodes and REPorter.POINodes[name]) then
 			-- found info?
@@ -44,23 +45,23 @@ function NS:REPorter_Add_New_Overlay(name)
 					frame.Overlay:ClearAllPoints()
 					frame.Overlay:SetPoint("CENTER", "REPorterFrameCorePOI", "TOPLEFT", info.x, info.y)
 				        frame.Overlay:SetAttribute("type1", "macro")
-					local macrotext1 = "/i INCOMING: " .. info.name
-				        frame.Overlay:SetAttribute("macrotext1", macrotext1)
+					frame.Overlay.macrotext1 = "/i INCOMING: " .. info.name
+				        frame.Overlay:SetAttribute("macrotext1", frame.Overlay.macrotext1)
 				        frame.Overlay:SetAttribute("type2", "macro")
-					local macrotext2 = "/i CLEAR: " .. info.name
-				        frame.Overlay:SetAttribute("macrotext2", macrotext2)
+					frame.Overlay.macrotext2 = "/i CLEAR: " .. info.name
+				        frame.Overlay:SetAttribute("macrotext2", frame.Overlay.macrotext2)
 				        frame.Overlay:SetAttribute("shift-type1", "macro")
-					local macrotext3 = "/i ATTACK: " .. info.name
-				        frame.Overlay:SetAttribute("shift-macrotext1", macrotext3)
+					frame.Overlay.macrotext3 = "/i ATTACK: " .. info.name
+				        frame.Overlay:SetAttribute("shift-macrotext1", frame.Overlay.macrotext3)
 				        frame.Overlay:SetAttribute("shift-type2", "macro")
-					local macrotext4 = "/i DEFEND: " .. info.name
-				        frame.Overlay:SetAttribute("shift-macrotext2", macrotext4)
+					frame.Overlay.macrotext4 = "/i DEFEND: " .. info.name
+				        frame.Overlay:SetAttribute("shift-macrotext2", frame.Overlay.macrotext4)
 				        frame.Overlay:SetAttribute("alt-type1", "macro")
-					local macrotext5 = "/i HELP: " .. info.name
-				        frame.Overlay:SetAttribute("alt-macrotext1", macrotext5)
+					frame.Overlay.macrotext5 = "/i HELP: " .. info.name
+				        frame.Overlay:SetAttribute("alt-macrotext1", frame.Overlay.macrotext5)
 				        frame.Overlay:SetAttribute("alt-type2", "macro")
-					local macrotext6 = "/i ON MY WAY: " .. info.name
-				        frame.Overlay:SetAttribute("alt-macrotext2", macrotext6)
+					frame.Overlay.macrotext6 = "/i ON MY WAY: " .. info.name
+				        frame.Overlay:SetAttribute("alt-macrotext2", frame.Overlay.macrotext6)
 				        frame.Overlay:SetScript("OnEnter", function(self)
 						-- has reporter + frame + IsShown + has node?
 						if (REPorter and frame and frame.name and frame:IsShown() and REPorter.POINodes[frame.name]) then
@@ -76,7 +77,6 @@ function NS:REPorter_Add_New_Overlay(name)
 						end
 					end)
 				        frame.Overlay:SetScript("OnLeave", function() GameTooltip:Hide() end)
-					NS.REPorterOverlayCache[name] = frame
 					frame.Overlay:Show()
 					return true
 				end
@@ -93,48 +93,42 @@ local function hook_REPorter_OnPOIUpdate()
 	-- has REPorter?
 	if (NS.faction ~= 0) then return end
 	if (REPorter) then
-		-- no map?
-		if (REPorter.CurrentMap == -1) then
-			-- reset
-			NS.REPorterOverlayCache = {}
-		else
-			-- alterac valley?
-			if (REPorter.CurrentMap == 91) then
-				-- add callouts
-				NS:REPorter_AlteracValley_Add_Callouts()
-			-- eye of the storm?
-			elseif (REPorter.CurrentMap == 112) then
-				-- add callouts
-				NS:REPorter_EyeOfTheStorm_Add_Callouts()
-			-- isle of conquest?
-			elseif (REPorter.CurrentMap == 169) then
-				-- add callouts
-				NS:REPorter_IsleOfConquest_Add_Callouts()
-			-- battle for gilneas?
-			elseif (REPorter.CurrentMap == 275) then
-				-- add callouts
-				NS:REPorter_Gilneas_Add_Callouts()
-			-- battle for wintergrasp?
-			elseif (REPorter.CurrentMap == 1334) then
-				-- add callouts
-				NS:REPorter_Wintergrasp_Add_Callouts()
-			-- arathi basin?
-			elseif (REPorter.CurrentMap == 1366) then
-				-- add callouts
-				NS:REPorter_ArathiBasin_Add_Callouts()
-				-- ashran?
-			elseif (REPorter.CurrentMap == 1478) then
-				-- add callouts
-				NS:REPorter_Ashran_Add_Callouts()
-			-- deepwind gorge?
-			elseif (REPorter.CurrentMap == 1576) then
-				-- add callouts
-				NS:REPorter_DeepwindGorge_Add_Callouts()
-			-- slayers rise?
-			elseif (REPorter.CurrentMap == 2397) then
-				-- add callouts
-				NS:REPorter_SlayersRise_Add_Callouts()
-			end
+		-- alterac valley?
+		if (REPorter.CurrentMap == 91) then
+			-- add callouts
+			NS:REPorter_AlteracValley_Add_Callouts()
+		-- eye of the storm?
+		elseif (REPorter.CurrentMap == 112) then
+			-- add callouts
+			NS:REPorter_EyeOfTheStorm_Add_Callouts()
+		-- isle of conquest?
+		elseif (REPorter.CurrentMap == 169) then
+			-- add callouts
+			NS:REPorter_IsleOfConquest_Add_Callouts()
+		-- battle for gilneas?
+		elseif (REPorter.CurrentMap == 275) then
+			-- add callouts
+			NS:REPorter_Gilneas_Add_Callouts()
+		-- battle for wintergrasp?
+		elseif (REPorter.CurrentMap == 1334) then
+			-- add callouts
+			NS:REPorter_Wintergrasp_Add_Callouts()
+		-- arathi basin?
+		elseif (REPorter.CurrentMap == 1366) then
+			-- add callouts
+			NS:REPorter_ArathiBasin_Add_Callouts()
+			-- ashran?
+		elseif (REPorter.CurrentMap == 1478) then
+			-- add callouts
+			NS:REPorter_Ashran_Add_Callouts()
+		-- deepwind gorge?
+		elseif (REPorter.CurrentMap == 1576) then
+			-- add callouts
+			NS:REPorter_DeepwindGorge_Add_Callouts()
+		-- slayers rise?
+		elseif (REPorter.CurrentMap == 2397) then
+			-- add callouts
+			NS:REPorter_SlayersRise_Add_Callouts()
 		end
 	end
 end
@@ -142,21 +136,31 @@ end
 -- setup hooks
 local REPorter_hooks_installed = nil
 function NS:REPorter_SetupHooks()
-	-- has REPorter?
+	-- in combat lockdown?
 	if (NS.faction ~= 0) then return end
-	if (REPorter) then
+	if (InCombatLockdown()) then
+		-- try again later
+		NS.CommFlare.CF.RegenJobs["REPorterSetupHooks"] = true
+		return nil
+	end
+
+	-- has REPorter?
+	if (REPorter and REPorter.POIIconSize and REPorter.OnPOIUpdate) then
 		-- not installed yet?
 		if (not REPorter_hooks_installed) then
 			-- process all
 			for i=1, REPorter.POINumber do
-				-- create overlay frame
+				-- fram exists?
 				local frame = _G["REPorterFrameCorePOI" .. i]
-				frame.Overlay = CreateFrame("Button", nil, REPorterFrame, "SecureActionButtonTemplate")
-			        frame.Overlay:SetFrameLevel(128)
-			        frame.Overlay:RegisterForClicks("AnyUp", "AnyDown")
-			        frame.Overlay:SetHeight(REPorter.POIIconSize)
-			        frame.Overlay:SetWidth(REPorter.POIIconSize)
-				frame.Overlay:Hide()
+				if (frame) then
+					-- create frame
+					frame.Overlay = CreateFrame("Button", nil, REPorterFrame, "SecureActionButtonTemplate")
+				        frame.Overlay:SetFrameLevel(128)
+				        frame.Overlay:RegisterForClicks("AnyUp", "AnyDown")
+				        frame.Overlay:SetHeight(REPorter.POIIconSize)
+			        	frame.Overlay:SetWidth(REPorter.POIIconSize)
+					frame.Overlay:Hide()
+				end
 			end
 
 			-- REPorter:OnPOIUpdate() not hooked?
@@ -188,8 +192,40 @@ function NS:REPorter_SetupHooks()
 				end
 			end
 		end
+
+		-- success
+		return true
+	end
+
+	-- not installed
+	return false
+end
+
+-- event handler
+local function OnEvent(self, event, ...)
+	-- PLAYER_REGEN_ENABLED?
+	if (event == "PLAYER_REGEN_ENABLED") then
+		-- has overlays to create?
+		if (next(createOverlays)) then
+			-- process all
+			for name,v in pairs(createOverlays) do
+				-- has REPorter POINodes?
+				if (REPorter.POINodes and REPorter.POINodes[name]) then
+					-- add new overlay
+					NS:REPorter_Add_New_Overlay(name)
+				end
+			end
+
+			-- reset
+			wipe(createOverlays)
+		end
 	end
 end
+
+-- event frame
+local f = CreateFrame("Frame", nil, UIParent)
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
+f:SetScript("OnEvent", OnEvent)
 
 -- fully loaded
 NS.LoadCount = NS.LoadCount + 1

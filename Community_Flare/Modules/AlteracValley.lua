@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local InCombatLockdown                            = _G.InCombatLockdown
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
@@ -352,20 +351,8 @@ end
 
 -- add REPorter callouts
 function NS:REPorter_AlteracValley_Add_Callouts()
-	-- in combat lockdown?
+	-- add new overlays
 	if (NS.faction ~= 0) then return end
-	if (InCombatLockdown()) then
-		-- update last raid warning
-		TimerAfter(5, function()
-			-- call again
-			NS:REPorter_AlteracValley_Add_Callouts()
-		end)
-
-		-- finished
-		return
-	end
-
-	-- add remaining overlays
 	NS:REPorter_Add_New_Overlay("Coldtooth Mine")
 	NS:REPorter_Add_New_Overlay("Dun Baldar North Bunker")
 	NS:REPorter_Add_New_Overlay("Dun Baldar South Bunker")

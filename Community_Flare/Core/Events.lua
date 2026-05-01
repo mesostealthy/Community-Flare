@@ -2141,6 +2141,13 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 				end
 			end
 		end
+
+		-- REPorterSetupHooks?
+		if (NS.CommFlare.CF.RegenJobs["REPorterSetupHooks"]) then
+			-- setup hooks
+			NS.CommFlare.CF.RegenJobs["REPorterSetupHooks"]  = nil
+			NS:REPorter_SetupHooks()
+		end
 	end
 end
 
@@ -2482,7 +2489,7 @@ function NS.CommFlare:QUEST_DETAIL(msg, ...)
 
 	-- verify quest giver
 	local player, realm = NS:UnitName("questnpc")
-	if (player and (player ~= "")) then
+	if (player and not issecretvalue(player) and (player ~= "")) then
 		-- has realm?
 		if (realm and (realm ~= "")) then
 			-- add realm

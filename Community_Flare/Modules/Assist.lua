@@ -400,19 +400,22 @@ function NS:CreateAssistButton()
 		end
 	end)
 	NS.AssistButton:SetScript("OnMouseUp", function(self, button)
-		-- right click?
-		if (button == "RightButton") then
-			-- toggle lock
-			if (NS.db.global.AssistFrame.locked == true) then
-				-- enable
-				NS.db.global.AssistFrame.locked = nil
-			else
-				-- disable
-				NS.db.global.AssistFrame.locked = true
-			end
+		-- not in combat?
+		if (not InCombatLockdown()) then
+			-- right click?
+			if (button == "RightButton") then
+				-- toggle lock
+				if (NS.db.global.AssistFrame.locked == true) then
+					-- enable
+					NS.db.global.AssistFrame.locked = nil
+				else
+					-- disable
+					NS.db.global.AssistFrame.locked = true
+				end
 
-			-- update assist button
-			NS:UpdateAssistButton()
+				-- update assist button
+				NS:UpdateAssistButton()
+			end
 		end
 	end)
 	NS.AssistButton:SetScript("OnSizeChanged", function(self, width, height)
@@ -517,38 +520,50 @@ end
 
 -- show assist button
 function NS:ShowAssistButton()
-	-- get main assist
+	-- in combat lockdown?
 	if (NS.faction ~= 0) then return end
-	local player1, unitToken1 = CommunityFlare_GetMainAssist()
-	if (player1) then
-		-- not in combat?
-		if (not InCombatLockdown()) then
-			-- setup macrotext
-			NS.AssistButton.Button.macrotext1 = "/assist [nodead] " .. player1
-			NS.AssistButton.Button.unitToken1 = "raid" .. unitToken1
-			NS.AssistButton.Button:SetAttribute("type1", "macro")
-			NS.AssistButton.Button:SetAttribute("macrotext1", NS.AssistButton.Button.macrotext1)
+	if (InCombatLockdown()) then
+		-- show later
+		NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = true
+	else
+		-- in instance?
+		local inInstance, instanceType = IsInInstance()
+		if (inInstance == true) then
+			-- pvp?
+			if (instanceType == "pvp") then
+				-- get main assist
+				local player1, unitToken1 = CommunityFlare_GetMainAssist()
+				if (player1) then
+					-- setup macrotext
+					NS.AssistButton.Button.macrotext1 = "/assist [nodead] " .. player1
+					NS.AssistButton.Button.unitToken1 = "raid" .. unitToken1
+					NS.AssistButton.Button:SetAttribute("type1", "macro")
+					NS.AssistButton.Button:SetAttribute("macrotext1", NS.AssistButton.Button.macrotext1)
+
+					-- get main tank?
+					local player2, unitToken2 = CommunityFlare_GetMainTank()
+					if (player2) then
+						-- setup macrotext
+						NS.AssistButton.Button.macrotext2 = "/assist [nodead] " .. player2
+						NS.AssistButton.Button.unitToken2 = "raid" .. unitToken2
+						NS.AssistButton.Button:SetAttribute("type2", "macro")
+						NS.AssistButton.Button:SetAttribute("macrotext2", NS.AssistButton.Button.macrotext2)
+					end
+
+					-- not shown?
+					if (not NS.AssistButton:IsShown()) then
+						-- show
+						NS.AssistButton:Show()
+					end
+				end
+			end
+		else
+			-- not shown?
 			if (not NS.AssistButton:IsShown()) then
 				-- show
 				NS.AssistButton:Show()
 			end
-
-			-- has main tank?
-			local player2, unitToken2 = CommunityFlare_GetMainTank()
-			if (player2) then
-				-- setup macrotext
-				NS.AssistButton.Button.macrotext2 = "/assist [nodead] " .. player2
-				NS.AssistButton.Button.unitToken2 = "raid" .. unitToken2
-				NS.AssistButton.Button:SetAttribute("type2", "macro")
-				NS.AssistButton.Button:SetAttribute("macrotext2", NS.AssistButton.Button.macrotext2)
-			end
-		else
-			-- show later
-			NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = true
 		end
-	else
-		-- hide assist button
-		NS:HideAssistButton()
 	end
 end
 

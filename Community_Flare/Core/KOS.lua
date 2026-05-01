@@ -73,7 +73,7 @@ function NS:CheckScoreBoardForKos()
 					local player = info.name
 					if (not strmatch(player, "-")) then
 						-- player is NOT AI?
-						if (info.honorLevel > 0) then
+						if (issecretvalue(info.honorLevel) or (info.honorLevel > 0)) then
 							-- add realm name
 							player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 						end
@@ -83,7 +83,7 @@ function NS:CheckScoreBoardForKos()
 					NS.CommFlare.CF.FullRoster[player] = info
 
 					-- has guid?
-					if (info.guid) then
+					if (info.guid and not issecretvalue(info.guid)) then
 						-- player is NOT AI?
 						if (info.honorLevel > 0) then
 							-- process member guid

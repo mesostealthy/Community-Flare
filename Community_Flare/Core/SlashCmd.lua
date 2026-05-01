@@ -313,6 +313,7 @@ local function Community_Flare_Slash_Command(input)
 			end
 
 			-- found crates?
+			local lastDropTime = nil
 			local crates = NS:FindWarSupplyCrateData(second)
 			local spawnUID = nil
 			if (crates and (#crates > 0)) then
@@ -333,6 +334,7 @@ local function Community_Flare_Slash_Command(input)
 							end
 
 							-- update
+							lastDropTime = v.timestamp
 							spawnUID = v.spawnUID
 						end
 					end
@@ -345,7 +347,7 @@ local function Community_Flare_Slash_Command(input)
 			if (spawnUID) then
 				-- calulate current
 				currentTime = bitband(currentTime, -8388608)
-				timestamp = currentTime + bitband(spawnUID, 8388607)
+				timestamp = currentTime + bitband(spawnUID, 8388607) + 1100
 			end
 	
 			-- found?
@@ -357,7 +359,7 @@ local function Community_Flare_Slash_Command(input)
 				end
 
 				-- display
-				print(strformat(L["Last Recorded Spawn Time: %s"], date(nil, timestamp - 1100)))
+				print(strformat(L["Last Recorded Spawn Time: %s"], date(nil, lastDropTime)))
 				print(strformat(L["Next Estimated Spawn Time: %s"], date(nil, timestamp)))
 			else
 				-- has spawnUID?

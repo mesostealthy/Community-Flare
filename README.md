@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.29.001:
--BUGFIX: Capping callouts work again after entering and exiting combat.
+v2.30.001:
+-BUGFIX: Another day, another Blizzard patch that messes up addons!

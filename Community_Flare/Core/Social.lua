@@ -15,6 +15,7 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local TimerAfter                                  = _G.C_Timer.After
 local ipairs                                      = _G.ipairs
+local issecretvalue                               = _G.issecretvalue
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
@@ -238,9 +239,7 @@ function NS:Update_Group(groupGUID)
 			for i=1, GetNumGroupMembers() do
 				-- unit exists?
 				local unit = "party" .. i
-				if (NS:UnitExists(unit) == true) then
-					-- using partyX
-				else
+				if (not NS:UnitExists(unit)) then
 					-- player
 					unit = "player"
 				end
@@ -248,13 +247,16 @@ function NS:Update_Group(groupGUID)
 				-- party leader?
 				local playerGUID = NS:UnitGUID(unit)
 				local playerName, playerRealm = NS:UnitName(unit)
-				if (NS:UnitIsGroupLeader(unit)) then
-					-- add leader
-					NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
-				end
+				if (playerName and not issecretvalue(playerName) and (playerName ~= "")) then
+					-- unit is group leader?
+					if (NS:UnitIsGroupLeader(unit)) then
+						-- add leader
+						NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
+					end
 
-				-- add member
-				NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+					-- add member
+					NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+				end
 			end
 		end
 	else

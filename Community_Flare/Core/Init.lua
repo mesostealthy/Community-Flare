@@ -58,6 +58,7 @@ local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
 local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
+local issecretvalue                               = _G.issecretvalue
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local select                                      = _G.select
@@ -1304,7 +1305,7 @@ function NS:GetPartyUnit(player)
 
 			-- get unit name / realm (if available)
 			local name, realm = NS:UnitName(unit)
-			if (name and (name ~= "")) then
+			if (name and not issecretvalue(name) and (name ~= "")) then
 				-- no realm name?
 				if (not realm or (realm == "")) then
 					-- get realm name
@@ -1344,7 +1345,7 @@ function NS:GetPartyLeader()
 			if (NS:UnitIsGroupLeader(unit)) then 
 				-- get unit name / realm (if available)
 				local name, realm = NS:UnitName(unit)
-				if (name and (name ~= "")) then
+				if (name and not issecretvalue(name) and (name ~= "")) then
 					-- no realm name?
 					if (not realm or (realm == "")) then
 						-- get realm name
@@ -1755,7 +1756,7 @@ function NS:Process_Party_States(isDead, isOffline)
 			-- process player
 			local level = UnitLevel(unit)
 			local player, realm = NS:UnitName(unit)
-			if (player and (player ~= "")) then
+			if (player and not issecretvalue(player) and (player ~= "")) then
 				-- realm name was given?
 				if (realm and (realm ~= "")) then
 					player = strformat("%s-%s", player, realm)
@@ -1821,7 +1822,7 @@ function NS:Queue_Check_Role_Chosen()
 	for i=1, GetNumGroupMembers() do
 		local unit = "party" .. i
 		local player, realm = NS:UnitName(unit)
-		if (player and (player ~= "")) then
+		if (player and not issecretvalue(player) and (player ~= "")) then
 			-- check relationship
 			local realmRelationship = NS:UnitRealmRelationship(unit)
 			if (realmRelationship == LE_REALM_RELATION_SAME) then

@@ -8,9 +8,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local InCombatLockdown                            = _G.InCombatLockdown
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
-local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local time                                        = _G.time
@@ -260,20 +258,8 @@ end
 
 -- add REPorter callouts
 function NS:REPorter_Ashran_Add_Callouts()
-	-- in combat lockdown?
-	if (NS.faction ~= 0) then return end
-	if (InCombatLockdown()) then
-		-- update last raid warning
-		TimerAfter(5, function()
-			-- call again
-			NS:REPorter_Ashran_Add_Callouts()
-		end)
-
-		-- finished
-		return
-	end
-
 	-- add new overlays
+	if (NS.faction ~= 0) then return end
 	NS:REPorter_Add_New_Overlay("Archmage Overwatch")
 	NS:REPorter_Add_New_Overlay("Crossroads")
 	NS:REPorter_Add_New_Overlay("Emberfall Tower")

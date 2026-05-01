@@ -50,6 +50,7 @@ NS.CommFlare.CF = {
 	CDMPersistent = false,
 	ChannelStreamsLoaded = false,
 	CrateHasDropped = false,
+	CrateDropPredicted = false,
 	DefaultVerified = false,
 	Disabled = false,
 	ExtCrateTracker = false,

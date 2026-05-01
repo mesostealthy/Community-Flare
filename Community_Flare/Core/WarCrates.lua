@@ -52,34 +52,6 @@ function NS:Check_For_Invalid_War_Crate_Position(mapID, x, y)
 	return false
 end
 
--- find war supply drop locations
-function NS:FindWarSupplyCrateDropLocation(mapID, x, y, degree)
-	-- has locations?
-	if (NS.WarCrateStartLocations[mapID] and NS.WarCrateDropLocations[mapID]) then
-		-- remove decimals
-		degree = strsplit(".", tostring(degree))
-		if (degree) then
-			-- not starting location?
-			local xString = tostring(x)
-			local xPos = strsub(NS.WarCrateStartLocations[mapID].x, 1, 9)
-			if (not xString:find(xPos)) then
-				-- process drop locations
-				degree = tonumber(degree)
-				for k,v in pairs(NS.WarCrateDropLocations[mapID]) do
-					-- matches range?
-					if ((degree >= v.dl) and (degree <= v.dh)) then
-						-- return drop location
-						return v.x, v.y
-					end
-				end
-			end
-		end
-	end
-
-	-- failed
-	return nil, nil
-end
-
 -- get war supply crate angle
 function NS:GetWarSupplyCrateAngle(mapID, x2, y2)
 	-- has location data?
@@ -99,6 +71,43 @@ function NS:GetWarSupplyCrateAngle(mapID, x2, y2)
 
 	-- failed
 	return nil
+end
+
+-- find war supply drop locations
+function NS:FindWarSupplyCrateDropLocation(mapID, x, y, degree)
+	-- has locations?
+	if (NS.WarCrateStartLocations[mapID] and NS.WarCrateDropLocations[mapID]) then
+		-- no degree?
+		if (not degree) then
+			-- get war supply crate angle
+			degree = NS:GetWarSupplyCrateAngle(mapID, x, y)
+		end
+
+		-- found degree?
+		if (degree) then
+			-- remove decimals
+			degree = strsplit(".", tostring(degree))
+			if (degree) then
+				-- not starting location?
+				local xString = tostring(x)
+				local xPos = strsub(NS.WarCrateStartLocations[mapID].x, 1, 9)
+				if (not xString:find(xPos)) then
+					-- process drop locations
+					degree = tonumber(degree)
+					for k,v in pairs(NS.WarCrateDropLocations[mapID]) do
+						-- matches range?
+						if ((degree >= v.dl) and (degree <= v.dh)) then
+							-- return drop location
+							return v.x, v.y
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- failed
+	return nil, nil
 end
 
 -- has crate dropped?
@@ -329,8 +338,9 @@ function NS:CheckForWarSupplyCrateAlerts(list)
 									if (not NS.CommFlare.CF.CrateHasDropped) then
 										-- reset crate has dropped later
 										NS.CommFlare.CF.CrateHasDropped = true
+										NS.CommFlare.CF.CrateDropPredicted = false
 										TimerAfter(150, function()
-											-- reset crate has dropped
+											-- reset
 											NS.CommFlare.CF.CrateHasDropped = false
 										end)
 									end
@@ -481,6 +491,30 @@ function NS:CheckForWarSupplyCrateAlerts(list)
 											if (not uid) then
 												-- set super tracked
 												NS:SetSuperTrackedUserWaypoint(true)
+											end
+										end
+									else
+										-- not predicted yet?
+										if (not NS.CommFlare.CF.CrateDropPredicted) then
+											-- find war supply drop locations
+											local dropX, dropY = NS:FindWarSupplyCrateDropLocation(mapID, info.x, info.y, info.degree)
+											if (dropX and dropY) then
+												-- can set user waypoint?
+												local mapID = NS:GetBestMapForUnit("player")
+												if (NS:CanSetUserWaypointOnMap(mapID)) then
+													-- create position from x/y
+													local point = UiMapPoint.CreateFromCoordinates(mapID, dropX, dropY)
+													NS:SetUserWaypoint(point)
+
+													-- not already tracked?
+													if (not uid) then
+														-- set super tracked
+														NS:SetSuperTrackedUserWaypoint(true)
+													end
+												end
+
+												-- crate drop predicted
+												NS.CommFlare.CF.CrateDropPredicted = true
 											end
 										end
 									end
