@@ -269,8 +269,8 @@ function NS:Update_Group(groupGUID)
 		end
 
 		-- get leader name / realm
-		local leaderName, leaderRealm = select(6, NS:GetPlayerInfoByGUID(leaderGUID))
-		if (not leaderName) then
+		local data = NS:GetPlayerInfoByGUID(leaderGUID)
+		if (not data) then
 			-- display results in 1.5 seconds
 			TimerAfter(1.5, function()
 				-- try again
@@ -283,8 +283,8 @@ function NS:Update_Group(groupGUID)
 		end
 
 		-- no realm detected?
-		if (not leaderRealm or (leaderRealm == "")) then
-			leaderRealm = NS.CommFlare.CF.PlayerServerName
+		if (not data.realm or (data.realm == "")) then
+			data.realm = NS.CommFlare.CF.PlayerServerName
 		end
 
 		-- process current queues
@@ -313,7 +313,7 @@ function NS:Update_Group(groupGUID)
 		end
 
 		-- not previously in queue?
-		local leader = strformat("%s-%s", leaderName, leaderRealm)
+		local leader = data.player
 		if (not NS.CommFlare.CF.SocialQueues[groupGUID]) then
 			-- any trackable queues?
 			if (numTrackedQueues > 0) then
@@ -325,9 +325,9 @@ function NS:Update_Group(groupGUID)
 				NS.CommFlare.CF.SocialQueues[groupGUID].numTrackedQueues = numTrackedQueues
 
 				-- has leader info?
-				if (leaderGUID and leaderName and leaderRealm) then
+				if (leaderGUID and data.name and data.realm) then
 					-- add leader
-					NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+					NS:Add_Group_Leader(groupGUID, leaderGUID, data.name, data.realm)
 				end
 			end
 		-- created / not popped?
@@ -339,7 +339,7 @@ function NS:Update_Group(groupGUID)
 			-- popped?
 			if ((numQueues == 0) or (numTrackedQueues < NS.CommFlare.CF.SocialQueues[groupGUID].numTrackedQueues)) then
 				-- popped
-				NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+				NS:Add_Group_Leader(groupGUID, leaderGUID, data.name, data.realm)
 				NS.CommFlare.CF.SocialQueues[groupGUID].popped = time()
 
 				-- process all queues
@@ -373,14 +373,14 @@ function NS:Update_Group(groupGUID)
 			-- no leader yet?
 			if (not NS.CommFlare.CF.SocialQueues[groupGUID].leader) then
 				-- has leader info?
-				if (leaderGUID and leaderName and leaderRealm) then
+				if (leaderGUID and data.name and data.realm) then
 					-- add leader
-					NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+					NS:Add_Group_Leader(groupGUID, leaderGUID, data.name, data.realm)
 				end
 			-- leader changed?
 			elseif (NS.CommFlare.CF.SocialQueues[groupGUID].leader.guid ~= leaderGUID) then
 				-- update leader
-				NS:Add_Group_Leader(groupGUID, leaderGUID, leaderName, leaderRealm)
+				NS:Add_Group_Leader(groupGUID, leaderGUID, data.name, data.realm)
 			end
 
 			-- has group members?
@@ -392,15 +392,15 @@ function NS:Update_Group(groupGUID)
 				for i=1, #members do
 					-- get player info
 					local playerGUID = members[i].guid
-					local playerName, playerRealm = select(6, NS:GetPlayerInfoByGUID(playerGUID))
-					if (playerName) then
+					local data = NS:GetPlayerInfoByGUID(playerGUID)
+					if (data) then
 						-- has no player realm?
-						if (not playerRealm or (playerRealm == "")) then
-							playerRealm = NS.CommFlare.CF.PlayerServerName
+						if (not data.realm or (data.realm == "")) then
+							data.realm = NS.CommFlare.CF.PlayerServerName
 						end
 
 						-- add group member
-						NS:Add_Group_Member(groupGUID, i, playerGUID, playerName, playerRealm)
+						NS:Add_Group_Member(groupGUID, i, playerGUID, data.name, data.realm)
 					end
 				end
 			else

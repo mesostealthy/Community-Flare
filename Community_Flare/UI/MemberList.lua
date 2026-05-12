@@ -523,29 +523,29 @@ function CF_MemberListEntryMixin:OnEnter()
 				GameTooltip:AddLine(strformat("GUID: %s", tostring(member.guid)), 1, 1, 1)
 			end
 
-			-- get player info by GUID
-			local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = NS:GetPlayerInfoByGUID(self.guid)
-			if (name) then
+			-- get player info by guid
+			local info = NS:GetPlayerInfoByGUID(self.guid)
+			if (info) then
 				-- has localized class?
-				if (localizedClass and (localizedClass ~= "")) then
+				if (info.localizedClass and (info.localizedClass ~= "")) then
 					-- add localized class
-					GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
+					GameTooltip:AddLine(strformat("Class: %s", info.localizedClass), 1, 1, 1)
 				end
 
 				-- has localized race?
-				if (localizedRace and (localizedRace ~= "")) then
+				if (info.localizedRace and (info.localizedRace ~= "")) then
 					-- add localized race
-					GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+					GameTooltip:AddLine(strformat("Race: %s", info.localizedRace), 1, 1, 1)
 				end
 
 				-- has sex?
-				if (sex and (sex ~= "")) then
+				if (info.sex and (info.sex ~= "")) then
 					-- male?
-					if (sex == 2) then
+					if (info.sex == 2) then
 						-- add sex
 						GameTooltip:AddLine("Sex: Male", 1, 1, 1)
 					-- female?
-					elseif (sex == 3) then
+					elseif (info.sex == 3) then
 						-- add sex
 						GameTooltip:AddLine("Sex: Female", 1, 1, 1)
 					else

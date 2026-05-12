@@ -28,6 +28,7 @@ local UnitIsConnected                             = _G.UnitIsConnected
 local UnitIsDeadOrGhost                           = _G.UnitIsDeadOrGhost
 local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
 local UnitIsPlayer                                = _G.UnitIsPlayer
+local UnitLeadsAnyGroup                           = _G.UnitLeadsAnyGroup
 local UnitLevel                                   = _G.UnitLevel
 local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local GetAreaPOIForMap                            = _G.C_AreaPoiInfo.GetAreaPOIForMap
@@ -86,6 +87,80 @@ local GetVignettePosition                         = _G.C_VignetteInfo.GetVignett
 local issecretvalue                               = _G.issecretvalue
 local type                                        = _G.type
 local unpack                                      = _G.unpack
+local strformat                                   = _G.string.format
+local strsplit                                    = _G.string.split
+
+-- global variable
+CommFlarePlayerGUIDCache = CommFlarePlayerGUIDCache or {}
+
+-- get player info by guid
+function NS:GetPlayerInfoByGUID(guid)
+	-- sanity checks
+	if (not guid or (not issecretvalue(guid) and (guid == ""))) then
+		-- failed
+		return nil
+	end
+
+	-- already cached?
+	if (CommFlarePlayerGUIDCache[guid]) then
+		-- return table
+		return CommFlarePlayerGUIDCache[guid]
+	end
+
+	-- get player info
+	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+	if (not localizedClass or not localizedRace or not name or (name == "")) then
+		-- failed
+		return nil
+	end
+
+	-- non-secret?
+	if (not issecretvalue(guid)) then
+		-- same realm?
+		local _, realmID, playerID = strsplit("-", guid)
+		if (realmID == NS.CommFlare.CF.PlayerRealmID) then
+			-- no realm?
+			if (not realm or (realm == "")) then
+				-- use player server realm
+				realm = NS.CommFlare.CF.PlayerServerName
+			end
+		else
+			-- no realm?
+			if (not realm or (realm == "")) then
+				-- failed
+				return nil
+			end
+		end
+	else
+		-- invalid realm?
+		if (not realm) then
+			-- build player
+			realm = NS.CommFlare.CF.PlayerServerName
+		end
+	end
+
+	-- sanity check
+	if ((name == "") or (realm == "")) then
+		-- failed
+		return nil
+	end
+
+	-- finalize data
+	local player = strformat("%s-%s", name, realm)
+	CommFlarePlayerGUIDCache[guid] = {
+		localizedClass = localizedClass,
+		englishClass = englishClass,
+		localizedRace = localizedRace,
+		englishRace = englishRace,
+		sex = sex,
+		name = name,
+		realm = realm,
+		player = player,
+	}
+
+	-- return table
+	return CommFlarePlayerGUIDCache[guid]
+end
 
 -- demote assistant
 function NS:DemoteAssistant(player)
@@ -116,18 +191,6 @@ function NS:DemoteAssistant(player)
 
 	-- success
 	return DemoteAssistant(player)
-end
-
--- get player info by guid
-function NS:GetPlayerInfoByGUID(guid)
-	-- sanity checks
-	if (not guid or (not issecretvalue(guid) and (guid == ""))) then
-		-- failed
-		return nil
-	end
-
-	-- success
-	return GetPlayerInfoByGUID(guid)
 end
 
 -- get raid roster info
@@ -367,6 +430,18 @@ function NS:UnitIsPlayer(unitToken)
 
 	-- success
 	return UnitIsPlayer(unitToken)
+end
+
+-- unit leads any group
+function NS:UnitLeadsAnyGroup(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitLeadsAnyGroup(unitToken)
 end
 
 -- unit level

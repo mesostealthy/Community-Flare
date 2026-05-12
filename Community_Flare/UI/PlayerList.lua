@@ -582,61 +582,11 @@ local show_tooltip = false
 function CF_PlayerListEntryMixin:OnEnter()
 	-- has member guid?
 	if (NS.db.global.MemberGUIDs) then
-		-- get player info by GUID
-		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = NS:GetPlayerInfoByGUID(self.guid)
-		if (name) then
-			-- has realm?
-			local player = nil
-			if ((name == "") and (realm == "")) then
-				-- character no longer exists?
-				if ((localizedClass == "Warrior") and (englishClass == "WARRIOR") and not localizedRace and (englishRace == "") and (sex == 1)) then
-					-- check for old member?
-					local old_player = NS.db.global.MemberGUIDs[self.guid]
-					if (NS.db.global.members[old_player]) then
-						-- delete
-						NS.db.global.members[old_player] = nil
-					end
-
-					-- check for old history?
-					if (NS.db.global.history[old_player]) then
-						-- delete
-						NS.db.global.members[old_player] = nil
-					end
-
-					-- has member note?
-					if (NS.db.global.MemberNotes and NS.db.global.MemberNotes[self.guid]) then
-						-- delete
-						NS.db.global.MemberNotes[self.guid] = nil
-					end
-
-					-- kos target?
-					if (NS.db.global.KosList and NS.db.global.KosList[self.guid]) then
-						-- delete
-						NS.db.global.KosList[self.guid] = nil
-					end
-
-					-- refresh list
-					CF_PlayerListFrame:RefreshList()
-					return
-				else
-					-- use from MemberGUIDs
-					player = NS.db.global.MemberGUIDs[self.guid]
-				end
-			elseif (not realm or (realm == "")) then
-				-- use player realm
-				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
-			else
-				-- use proper realm
-				player = strformat("%s-%s", name, realm)
-			end
-	
-			-- sanity check
-			if (not player) then
-				-- finished
-				return
-			end
-
+		-- get player info by guid
+		local info = NS:GetPlayerInfoByGUID(self.guid)
+		if (info) then
 			-- updated?
+			local player = info.player
 			if (NS.db.global.MemberGUIDs[self.guid] and (NS.db.global.MemberGUIDs[self.guid] ~= player)) then
 				-- check for old member?
 				NS:Process_MemberGUID(self.guid, player)
@@ -653,15 +603,15 @@ function CF_PlayerListEntryMixin:OnEnter()
 				GameTooltip:AddLine(strformat("Player: %s", player), 1, 1, 1)
 
 				-- has localized class?
-				if (localizedClass and (localizedClass ~= "")) then
+				if (info.localizedClass and (info.localizedClass ~= "")) then
 					-- add localized class
-					GameTooltip:AddLine(strformat("Class: %s", localizedClass), 1, 1, 1)
+					GameTooltip:AddLine(strformat("Class: %s", info.localizedClass), 1, 1, 1)
 				end
 
 				-- has localized race?
-				if (localizedRace and (localizedRace ~= "")) then
+				if (info.localizedRace and (info.localizedRace ~= "")) then
 					-- add localized race
-					GameTooltip:AddLine(strformat("Race: %s", localizedRace), 1, 1, 1)
+					GameTooltip:AddLine(strformat("Race: %s", info.localizedRace), 1, 1, 1)
 				end
 
 				-- create player location from guid
@@ -1038,9 +988,9 @@ local function RefreshPlayerName(guid, old_player)
 		return
 	end
 
-	-- get player info by GUID
-	local name, realm = select(6, NS:GetPlayerInfoByGUID(guid))
-	if (not name or (name == "")) then
+	-- get player info by guid
+	local info = NS:GetPlayerInfoByGUID(guid)
+	if (not info) then
 		-- increase
 		refresh_retries = refresh_retries + 1
 		if (refresh_retries >= 5) then
@@ -1056,17 +1006,8 @@ local function RefreshPlayerName(guid, old_player)
 		return
 	end
 
-	-- check for old member?
-	local player = nil
-	if (not realm or (realm == "")) then
-		-- add realm name
-		player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
-	else
-		-- use realm name
-		player = strformat("%s-%s", name, realm)
-	end
-
 	-- has name updated?
+	local player = info.player
 	if (player and (player ~= old_player)) then
 		-- kos target?
 		local updated = false

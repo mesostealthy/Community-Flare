@@ -517,26 +517,18 @@ function NS:Verify_MemberGUID(guid)
 		return false
 	end
 
-	-- cache player info
-	local name, realm = select(6, NS:GetPlayerInfoByGUID(guid))
-	if (not name and not realm) then
+	-- get player info by guid
+	local info = NS:GetPlayerInfoByGUID(guid)
+	if (not info) then
 		-- refresh 1 second
 		TimerAfter(1, function()
 			-- call recursively
 			NS:Verify_MemberGUID(guid)
 		end)
-	elseif (name and (name ~= "")) then
-		-- no realm found?
-		local player = nil
-		if (not realm or (realm == "")) then
-			-- use player realm
-			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
-		else
-			-- use proper realm
-			player = strformat("%s-%s", name, realm)
-		end
-
+	-- found player?
+	elseif (info.player) then
 		-- updated?
+		local player = info.player
 		if (NS.db.global.MemberGUIDs[guid] and (NS.db.global.MemberGUIDs[guid] ~= player)) then
 			-- check for old member
 			local old_player = NS.db.global.MemberGUIDs[guid]
@@ -1256,20 +1248,17 @@ function NS:Add_Member(clubId, info, rebuild)
 	local player = strformat("%s", info.name)
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
-		local name, realm = select(6, NS:GetPlayerInfoByGUID(info.guid))
-		if (not name or not realm) then
+		local info = NS:GetPlayerInfoByGUID(info.guid)
+		if (not info) then
 			-- try again, 1 second later
 			TimerAfter(1, function()
 				-- call recursively
 				NS:Add_Member(clubId, info, rebuild)
 			end)
 			return
-		elseif (realm ~= "") then
-			-- rebuild full
-			player = strformat("%s-%s", name, realm)
 		else
-			-- add realm name
-			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+			-- use full player
+			player = info.player
 		end
 	end
 
@@ -1438,20 +1427,17 @@ function NS:Remove_Member(clubId, info)
 	local player = info.name
 	if (not strmatch(player, "-")) then
 		-- get player info by guid
-		local name, realm = select(6, NS:GetPlayerInfoByGUID(info.guid))
-		if (not name or not realm) then
+		local info = NS:GetPlayerInfoByGUID(info.guid)
+		if (not info) then
 			-- try again, 1 second later
 			TimerAfter(1, function()
 				-- call recursively
 				NS:Remove_Member(clubId, info)
 			end)
 			return
-		elseif (realm ~= "") then
-			-- rebuild full
-			player = strformat("%s-%s", name, realm)
 		else
-			-- add realm name
-			player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+			-- use full player
+			player = info.player
 		end
 	end
 
@@ -1812,20 +1798,17 @@ function NS:Club_Member_Removed(clubId, memberId)
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
-			local name, realm = select(6, NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (not name or not realm) then
+			local info = NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid)
+			if (not info) then
 				-- try again, 1 second later
 				TimerAfter(1, function()
 					-- call recursively
 					NS:Club_Member_Removed(clubId, memberId)
 				end)
 				return
-			elseif (realm ~= "") then
-				-- rebuild full
-				player = strformat("%s-%s", name, realm)
 			else
-				-- add realm name
-				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+				-- use full player
+				player = info.player
 			end
 		end
 
@@ -1891,20 +1874,17 @@ function NS:Club_Member_Updated(clubId, memberId)
 		local player = NS.CommFlare.CF.MemberInfo.name
 		if (not strmatch(player, "-")) then
 			-- get player info by guid
-			local name, realm = select(6, NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid))
-			if (not name or not realm) then
+			local info = NS:GetPlayerInfoByGUID(NS.CommFlare.CF.MemberInfo.guid)
+			if (not info) then
 				-- try again, 1 second later
 				TimerAfter(1, function()
 					-- call recursively
 					NS:Club_Member_Updated(clubId, memberId)
 				end)
 				return
-			elseif (realm ~= "") then
-				-- rebuild full
-				player = strformat("%s-%s", name, realm)
 			else
-				-- add realm name
-				player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+				-- use full player
+				player = info.player
 			end
 		end
 
@@ -1982,15 +1962,10 @@ function NS:Find_ExCommunity_Members(clubId)
 			local player = mi.name
 			if (not strmatch(player, "-")) then
 				-- get player info by guid
-				local name, realm = select(6, NS:GetPlayerInfoByGUID(mi.guid))
-				if (not name) then
-					-- do nothing
-				elseif (name and realm and (realm ~= "")) then
-					-- rebuild full
-					player = strformat("%s-%s", name, realm)
-				else
-					-- add realm name
-					player = strformat("%s-%s", name, NS.CommFlare.CF.PlayerServerName)
+				local info = NS:GetPlayerInfoByGUID(mi.guid)
+				if (info) then
+					-- use full player
+					player = info.player
 				end
 			end
 
@@ -2217,23 +2192,15 @@ function NS:Find_Community_Member_By_GUID(guid)
 		return nil
 	end
 
-	-- get player info by guid?
-	local player, realm = select(6, NS:GetPlayerInfoByGUID(guid))
-	if (not player or (player == "")) then
+	-- get player info by guid
+	local info = NS:GetPlayerInfoByGUID(guid)
+	if (not info) then
 		-- failed
 		return nil
 	end
 
-	-- no realm found?
-	if (not realm or (realm == "")) then
-		-- add realm
-		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
-	else
-		-- add realm
-		player = strformat("%s-%s", player, realm)
-	end
-
 	-- check inside database
+	local player = info.player
 	if (player and (player ~= "") and NS.db.global and NS.db.global.members and NS.db.global.members[player]) then
 		-- success
 		return NS.db.global.members[player]
@@ -2354,23 +2321,11 @@ function NS.CommFlare:Prune_Database()
 	for k,v in pairs(members) do
 		-- has guid?
 		if (v.guid) then
-			-- get info
-			local name, realm = select(6, NS:GetPlayerInfoByGUID(v.guid))
-			if (name and (name ~= "")) then
-				-- no realm?
-				if (not realm or (realm == "")) then
-					-- use player server
-					realm = NS.CommFlare.CF.PlayerServerName
-				end
-
-				-- build proper name
-				local player = name
-				if (not strmatch(player, "-")) then
-					-- add realm name
-					player = strformat("%s-%s", player, realm)
-				end
-
+			-- get player info by guid
+			local info = NS:GetPlayerInfoByGUID(v.guid)
+			if (info) then
 				-- updated?
+				local player = info.player
 				if (player ~= k) then
 					-- remove
 					NS.db.global.members[k] = nil

@@ -12,9 +12,11 @@ local GetScreenHeight                             = _G.GetScreenHeight
 local GetScreenWidth                              = _G.GetScreenWidth
 local InCombatLockdown                            = _G.InCombatLockdown
 local IsInRaid                                    = _G.IsInRaid
+local UnitCanAttack                               = _G.UnitCanAttack
 local UnitClassBase                               = _G.UnitClassBase
 local UnitIsEnemy                                 = _G.UnitIsEnemy
 local UnitIsPlayer                                = _G.UnitIsPlayer
+local UnitIsPossessed                             = _G.UnitIsPossessed
 local UnitPowerMax                                = _G.UnitPowerMax
 local UnitPowerType                               = _G.UnitPowerType
 local GetNamePlates                               = _G.C_NamePlate.GetNamePlates
@@ -157,10 +159,100 @@ function NS:SaveButtonPosition()
 	NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
 end
 
+-- is valid unit token
+function NS:IsValidUnitToken(unitToken)
+	-- not player?
+	if (NS.faction ~= 0) then return nil end
+	if (not UnitIsPlayer(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- not an enemy?
+	if (not (UnitCanAttack("player", unitToken) or UnitIsEnemy("player", unitToken))) then
+		-- failed
+		return nil
+	end
+
+	-- unit is mind controlled?
+	if (UnitIsPossessed(unitToken)) then
+		-- : same faction as player?
+		if (UnitFactionGroup(unitToken) == NS.CommFlare.CF.PlayerFaction) then
+			-- failed
+			return nil
+		end
+	end
+
+	-- success
+	return true
+end
+
+-- get unit role
+function NS:GetUnitRole(unitToken)
+	-- check class base
+	if (NS.faction ~= 0) then return nil end
+	local className, classID = UnitClassBase(unitToken)
+	if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
+		-- damager
+		return "DAMAGER"
+	elseif (className == "MONK") then
+		-- check power type
+		local powerType = UnitPowerType(unitToken)
+		if (powerType == 0) then
+			-- healer
+			return "HEALER"
+		else
+			-- check power max
+			local powerMax = UnitPowerMax(unitToken, 12)
+			if (powerMax == 4) then
+				-- tank
+				return "TANK"
+			end
+		end
+	elseif (className == "PRIEST") then
+		-- check power type
+		local powerType = UnitPowerType(unitToken)
+		if (powerType ~= 13) then
+			-- healer
+			return "HEALER"
+		end
+	end
+
+	-- try getting from battleground enemies
+	local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
+	if (role) then
+		-- healer?
+		if (role == "HEALER") then
+			-- return role
+			return role
+		-- tank?
+		elseif (role == "TANK") then
+			-- return role
+			return role
+		-- damager?
+		elseif (role == "DAMAGER") then
+			-- return role
+			return role
+		end
+	end
+
+	-- last resort shaman check
+	if (className == "SHAMAN") then
+		-- check power type
+		local powerType = UnitPowerType(unitToken)
+		if (powerType ~= 11) then
+			-- healer
+			return "HEALER"
+		end
+	end
+
+	-- unknown
+	return nil
+end
+
 -- name plate added
-function NS:AssistButtonNamePlateAdded(...)
-	-- get name plate
-	local unitToken = ...
+function NS:AssistButtonNamePlateAdded(unitToken)
+	-- get name plate for unit
 	if (NS.faction ~= 0) then return end
 	local namePlate = NS:GetNamePlateForUnit(unitToken)
 	if (not namePlate) then
@@ -168,125 +260,50 @@ function NS:AssistButtonNamePlateAdded(...)
 		return
 	end
 
-	-- uninitialized?
-	if (not namePlate.CF) then
-		-- initialize
-		namePlate.CF = {}
+	-- has unit frame?
+	local unitFrame = namePlate.UnitFrame
+	if (not unitFrame) then
+		-- finished
+		return
 	end
 
-	-- frame uninitialized?
-	if (not namePlate.CF.frame) then
-		-- create frame
-		namePlate.CF.frame = CreateFrame("Frame", nil, namePlate)
+	-- texture not created yet?
+	if (not unitFrame.CFTexture) then
+		-- create / setup texture
+		unitFrame.CFTexture = unitFrame:CreateTexture(nil, "OVERLAY")
+		unitFrame.CFTexture:SetSize(50, 50)
+		unitFrame.CFTexture:SetPoint("BOTTOM", namePlate, "TOP", 0, 0)
 	end
 
-	-- no texture yet?
-	if (not namePlate.CF.frame.texture) then
-		-- create texture
-		namePlate.CF.frame.texture = namePlate.CF.frame:CreateTexture(nil, "OVERLAY")
-	end
-
-	-- reset frame
-	namePlate.CF.frame:SetFrameStrata("HIGH")
-	namePlate.CF.frame:SetSize(50, 50)
-	namePlate.CF.frame:SetParent(namePlate)
-	namePlate.CF.frame:SetPoint("BOTTOM", namePlate, "TOP", 0, 10)
-	namePlate.CF.frame.texture:SetAllPoints()
-	namePlate.CF.frame.texture:SetTexture(nil)
-	namePlate.CF.frame:SetAlpha(0)
-	namePlate.CF.frame:Hide()
-
-	-- enemy player?
-	if (UnitIsEnemy(unitToken, "player")) then
-		-- check class base
-		namePlate.CF.markerSet = nil
-		local className, classID = UnitClassBase(unitToken)
-		if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
-			-- skip further checks
-		elseif (className == "MONK") then
-			-- check power type
-			local powerType = UnitPowerType(unitToken)
-			if (powerType == 0) then
-				-- set healer
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-				namePlate.CF.frame:SetAlpha(1)
-				namePlate.CF.frame:Show()
-				namePlate.CF.markerSet = true
-			else
-				-- check power max
-				local powerMax = UnitPowerMax(unitToken, 12)
-				if (powerMax == 4) then
-					-- set tank
-					namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-					namePlate.CF.frame:SetAlpha(1)
-					namePlate.CF.frame:Show()
-					namePlate.CF.markerSet = true
-				end
-			end
-		elseif (className == "PRIEST") then
-			-- check power type
-			local powerType = UnitPowerType(unitToken)
-			if (powerType ~= 13) then
-				-- set healer
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-				namePlate.CF.frame:SetAlpha(1)
-				namePlate.CF.frame:Show()
-				namePlate.CF.markerSet = true
-			end
-		elseif (className == "SHAMAN") then
-			-- check power type
-			local powerType = UnitPowerType(unitToken)
-			if (powerType ~= 11) then
-				-- set healer
-				namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-				namePlate.CF.frame:SetAlpha(1)
-				namePlate.CF.frame:Show()
-				namePlate.CF.markerSet = true
-			end
-		else
-			-- player?
-			if (UnitIsPlayer("target")) then
-				-- try getting from battleground enemies
-				local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
-				if (role) then
-					-- healer?
-					if (role == "HEALER") then
-						-- set healer
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-						namePlate.CF.frame:SetAlpha(1)
-						namePlate.CF.frame:Show()
-						namePlate.CF.markerSet = true
-					-- tank?
-					elseif (role == "TANK") then
-						-- set tank
-						namePlate.CF.frame.texture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-						namePlate.CF.frame:SetAlpha(1)
-						namePlate.CF.frame:Show()
-						namePlate.CF.markerSet = true
-					end
-				end
-			end
+	-- valid token?
+	if (NS:IsValidUnitToken(unitToken)) then
+		-- get unit role
+		local role = NS:GetUnitRole(unitToken)
+		if (role == "HEALER") then
+			-- set healer
+			unitFrame.CFTexture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
+			unitFrame.CFTexture:Show()
+			return
+		elseif (role == "TANK") then
+			-- set healer
+			unitFrame.CFTexture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
+			unitFrame.CFTexture:Show()
+			return
 		end
 	end
+
+	-- hide texture
+	unitFrame.CFTexture:Hide()
 end
 
 -- name plate removed
-function NS:AssistButtonNamePlateRemoved(...)
-	-- get name plate
-	local unitToken = ...
+function NS:AssistButtonNamePlateRemoved(unitToken)
+	-- has nameplate, unit frame and texture?
 	if (NS.faction ~= 0) then return end
-	local namePlate = NS:GetNamePlateForUnit(unitToken)
-	if (not namePlate) then
-		-- failed
-		return nil
-	end
-
-	-- frame created?
-	if (namePlate.CF and namePlate.CF.frame and namePlate.CF.frame.texture) then
-		-- hide
-		namePlate.CF.frame.texture:SetTexture(nil)
-		namePlate.CF.frame:SetAlpha(0)
-		namePlate.CF.frame:Hide()
+	local namePlate = C_NamePlate.GetNamePlateForUnit(unit)
+	if (namePlate and namePlate.UnitFrame and namePlate.UnitFrame.CFTexture) then
+		-- hide texture
+		namePlate.UnitFrame.CFTexture:Hide()
 	end
 end
 
@@ -487,14 +504,15 @@ function NS:CreateAssistButton()
 	-- event handler
 	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_ADDED")
 	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+	NS.AssistButton:RegisterEvent("PLAYER_LEAVING_WORLD")
 	NS.AssistButton:SetScript("OnEvent", function(self, event, ...)
 		-- name plate unit added?
 		if (event == "NAME_PLATE_UNIT_ADDED") then
-			-- assist button name plate added
-			NS:AssistButtonNamePlateAdded(...)
+			local unitToken = ...
+			NS:AssistButtonNamePlateAdded(unitToken)
+		-- name plate unit removed?
 		elseif (event == "NAME_PLATE_UNIT_REMOVED") then
-			-- assist button name plate removed
-			NS:AssistButtonNamePlateRemoved(...)
+			local unitToken = ...
 		end
 	end)
 

@@ -1,2 +1,2 @@
-v2.30.001:
--BUGFIX: Another day, another Blizzard patch that messes up addons!
+v2.31.001:
+-BUGFIXES: Blizzard released another patch, fixed the latest lua errors.

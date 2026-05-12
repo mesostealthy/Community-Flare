@@ -32,7 +32,6 @@ local hook_AcceptBattlefieldPort_installed = false
 local hook_AcceptProposal_installed = false
 local hook_ClubFinderGuildFinderFrame_CommunityCards_RefreshLayout_installed = false
 local hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout_installed = false
-local hook_GameTooltip_OnShow_installed = false
 local hook_HonorFrameQueueButton_OnEnter_installed = false
 local hook_LeaveBattlefield_installed = false
 local hook_LeaveLFG_installed = false
@@ -259,22 +258,6 @@ local function hook_ClubFinderGuildFinderFrame_GuildCards_RefreshLayout()
 	end
 end
 
--- securely hook game tooltip on show
-local function hook_GameTooltip_OnShow()
-	-- game tooltips blocked?
-	if (NS.db.global.blockGameTooltips == true) then
-		-- inside pvp?
-		local inInstance, instanceType = IsInInstance()
-		if (inInstance and (instanceType == "pvp")) then
-			-- not holding shift?
-			if (not IsShiftKeyDown()) then
-				-- hide
-				GameTooltip:Hide()
-			end
-		end
-	end
-end
-
 -- securely hook honor frame queue queue button hover
 local function hook_HonorFrameQueueButton_OnEnter(self)
 	-- not in a group?
@@ -441,16 +424,6 @@ function NS:Battlefield_SetupHooks()
 			-- hook PVPMatchResults:OnUpdate
 			PVPMatchResults:HookScript("OnUpdate", hook_PVPMatchResults_OnUpdate)
 			hook_PVPMatchResults_OnUpdate_installed = true
-		end
-	end
-
-	-- GameTooltip:OnShow() not hooked?
-	if (hook_GameTooltip_OnShow_installed ~= true) then
-		--- game tooltip loaded?
-		if (GameTooltip) then
-			-- hook GameTooltip:OnShow
-			GameTooltip:HookScript("OnShow", hook_GameTooltip_OnShow)
-			hook_GameTooltip_OnShow_installed = true
 		end
 	end
 

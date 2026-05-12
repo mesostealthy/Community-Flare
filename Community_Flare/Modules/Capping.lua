@@ -1,7 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
-if (not NS.Loaded or not NS.Loaded["Timers"]) then return end
+if (not NS.Loaded or not NS.Loaded["BattleGroundEnemies"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
 
@@ -307,7 +307,6 @@ local function OnEvent(self, event, ...)
 		-- has overlays to create?
 		if (next(createOverlays)) then
 			-- process all
-			GLOBAL_bars = {}
 			for bar,v in pairs(createOverlays) do
 				-- still shown?
 				if (bar:IsShown()) then

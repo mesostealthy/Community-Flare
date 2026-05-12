@@ -31,33 +31,20 @@ function NS:Show_Applicant_Info(owner, rootDescription)
 	-- get name / server
 	local data = owner:GetData()
 	print(strformat("%s: %s", L["Applicant"], guid))
-	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = NS:GetPlayerInfoByGUID(guid)
-	if (name) then
-		-- no realm?
-		if (not realm or (realm == "")) then
-			-- use player server
-			realm = NS.CommFlare.CF.PlayerServerName
-		end
-
-		-- build proper name
-		local player = name
-		if (not strmatch(player, "-")) then
-			-- add realm name
-			player = strformat("%s-%s", player, realm)
-		end
-
+	local info = NS:GetPlayerInfoByGUID(guid)
+	if (info) then
 		-- display info
-		print(strformat("%s: %s", L["Player"], player))
+		print(strformat("%s: %s", L["Player"], info.player))
 		print(strformat("%s: %d", L["Level"], tonumber(data.level)))
 		print(strformat("%s: %d", L["iLevel"], tonumber(data.ilvl)))
-		print(strformat("%s: %s", L["Class"], localizedClass))
-		print(strformat("%s: %s", L["Race"], localizedRace))
+		print(strformat("%s: %s", L["Class"], info.localizedClass))
+		print(strformat("%s: %s", L["Race"], info.localizedRace))
 
 		-- found sex?
-		if (sex == 2) then
+		if (info.sex == 2) then
 			-- male
 			print(strformat("%s: %s", L["Sex"], L["Male"]))
-		elseif (sex == 3) then
+		elseif (info.sex == 3) then
 			-- female
 			print(strformat("%s: %s", L["Sex"], L["Female"]))
 		end

@@ -474,35 +474,48 @@ function NS:Update_LFG_Status(event)
 	end
 
 	-- process all
-	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
-		-- queued?
-		if (v.status == "queued") then
-			-- get lfg mode
-			local mode, submode = GetLFGMode(v.category)
-			if (not mode or (mode and (mode ~= "suspended"))) then
-				-- not still queued?
-				local inParty, joined, queued, _, _, _, slotCount, _category, leader, tank, healer, dps = GetLFGInfoServer(v.category, index)
-				if (queued == false) then
-					-- dungeons?
-					if (v.category == LE_LFG_CATEGORY_LFD) then
-						-- dropping all?
-						if (bDropAll) then
-							-- update name
-							NS.CommFlare.CF.LocalQueues[index].name = "All Dungeons"
-						end
-					-- raid finder?
-					elseif (v.category == LE_LFG_CATEGORY_RF) then
-						-- dropping all?
-						if (NS.CommFlare.CF.LeftQueueCount > 0) then
-							-- update name
-							NS.CommFlare.CF.LocalQueues[index].name = "All Raids"
-						end
-					end
-
-					-- update queue status
-					NS.CommFlare.CF.LocalQueues[index].status = "dropped"
-					NS:Update_Queue_Status(v.category, index)
+	local entries = {}
+	for category=1, NUM_LE_LFG_CATEGORYS do
+		-- get lfg mode
+		local mode, submode = GetLFGMode(category)
+		if (mode and (mode ~= "suspended")) then
+			-- get all entries
+			local entryIDs = NS:GetAllEntriesForCategory(category)
+			if (entryIDs and (#entryIDs > 0)) then
+				-- process all
+				for _, entryID in ipairs(entryIDs) do
+					-- save entry
+					entries[entryID] = true
 				end
+			end
+		end
+	end
+
+	-- process all
+	for index,v in pairs(NS.CommFlare.CF.LocalQueues) do
+		-- lfg queue?
+		if (index > 3) then
+			-- entry no longer exists?
+			if (not entries[index]) then
+				-- dungeons?
+				if (v.category == LE_LFG_CATEGORY_LFD) then
+					-- dropping all?
+					if (bDropAll) then
+						-- update name
+						NS.CommFlare.CF.LocalQueues[index].name = "All Dungeons"
+					end
+				-- raid finder?
+				elseif (v.category == LE_LFG_CATEGORY_RF) then
+					-- dropping all?
+					if (NS.CommFlare.CF.LeftQueueCount > 0) then
+						-- update name
+						NS.CommFlare.CF.LocalQueues[index].name = "All Raids"
+					end
+				end
+
+				-- update queue status
+				NS.CommFlare.CF.LocalQueues[index].status = "dropped"
+				NS:Update_Queue_Status(v.category, index)
 			end
 		end
 	end

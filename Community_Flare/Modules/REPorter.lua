@@ -9,6 +9,7 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local CreateFrame                                 = _G.CreateFrame
 local InCombatLockdown                            = _G.InCombatLockdown
+local hooksecurefunc                              = _G.hooksecurefunc
 
 -- local variables
 local createOverlays = {}
@@ -154,7 +155,7 @@ function NS:REPorter_SetupHooks()
 				local frame = _G["REPorterFrameCorePOI" .. i]
 				if (frame) then
 					-- create frame
-					frame.Overlay = CreateFrame("Button", nil, REPorterFrame, "SecureActionButtonTemplate")
+					frame.Overlay = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
 				        frame.Overlay:SetFrameLevel(128)
 				        frame.Overlay:RegisterForClicks("AnyUp", "AnyDown")
 				        frame.Overlay:SetHeight(REPorter.POIIconSize)

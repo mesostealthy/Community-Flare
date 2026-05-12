@@ -560,23 +560,11 @@ function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 	local applicantList = NS.db.global.ApplicantLists[clubId]
 	local list = NS:ReturnClubApplicantList(clubId)
 	for k,v in ipairs(list) do
-		-- get name / server
-		local name, realm = select(6, NS:GetPlayerInfoByGUID(v.playerGUID))
-		if (name) then
-			-- no realm?
-			if (not realm or (realm == "")) then
-				-- use player server
-				realm = NS.CommFlare.CF.PlayerServerName
-			end
-
-			-- build proper name
-			local player = name
-			if (not strmatch(player, "-")) then
-				-- add realm name
-				player = strformat("%s-%s", player, realm)
-			end
-
+		-- get player info by guid
+		local info = NS:GetPlayerInfoByGUID(v.playerGUID)
+		if (info) then
 			-- save applicant
+			local player = info.player
 			applicantList[player] = v.playerGUID
 			NS:Process_MemberGUID(v.playerGUID, player)
 		end
@@ -1421,14 +1409,6 @@ function NS.CommFlare:NAME_PLATE_UNIT_ADDED(msg, ...)
 	end
 end
 
--- process notify pvp afk result
-function NS.CommFlare:NOTIFY_PVP_AFK_RESULT(msg, ...)
-	local offender, numBlackMarksOnOffender, numPlayersIHaveReported = ...
-
-	-- hmmm, what is this?
-	print(strformat("NOTIFY_PVP_AFK_RESULT: %s = %s, %s", offender, numBlackMarksOnOffender, numPlayersIHaveReported))
-end
-
 -- process party invite request
 function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 	local sender, _, _, _, _, _, guid, questSessionActive = ...
@@ -1477,41 +1457,6 @@ function NS.CommFlare:PARTY_INVITE_REQUEST(msg, ...)
 			-- click decline button
 			LFGInvitePopupDeclineButton:Click()
 		end
-	end
-end
-
--- process party kill
-function NS.CommFlare:PARTY_KILL(msg, ...)
-	local attackerGUID, targetGUID = ...
-
-	-- has attacker name?
-	local message = nil
-	local attackerName, attackerRealm = select(6, NS:GetPlayerInfoByGUID(attackerGUID))
-	local targetName, targetRealm = select(6, NS:GetPlayerInfoByGUID(targetGUID))
-	if (attackerName) then
-		-- has target name?
-		if (targetName) then
-			-- build message
-			message = NS.CommFlare.Title .. ": PARTY_KILL; Player " .. attackerName .. " (" .. attackerGUID .. ") killed Player " .. targetName .. "(" .. targetGUID .. ")"
-		else
-			-- build message
-			message = NS.CommFlare.Title .. ": PARTY_KILL; Player " .. attackerName .. " (" .. attackerGUID .. ") killed Non-Player (" .. targetGUID .. ")"
-		end
-	else
-		-- has target name?
-		if (targetName) then
-			-- build message
-			message = NS.CommFlare.Title .. ": PARTY_KILL; Non-Player (" .. attackerGUID .. ") killed Player " .. targetName .. "(" .. targetGUID .. ")"
-		else
-			-- build message
-			message = NS.CommFlare.Title .. ": PARTY_KILL; Non-Player (" .. attackerGUID .. ") killed Non-Player (" .. targetGUID .. ")"
-		end
-	end
-
-	-- has message?
-	if (message) then
-		-- debug print
-		NS:Debug_Print(message)
 	end
 end
 
@@ -1616,11 +1561,14 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS.CommFlare.CF.PlayerName = NS:UnitName("player")
 	NS.CommFlare.CF.PlayerGUID = NS:UnitGUID("player")
 	local classColor = ClassColorGetClassColor(className)
+	NS.CommFlare.CF.PlayerFaction = NS:UnitFactionGroup("player")
 	NS.CommFlare.CF.PlayerClassColor = classColor:GenerateHexColor()
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerServerName)
 	NS.CommFlare.CF.TotalBGHKs = select(4, GetAchievementCriteriaInfoByID(382, 0))
 	NS.CommFlare.CF.TotalBGKBs = select(4, GetAchievementCriteriaInfoByID(1491, 0))
+	local _, realmID, playerID = strsplit("-", NS.CommFlare.CF.PlayerGUID)
+	NS.CommFlare.CF.PlayerRealmID = realmID
 
 	-- build stuff
 	NS:Build_Battlegrounds()
@@ -2817,12 +2765,11 @@ function NS.CommFlare:READY_CHECK_FINISHED(msg, ...)
 						-- alliance faction?
 						local text = ""
 						local count = NS:GetGroupCountText()
-						local faction = NS:UnitFactionGroup("player")
-						if (faction == FACTION_ALLIANCE) then
+						if (NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE) then
 							-- alliance ready
 							text = strformat(L["%s Alliance Ready!"], count)
 						-- horde faction?
-						elseif (faction == FACTION_HORDE) then
+						elseif (NS.CommFlare.CF.PlayerFaction == FACTION_HORDE) then
 							-- horde ready
 							text = strformat(L["%s Horde Ready!"], count)
 						else
@@ -2964,9 +2911,9 @@ function NS.CommFlare:UNIT_DIED(msg, ...)
 	if (NS:IsInBattleground() == true) then
 		-- isle of conquest?
 		if (NS.CommFlare.CF.MapID == 169) then
-			-- non-player?
-			local name = select(6, NS:GetPlayerInfoByGUID(unitGUID))
-			if (not name) then
+			-- get player info by guid
+			local info = NS:GetPlayerInfoByGUID(unitGUID)
+			if (not info) then
 				-- process stuff
 				NS:Process_IsleOfConquest_Vehicles(NS.CommFlare.CF.MapID)
 			end
@@ -3474,9 +3421,7 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 	self:RegisterEvent("LFG_UPDATE")
 	self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-	self:RegisterEvent("NOTIFY_PVP_AFK_RESULT")
 	self:RegisterEvent("PARTY_INVITE_REQUEST")
-	self:RegisterEvent("PARTY_KILL")
 	self:RegisterEvent("PARTY_LEADER_CHANGED")
 	self:RegisterEvent("PLAYER_DEAD")
 	self:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
@@ -3563,9 +3508,7 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("LFG_ROLE_CHECK_SHOW")
 	self:UnregisterEvent("LFG_UPDATE")
 	self:UnregisterEvent("NAME_PLATE_UNIT_ADDED")
-	self:UnregisterEvent("NOTIFY_PVP_AFK_RESULT")
 	self:UnregisterEvent("PARTY_INVITE_REQUEST")
-	self:UnregisterEvent("PARTY_KILL")
 	self:UnregisterEvent("PARTY_LEADER_CHANGED")
 	self:UnregisterEvent("PLAYER_DEAD")
 	self:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")

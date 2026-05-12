@@ -8,6 +8,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CreateFrame                                 = _G.CreateFrame
+local IsInInstance                                = _G.IsInInstance
 local UnitPercentHealthFromGUID                   = _G.UnitPercentHealthFromGUID
 local hooksecurefunc                              = _G.hooksecurefunc
 local issecretvalue                               = _G.issecretvalue
@@ -37,7 +38,7 @@ function NS:CreateTooltipFrame()
 		frame.Text:SetText("")
 
 		-- check guid
-		local guid = GameTooltipStatusBar:GetAttribute("guid");
+		local guid = GameTooltipStatusBar:GetAttribute("guid")
 		if (guid and not issecretvalue(guid) and guid:find("GameObject")) then
 			-- update text
 			local hpPercent = UnitPercentHealthFromGUID(guid)
@@ -45,6 +46,28 @@ function NS:CreateTooltipFrame()
 				-- set text
 				hpPercent = NS:AbbreviateFloatPercentage(hpPercent)
 				frame.Text:SetText(hpPercent)
+			end
+		end
+	end)
+
+	-- hook GameTooltipStatusBar:SetWatch()
+	hooksecurefunc(GameTooltipStatusBar, "SetWatch", function(self, guid)
+		-- check guid for game objects
+		if (guid and not issecretvalue(guid) and guid:find("GameObject")) then
+			-- never hide
+			return
+		end
+
+		-- game tooltips blocked?
+		if (NS.db.global.blockGameTooltips == true) then
+			-- inside pvp?
+			local inInstance, instanceType = IsInInstance()
+			if (inInstance and (instanceType == "pvp")) then
+				-- not holding shift?
+				if (not IsShiftKeyDown()) then
+					-- hide
+					GameTooltip:Hide()
+				end
 			end
 		end
 	end)
