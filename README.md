@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.31.001:
--BUGFIXES: Blizzard released another patch, fixed the latest lua errors.
+v2.31.002:
+-BUGFIX: Fixed issue with UNIT_DIED check for Isle of Conquest.

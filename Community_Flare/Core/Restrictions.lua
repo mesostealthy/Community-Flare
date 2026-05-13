@@ -96,15 +96,28 @@ CommFlarePlayerGUIDCache = CommFlarePlayerGUIDCache or {}
 -- get player info by guid
 function NS:GetPlayerInfoByGUID(guid)
 	-- sanity checks
-	if (not guid or (not issecretvalue(guid) and (guid == ""))) then
+	if (not guid) then
 		-- failed
 		return nil
 	end
 
-	-- already cached?
-	if (CommFlarePlayerGUIDCache[guid]) then
-		-- return table
-		return CommFlarePlayerGUIDCache[guid]
+	-- secret value?
+	local bSecret = false
+	if (issecretvalue(guid)) then
+		-- set secret
+		bSecret = true
+	elseif (guid == "") then
+		-- failed
+		return nil
+	end
+
+	-- not secret?
+	if (not bSecret) then
+		-- already cached?
+		if (CommFlarePlayerGUIDCache[guid]) then
+			-- return table
+			return CommFlarePlayerGUIDCache[guid]
+		end
 	end
 
 	-- get player info
@@ -114,8 +127,8 @@ function NS:GetPlayerInfoByGUID(guid)
 		return nil
 	end
 
-	-- non-secret?
-	if (not issecretvalue(guid)) then
+	-- not secret?
+	if (not bSecret) then
 		-- same realm?
 		local _, realmID, playerID = strsplit("-", guid)
 		if (realmID == NS.CommFlare.CF.PlayerRealmID) then
@@ -124,12 +137,12 @@ function NS:GetPlayerInfoByGUID(guid)
 				-- use player server realm
 				realm = NS.CommFlare.CF.PlayerServerName
 			end
-		else
-			-- no realm?
-			if (not realm or (realm == "")) then
-				-- failed
-				return nil
-			end
+		end
+
+		-- sanity check
+		if ((name == "") or (realm == "")) then
+			-- failed
+			return nil
 		end
 	else
 		-- invalid realm?
@@ -139,15 +152,9 @@ function NS:GetPlayerInfoByGUID(guid)
 		end
 	end
 
-	-- sanity check
-	if ((name == "") or (realm == "")) then
-		-- failed
-		return nil
-	end
-
 	-- finalize data
 	local player = strformat("%s-%s", name, realm)
-	CommFlarePlayerGUIDCache[guid] = {
+	local data = {
 		localizedClass = localizedClass,
 		englishClass = englishClass,
 		localizedRace = localizedRace,
@@ -158,8 +165,14 @@ function NS:GetPlayerInfoByGUID(guid)
 		player = player,
 	}
 
-	-- return table
-	return CommFlarePlayerGUIDCache[guid]
+	-- not secret?
+	if (not bSecret) then
+		-- finalize data
+		CommFlarePlayerGUIDCache[guid] = data
+	end
+
+	-- return data
+	return data
 end
 
 -- demote assistant
