@@ -24,7 +24,7 @@ function NS:CreateTooltipFrame()
 
 	-- create frame
 	local frame = CreateFrame("Frame", nil, GameTooltipStatusBar)
-	frame.Text = frame:CreateFontString(nil, "ARTWORK", nil, 2)
+	frame.Text = frame:CreateFontString(nil, "ARTWORK", nil)
 	frame.Text:SetFont(NS.Libs.LibSharedMedia:Fetch("font", "Roboto Condensed BoldItalic"), 12, "OUTLINE")
 	frame.Text:SetPoint("CENTER", GameTooltipStatusBar, "CENTER", 0, 0)
 	frame.Text:SetSize(150, 20)

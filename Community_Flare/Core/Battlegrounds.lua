@@ -320,6 +320,8 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.WG = {}
 	NS.CommFlare.CF.WSG = {}
 	NS.CommFlare.CF.DisplayedLists = {}
+	NS.CommFlare.CF.EnemyPlayerPIDs = {}
+	NS.CommFlare.CF.EnemyPlayerDetails = {}
 	NS.CommFlare.CF.KosAlerted = {}
 	NS.CommFlare.CF.FullRoster = {}
 	NS.CommFlare.CF.LogListPlayers = {}

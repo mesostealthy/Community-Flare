@@ -1,2 +1,5 @@
-v2.31.002:
--BUGFIX: Fixed issue with UNIT_DIED check for Isle of Conquest.
+v2.40.001:
+-Slayer's Rise: Now tracks Mana Cell spawn & cap times with Capping bars.
+-Slayer's Rise: Now shows the amount of points bleeding from each team.
+-Name Plates have some more ROLE (tank/healer) detection upon targeting.
+-Some more various bugfixes that I've forgot specifically.

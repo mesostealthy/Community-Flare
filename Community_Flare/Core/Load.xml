@@ -4,8 +4,8 @@
 	<Script file="Constants.lua" />
 	<Script file="Config.lua" />
 	<Script file="Debug.lua" />
-	<Script file="Init.lua" />
 	<Script file="Restrictions.lua" />
+	<Script file="Init.lua" />
 	<Script file="Battlegrounds.lua" />
 	<Script file="BlockGameMenus.lua" />
 	<Script file="Communication.lua" />
@@ -16,6 +16,7 @@
 	<Script file="Housing.lua" />
 	<Script file="KOS.lua" />
 	<Script file="Menus.lua" />
+	<Script file="NamePlates.lua" />
 	<Script file="POIs.lua" />
 	<Script file="Quests.lua" />
 	<Script file="Social.lua" />

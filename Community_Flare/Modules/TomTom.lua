@@ -24,9 +24,9 @@ function NS:TomTomRemoveWaypoints(title)
 	local TT = TomTom
 	if (TT and TT.RemoveWaypoint and TT.waypoints) then
 		-- process all waypoints
-		for mapID, entries in pairs(TT.waypoints) do
+		for mapID,entries in pairs(TT.waypoints) do
 			-- process zone waypoints
-			for _, waypoint in pairs(entries) do
+			for _,waypoint in pairs(entries) do
 				-- title matches?
 				if (waypoint.title and waypoint.title:find(title)) then
 					-- remove waypoint

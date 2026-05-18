@@ -11,15 +11,10 @@ local CreateFrame                                 = _G.CreateFrame
 local GetScreenHeight                             = _G.GetScreenHeight
 local GetScreenWidth                              = _G.GetScreenWidth
 local InCombatLockdown                            = _G.InCombatLockdown
+local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
-local UnitCanAttack                               = _G.UnitCanAttack
-local UnitClassBase                               = _G.UnitClassBase
-local UnitIsEnemy                                 = _G.UnitIsEnemy
-local UnitIsPlayer                                = _G.UnitIsPlayer
-local UnitIsPossessed                             = _G.UnitIsPossessed
-local UnitPowerMax                                = _G.UnitPowerMax
-local UnitPowerType                               = _G.UnitPowerType
-local GetNamePlates                               = _G.C_NamePlate.GetNamePlates
+local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
+local PvPGetActiveMatchDuration                   = _G.C_PvP.GetActiveMatchDuration
 local mfloor                                      = _G.math.floor
 local strsplit                                    = _G.string.split
 
@@ -64,33 +59,6 @@ function CommunityFlare_GetMainTank()
 		end
 	end
 	return nil
-end
-
--- get player details from battleground enemies
-function NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
-	-- not installed?
-	if (NS.faction ~= 0) then return end
-	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
-		-- failed
-		return nil
-	end
-
-	-- get player button by unit
-	local playerButton = BattleGroundEnemies:GetPlayerbuttonByUnitID(unitToken, "Enemies")
-	if (not playerButton or not playerButton.PlayerDetails) then
-		-- failed
-		return nil
-	end
-
-	-- no player role?
-	local playerDetails = playerButton.PlayerDetails
-	if (not playerDetails or not playerDetails.PlayerRole) then
-		-- failed
-		return nil
-	end
-
-	-- return player role
-	return playerDetails.PlayerRole
 end
 
 -- update assist button
@@ -157,154 +125,6 @@ function NS:SaveButtonPosition()
 	-- move assist button
 	NS.AssistButton:ClearAllPoints()
 	NS.AssistButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
-end
-
--- is valid unit token
-function NS:IsValidUnitToken(unitToken)
-	-- not player?
-	if (NS.faction ~= 0) then return nil end
-	if (not UnitIsPlayer(unitToken)) then
-		-- failed
-		return nil
-	end
-
-	-- not an enemy?
-	if (not (UnitCanAttack("player", unitToken) or UnitIsEnemy("player", unitToken))) then
-		-- failed
-		return nil
-	end
-
-	-- unit is mind controlled?
-	if (UnitIsPossessed(unitToken)) then
-		-- : same faction as player?
-		if (UnitFactionGroup(unitToken) == NS.CommFlare.CF.PlayerFaction) then
-			-- failed
-			return nil
-		end
-	end
-
-	-- success
-	return true
-end
-
--- get unit role
-function NS:GetUnitRole(unitToken)
-	-- check class base
-	if (NS.faction ~= 0) then return nil end
-	local className, classID = UnitClassBase(unitToken)
-	if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
-		-- damager
-		return "DAMAGER"
-	elseif (className == "MONK") then
-		-- check power type
-		local powerType = UnitPowerType(unitToken)
-		if (powerType == 0) then
-			-- healer
-			return "HEALER"
-		else
-			-- check power max
-			local powerMax = UnitPowerMax(unitToken, 12)
-			if (powerMax == 4) then
-				-- tank
-				return "TANK"
-			end
-		end
-	elseif (className == "PRIEST") then
-		-- check power type
-		local powerType = UnitPowerType(unitToken)
-		if (powerType ~= 13) then
-			-- healer
-			return "HEALER"
-		end
-	end
-
-	-- try getting from battleground enemies
-	local role = NS:BattleGroundEnemies_GetPlayerDetails(unitToken)
-	if (role) then
-		-- healer?
-		if (role == "HEALER") then
-			-- return role
-			return role
-		-- tank?
-		elseif (role == "TANK") then
-			-- return role
-			return role
-		-- damager?
-		elseif (role == "DAMAGER") then
-			-- return role
-			return role
-		end
-	end
-
-	-- last resort shaman check
-	if (className == "SHAMAN") then
-		-- check power type
-		local powerType = UnitPowerType(unitToken)
-		if (powerType ~= 11) then
-			-- healer
-			return "HEALER"
-		end
-	end
-
-	-- unknown
-	return nil
-end
-
--- name plate added
-function NS:AssistButtonNamePlateAdded(unitToken)
-	-- get name plate for unit
-	if (NS.faction ~= 0) then return end
-	local namePlate = NS:GetNamePlateForUnit(unitToken)
-	if (not namePlate) then
-		-- finished
-		return
-	end
-
-	-- has unit frame?
-	local unitFrame = namePlate.UnitFrame
-	if (not unitFrame) then
-		-- finished
-		return
-	end
-
-	-- texture not created yet?
-	if (not unitFrame.CFTexture) then
-		-- create / setup texture
-		unitFrame.CFTexture = unitFrame:CreateTexture(nil, "OVERLAY")
-		unitFrame.CFTexture:SetSize(50, 50)
-		unitFrame.CFTexture:SetPoint("BOTTOM", namePlate, "TOP", 0, 0)
-	end
-
-	-- valid token?
-	if (NS:IsValidUnitToken(unitToken)) then
-		-- get unit role
-		local role = NS:GetUnitRole(unitToken)
-		if (role == "HEALER") then
-			-- set healer
-			unitFrame.CFTexture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
-			unitFrame.CFTexture:Show()
-			return
-		elseif (role == "TANK") then
-			-- set healer
-			unitFrame.CFTexture:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
-			unitFrame.CFTexture:Show()
-			return
-		end
-	end
-
-	-- hide texture
-	unitFrame.CFTexture:Hide()
-end
-
--- name plate removed
-function NS:AssistButtonNamePlateRemoved(unitToken)
-	-- has nameplate, unit frame and texture?
-	if (NS.faction ~= 0) then return end
-	local namePlate = C_NamePlate.GetNamePlateForUnit(unit)
-	if (namePlate and namePlate.UnitFrame and namePlate.UnitFrame.CFTexture) then
-		-- hide texture
-		namePlate.UnitFrame.CFTexture:Hide()
-	end
 end
 
 -- create assist button
@@ -456,7 +276,7 @@ function NS:CreateAssistButton()
 	NS.AssistButton.Header.Background = NS.AssistButton:CreateTexture(nil, "BACKGROUND")
 	NS.AssistButton.Header.Background:SetAllPoints()
 	NS.AssistButton.Header.Background:SetColorTexture(0, 255, 0, 1)
-	NS.AssistButton.Header.Text = NS.AssistButton:CreateFontString(nil, "ARTWORK", nil, 2)
+	NS.AssistButton.Header.Text = NS.AssistButton:CreateFontString(nil, "ARTWORK", nil)
 	NS.AssistButton.Header.Text:SetFont(NS.Libs.LibSharedMedia:Fetch("font", "Roboto Condensed BoldItalic"), 12, "OUTLINE")
 	NS.AssistButton.Header.Text:SetPoint("TOPLEFT", NS.AssistButton, "TOPLEFT", 2, 0)
 	NS.AssistButton.Header.Text:SetSize(width, 20)
@@ -498,21 +318,6 @@ function NS:CreateAssistButton()
 
 			-- save positions
 			NS.db.global.AssistFrame.width = width
-		end
-	end)
-
-	-- event handler
-	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-	NS.AssistButton:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-	NS.AssistButton:RegisterEvent("PLAYER_LEAVING_WORLD")
-	NS.AssistButton:SetScript("OnEvent", function(self, event, ...)
-		-- name plate unit added?
-		if (event == "NAME_PLATE_UNIT_ADDED") then
-			local unitToken = ...
-			NS:AssistButtonNamePlateAdded(unitToken)
-		-- name plate unit removed?
-		elseif (event == "NAME_PLATE_UNIT_REMOVED") then
-			local unitToken = ...
 		end
 	end)
 
@@ -609,6 +414,94 @@ function NS:ToggleAssistButton()
 		end
 	end
 end
+
+-- on event handler
+local function OnEvent(self, event, ...)
+	-- player entering world?
+	if (event == "PLAYER_ENTERING_WORLD") then
+		local isInitialLogin, isReloadingUi = ...
+
+		-- initial login or reloading?
+		if ((isInitialLogin == true) or (isReloadingUi == true)) then
+			-- create assist button
+			NS:CreateAssistButton()
+
+			-- assist button enabled?
+			if (NS.db.global.assistButtonEnabled == true) then
+				-- in battleground?
+				if (NS:IsInBattleground() == true) then
+					-- match state is active?
+					local duration = PvPGetActiveMatchDuration()
+					if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
+						-- show assist button
+						NS:ShowAssistButton()
+					end
+				end
+			end
+		end
+	-- player regen enabled?
+	elseif (event == "PLAYER_REGEN_ENABLED") then
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- hide assist button?
+			if (NS.CommFlare.CF.RegenJobs["HideAssistButton"] == true) then
+				-- hide
+				NS.CommFlare.CF.RegenJobs["HideAssistButton"] = nil
+				NS:HideAssistButton()
+			elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"] == true) then
+				-- show
+				NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = nil
+				NS:ShowAssistButton()
+			end
+		end
+	-- player roles assigned?
+	elseif (event == "PLAYER_ROLES_ASSIGNED") then
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- in battleground?
+			if (NS:IsInBattleground() == true) then
+				-- match state is not complete?
+				if (PvPGetActiveMatchState() ~= Enum.PvPMatchState.Complete) then
+					-- show assist button
+					NS:ShowAssistButton()
+				end
+			end
+		end
+	-- pvp match complete?
+	elseif (event == "PVP_MATCH_COMPLETE") then
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- assist button shown?
+			if (NS.AssistButton:IsShown()) then
+				-- hide assist button
+				NS:HideAssistButton()
+			end
+		end
+	-- zone changed new area?
+	elseif (event == "ZONE_CHANGED_NEW_AREA") then
+		-- assist button enabled?
+		if (NS.db.global.assistButtonEnabled == true) then
+			-- assist button shown?
+			if (NS.AssistButton:IsShown()) then
+				-- check zone type
+				local inInstance, instanceType = IsInInstance()
+				if (instanceType ~= "pvp") then
+					-- hide assist button
+					NS:HideAssistButton()
+				end
+			end
+		end
+	end
+end
+
+-- create event handler frame
+local f = CreateFrame("Frame")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
+f:RegisterEvent("PLAYER_ROLES_ASSIGNED")
+f:RegisterEvent("PVP_MATCH_COMPLETE")
+f:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+f:SetScript("OnEvent", OnEvent)
 
 -- fully loaded
 NS.LoadCount = NS.LoadCount + 1

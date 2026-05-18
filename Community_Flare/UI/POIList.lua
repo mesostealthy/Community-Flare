@@ -342,7 +342,6 @@ end
 -- on enter
 function CF_POIListEntryMixin:OnEnter()
 	-- start tooltip
-	GLOBAL_self = self
 	local info = self.info.data
 	GameTooltip:SetOwner(self)
 

@@ -73,7 +73,7 @@ function NS:Count_AlteracValley_BunkersTowers_Destroyed()
 		local list = {}
 		local TowersDestroyed = 0
 		local BunkersDestroyed = 0
-		for _, id in pairs(ids) do
+		for _,id in pairs(ids) do
 			-- get info
 			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.areaPoiID and info.textureIndex) then
@@ -106,14 +106,14 @@ end
 
 -- process alterac valley pois
 function NS:Process_AlteracValley_POIs()
-	-- found POIs?
+	-- get area pois for map
 	if (NS.faction ~= 0) then return end
 	local mapID = NS.CommFlare.CF.MapID
 	local ids = NS:GetAreaPOIForMap(mapID)
 	if (ids and (#ids > 0)) then
 		-- process ids
 		local list = {}
-		for _, id in pairs(ids) do
+		for _,id in pairs(ids) do
 			-- get info
 			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.name and info.areaPoiID) then
@@ -126,7 +126,7 @@ function NS:Process_AlteracValley_POIs()
 		-- process list
 		NS.CommFlare.CF.AV.BunkersDestroyed = 0
 		NS.CommFlare.CF.AV.TowersDestroyed = 0
-		for name, info in pairs(list) do
+		for name,info in pairs(list) do
 			-- not tracked yet?
 			if (not NS.AlteracValleyActivePOIs[name]) then
 				-- initialize
@@ -210,7 +210,7 @@ function NS:Process_AlteracValley_Vignettes()
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
-		for _, guid in pairs(ids) do
+		for _,guid in pairs(ids) do
 			-- get info
 			local info = NS:GetVignetteInfo(guid)
 			if (info and info.name and info.vignetteID) then
@@ -232,7 +232,7 @@ function NS:Process_AlteracValley_Vignettes()
 		end
 
 		-- check for deletions
-		for id, info in pairs(NS.AlteracValleyTrackedVignettes) do
+		for id,info in pairs(NS.AlteracValleyTrackedVignettes) do
 			-- active?
 			if (NS.AlteracValleyActiveVignettes[id]) then
 				-- no longer exists?

@@ -19,6 +19,7 @@ local strformat                                   = _G.string.format
 -- pois
 NS.IOCActivePOIs = {}
 NS.IOCTrackedPOIs = {} -- none for now
+NS.IOCDocksPOIs = { 2356, 2357, 2358, 2359 }
 
 -- initialize
 function NS:IsleOfConquest_Initialize()
@@ -52,7 +53,7 @@ function NS:Process_IsleOfConquest_POIs()
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
-		for _, id in pairs(ids) do
+		for _,id in pairs(ids) do
 			-- get info
 			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.name and info.areaPoiID) then
@@ -62,21 +63,36 @@ function NS:Process_IsleOfConquest_POIs()
 
 				-- not active?
 				if (not NS.IOCActivePOIs[id]) then
-					-- save spawn time
-					NS.IOCActivePOIs[id] = time()
-
 					-- Docks = Horde Controlled?
 					if (id == 2357) then
 						-- all glaives up
 						NS.CommFlare.CF.IOC.HordeGlaivesUp = 3
 						NS.CommFlare.CF.IOC.AllianceGlaivesUp = 0 -- reset zero
 						NS.CommFlare.CF.IOC.DocksFlag = id
+
+						-- process all docks
+						for _,ID in ipairs(NS.IOCDocksPOIs) do
+							-- active?
+							if (NS.IOCActivePOIs[ID]) then
+								-- delete
+								NS.IOCActivePOIs[ID] = nil
+							end
+						end
 					-- Docks = Alliance Controlled?
 					elseif (id == 2358) then
 						-- all glaives up
 						NS.CommFlare.CF.IOC.HordeGlaivesUp = 0 -- reset zero
 						NS.CommFlare.CF.IOC.AllianceGlaivesUp = 3
 						NS.CommFlare.CF.IOC.DocksFlag = id
+
+						-- process all docks
+						for _,ID in ipairs(NS.IOCDocksPOIs) do
+							-- active?
+							if (NS.IOCActivePOIs[ID]) then
+								-- delete
+								NS.IOCActivePOIs[ID] = nil
+							end
+						end
 					-- Docks = Tapped?
 					elseif ((id == 2356) or (id == 2359)) then
 						-- cancel glaives stuff
@@ -85,8 +101,19 @@ function NS:Process_IsleOfConquest_POIs()
 						NS.CommFlare.CF.IOC.DocksFlag = id
 						NS:Cancel_Active_Timers(L["Glaive Thrower"])
 						NS:Capping_Stop_Bars(L["Glaive Thrower"])
+
+						-- process all docks
+						for _,ID in ipairs(NS.IOCDocksPOIs) do
+							-- active?
+							if (NS.IOCActivePOIs[ID]) then
+								-- delete
+								NS.IOCActivePOIs[ID] = nil
+							end
+						end
 					end
 
+					-- save spawn time
+					NS.IOCActivePOIs[id] = time()
 				end
 			end
 		end
@@ -113,11 +140,11 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 	local list = NS:GetBattlefieldVehicles(mapID)
 	if (list and (#list > 0)) then
 		-- process all
-		for k,v in pairs(list) do
+		for _,info in pairs(list) do
 			-- glaive thrower?
-			if (v.name == L["Glaive Thrower"]) then
+			if (info.name == L["Glaive Thrower"]) then
 				-- is alive?
-				if (v.isAlive == true) then
+				if (info.isAlive == true) then
 					-- increase
 					numGlaives = numGlaives + 1
 				end

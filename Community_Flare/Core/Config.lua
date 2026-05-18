@@ -797,8 +797,12 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 	OnAccept = function(dialog, player)
 		-- save settings
 		for k,v in pairs(settings_that_require_reload) do
+			-- always readd channels?
+			if (k == "alwaysReaddChannels") then
+				-- save value
+				NS.charDB.profile.alwaysReaddChannels = v
 			-- block hotkeys?
-			if (k == "blockGameMenuHotKeys") then
+			elseif (k == "blockGameMenuHotKeys") then
 				-- save value
 				NS.charDB.profile.blockGameMenuHotKeys = v
 			-- community right click menu?
@@ -816,7 +820,23 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 	hideOnEscape = true,
 }
 
--- set community right menu click
+-- set community readd channels
+local function Community_Readd_Channels_Set(info, value)
+	-- enabled?
+	if (value == true) then
+		-- save value
+		NS.charDB.profile.alwaysReaddChannels = value
+	else
+		-- needs reload?
+		if (NS.CommFlare.CF.ChannelsReadded) then
+			-- setting requires reload
+			settings_that_require_reload["alwaysReaddChannels"] = value
+			NS:PopupBox("CommunityFlare_ReloadUI_Required_Dialog", value)
+		end
+	end
+end
+
+-- set community right click menu
 local function Community_Right_Click_Menu_Set(info, value)
 	-- enabled?
 	if (value == true) then
@@ -1532,7 +1552,7 @@ local CommunityGroup = {
 			desc = L["This will automatically delete communities channels from general and re-add them upon login."],
 			width = "full",
 			get = function(info) return NS.charDB.profile.alwaysReaddChannels end,
-			set = function(info, value) NS.charDB.profile.alwaysReaddChannels = value end,
+			set = Community_Readd_Channels_Set,
 		},
 		communityRightClickMenu = {
 			type = "toggle",

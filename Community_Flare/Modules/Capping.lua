@@ -307,7 +307,7 @@ local function OnEvent(self, event, ...)
 		-- has overlays to create?
 		if (next(createOverlays)) then
 			-- process all
-			for bar,v in pairs(createOverlays) do
+			for bar,_ in pairs(createOverlays) do
 				-- still shown?
 				if (bar:IsShown()) then
 					-- create bar overlay

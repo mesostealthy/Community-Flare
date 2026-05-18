@@ -21,34 +21,34 @@ function NS:Build_Classes()
 	local count = 0
 	for classID=1, GetNumClasses() do
 		-- get class info / create class
-		local className, classFile = GetClassInfo(classID)
-		if (not NS.CommFlare.Classes[className]) then
+		local className, classToken = GetClassInfo(classID)
+		if (not NS.CommFlare.Classes[classToken]) then
 			-- initialize
-			NS.CommFlare.Classes[className] = {}
+			NS.CommFlare.Classes[classToken] = {}
 		end
 
 		-- add class info
-		NS.CommFlare.Classes[className].classID = classID
-		NS.CommFlare.Classes[className].className = className
-		NS.CommFlare.Classes[className].classFile = classFile
-		NS.CommFlare.Classes[className].specs = {}
+		NS.CommFlare.Classes[classToken].classID = classID
+		NS.CommFlare.Classes[classToken].className = className
+		NS.CommFlare.Classes[classToken].classToken = classToken
+		NS.CommFlare.Classes[classToken].specs = {}
 
 		-- process all specializations
 		for specIndex=1, GetNumSpecializationsForClassID(classID) do
 			-- getr specialization info / create specialization
 			local specID, specName, specDescription, specIcon, role = NS:GetSpecializationInfoForClassID(classID, specIndex)
-			if (not NS.CommFlare.Classes[className].specs[specName]) then
+			if (not NS.CommFlare.Classes[classToken].specs[specName]) then
 				-- initialize
-				NS.CommFlare.Classes[className].specs[specName] = {}
+				NS.CommFlare.Classes[classToken].specs[specName] = {}
 			end
 
 			-- add specialization info
-			NS.CommFlare.Classes[className].specs[specName].specID = specID
-			NS.CommFlare.Classes[className].specs[specName].specName = specName
-			NS.CommFlare.Classes[className].specs[specName].specIndex = specIndex
-			NS.CommFlare.Classes[className].specs[specName].specDescription = specDescription
-			NS.CommFlare.Classes[className].specs[specName].specIcon = specIcon
-			NS.CommFlare.Classes[className].specs[specName].role = role
+			NS.CommFlare.Classes[classToken].specs[specName].specID = specID
+			NS.CommFlare.Classes[classToken].specs[specName].specName = specName
+			NS.CommFlare.Classes[classToken].specs[specName].specIndex = specIndex
+			NS.CommFlare.Classes[classToken].specs[specName].specDescription = specDescription
+			NS.CommFlare.Classes[classToken].specs[specName].specIcon = specIcon
+			NS.CommFlare.Classes[classToken].specs[specName].role = role
 
 			-- increase
 			count = count + 1
@@ -59,16 +59,28 @@ function NS:Build_Classes()
 	return count
 end
 
--- get specID from className & specName
-function NS:Get_SpecID(className, specName)
-	-- spec name exists?
-	if (NS.CommFlare.Classes[className] and NS.CommFlare.Classes[className].specs and NS.CommFlare.Classes[className].specs[specName] and NS.CommFlare.Classes[className].specs[specName].specID) then
-		-- return specID
-		return NS.CommFlare.Classes[className].specs[specName].specID
+-- get classID from classToken
+function NS:Get_Class(classToken)
+	-- class exists?
+	if (NS.CommFlare.Classes[classToken]) then
+		-- found
+		return NS.CommFlare.Classes[classToken].classID, NS.CommFlare.Classes[classToken]
 	end
 
 	-- failed
-	return 0
+	return nil
+end
+
+-- get specID from classToken & specName
+function NS:Get_SpecID(classToken, specName)
+	-- class/spec name exists?
+	if (NS.CommFlare.Classes[classToken] and NS.CommFlare.Classes[classToken].specs and NS.CommFlare.Classes[classToken].specs[specName] and NS.CommFlare.Classes[classToken].specs[specName].specID) then
+		-- return specID
+		return NS.CommFlare.Classes[classToken].specs[specName].specID
+	end
+
+	-- failed
+	return nil
 end
 
 -- fully loaded

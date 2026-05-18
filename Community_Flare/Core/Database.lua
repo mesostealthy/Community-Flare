@@ -350,6 +350,7 @@ function NS:Verify_Club_Streams(clubs)
 						if (not channel or (NS.charDB.profile.alwaysReaddChannels == true)) then
 							-- readd community chat window
 							NS:ReaddCommunityChatWindow(clubId, v.streamId)
+							NS.CommFlare.CF.ChannelsReadded = true
 						end
 
 						-- AddChatWindowChannel available?

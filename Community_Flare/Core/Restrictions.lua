@@ -1,7 +1,7 @@
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
-if (not NS.Loaded or not NS.Loaded["Init"]) then return end
+if (not NS.Loaded or not NS.Loaded["Debug"]) then return end
 local L = LibStub("AceLocale-3.0"):GetLocale(ADDON_NAME, false)
 if (not L or not NS.CommFlare) then return end
  
@@ -15,6 +15,7 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local PromoteToAssistant                          = _G.PromoteToAssistant
 local PromoteToLeader                             = _G.PromoteToLeader
+local UnitCanAttack                               = _G.UnitCanAttack
 local UnitExists                                  = _G.UnitExists
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitFullName                                = _G.UnitFullName
@@ -26,10 +27,15 @@ local UnitInRaid                                  = _G.UnitInRaid
 local UnitInVehicle                               = _G.UnitInVehicle
 local UnitIsConnected                             = _G.UnitIsConnected
 local UnitIsDeadOrGhost                           = _G.UnitIsDeadOrGhost
+local UnitIsEnemy                                 = _G.UnitIsEnemy
 local UnitIsGroupLeader                           = _G.UnitIsGroupLeader
 local UnitIsPlayer                                = _G.UnitIsPlayer
+local UnitIsPossessed                             = _G.UnitIsPossessed
 local UnitLeadsAnyGroup                           = _G.UnitLeadsAnyGroup
 local UnitLevel                                   = _G.UnitLevel
+local UnitName                                    = _G.UnitName
+local UnitPowerMax                                = _G.UnitPowerMax
+local UnitPowerType                               = _G.UnitPowerType
 local UnitRealmRelationship                       = _G.UnitRealmRelationship
 local GetAreaPOIForMap                            = _G.C_AreaPoiInfo.GetAreaPOIForMap
 local GetAreaPOIInfo                              = _G.C_AreaPoiInfo.GetAreaPOIInfo
@@ -95,40 +101,54 @@ CommFlarePlayerGUIDCache = CommFlarePlayerGUIDCache or {}
 
 -- get player info by guid
 function NS:GetPlayerInfoByGUID(guid)
-	-- sanity checks
+	-- sanity check
 	if (not guid) then
 		-- failed
 		return nil
 	end
 
-	-- secret value?
-	local bSecret = false
+	-- secret guid?
+	local data = nil
 	if (issecretvalue(guid)) then
-		-- set secret
-		bSecret = true
-	elseif (guid == "") then
-		-- failed
-		return nil
-	end
+		-- get player info
+		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+		if (not localizedClass or not localizedRace or not name) then
+			-- failed
+			return nil
+		end
 
-	-- not secret?
-	if (not bSecret) then
+		-- finalize data
+		local player = strformat("%s-%s", name, realm)
+		data = {
+			localizedClass = localizedClass,
+			englishClass = englishClass,
+			localizedRace = localizedRace,
+			englishRace = englishRace,
+			sex = sex,
+			name = name,
+			realm = realm,
+			player = player,
+		}
+	else
+		-- empty?
+		if (guid == "") then
+			-- failed
+			return nil
+		end
+
 		-- already cached?
 		if (CommFlarePlayerGUIDCache[guid]) then
-			-- return table
+			-- return cached data
 			return CommFlarePlayerGUIDCache[guid]
 		end
-	end
 
-	-- get player info
-	local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
-	if (not localizedClass or not localizedRace or not name or (name == "")) then
-		-- failed
-		return nil
-	end
+		-- get player info
+		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
+		if (not localizedClass or not localizedRace or not name or (name == "")) then
+			-- failed
+			return nil
+		end
 
-	-- not secret?
-	if (not bSecret) then
 		-- same realm?
 		local _, realmID, playerID = strsplit("-", guid)
 		if (realmID == NS.CommFlare.CF.PlayerRealmID) then
@@ -139,35 +159,26 @@ function NS:GetPlayerInfoByGUID(guid)
 			end
 		end
 
-		-- sanity check
-		if ((name == "") or (realm == "")) then
+		-- empty?
+		if (realm == "") then
 			-- failed
 			return nil
 		end
-	else
-		-- invalid realm?
-		if (not realm) then
-			-- build player
-			realm = NS.CommFlare.CF.PlayerServerName
-		end
-	end
 
-	-- finalize data
-	local player = strformat("%s-%s", name, realm)
-	local data = {
-		localizedClass = localizedClass,
-		englishClass = englishClass,
-		localizedRace = localizedRace,
-		englishRace = englishRace,
-		sex = sex,
-		name = name,
-		realm = realm,
-		player = player,
-	}
-
-	-- not secret?
-	if (not bSecret) then
 		-- finalize data
+		local player = strformat("%s-%s", name, realm)
+		data = {
+			localizedClass = localizedClass,
+			englishClass = englishClass,
+			localizedRace = localizedRace,
+			englishRace = englishRace,
+			sex = sex,
+			name = name,
+			realm = realm,
+			player = player,
+		}
+
+		-- save cached data
 		CommFlarePlayerGUIDCache[guid] = data
 	end
 
@@ -224,7 +235,7 @@ end
 -- get specialization info for class id
 function NS:GetSpecializationInfoForClassID(classID, index, ...)
 	-- sanity checks
-	if (not classID or not index or issecretvalue(classID) or issecretvalue(index)) then
+	if (not (classID or index) or issecretvalue(classID) or issecretvalue(index)) then
 		-- failed
 		return nil
 	end
@@ -281,6 +292,18 @@ function NS:PromoteToLeader(player)
 
 	-- success
 	return PromoteToLeader(player)
+end
+
+-- unit can attack
+function NS:UnitCanAttack(unitToken1, unitToken2)
+	-- sanity checks
+	if (not (unitToken1 or unitToken2) or issecretvalue(unitToken1) or issecretvalue(unitToken2)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitCanAttack(unitToken1, unitToken2)
 end
 
 -- unit exists
@@ -421,16 +444,28 @@ function NS:UnitIsDeadOrGhost(unitToken)
 	return UnitIsDeadOrGhost(unitToken)
 end
 
--- unit is group leader
-function NS:UnitIsGroupLeader(unitToken, ...)
+-- unit is enemy
+function NS:UnitIsEnemy(unitToken1, unitToken2)
 	-- sanity checks
-	if (not unitToken or issecretvalue(unitToken)) then
+	if (not (unitToken1 or unitToken2) or issecretvalue(unitToken1) or issecretvalue(unitToken2)) then
 		-- failed
 		return nil
 	end
 
 	-- success
-	return UnitIsGroupLeader(unitToken, ...)
+	return UnitIsEnemy(unitToken1, unitToken2)
+end
+
+-- unit is group leader
+function NS:UnitIsGroupLeader(unitToken, partyCategory)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken) or issecretvalue(partyCategory)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitIsGroupLeader(unitToken, partyCategory)
 end
 
 -- unit is player
@@ -443,6 +478,18 @@ function NS:UnitIsPlayer(unitToken)
 
 	-- success
 	return UnitIsPlayer(unitToken)
+end
+
+-- unit is possessed
+function NS:UnitIsPossessed(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitIsPossessed(unitToken)
 end
 
 -- unit leads any group
@@ -481,6 +528,30 @@ function NS:UnitName(unitToken)
 	return UnitName(unitToken)
 end
 
+-- unit power max
+function NS:UnitPowerMax(unitToken, powerType)
+	-- sanity checks
+	if (not (unitToken or powerType) or issecretvalue(unitToken) or issecretvalue(powerType)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitPowerMax(unitToken, powerType)
+end
+
+-- unit power type
+function NS:UnitPowerType(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitPowerType(unitToken)
+end
+
 -- unit realm relationship
 function NS:UnitRealmRelationship(unitToken)
 	-- sanity checks
@@ -512,7 +583,7 @@ end
 -- get area poi info
 function NS:GetAreaPOIInfo(uiMapID, areaPoiID)
 	-- sanity checks
-	if (not uiMapID or not areaPoiID or issecretvalue(uiMapID) or issecretvalue(areaPoiID)) then
+	if (not (uiMapID or areaPoiID) or issecretvalue(uiMapID) or issecretvalue(areaPoiID)) then
 		-- failed
 		return nil
 	end
@@ -552,7 +623,7 @@ end
 -- get friend game account info
 function NS:GetFriendGameAccountInfo(friendIndex, accountIndex)
 	-- sanity checks
-	if (not friendIndex or not accountIndex or issecretvalue(friendIndex) or issecretvalue(accountIndex)) then
+	if (not (friendIndex or accountIndex) or issecretvalue(friendIndex) or issecretvalue(accountIndex)) then
 		-- failed
 		return nil
 	end
@@ -646,7 +717,7 @@ function NS:GetMemberInfo(clubId, memberId)
 	end
 
 	-- sanity checks
-	if (not clubId or not memberId or issecretvalue(clubId) or issecretvalue(memberId)) then
+	if (not (clubId or memberId) or issecretvalue(clubId) or issecretvalue(memberId)) then
 		-- failed
 		return nil
 	end
@@ -676,7 +747,7 @@ function NS:GetStreamInfo(clubId, streamId)
 	end
 
 	-- sanity checks
-	if (not clubId or not streamId or issecretvalue(clubId) or issecretvalue(streamId)) then
+	if (not (clubId or streamId) or issecretvalue(clubId) or issecretvalue(streamId)) then
 		-- failed
 		return nil
 	end
@@ -1167,7 +1238,7 @@ end
 -- get tree currency info
 function NS:GetTreeCurrencyInfo(configID, treeID, excludeStagedChanges)
 	-- sanity checks
-	if (not configID or not treeID or not excludeStagedChanges or issecretvalue(configID) or issecretvalue(treeID) or issecretvalue(excludeStagedChanges)) then
+	if (not (configID or treeID or excludeStagedChanges) or issecretvalue(configID) or issecretvalue(treeID) or issecretvalue(excludeStagedChanges)) then
 		-- failed
 		return nil
 	end
@@ -1183,7 +1254,7 @@ end
 -- get unit auras
 function NS:GetUnitAuras(unit, filter, ...)
 	-- sanity checks
-	if (not unit or not filter or issecretvalue(unit) or issecretvalue(filter)) then
+	if (not (unit or filter) or issecretvalue(unit) or issecretvalue(filter)) then
 		-- failed
 		return nil
 	end
@@ -1212,7 +1283,7 @@ end
 -- get vignette position
 function NS:GetVignettePosition(vignetteGUID, uiMapID)
 	-- sanity checks
-	if (not vignetteGUID or not uiMapID or issecretvalue(vignetteGUID) or issecretvalue(uiMapID)) then
+	if (not (vignetteGUID or uiMapID) or issecretvalue(vignetteGUID) or issecretvalue(uiMapID)) then
 		-- failed
 		return nil
 	end
@@ -1230,7 +1301,7 @@ function NS:SendMessage(sender, msg, channel)
 	end
 
 	-- sanity checks
-	if (not sender or not msg or issecretvalue(sender) or issecretvalue(msg) or issecretvalue(channel)) then
+	if (not (sender or msg) or issecretvalue(sender) or issecretvalue(msg) or issecretvalue(channel)) then
 		-- failed
 		return nil
 	end

@@ -478,7 +478,7 @@ function NS:Update_LFG_Status(event)
 	for category=1, NUM_LE_LFG_CATEGORYS do
 		-- get lfg mode
 		local mode, submode = GetLFGMode(category)
-		if (mode and (mode ~= "suspended")) then
+		if (mode) then
 			-- get all entries
 			local entryIDs = NS:GetAllEntriesForCategory(category)
 			if (entryIDs and (#entryIDs > 0)) then

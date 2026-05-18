@@ -123,6 +123,10 @@ function NS.CommFlare:AREA_POIS_UPDATED(msg)
 		elseif (NS.CommFlare.CF.MapID == 1478) then
 			-- process stuff
 			NS:Process_Ashran_POIs()
+		-- slayer's rise?
+		elseif (NS.CommFlare.CF.MapID == 2397) then
+			-- process stuff
+			NS:Process_SlayersRise_POIs()
 		end
 	end
 end
@@ -165,45 +169,36 @@ function NS.CommFlare:CHAT_MSG_ADDON(msg, ...)
 	end
 end
 
--- process chat bg system alliance
+-- process chat message battleground system alliance
 function NS.CommFlare:CHAT_MSG_BG_SYSTEM_ALLIANCE(msg, ...)
-	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+	local text, sender = ...
 
-	-- in battleground?
-	if (NS:IsInBattleground() == true) then
-		-- slayer's rise?
-		if (NS.CommFlare.CF.MapID == 2397) then
-			-- process stuff
-			NS:Process_SlayersRise_Messages(text)
-		end
+	-- slayer's rise?
+	if (NS.CommFlare.CF.MapID == 2397) then
+		-- process stuff
+		NS:Process_SlayersRise_Messages(text)
 	end
 end
 
--- process chat bg system horde
+-- process chat message battleground system horde
 function NS.CommFlare:CHAT_MSG_BG_SYSTEM_HORDE(msg, ...)
-	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+	local text, sender = ...
 
-	-- in battleground?
-	if (NS:IsInBattleground() == true) then
-		-- slayer's rise?
-		if (NS.CommFlare.CF.MapID == 2397) then
-			-- process stuff
-			NS:Process_SlayersRise_Messages(text)
-		end
+	-- slayer's rise?
+	if (NS.CommFlare.CF.MapID == 2397) then
+		-- process stuff
+		NS:Process_SlayersRise_Messages(text)
 	end
 end
 
--- process chat bg system neutral
+-- process chat message battleground system neutral
 function NS.CommFlare:CHAT_MSG_BG_SYSTEM_NEUTRAL(msg, ...)
-	local text, sender, _, _, _, _, _, _, _, _, _, _, bnSenderID = ...
+	local text, sender = ...
 
-	-- in battleground?
-	if (NS:IsInBattleground() == true) then
-		-- slayer's rise?
-		if (NS.CommFlare.CF.MapID == 2397) then
-			-- process stuff
-			NS:Process_SlayersRise_Messages(text)
-		end
+	-- slayer's rise?
+	if (NS.CommFlare.CF.MapID == 2397) then
+		-- process stuff
+		NS:Process_SlayersRise_Messages(text)
 	end
 end
 
@@ -1275,22 +1270,18 @@ function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 		if (isTracked == true) then
 			-- first role chosen?
 			if (not NS.CommFlare.CF.RoleChosen[player]) then
-				-- is damage?
-				if (isDamage == true) then
-					-- increase
-					NS.CommFlare.CF.LocalData.NumDPS = NS.CommFlare.CF.LocalData.NumDPS + 1
-				end
-
 				-- is healer?
 				if (isHealer == true) then
 					-- increase
 					NS.CommFlare.CF.LocalData.NumHealers = NS.CommFlare.CF.LocalData.NumHealers + 1
-				end
-
 				-- is tank?
-				if (isTank == true) then
+				elseif (isTank == true) then
 					-- increase
 					NS.CommFlare.CF.LocalData.NumTanks = NS.CommFlare.CF.LocalData.NumTanks + 1
+				-- is damage?
+				elseif (isDamage == true) then
+					-- increase
+					NS.CommFlare.CF.LocalData.NumDPS = NS.CommFlare.CF.LocalData.NumDPS + 1
 				end
 			end
 
@@ -1523,13 +1514,17 @@ function NS.CommFlare:PLAYER_DEAD(msg)
 	-- in battleground?
 	if (NS:IsInBattleground() == true) then
 		-- reset killing blows
+		local previousKBs = NS.CommFlare.CF.KillingBlows
 		NS.CommFlare.CF.KillingBlows = 0
 
-		-- build message
-		local message = ColorUtilWrapTextInColorCode(strformat("%s has died! Kill streak has been reset!", NS.CommFlare.CF.PlayerName), NS.KillStreakTextColorCode)
-		if (message) then
-			-- display
-			print(message)
+		-- display kill shot message?
+		if (NS.db.global.killShotDisplayMsg) then
+			-- build message
+			local message = ColorUtilWrapTextInColorCode(strformat("%s has died! Kill streak of %d has been reset!", NS.CommFlare.CF.PlayerName, previousKBs), NS.KillStreakTextColorCode)
+			if (message) then
+				-- display
+				print(message)
+			end
 		end
 	end
 end
@@ -1578,6 +1573,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 	-- setup hooks
 	NS:Battlefield_SetupHooks()
+	NS:BattleGroundEnemies_SetupHooks()
 	NS:CommunityGuild_SetupHooks()
 	NS:REPorter_SetupHooks()
 
@@ -1585,8 +1581,8 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS:AddRangeCheckSpell("DEATHKNIGHT", "Friend", 410358)
 
 	-- in pvp content?
-	local inInstance, instanceType = IsInInstance()
-	if ((inInstance == true) and (instanceType == "pvp")) then
+	NS.CommFlare.CF.InInstance, NS.CommFlare.CF.InstanceType = IsInInstance()
+	if (NS.CommFlare.CF.InInstance and (NS.CommFlare.CF.InstanceType == "pvp")) then
 		-- has pvp equipment set?
 		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
 			-- can use equipment sets?
@@ -1654,12 +1650,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- enforce binding rules
 		NS:Enforce_Binding_Rules()
 
-		-- available?
-		if (NS.AssistButton and NS.CreateAssistButton) then
-			-- create assist button
-			NS:CreateAssistButton()
-		end
-
 		-- get MapID
 		NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
 		if (NS.CommFlare.CF.MapID) then
@@ -1680,15 +1670,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 				if (duration > 0) then
 					-- match started
 					NS.CommFlare.CF.MatchStatus = 2
-				end
-
-				-- available?
-				if (NS.AssistButton and NS.ShowAssistButton) then
-					-- assist button enabled?
-					if (NS.db.global.assistButtonEnabled == true) then
-						-- show assist button
-						NS:ShowAssistButton()
-					end
 				end
 			end
 
@@ -1852,13 +1833,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- purge war supply crates
 		NS:PurgeWarSupplyCrates()
 	else
-		-- in instance?
-		if (inInstance == true) then
-			-- not pvp?
-			if (instanceType ~= "pvp") then
-				-- always reset
-				NS.CommFlare.CF.MatchStatus = 0
-			end
+		-- in non-pvp instance?
+		if (NS.CommFlare.CF.InInstance and (NS.CommFlare.CF.InstanceType ~= "pvp")) then
+			-- always reset
+			NS.CommFlare.CF.MatchStatus = 0
 		end
 	end
 
@@ -1873,6 +1851,18 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 		-- has now run once
 		NS.CommFlare.CF.RunOnce = true
+	end
+end
+
+-- process player leaving world
+function NS.CommFlare:PLAYER_LEAVING_WORLD(msg)
+	-- in battleground?
+	if (NS:IsInBattleground() == true) then
+		-- slayer's rise?
+		if (NS.CommFlare.CF.MapID == 2397) then
+			-- hide widget frames
+			NS:SlayersRise_Hide_WidgetFrames()
+		end
 	end
 end
 
@@ -1992,23 +1982,6 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 
 	-- has regen jobs?
 	if (next(NS.CommFlare.CF.RegenJobs)) then
-		-- available?
-		if (NS.AssistButton and NS.HideAssistButton and NS.ShowAssistButton) then
-			-- assist button enabled?
-			if (NS.db.global.assistButtonEnabled == true) then
-				-- hide assist button?
-				if (NS.CommFlare.CF.RegenJobs["HideAssistButton"] == true) then
-					-- hide
-					NS.CommFlare.CF.RegenJobs["HideAssistButton"] = nil
-					NS:HideAssistButton()
-				elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"] == true) then
-					-- show
-					NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = nil
-					NS:ShowAssistButton()
-				end
-			end
-		end
-
 		-- DemoteAssistant?
 		if (NS.CommFlare.CF.RegenJobs["DemoteAssistant"]) then
 			-- sanity check
@@ -2095,24 +2068,6 @@ function NS.CommFlare:PLAYER_REGEN_ENABLED(msg)
 			-- setup hooks
 			NS.CommFlare.CF.RegenJobs["REPorterSetupHooks"]  = nil
 			NS:REPorter_SetupHooks()
-		end
-	end
-end
-
--- process player roles assigned
-function NS.CommFlare:PLAYER_ROLES_ASSIGNED(msg)
-	-- available?
-	if (NS.AssistButton and NS.ShowAssistButton) then
-		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
-			-- in battleground?
-			if (NS:IsInBattleground() == true) then
-				-- match state is not complete?
-				if (PvPGetActiveMatchState() ~= Enum.PvPMatchState.Complete) then
-					-- show assist button
-					NS:ShowAssistButton()
-				end
-			end
 		end
 	end
 end
@@ -2324,18 +2279,6 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	if (NS:UnitInVehicle("player")) then
 		-- show stuff in vehicles
 		NS:ShowStuffInVehicles("all")
-	end
-
-	-- available?
-	if (NS.AssistButton and NS.HideAssistButton) then
-		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
-			-- assist button shown?
-			if (NS.AssistButton:IsShown()) then
-				-- hide assist button
-				NS:HideAssistButton()
-			end
-		end
 	end
 end
 
@@ -3176,6 +3119,10 @@ function NS.CommFlare:UPDATE_UI_WIDGET(msg, ...)
 		elseif (NS.CommFlare.CF.MapID == 1478) then
 			-- process stuff
 			NS:Process_Ashran_Widget(widgetInfo)
+		-- slayer's rise?
+		elseif (NS.CommFlare.CF.MapID == 2397) then
+			-- process stuff
+			NS:Process_SlayersRise_Widget(widgetInfo)
 		end
 	end
 end
@@ -3282,14 +3229,11 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 	-- enforce binding rules
 	NS:Enforce_Binding_Rules()
 
-	-- in instance?
-	local inInstance, instanceType = IsInInstance()
-	if (inInstance == true) then
-		-- not pvp?
-		if (instanceType ~= "pvp") then
-			-- always reset
-			NS.CommFlare.CF.MatchStatus = 0
-		end
+	-- not in pvp instance?
+	NS.CommFlare.CF.InInstance, NS.CommFlare.CF.InstanceType = IsInInstance()
+	if (NS.CommFlare.CF.InInstance and (NS.CommFlare.CF.InstanceType ~= "pvp")) then
+		-- always reset
+		NS.CommFlare.CF.MatchStatus = 0
 	end
 
 	-- is tracked pvp?
@@ -3353,22 +3297,6 @@ function NS.CommFlare:ZONE_CHANGED_NEW_AREA(msg)
 		NS.CommFlare.CF.VersionSent = false
 		NS.CommFlare.CF.LastRaidWarning = 0
 	end
-
-	-- available?
-	if (NS.AssistButton and NS.HideAssistButton) then
-		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
-			-- assist button shown?
-			if (NS.AssistButton:IsShown()) then
-				-- check zone type
-				local inInstance, instanceType = IsInInstance()
-				if (instanceType ~= "pvp") then
-					-- hide assist button
-					NS:HideAssistButton()
-				end
-			end
-		end
-	end
 end
 
 -- enabled
@@ -3426,12 +3354,12 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PLAYER_DEAD")
 	self:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("PLAYER_LEAVING_WORLD")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
 	self:RegisterEvent("PLAYER_MAP_CHANGED")
 	self:RegisterEvent("PLAYER_PVP_KILLS_CHANGED")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
-	self:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:RegisterEvent("PVP_MATCH_ACTIVE")
 	self:RegisterEvent("PVP_MATCH_COMPLETE")
 	self:RegisterEvent("PVP_MATCH_INACTIVE")
@@ -3513,12 +3441,12 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PLAYER_DEAD")
 	self:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+	self:UnregisterEvent("PLAYER_LEAVING_WORLD")
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
 	self:UnregisterEvent("PLAYER_MAP_CHANGED")
 	self:UnregisterEvent("PLAYER_PVP_KILLS_CHANGED")
 	self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-	self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
 	self:UnregisterEvent("PVP_MATCH_ACTIVE")
 	self:UnregisterEvent("PVP_MATCH_COMPLETE")
 	self:UnregisterEvent("PVP_MATCH_INACTIVE")

@@ -65,7 +65,7 @@ function NS:Process_Ashran_POIs()
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
-		for _, id in pairs(ids) do
+		for _,id in pairs(ids) do
 			-- get info
 			local info = NS:GetAreaPOIInfo(mapID, id)
 			if (info and info.name and info.areaPoiID) then
@@ -96,7 +96,7 @@ function NS:Process_Ashran_POIs()
 		end
 
 		-- check for deletions
-		for id, info in pairs(NS.AshranTrackedPOIs) do
+		for id,info in pairs(NS.AshranTrackedPOIs) do
 			-- active?
 			if (NS.AshranActivePOIs[id]) then
 				-- no longer exists?
@@ -136,7 +136,7 @@ function NS:Process_Ashran_Vignettes()
 	if (ids and (#ids > 0)) then
 		-- check for additions
 		local list = {}
-		for _, guid in pairs(ids) do
+		for _,guid in pairs(ids) do
 			-- get info
 			local info = NS:GetVignetteInfo(guid)
 			if (info and info.name and info.vignetteID) then
@@ -158,7 +158,7 @@ function NS:Process_Ashran_Vignettes()
 		end
 
 		-- check for deletions
-		for id, info in pairs(NS.AshranTrackedVignettes) do
+		for id,info in pairs(NS.AshranTrackedVignettes) do
 			-- active?
 			if (NS.AshranActiveVignettes[id]) then
 				-- no longer exists?

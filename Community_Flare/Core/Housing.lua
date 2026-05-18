@@ -17,7 +17,7 @@ local function CreateMemberCountFrame()
 	if (not member_count_frame) then
 		-- create frame
 		member_count_frame = CreateFrame("Frame", nil, HousingBulletinBoardFrame)
-		member_count_frame.Text = member_count_frame:CreateFontString(nil, "ARTWORK", nil, 2)
+		member_count_frame.Text = member_count_frame:CreateFontString(nil, "ARTWORK", nil)
 		member_count_frame.Text:SetFont(NS.Libs.LibSharedMedia:Fetch("font", "Roboto Condensed BoldItalic"), 12, "OUTLINE")
 		member_count_frame.Text:SetPoint("TOPLEFT", HousingBulletinBoardFrame, "TOPLEFT", -10, -10)
 		member_count_frame.Text:SetSize(150, 20)

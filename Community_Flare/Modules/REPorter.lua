@@ -209,7 +209,7 @@ local function OnEvent(self, event, ...)
 		-- has overlays to create?
 		if (next(createOverlays)) then
 			-- process all
-			for name,v in pairs(createOverlays) do
+			for name,_ in pairs(createOverlays) do
 				-- has REPorter POINodes?
 				if (REPorter.POINodes and REPorter.POINodes[name]) then
 					-- add new overlay
