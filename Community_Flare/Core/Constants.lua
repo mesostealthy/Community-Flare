@@ -462,7 +462,6 @@ NS.WarCrateStartLocations = {
 	 [896] = { x = "0.33602023124695", y = "0.092845797538757" }, -- Drustvar
 	 [942] = { x = "0.68265008926392", y = "0.82041168212891"  }, -- Stormsong Valley
 	[1355] = { x = "0.51512289047241", y = "0.089830100536346" }, -- Nazjatar
-	--[1462] = { x = "", y = "" }, -- Mechagon Island? (NO CRATES?)
 
 	-- Dragonflight
 	[2022] = { x = "0.76880621910095", y = "0.637091755867"    }, -- The Waking Shores
@@ -501,7 +500,6 @@ NS.WarCrateDropLocations = {
 	-- [896] = { x = "0.33602023124695", y = "0.092845797538757" }, -- Drustvar
 	-- [942] = { x = "0.68265008926392", y = "0.82041168212891"  }, -- Stormsong Valley
 	--[1355] = { x = "0.51512289047241", y = "0.089830100536346" }, -- Nazjatar
-	--[1462] = { x = "", y = "" }, -- Mechagon Island? (NO CRATES?)
 
 	-- TODO: Dragonflight
 	--[2022] = { x = "0.76880621910095", y = "0.637091755867"    }, -- The Waking Shores

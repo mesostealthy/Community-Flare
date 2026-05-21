@@ -25,6 +25,7 @@ NS.SlayerRiseScoreBar = 7002
 -- local variables
 NS.LeftFrame = nil
 NS.RightFrame = nil
+NS.AttachedFrames = false
 
 -- vignettes
 NS.SlayersRiseActiveVignettes = {}
@@ -57,7 +58,10 @@ function NS:SlayersRise_Create_WidgetFrames()
 	NS.RightFrame:SetTextColor(1, 1, 1, 1)
 	NS.RightFrame:SetJustifyH("CENTER")
 	NS.RightFrame:Hide()
+end
 
+-- attach widget frames
+function NS:SlayersRise_Attach_WidgetFrames()
 	-- has widget frames?
 	if (UIWidgetTopCenterContainerFrame and UIWidgetTopCenterContainerFrame.widgetFrames) then
 		-- has score widget?
@@ -76,6 +80,9 @@ function NS:SlayersRise_Create_WidgetFrames()
 				NS.RightFrame:SetPoint("CENTER", widgetFrame.RightBar, "CENTER", 0, -22)
 				NS.RightFrame:SetText("Bleeding: 0")
 				NS.RightFrame:Show()
+
+				-- frames attached
+				NS.AttachedFrames = true
 			end
 		end
 	end
@@ -86,6 +93,10 @@ function NS:SlayersRise_Hide_WidgetFrames()
 	-- hide frames
 	if (NS.faction ~= 0) then return end
 	if (NS.LeftFrame and NS.RightFrame) then
+		-- clear all points
+		NS.LeftFrame:ClearAllPoints()
+		NS.RightFrame:ClearAllPoints()
+
 		-- hide
 		NS.LeftFrame:Hide()
 		NS.RightFrame:Hide()
@@ -96,13 +107,32 @@ end
 function NS:SlayersRise_Update_WidgetFrames()
 	-- sanity check
 	if (NS.faction ~= 0) then return end
-	if (NS.LeftFrame and NS.RightFrame) then
+	if (not (NS.LeftFrame or NS.RightFrame)) then
+		-- create / attach
+		NS:SlayersRise_Create_WidgetFrames()
+		NS:SlayersRise_Attach_WidgetFrames()
+	else
+		-- frames not attached?
+		if (not NS.AttachedFrames) then
+			-- attach frames
+			NS:SlayersRise_Attach_WidgetFrames()
+		end
+
+		-- left frame not shown?
+		if (not NS.LeftFrame:IsShown()) then
+			-- show
+			NS.LeftFrame:Show()
+		end
+
+		-- right frame not shown?
+		if (not NS.RightFrame:IsShown()) then
+			-- show
+			NS.RightFrame:Show()
+		end
+
 		-- update
 		NS.LeftFrame:SetText(strformat("Bleeding: %d", NS.CommFlare.CF.SLR.AlliancePointsBleed))
 		NS.RightFrame:SetText(strformat("Bleeding: %d", NS.CommFlare.CF.SLR.HordePointsBleed))
-	else
-		-- create widget frames
-		NS:SlayersRise_Create_WidgetFrames()
 	end
 end
 
@@ -122,6 +152,7 @@ function NS:SlayersRise_Initialize()
 	NS.CommFlare.CF.SLR.HordeSparringGrounds = false
 	NS.CommFlare.CF.SLR.AllianceTheHusk = false
 	NS.CommFlare.CF.SLR.HordeTheHusk = false
+	NS.AttachedFrames = false
 
 	-- get initial scores
 	local data = NS:GetDoubleStatusBarWidgetVisualizationInfo(NS.SlayerRiseScoreBar)
@@ -131,8 +162,9 @@ function NS:SlayersRise_Initialize()
 		NS.CommFlare.CF.SLR.PrevRightScore = tonumber(data.rightBarValue)
 	end
 
-	-- update widget frames
-	NS:SlayersRise_Update_WidgetFrames()
+	-- create / attach
+	NS:SlayersRise_Create_WidgetFrames()
+	NS:SlayersRise_Attach_WidgetFrames()
 end
 
 -- process slayer's rise messages

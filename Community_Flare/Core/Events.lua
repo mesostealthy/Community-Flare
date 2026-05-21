@@ -13,8 +13,6 @@ local DeclineQuest                                = _G.DeclineQuest
 local FlashClientIcon                             = _G.FlashClientIcon
 local GenericTraitUI_LoadUI                       = _G.GenericTraitUI_LoadUI
 local GetAchievementCriteriaInfoByID              = _G.GetAchievementCriteriaInfoByID
-local GetAddOnCPUUsage                            = _G.GetAddOnCPUUsage
-local GetAddOnMemoryUsage                         = _G.GetAddOnMemoryUsage
 local GetAutoCompletePresenceID                   = _G.GetAutoCompletePresenceID
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
 local GetCVar                                     = _G.GetCVar
@@ -1854,18 +1852,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	end
 end
 
--- process player leaving world
-function NS.CommFlare:PLAYER_LEAVING_WORLD(msg)
-	-- in battleground?
-	if (NS:IsInBattleground() == true) then
-		-- slayer's rise?
-		if (NS.CommFlare.CF.MapID == 2397) then
-			-- hide widget frames
-			NS:SlayersRise_Hide_WidgetFrames()
-		end
-	end
-end
-
 -- process player login
 function NS.CommFlare:PLAYER_LOGIN(msg)
 	-- load previous session
@@ -2279,6 +2265,12 @@ function NS.CommFlare:PVP_MATCH_COMPLETE(msg, ...)
 	if (NS:UnitInVehicle("player")) then
 		-- show stuff in vehicles
 		NS:ShowStuffInVehicles("all")
+	end
+
+	-- slayer's rise?
+	if (NS.CommFlare.CF.MapID == 2397) then
+		-- hide widget frames
+		NS:SlayersRise_Hide_WidgetFrames()
 	end
 end
 
@@ -3354,7 +3346,6 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("PLAYER_DEAD")
 	self:RegisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-	self:RegisterEvent("PLAYER_LEAVING_WORLD")
 	self:RegisterEvent("PLAYER_LOGIN")
 	self:RegisterEvent("PLAYER_LOGOUT")
 	self:RegisterEvent("PLAYER_MAP_CHANGED")
@@ -3441,7 +3432,6 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("PLAYER_DEAD")
 	self:UnregisterEvent("PLAYER_ENTERING_BATTLEGROUND")
 	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-	self:UnregisterEvent("PLAYER_LEAVING_WORLD")
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self:UnregisterEvent("PLAYER_LOGOUT")
 	self:UnregisterEvent("PLAYER_MAP_CHANGED")

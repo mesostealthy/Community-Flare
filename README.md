@@ -21,8 +21,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.40.001:
--Slayer's Rise: Now tracks Mana Cell spawn & cap times with Capping bars.
--Slayer's Rise: Now shows the amount of points bleeding from each team.
--Name Plates have some more ROLE (tank/healer) detection upon targeting.
--Some more various bugfixes that I've forgot specifically.
+v2.41.001:
+-Slayer's Rise: Bleeds don't show in sequential matches after player a Slayer's Rise.
+-Level 90 check should not ask to kick upon inviting a non-cached player's level.
+-Some internal optimizations.

@@ -117,6 +117,12 @@ function NS:GetPlayerInfoByGUID(guid)
 			return nil
 		end
 
+		-- no realm?
+		if (not realm) then
+			-- use player server realm
+			realm = NS.CommFlare.CF.PlayerServerName
+		end
+
 		-- finalize data
 		local player = strformat("%s-%s", name, realm)
 		data = {
@@ -150,7 +156,7 @@ function NS:GetPlayerInfoByGUID(guid)
 		end
 
 		-- same realm?
-		local _, realmID, playerID = strsplit("-", guid)
+		local _, realmID, _ = strsplit("-", guid)
 		if (realmID == NS.CommFlare.CF.PlayerRealmID) then
 			-- no realm?
 			if (not realm or (realm == "")) then

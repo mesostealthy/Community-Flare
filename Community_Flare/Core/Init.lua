@@ -42,7 +42,6 @@ local SetCVar                                     = _G.SetCVar
 local SetLFGRoles                                 = _G.SetLFGRoles
 local SetPVPRoles                                 = _G.SetPVPRoles
 local StaticPopup_Show                            = _G.StaticPopup_Show
-local UnitLevel                                   = _G.UnitLevel
 local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnMetric
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
@@ -1745,7 +1744,7 @@ end
 -- process party states
 function NS:Process_Party_States(isDead, isOffline)
 	-- process all
-	local playerLevel = UnitLevel("player")
+	local playerLevel = NS:UnitLevel("player")
 	local maxLevel = GetMaxLevelForLatestExpansion()
 	for i=1, GetNumGroupMembers() do
 		-- exists?
@@ -1754,7 +1753,7 @@ function NS:Process_Party_States(isDead, isOffline)
 		local unit = "party" .. i
 		if (UnitExists(unit)) then
 			-- process player
-			local level = UnitLevel(unit)
+			local level = NS:UnitLevel(unit)
 			local player, realm = NS:UnitName(unit)
 			if (player and not issecretvalue(player) and (player ~= "")) then
 				-- realm name was given?
@@ -1774,11 +1773,14 @@ function NS:Process_Party_States(isDead, isOffline)
 					kickPlayer = true
 				-- player level max?
 				elseif (playerLevel == maxLevel) then
-					-- player in lower bracket?
-					if (level < maxLevel) then
-						-- kick them
-						reason = L["not being max level"]
-						kickPlayer = true
+					-- verify level found?
+					if (level and (level > 0)) then
+						-- player in lower bracket?
+						if (level < maxLevel) then
+							-- kick them
+							reason = L["not being max level"]
+							kickPlayer = true
+						end
 					end
 				end
 

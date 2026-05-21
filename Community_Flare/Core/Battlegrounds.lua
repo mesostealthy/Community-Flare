@@ -46,17 +46,18 @@ local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strmatch                                    = _G.string.match
 local strsplit                                    = _G.string.split
+local tconcat                                     = _G.table.concat
 local tinsert                                     = _G.table.insert
 local tsort                                       = _G.table.sort
 
 -- is epic battleground?
 function NS:IsEpicBG(name)
 	-- process all
-	for k,v in pairs(NS.CommFlare.EpicBattlegrounds) do
+	for mapName,data in pairs(NS.CommFlare.EpicBattlegrounds) do
 		-- matches?
-		if (v.name and (v.name == name)) then
+		if (data.name and (data.name == name)) then
 			-- yup
-			return true, k
+			return true, mapName
 		end
 	end
 
@@ -67,11 +68,11 @@ end
 -- is random battleground?
 function NS:IsRandomBG(name)
 	-- process all
-	for k,v in pairs(NS.CommFlare.RandomBattlegrounds) do
+	for mapName,data in pairs(NS.CommFlare.RandomBattlegrounds) do
 		-- matches?
-		if (v.name and (v.name == name)) then
+		if (data.name and (data.name == name)) then
 			-- yup
-			return true, k
+			return true, mapName
 		end
 	end
 
@@ -88,11 +89,11 @@ function NS:IsBrawl(name)
 	end
 
 	-- process all
-	for k,v in pairs(NS.CommFlare.Brawls) do
+	for mapName,data in pairs(NS.CommFlare.Brawls) do
 		-- matches?
-		if (v.name and (v.name == name) and (v.id > 0)) then
+		if (data.name and (data.name == name) and (data.id > 0)) then
 			-- yup
-			return true, k
+			return true, mapName
 		end
 	end
 
@@ -244,7 +245,7 @@ end
 -- is mercenary queued?
 function NS:Battleground_IsMercenaryQueued()
 	-- process all
-	for k,v in pairs(NS.CommFlare.CF.LocalQueues) do
+	for _,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- mercenary?
 		if (v.mercenary and (v.mercenary == true)) then
 			-- yes
@@ -342,7 +343,7 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.Reloaded = false
 
-	-- in chat messaging lockdown?
+	-- not in chat messaging lockdown?
 	if (not InChatMessagingLockdown()) then
 		-- get player score info
 		local playerGUID = NS:UnitGUID("player")
@@ -1057,19 +1058,9 @@ function NS:Print_Mercenary_Stuff(isPrint, timer)
 	if (NS.CommFlare.CF.MercCount > 0) then
 		-- display community names?
 		if (NS.charDB.profile.communityDisplayNames == true) then
-			-- build mercenary list
-			local list = nil
-			for k,v in pairs(NS.CommFlare.CF.MercNamesList) do
-				-- list still empty? start it!
-				if (list == nil) then
-					list = tostring(v)
-				else
-					list = strformat("%s, %s", tostring(list), tostring(v))
-				end
-			end
-
-			-- found merc list?
-			if (list ~= nil) then
+			-- found mercenary list?
+			local list = tconcat(NS.CommFlare.CF.MercNamesList, ", ")
+			if (list ~= "") then
 				-- has timer?
 				if (timer) then
 					-- display results staggered
@@ -1291,7 +1282,7 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 				NS.CommFlare.CF.TeamUnits[player].joined = timestamp
 			end
 
-			-- in chat lock down?
+			-- in chat messaging lockdown?
 			if (bLockdown) then
 				-- horde?
 				if (NS.faction == 0) then
@@ -1659,7 +1650,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	local bLockdown = InChatMessagingLockdown()
 	NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 
-	-- not in chat lock down?
+	-- not in chat messaging lockdown?
 	if (not bLockdown) then
 		-- update scoreboard stuff
 		NS:Update_Scoreboard_Stuff(bPromote)

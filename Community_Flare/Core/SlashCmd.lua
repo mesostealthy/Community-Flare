@@ -7,9 +7,12 @@ if (not L or not NS.CommFlare) then return end
 
 -- localize stuff
 local _G                                          = _G
+local GetAddOnCPUUsage                            = _G.GetAddOnCPUUsage
+local GetAddOnMemoryUsage                         = _G.GetAddOnMemoryUsage
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local SetBattlefieldScoreFaction                  = _G.SetBattlefieldScoreFaction
 local Settings_OpenToCategory                     = _G.Settings.OpenToCategory
+local UpdateAddOnMemoryUsage                      = _G.UpdateAddOnMemoryUsage
 local DateAndTimeGetServerTimeLocal               = _G.C_DateAndTime.GetServerTimeLocal
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
@@ -167,6 +170,7 @@ local function Community_Flare_Slash_Command(input)
 		end
 	elseif (lower == "usage") then
 		-- display usages
+		UpdateAddOnMemoryUsage()
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["CPU Usage"], GetAddOnCPUUsage(ADDON_NAME)))
 		print(strformat("%s: %s = %d", NS.CommFlare.Title, L["Memory Usage"], GetAddOnMemoryUsage(ADDON_NAME)))
 	elseif (lower == "vehicles") then
