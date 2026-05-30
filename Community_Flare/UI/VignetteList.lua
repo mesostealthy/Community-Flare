@@ -113,7 +113,7 @@ function CF_VignetteListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -186,7 +186,7 @@ end
 function CF_VignetteListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -538,7 +538,7 @@ function NS:ToggleVignetteList()
 		CF_VignetteListFrame:Hide()
 	else
 		-- debug print enabled?
-		if (NS.db.global.debugPrint == true) then
+		if (NS.db.global.debugPrint) then
 			-- list vignettes
 			NS:List_Vignettes()
 		end

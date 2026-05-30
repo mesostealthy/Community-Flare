@@ -191,7 +191,7 @@ function NS:Get_Clubs_List(bIgnoreGuild)
 	-- not ignoring guild?
 	if (bIgnoreGuild ~= true) then
 		-- treat guild as community?
-		if (NS.charDB.profile.addGuildMembers == true) then
+		if (NS.charDB.profile.addGuildMembers) then
 			-- get guild club id
 			clubId = ClubGetGuildClubId()
 			if (clubId and (clubId > 1)) then
@@ -347,7 +347,7 @@ function NS:Verify_Club_Streams(clubs)
 					if (streamInfo.streamType == Enum.ClubStreamType.General) then
 						-- verify channel is added for proper reporting
 						local channel = GetCommunitiesChannel(clubId, v.streamId)
-						if (not channel or (NS.charDB.profile.alwaysReaddChannels == true)) then
+						if (not channel or NS.charDB.profile.alwaysReaddChannels) then
 							-- readd community chat window
 							NS:ReaddCommunityChatWindow(clubId, v.streamId)
 							NS.CommFlare.CF.ChannelsReadded = true
@@ -612,13 +612,13 @@ function NS:Get_LogList_Status(player)
 		-- process clubs
 		for k,v in pairs(NS.db.global.members[player].clubs) do
 			-- log list enabled?
-			if (NS.charDB.profile.communityLogList[k] == true) then
+			if (NS.charDB.profile.communityLogList[k]) then
 				-- success
 				return true
 			end
 
 			-- treat guild as community?
-			if (NS.charDB.profile.addGuildMembers == true) then
+			if (NS.charDB.profile.addGuildMembers) then
 				-- has guild id?
 				if (NS.CommFlare.CF.GuildID > 0) then
 					-- matches?
@@ -885,7 +885,7 @@ function NS:Check_For_Deployed_Members()
 					if (mi.presence == Enum.ClubMemberPresence.Online) then
 						-- is tracked pvp?
 						local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mi.zone)
-						if (isTracked == true) then
+						if (isTracked) then
 							-- not initialized?
 							if (not deployed[mi.zone]) then
 								-- initialize
@@ -940,7 +940,7 @@ function NS:Rebuild_Community_Leaders()
 	local numLeaders = 0
 	for k,v in pairs(NS.charDB.profile.communityLeadersList) do
 		-- enabled?
-		if (v == true) then
+		if (v) then
 			-- increase
 			numLeaders = numLeaders + 1
 		end
@@ -957,7 +957,7 @@ function NS:Rebuild_Community_Leaders()
 	for k,v in pairs(NS.db.global.members) do
 		-- owner?
 		local added = false
-		if (v.owner == true) then
+		if (v.owner) then
 			-- always verify leader status
 			local sharesLeaderCommunity = false
 			NS.db.global.members[k].owner = nil
@@ -967,7 +967,7 @@ function NS:Rebuild_Community_Leaders()
 					-- has community leaders list?
 					if (numLeaders > 0) then
 						-- has community from leaders list?
-						if (NS.charDB.profile.communityLeadersList[k2] == true) then
+						if (NS.charDB.profile.communityLeadersList[k2]) then
 							-- shares leader community
 							sharesLeaderCommunity = true
 						end
@@ -979,7 +979,7 @@ function NS:Rebuild_Community_Leaders()
 			end
 
 			-- currently has owner role somewhere?
-			if (NS.db.global.members[k].owner == true) then
+			if (NS.db.global.members[k].owner) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -991,7 +991,7 @@ function NS:Rebuild_Community_Leaders()
 				end
 
 				-- allowed?
-				if (allowed == true) then
+				if (allowed) then
 					-- add first
 					added = true
 					NS.CommFlare.CF.CommunityLeaders[count] = k
@@ -1003,7 +1003,7 @@ function NS:Rebuild_Community_Leaders()
 		end
 
 		-- not added and leader?
-		if ((added == false) and (v.leader == true)) then
+		if ((added == false) and v.leader) then
 			-- always verify leader status
 			local sharesLeaderCommunity = false
 			NS.db.global.members[k].leader = nil
@@ -1013,7 +1013,7 @@ function NS:Rebuild_Community_Leaders()
 					-- has community leaders list?
 					if (numLeaders > 0) then
 						-- has community from leaders list?
-						if (NS.charDB.profile.communityLeadersList[k2] == true) then
+						if (NS.charDB.profile.communityLeadersList[k2]) then
 							-- shares leader community
 							sharesLeaderCommunity = true
 						end
@@ -1025,7 +1025,7 @@ function NS:Rebuild_Community_Leaders()
 			end
 
 			-- currently has leader role somewhere?
-			if (NS.db.global.members[k].leader == true) then
+			if (NS.db.global.members[k].leader) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -1037,7 +1037,7 @@ function NS:Rebuild_Community_Leaders()
 				end
 
 				-- allowed?
-				if (allowed == true) then
+				if (allowed) then
 					-- has priority?
 					added = true
 					if (v.P and (v.P > 0)) then
@@ -1058,7 +1058,7 @@ function NS:Rebuild_Community_Leaders()
 		end
 
 		-- not added and moderator?
-		if ((added == false) and (v.moderator == true)) then
+		if ((added == false) and v.moderator) then
 			-- always verify leader status
 			local sharesLeaderCommunity = false
 			NS.db.global.members[k].moderator = nil
@@ -1068,7 +1068,7 @@ function NS:Rebuild_Community_Leaders()
 					-- has community leaders list?
 					if (numLeaders > 0) then
 						-- has community from leaders list?
-						if (NS.charDB.profile.communityLeadersList[k2] == true) then
+						if (NS.charDB.profile.communityLeadersList[k2]) then
 							-- shares leader community
 							sharesLeaderCommunity = true
 						end
@@ -1080,7 +1080,7 @@ function NS:Rebuild_Community_Leaders()
 			end
 
 			-- currently has moderator role somewhere?
-			if (NS.db.global.members[k].moderator == true) then
+			if (NS.db.global.members[k].moderator) then
 				-- has community leaders list?
 				local allowed = true
 				if (numLeaders > 0) then
@@ -1092,7 +1092,7 @@ function NS:Rebuild_Community_Leaders()
 				end
 
 				-- allowed?
-				if (allowed == true) then
+				if (allowed) then
 					-- has priority?
 					added = true
 					if (v.P and (v.P > 0)) then
@@ -1410,7 +1410,7 @@ function NS:Add_Member(clubId, info, rebuild)
 	NS:Process_MemberGUID(info.guid, player)
 
 	-- rebuild leaders?
-	if (rebuild == true) then
+	if (rebuild) then
 		-- rebuild community leaders
 		NS:Rebuild_Community_Leaders()
 	end
@@ -1558,7 +1558,7 @@ function NS:Remove_All_Club_Members_By_ClubID(clubId)
 			-- has name?
 			if (v.name) then
 				-- remove member
-				if (NS:Remove_Member(clubId, v) == true) then
+				if (NS:Remove_Member(clubId, v)) then
 					-- increase
 					count = count + 1
 				end
@@ -1606,7 +1606,7 @@ end
 -- update member database
 function NS:Update_Club_Members(clubId, type)
 	-- adding?
-	if (type == true) then
+	if (type) then
 		-- add all club members
 		NS:Add_All_Club_Members_By_ClubID(clubId)
 	else
@@ -1640,7 +1640,7 @@ function NS:Process_Club_Members()
 			if (info.clubType == Enum.ClubType.Guild) then
 				-- treat guild as community?
 				NS.CommFlare.CF.GuildID = clubId
-				if (NS.charDB.profile.addGuildMembers == true) then
+				if (NS.charDB.profile.addGuildMembers) then
 					-- process
 					shouldProcess = true
 				end
@@ -1650,12 +1650,12 @@ function NS:Process_Club_Members()
 			end
 
 			-- should process?
-			if (shouldProcess == true) then
+			if (shouldProcess) then
 				-- add community
 				NS:Add_Community(clubId, info)
 
 				-- are members ready?
-				if (NS:AreMembersReady(clubId) == true) then
+				if (NS:AreMembersReady(clubId)) then
 					-- process all
 					local members = NS:GetClubMembers(clubId)
 					if (members) then
@@ -1989,7 +1989,7 @@ function NS:Find_ExCommunity_Members(clubId)
 		end
 
 		-- matched?
-		if (matched == true) then
+		if (matched) then
 			-- not found in current?
 			if (not current[k]) then
 				-- add removed
@@ -2152,8 +2152,7 @@ function NS:Has_Shared_Community(sender)
 	end
 
 	-- find player in database
-	local player = NS.CommFlare.CF.PlayerFullName
-	local member1 = NS:Get_Community_Member(player)
+	local member1 = NS:Get_Community_Member(NS.CommFlare.CF.PlayerFullName)
 	if (not member1 or not member1.clubs) then
 		-- failed
 		return false

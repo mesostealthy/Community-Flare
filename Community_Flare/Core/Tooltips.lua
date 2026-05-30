@@ -59,7 +59,7 @@ function NS:CreateTooltipFrame()
 		end
 
 		-- game tooltips blocked?
-		if (NS.db.global.blockGameTooltips == true) then
+		if (NS.db.global.blockGameTooltips) then
 			-- inside pvp?
 			local inInstance, instanceType = IsInInstance()
 			if (inInstance and (instanceType == "pvp")) then

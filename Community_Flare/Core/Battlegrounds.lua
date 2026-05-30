@@ -41,6 +41,7 @@ local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
+local wipe                                        = _G.wipe
 local bitbor                                      = _G.bit.bor
 local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
@@ -151,7 +152,7 @@ end
 function NS:GetBGID(name)
 	-- epic battleground?
 	local isEpic, epicID = NS:IsEpicBG(name)
-	if (isEpic == true) then
+	if (isEpic) then
 		-- has mapID?
 		if (NS.CommFlare.EpicBattlegrounds[epicID].mapID) then
 			-- return mapID
@@ -164,7 +165,7 @@ function NS:GetBGID(name)
 
 	-- random battleground?
 	local isRandom, randomID = NS:IsRandomBG(name)
-	if (isRandom == true) then
+	if (isRandom) then
 		-- has mapID?
 		if (NS.CommFlare.RandomBattlegrounds[randomID].mapID) then
 			-- return mapID
@@ -177,7 +178,7 @@ function NS:GetBGID(name)
 
 	-- brawl?
 	local isBrawl, brawlID = NS:IsBrawl(name)
-	if (isBrawl == true) then
+	if (isBrawl) then
 		-- has brawlID?
 		if (brawlID) then
 			-- return id
@@ -196,21 +197,21 @@ end
 function NS:GetBGPrefix(name)
 	-- epic battleground?
 	local isEpic, epicID = NS:IsEpicBG(name)
-	if (isEpic == true) then
+	if (isEpic) then
 		-- return prefix
 		return NS.CommFlare.EpicBattlegrounds[epicID].prefix
 	end
 
 	-- random battleground?
 	local isRandom, randomID = NS:IsRandomBG(name)
-	if (isRandom == true) then
+	if (isRandom) then
 		-- return prefix
 		return NS.CommFlare.RandomBattlegrounds[randomID].prefix
 	end
 
 	-- brawl?
 	local isBrawl, brawlID = NS:IsBrawl(name)
-	if (isBrawl == true) then
+	if (isBrawl) then
 		-- has brawlID?
 		if (brawlID) then
 			-- return prefix
@@ -233,7 +234,7 @@ function NS:IsTrackedPVP(name)
 	local isRandomBattleground = NS:IsRandomBG(name)
 
 	-- is epic or random battleground?
-	if ((isEpicBattleground == true) or (isRandomBattleground == true) or (isBrawl == true)) then
+	if (isEpicBattleground or isRandomBattleground or isBrawl) then
 		-- tracked
 		return true, isEpicBattleground, isRandomBattleground, isBrawl
 	end
@@ -247,7 +248,7 @@ function NS:Battleground_IsMercenaryQueued()
 	-- process all
 	for _,v in pairs(NS.CommFlare.CF.LocalQueues) do
 		-- mercenary?
-		if (v.mercenary and (v.mercenary == true)) then
+		if (v.mercenary) then
 			-- yes
 			return true
 		end
@@ -265,19 +266,19 @@ function NS:Verify_Role_Counts()
 		local isTank, isHealer, isDamage = GetPVPRoles()
 
 		-- tank?
-		if (isTank == true) then
+		if (isTank) then
 			-- tank spec
 			NS.CommFlare.CF.LocalData.NumTanks = 1
 		end
 	
 		-- tank?
-		if (isHealer == true) then
+		if (isHealer) then
 			-- header spec
 			NS.CommFlare.CF.LocalData.NumHealers = 1
 		end
 
 		-- dps?
-		if (isDamage == true) then
+		if (isDamage) then
 			-- header spec
 			NS.CommFlare.CF.LocalData.NumDPS = 1
 		end
@@ -304,31 +305,31 @@ end
 function NS:Initialize_Battleground_Status()
 	-- reset stuff
 	NS.CommFlare.CF.MapID = 0
-	NS.CommFlare.CF.AB = {}
-	NS.CommFlare.CF.ASH = {}
-	NS.CommFlare.CF.AV = {}
-	NS.CommFlare.CF.BFG = {}
-	NS.CommFlare.CF.DHR = {}
-	NS.CommFlare.CF.DWG = {}
-	NS.CommFlare.CF.EOTS = {}
-	NS.CommFlare.CF.IOC = {}
-	NS.CommFlare.CF.SLR = {}
-	NS.CommFlare.CF.SSH = {}
-	NS.CommFlare.CF.SSM = {}
-	NS.CommFlare.CF.SSvTM = {}
-	NS.CommFlare.CF.TOK = {}
-	NS.CommFlare.CF.TWP = {}
-	NS.CommFlare.CF.WG = {}
-	NS.CommFlare.CF.WSG = {}
-	NS.CommFlare.CF.DisplayedLists = {}
-	NS.CommFlare.CF.EnemyPlayerPIDs = {}
-	NS.CommFlare.CF.EnemyPlayerDetails = {}
-	NS.CommFlare.CF.KosAlerted = {}
-	NS.CommFlare.CF.FullRoster = {}
-	NS.CommFlare.CF.LogListPlayers = {}
-	NS.CommFlare.CF.MapInfo = {}
-	NS.CommFlare.CF.RosterList = {}
-	NS.CommFlare.CF.TeamUnits = {}
+	wipe(NS.CommFlare.CF.AB)
+	wipe(NS.CommFlare.CF.ASH)
+	wipe(NS.CommFlare.CF.AV)
+	wipe(NS.CommFlare.CF.BFG)
+	wipe(NS.CommFlare.CF.DHR)
+	wipe(NS.CommFlare.CF.DWG)
+	wipe(NS.CommFlare.CF.EOTS)
+	wipe(NS.CommFlare.CF.IOC)
+	wipe(NS.CommFlare.CF.SLR)
+	wipe(NS.CommFlare.CF.SSH)
+	wipe(NS.CommFlare.CF.SSM)
+	wipe(NS.CommFlare.CF.SSvTM)
+	wipe(NS.CommFlare.CF.TOK)
+	wipe(NS.CommFlare.CF.TWP)
+	wipe(NS.CommFlare.CF.WG)
+	wipe(NS.CommFlare.CF.WSG)
+	wipe(NS.CommFlare.CF.DisplayedLists)
+	wipe(NS.CommFlare.CF.EnemyPlayerPIDs)
+	wipe(NS.CommFlare.CF.EnemyPlayerDetails)
+	wipe(NS.CommFlare.CF.FullRoster)
+	wipe(NS.CommFlare.CF.KosAlerted)
+	wipe(NS.CommFlare.CF.LogListPlayers)
+	wipe(NS.CommFlare.CF.MapInfo)
+	wipe(NS.CommFlare.CF.RosterList)
+	wipe(NS.CommFlare.CF.TeamUnits)
 	NS.CommFlare.CF.KosRefreshTime = 0
 	NS.CommFlare.CF.LastRestrictPingTime = 0
 	NS.CommFlare.CF.MatchEndDate = ""
@@ -346,8 +347,7 @@ function NS:Initialize_Battleground_Status()
 	-- not in chat messaging lockdown?
 	if (not InChatMessagingLockdown()) then
 		-- get player score info
-		local playerGUID = NS:UnitGUID("player")
-		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
+		NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(NS.CommFlare.CF.PlayerGUID)
 	end
 
 	-- get MapID
@@ -385,7 +385,7 @@ end
 -- get player raid rank
 function NS:GetRaidRank(player)
 	-- in battleground / brawl?
-	if ((NS:IsInBattleground() == true) or (PvPIsInBrawl() == true)) then
+	if (NS:IsInBattleground() or PvPIsInBrawl()) then
 		-- process all raid members
 		for i=1, MAX_RAID_MEMBERS do
 			-- get name / rank
@@ -516,14 +516,14 @@ function NS:Get_Current_Battleground_Status()
 		NS.CommFlare.CF.POIInfo = NS:GetAreaPOIInfo(NS.CommFlare.CF.MapID, 6056) -- Wintergrasp Fortress Gate
 		if (NS.CommFlare.CF.POIInfo and ((NS.CommFlare.CF.POIInfo.textureIndex >= 77) and (NS.CommFlare.CF.POIInfo.textureIndex <= 79))) then
 			-- mercenary?
-			if (NS.CommFlare.CF.HasAura == true) then
+			if (NS.CommFlare.CF.HasAura) then
 				NS.CommFlare.CF.WG.Type = L["Offense"]
 			else
 				NS.CommFlare.CF.WG.Type = L["Defense"]
 			end
 		else
 			-- mercenary?
-			if (NS.CommFlare.CF.HasAura == true) then
+			if (NS.CommFlare.CF.HasAura) then
 				NS.CommFlare.CF.WG.Type = L["Defense"]
 			else
 				NS.CommFlare.CF.WG.Type = L["Offense"]
@@ -902,12 +902,60 @@ function NS:Get_Current_Battleground_Status()
 	return false
 end
 
+-- update battleground roles
+function NS:Update_Battleground_Roles()
+	-- does player have raid leadership?
+	NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
+	if (NS.CommFlare.CF.PlayerRank == 2) then
+		-- process all raid members
+		for i=1, MAX_RAID_MEMBERS do
+			-- only process members not already promoted
+			local name, rank = NS:GetRaidRosterInfo(i)
+			if (name and rank and (rank == 0)) then
+				-- force name-realm format
+				local player = name
+				if (not strmatch(player, "-")) then
+					-- add realm name
+					player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+				end
+
+				-- get community member
+				local member = NS:Get_Community_Member(player)
+				if (member and member.clubs) then
+					-- has shared community?
+					if (NS:Has_Shared_Community(player)) then
+						-- only allow leaders?
+						local bAutoPromote = false
+						if (NS.charDB.profile.communityAutoAssist == 2) then
+							-- player is community leader?
+							if (NS:Is_Community_Leader(player)) then
+								-- auto promote
+								bAutoPromote = true
+							end
+						-- allow all members?
+						elseif (NS.charDB.profile.communityAutoAssist == 3) then
+							-- auto promote
+							bAutoPromote = true
+						end
+
+						-- auto promote?
+						if (bAutoPromote) then
+							-- promote
+							NS:PromoteToAssistant(name)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 -- print community stuff
 function NS:Print_Community_Stuff(isPrint, timer)
 	-- has community players?
 	if (NS.CommFlare.CF.CommCount > 0) then
 		-- display community names?
-		if (NS.charDB.profile.communityDisplayNames == true) then
+		if (NS.charDB.profile.communityDisplayNames) then
 			-- build member list
 			local list = nil
 			for k,v in pairs(NS.CommFlare.CF.CommNamesList) do
@@ -1057,7 +1105,7 @@ function NS:Print_Mercenary_Stuff(isPrint, timer)
 	-- has mercenary players?
 	if (NS.CommFlare.CF.MercCount > 0) then
 		-- display community names?
-		if (NS.charDB.profile.communityDisplayNames == true) then
+		if (NS.charDB.profile.communityDisplayNames) then
 			-- found mercenary list?
 			local list = tconcat(NS.CommFlare.CF.MercNamesList, ", ")
 			if (list ~= "") then
@@ -1160,14 +1208,14 @@ function NS:Print_Mercenary_Stuff(isPrint, timer)
 end
 
 -- promote players
-function NS:Promote_Battleground_Player(info, player)
+function NS:Promote_Battleground_Player(name, player)
 	-- player has raid leader?
 	if (NS.CommFlare.CF.PlayerRank == 2) then
 		-- only allow leaders?
 		local bAutoPromote = false
 		if (NS.charDB.profile.communityAutoAssist == 2) then
 			-- player is community leader?
-			if (NS:Is_Community_Leader(player) == true) then
+			if (NS:Is_Community_Leader(player)) then
 				-- auto promote
 				bAutoPromote = true
 			end
@@ -1178,7 +1226,7 @@ function NS:Promote_Battleground_Player(info, player)
 		end
 
 		-- auto promote?
-		if (bAutoPromote == true) then
+		if (bAutoPromote) then
 			-- found raid unit / rank?
 			if (NS.CommFlare.CF.TeamUnits[player] and NS.CommFlare.CF.TeamUnits[player].unit and NS.CommFlare.CF.TeamUnits[player].rank) then
 				-- already assist?
@@ -1190,11 +1238,11 @@ function NS:Promote_Battleground_Player(info, player)
 		end
 
 		-- auto promote?
-		if (bAutoPromote == true) then
+		if (bAutoPromote) then
 			-- not left?
 			if (not NS.CommFlare.CF.TeamUnits[player].left) then
 				-- promote
-				NS:PromoteToAssistant(info.name)
+				NS:PromoteToAssistant(name)
 			end
 		end
 	end
@@ -1204,24 +1252,24 @@ end
 function NS:Reset_Battleground_Stuff()
 	-- initialize community stuff
 	NS.CommFlare.CF.CommCount = 0
-	NS.CommFlare.CF.CommCounts = {}
-	NS.CommFlare.CF.CommCountsList = {}
-	NS.CommFlare.CF.CommNames = {}
-	NS.CommFlare.CF.CommNamesList = {}
+	wipe(NS.CommFlare.CF.CommCounts)
+	wipe(NS.CommFlare.CF.CommCountsList)
+	wipe(NS.CommFlare.CF.CommNames)
+	wipe(NS.CommFlare.CF.CommNamesList)
 
 	-- initialize mercenary stuff
 	NS.CommFlare.CF.MercCount = 0
-	NS.CommFlare.CF.MercCounts = {}
-	NS.CommFlare.CF.MercCountsList = {}
-	NS.CommFlare.CF.MercNames = {}
-	NS.CommFlare.CF.MercNamesList = {}
+	wipe(NS.CommFlare.CF.MercCounts)
+	wipe(NS.CommFlare.CF.MercCountsList)
+	wipe(NS.CommFlare.CF.MercNames)
+	wipe(NS.CommFlare.CF.MercNamesList)
 
 	-- initialize log list stuff
 	NS.CommFlare.CF.LogListCount = 0
-	NS.CommFlare.CF.LogListNamesList = {}
+	wipe(NS.CommFlare.CF.LogListNamesList)
 
 	-- initialize horde stuff
-	NS.CommFlare.CF.Horde = {}
+	wipe(NS.CommFlare.CF.Horde)
 	NS.CommFlare.CF.Horde.Count = 0
 	NS.CommFlare.CF.Horde.Healers = 0
 	NS.CommFlare.CF.Horde.Tanks = 0
@@ -1229,7 +1277,7 @@ function NS:Reset_Battleground_Stuff()
 	NS.CommFlare.CF.Horde.HealingDone = 0
 
 	-- initialize alliance stuff
-	NS.CommFlare.CF.Alliance = {}
+	wipe(NS.CommFlare.CF.Alliance)
 	NS.CommFlare.CF.Alliance.Count = 0
 	NS.CommFlare.CF.Alliance.Healers = 0
 	NS.CommFlare.CF.Alliance.Tanks = 0
@@ -1314,7 +1362,7 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 				local member = NS:Get_Community_Member(player)
 				if (member and member.clubs) then
 					-- mercenary?
-					if (mercenary == true) then
+					if (mercenary) then
 						-- process all clubs
 						for k,v in pairs(member.clubs) do
 							-- mercenary counts setup?
@@ -1368,15 +1416,14 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 						NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 
 						-- should promote?
-						if (bPromote == true) then
+						if (bPromote) then
 							-- promote battleground player
-							local info = { name = name }
-							NS:Promote_Battleground_Player(info, player)
+							NS:Promote_Battleground_Player(name, player)
 						end
 					end
 
 					-- should log list / i.e. has shared community?
-					if (NS:Get_LogList_Status(player) == true) then
+					if (NS:Get_LogList_Status(player)) then
 						-- update
 						NS.CommFlare.CF.LogListPlayers[player] = true
 						tinsert(NS.CommFlare.CF.LogListNamesList, player)
@@ -1394,8 +1441,7 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 	NS:Reset_Battleground_Stuff()
 
 	-- get player score info
-	local playerGUID = NS:UnitGUID("player")
-	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(playerGUID)
+	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(NS.CommFlare.CF.PlayerGUID)
 
 	-- process all scores
 	for i=1, GetNumBattlefieldScores() do
@@ -1443,10 +1489,10 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 			if (info.faction == Enum.PvPFaction.Alliance) then
 				-- increase alliance counts
 				NS.CommFlare.CF.Alliance.Count = NS.CommFlare.CF.Alliance.Count + 1
-					if (NS.CommFlare.CF.IsHealer == true) then
+					if (NS.CommFlare.CF.IsHealer) then
 					-- add to alliance healers
 					NS.CommFlare.CF.Alliance.Healers = NS.CommFlare.CF.Alliance.Healers + 1
-				elseif (NS.CommFlare.CF.IsTank == true) then
+				elseif (NS.CommFlare.CF.IsTank) then
 					-- add to alliance tanks
 					NS.CommFlare.CF.Alliance.Tanks = NS.CommFlare.CF.Alliance.Tanks + 1
 				end
@@ -1472,10 +1518,10 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 			elseif (info.faction == Enum.PvPFaction.Horde) then
 				-- increase horde counts
 				NS.CommFlare.CF.Horde.Count = NS.CommFlare.CF.Horde.Count + 1
-				if (NS.CommFlare.CF.IsHealer == true) then
+				if (NS.CommFlare.CF.IsHealer) then
 					-- add to horde healers
 					NS.CommFlare.CF.Horde.Healers = NS.CommFlare.CF.Horde.Healers + 1
-				elseif (NS.CommFlare.CF.IsTank == true) then
+				elseif (NS.CommFlare.CF.IsTank) then
 					-- add to horde tanks
 					NS.CommFlare.CF.Horde.Tanks = NS.CommFlare.CF.Horde.Tanks + 1
 				end
@@ -1509,7 +1555,7 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 					local community = false
 					if (NS.faction == info.faction) then
 						-- mercenary?
-						if (mercenary == true) then
+						if (mercenary) then
 							-- process all clubs
 							for k,v in pairs(member.clubs) do
 								-- mercenary counts setup?
@@ -1563,14 +1609,14 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 
 							-- should promote?
-							if (bPromote == true) then
+							if (bPromote) then
 								-- promote battleground player
-								NS:Promote_Battleground_Player(info, player)
+								NS:Promote_Battleground_Player(info.name, player)
 							end
 						end
 					else
 						-- mercenary?
-						if (mercenary == true) then
+						if (mercenary) then
 							-- process all clubs
 							for k,v in pairs(member.clubs) do
 								-- mercenary counts setup?
@@ -1624,15 +1670,15 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 							NS.CommFlare.CF.CommCount = NS.CommFlare.CF.CommCount + 1
 
 							-- should promote?
-							if (bPromote == true) then
+							if (bPromote) then
 								-- promote battleground player
-								NS:Promote_Battleground_Player(info, player)
+								NS:Promote_Battleground_Player(info.name, player)
 							end
 						end
 					end
 
 					-- should log list / i.e. has shared community?
-					if (NS:Get_LogList_Status(player) == true) then
+					if (NS:Get_LogList_Status(player)) then
 						-- update
 						NS.CommFlare.CF.LogListPlayers[player] = true
 						tinsert(NS.CommFlare.CF.LogListNamesList, player)
@@ -1690,7 +1736,7 @@ function NS:Update_Battleground_Stuff(isPrint, bPromote)
 	NS.CommFlare.CF.NumScores = GetNumBattlefieldScores()
 
 	-- should print?
-	if (isPrint == true) then
+	if (isPrint) then
 		-- no scores yet?
 		if (NS.CommFlare.CF.NumScores == 0) then
 			-- not in battleground yet
@@ -1826,7 +1872,7 @@ end
 -- process pass leadership
 function NS:Process_Pass_Leadership(sender)
 	-- no shared community?
-	if (NS:Has_Shared_Community(sender) == false) then
+	if (not NS:Has_Shared_Community(sender)) then
 		-- finished
 		return
 	end
@@ -1843,7 +1889,7 @@ function NS:Process_Pass_Leadership(sender)
 	end
 
 	-- in battleground?
-	if (NS:IsInBattleground() == true) then
+	if (NS:IsInBattleground()) then
 		-- does player have raid leadership?
 		NS.CommFlare.CF.PlayerRank = NS:GetRaidRank(NS.CommFlare.CF.PlayerName)
 		if (NS.CommFlare.CF.PlayerRank == 2) then
@@ -1851,7 +1897,7 @@ function NS:Process_Pass_Leadership(sender)
 			if (NS.CommFlare.CF.RaidLeadPassed == false) then
 				-- player is community leader?
 				local shouldPromote = false
-				if (NS:Is_Community_Leader(player) == true) then
+				if (NS:Is_Community_Leader(player)) then
 					-- higher or equal priority for sender?
 					local compare = NS:Compare_Community_Priority(player, sender)
 					if (compare <= 0) then
@@ -1860,18 +1906,18 @@ function NS:Process_Pass_Leadership(sender)
 					end
 				else
 					-- sender is community leader?
-					if (NS:Is_Community_Leader(sender) == true) then
+					if (NS:Is_Community_Leader(sender)) then
 						-- should promote
 						shouldPromote = true
 					end
 				end
 
 				-- should promote?
-				if (shouldPromote == true) then
+				if (shouldPromote) then
 					-- has shared community?
-					if (NS:Has_Shared_Community(sender) == true) then
+					if (NS:Has_Shared_Community(sender)) then
 						-- process pass leadership
-						if (NS:PromoteToRaidLeader(sender) == true) then
+						if (NS:PromoteToRaidLeader(sender)) then
 							-- raid leader passed
 							NS.CommFlare.CF.RaidLeadPassed = true
 						end
@@ -1883,7 +1929,7 @@ function NS:Process_Pass_Leadership(sender)
 		-- not sending to yourself?
 		if (player ~= sender) then
 			-- are you group leader?
-			if (NS:IsGroupLeader() == true) then
+			if (NS:IsGroupLeader()) then
 				-- higher or equal priority for sender?
 				local compare = NS:Compare_Community_Priority(player, sender)
 				if (compare <= 0) then
@@ -1898,7 +1944,7 @@ end
 -- process auto invite
 function NS:Process_Auto_Invite(sender)
 	-- no shared community?
-	if (NS:Has_Shared_Community(sender) == false) then
+	if (not NS:Has_Shared_Community(sender)) then
 		-- finished
 		return
 	end
@@ -1906,13 +1952,13 @@ function NS:Process_Auto_Invite(sender)
 	-- number?
 	if (type(sender) == "number") then
 		-- battle net auto invite enabled?
-		if (NS.db.global.bnetAutoInvite == true) then
+		if (NS.db.global.bnetAutoInvite) then
 			-- in battleground?
-			if (NS:IsInBattleground() == true) then
+			if (NS:IsInBattleground()) then
 				-- can not invite while in a battleground
 				NS:SendMessage(sender, L["Sorry, currently in a battleground now."])
 			-- inside brawl?
-			elseif (PvPIsInBrawl() == true) then
+			elseif (PvPIsInBrawl()) then
 				-- can not invite while in a brawl
 				NS:SendMessage(sender, L["Sorry, currently in a brawl now."])
 			else
@@ -1961,13 +2007,13 @@ function NS:Process_Auto_Invite(sender)
 		end
 	else
 		-- community auto invite enabled?
-		if (NS.charDB.profile.communityAutoInvite == true) then
+		if (NS.charDB.profile.communityAutoInvite) then
 			-- in battleground?
-			if (NS:IsInBattleground() == true) then
+			if (NS:IsInBattleground()) then
 				-- can not invite while in a battleground
 				NS:SendMessage(sender, L["Sorry, currently in a battleground now."])
 			-- inside brawl?
-			elseif (PvPIsInBrawl() == true) then
+			elseif (PvPIsInBrawl()) then
 				-- can not invite while in a brawl
 				NS:SendMessage(sender, L["Sorry, currently in a brawl now."])
 			else
@@ -2009,7 +2055,7 @@ end
 -- report joined with estimated time
 function NS:Report_Joined_With_Estimated_Time(index)
 	-- clear role chosen table
-	NS.CommFlare.CF.RoleChosen = {}
+	wipe(NS.CommFlare.CF.RoleChosen)
 
 	-- community reporter not enabled?
 	if (NS.charDB.profile.communityReporter ~= true) then
@@ -2028,7 +2074,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		-- is tracked pvp?
 		local status, mapName = GetBattlefieldStatus(index)
 		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-		if (isTracked == true) then
+		if (isTracked) then
 			-- get estimated time
 			local text = ""
 			local count = NS:GetGroupCountText()
@@ -2051,7 +2097,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- mercenary queue?
 				local mercenary = ""
-				if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+				if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 					-- set mercenary text
 					mercenary = strformat("%s ", L["Mercenary"])
 				end
@@ -2095,7 +2141,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 
 				-- mercenary queue?
 				local mercenary = ""
-				if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+				if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 					-- set mercenary text
 					mercenary = strformat("%s ", L["Mercenary"])
 				end
@@ -2125,7 +2171,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 			local maxCount = NS:GetMaxGroupCount()
 			if (GetNumGroupMembers() < maxCount) then
 				-- community auto invite enabled?
-				if (NS.charDB.profile.communityAutoInvite == true) then
+				if (NS.charDB.profile.communityAutoInvite) then
 					-- update text
 					text = strformat("%s (%s)", text, L["For auto invite, whisper me INV"])
 				end
@@ -2144,7 +2190,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 		end
 
 		-- is tracked?
-		if (isTracked == true) then
+		if (isTracked) then
 			-- get lfg queue stats
 			local category = NS.CommFlare.CF.LocalQueues[index].category
 			local hasData, leaderNeeds, tankNeeds, healerNeeds, dpsNeeds, totalTanks, totalHealers, totalDPS, instanceType, instanceSubType, instanceName, averageWait, tankWait, healerWait, damageWait, myWait, queuedTime = GetLFGQueueStats(category)
@@ -2194,7 +2240,7 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				local maxCount = NS:GetMaxGroupCount()
 				if (GetNumGroupMembers() < maxCount) then
 					-- community auto invite enabled?
-					if (NS.charDB.profile.communityAutoInvite == true) then
+					if (NS.charDB.profile.communityAutoInvite) then
 						-- update text
 						text = strformat("%s (%s)", text, L["For auto invite, whisper me INV"])
 					end
@@ -2221,14 +2267,7 @@ function NS:Update_Battlefield_Status(index)
 
 	-- is tracked pvp?
 	local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-	if (isTracked == true) then
-		-- has leader GUID?
-		local leaderGUID = NS.CommFlare.CF.LeaderGUID
-		if (not leaderGUID) then
-			-- use player
-			leaderGUID = NS:UnitGUID("player")
-		end
-
+	if (isTracked) then
 		-- queued?
 		NS:Verify_Role_Counts()
 		local partyGUID = NS:GetPartyGUID()
@@ -2236,7 +2275,7 @@ function NS:Update_Battlefield_Status(index)
 			-- just entering queue?
 			if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
 				-- warn when honor capped?
-				if (NS.db.global.warningHonorCapped == true) then
+				if (NS.db.global.warningHonorCapped) then
 					-- get honor info
 					local info = NS:GetCurrencyInfo(1792)
 					if (info and info.quantity and info.maxQuantity) then
@@ -2273,7 +2312,7 @@ function NS:Update_Battlefield_Status(index)
 				-- does the player have the mercenary buff?
 				local mercenary = false
 				NS:CheckForAura("player", "HELPFUL", L["Mercenary Contract"])
-				if (NS.CommFlare.CF.HasAura == true) then
+				if (NS.CommFlare.CF.HasAura) then
 					-- mercenary
 					mercenary = true
 				end
@@ -2305,7 +2344,7 @@ function NS:Update_Battlefield_Status(index)
 					-- should report queue?
 					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
-						if (NS:IsGroupLeader() == true) then
+						if (NS:IsGroupLeader()) then
 							-- report joined queue with estimated time
 							NS.CommFlare.CF.EstimatedWaitTime = 0
 							NS:Report_Joined_With_Estimated_Time(index)
@@ -2315,17 +2354,17 @@ function NS:Update_Battlefield_Status(index)
 			else
 				-- has queue paused?
 				local popped = PVPReadyDialog:IsShown()
-				if ((suspendedQueue == true) and (NS.CommFlare.CF.LocalQueues[index].suspended == false)) then
+				if (suspendedQueue and (NS.CommFlare.CF.LocalQueues[index].suspended == false)) then
 					-- queue has paused
 					NS.CommFlare.CF.LocalQueues[index].suspended = true
 
 					-- queue popped window not open?
 					if (popped ~= true) then
 						-- queue paused warning enabled?
-						if (NS.db.global.warningQueuePaused == true) then
+						if (NS.db.global.warningQueuePaused) then
 							-- are you group leader?
 							local text = strformat(L["Queue for %s has paused!"], mapName)
-							if (NS:IsGroupLeader() == true) then
+							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
 								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", text)
 
@@ -2341,17 +2380,17 @@ function NS:Update_Battlefield_Status(index)
 						NS.CommFlare.CF.QueuePopped = true
 					end
 				-- has queue unpaused?
-				elseif ((suspendedQueue == false) and (NS.CommFlare.CF.LocalQueues[index].suspended == true)) then
+				elseif ((suspendedQueue == false) and NS.CommFlare.CF.LocalQueues[index].suspended) then
 					-- queue has resumed
 					NS.CommFlare.CF.LocalQueues[index].suspended = false
 
 					-- queue popped window not open?
 					if (NS.CommFlare.CF.QueuePopped ~= true) then
 						-- queue paused warning enabled?
-						if (NS.db.global.warningQueuePaused == true) then
+						if (NS.db.global.warningQueuePaused) then
 							-- are you group leader?
 							local text = strformat(L["Queue for %s has resumed!"], mapName)
-							if (NS:IsGroupLeader() == true) then
+							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
 								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", text)
 							else
@@ -2387,7 +2426,7 @@ function NS:Update_Battlefield_Status(index)
 					-- should report queue?
 					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
-						if (NS:IsGroupLeader() == true) then
+						if (NS:IsGroupLeader()) then
 							-- player is horde?
 							local faction = L["N/A"]
 							if (NS.faction == Enum.PvPFaction.Horde) then
@@ -2400,7 +2439,7 @@ function NS:Update_Battlefield_Status(index)
 
 							-- mercenary queue?
 							local mercenary = ""
-							if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+							if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 								-- set mercenary text
 								mercenary = strformat("%s ", L["Mercenary"])
 							end
@@ -2448,7 +2487,7 @@ function NS:Update_Battlefield_Status(index)
 					-- should report queue?
 					if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 						-- are you group leader?
-						if (NS:IsGroupLeader() == true) then
+						if (NS:IsGroupLeader()) then
 							-- player is horde?
 							local faction = L["N/A"]
 							if (NS.faction == Enum.PvPFaction.Horde) then
@@ -2461,7 +2500,7 @@ function NS:Update_Battlefield_Status(index)
 
 							-- mercenary queue?
 							local mercenary = ""
-							if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+							if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 								-- set mercenary text
 								mercenary = strformat("%s ", L["Mercenary"])
 							end
@@ -2498,7 +2537,7 @@ function NS:Update_Battlefield_Status(index)
 
 						-- mercenary queue?
 						local mercenary = ""
-						if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+						if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 							-- set mercenary text
 							mercenary = strformat("%s ", L["Mercenary"])
 						end
@@ -2537,7 +2576,7 @@ end
 -- iniialize queue session
 function NS:Initialize_Queue_Session()
 	-- clear role chosen table
-	NS.CommFlare.CF.RoleChosen = {}
+	wipe(NS.CommFlare.CF.RoleChosen)
 
 	-- not group leader?
 	if (NS:IsGroupLeader() ~= true) then
@@ -2555,7 +2594,7 @@ function NS:Initialize_Queue_Session()
 	-- is tracked pvp?
 	local mapName = GetLFGRoleUpdateBattlegroundInfo()
 	local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-	if (isTracked == true) then
+	if (isTracked) then
 		-- uninvite players that are afk?
 		local uninviteTimer = 0
 		if (NS.db.global.uninvitePlayersAFK > 0) then
@@ -2589,14 +2628,14 @@ function NS:Get_Current_Queues_Text()
 
 		-- queued and tracked?
 		local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-		if ((status == "queued") and (isTracked == true)) then
+		if (isTracked and (status == "queued")) then
 			-- calculate time
 			NS.CommFlare.CF.Timer.Seconds = time() - v.created
 			NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
 			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
 
 			-- mercenary queue?
-			if (v.mercenary == true) then
+			if (v.mercenary) then
 				-- set mercenary text
 				mercenary = strformat("%s ", L["Mercenary"])
 			end
@@ -2643,7 +2682,7 @@ function NS:Get_Current_Queues_Text()
 		local maxCount = NS:GetMaxGroupCount()
 		if (NS.CommFlare.CF.Count < maxCount) then
 			-- community auto invite enabled?
-			if (NS.charDB.profile.communityAutoInvite == true) then
+			if (NS.charDB.profile.communityAutoInvite) then
 				-- update text
 				text = strformat("%s (%s)", text, L["For auto invite, whisper me INV"])
 			end
@@ -2658,7 +2697,7 @@ end
 function NS:Report_Queue_Entry_Time_Left()
 	-- display time left message?
 	local seconds = NS.CommFlare.CF.Expiration - (time() - NS.CommFlare.CF.EnteredTime)
-	if (NS.CommFlare.ReportTimesLeft[seconds] == true) then
+	if (NS.CommFlare.ReportTimesLeft[seconds]) then
 		-- display message
 		print(strformat(L["%s: %d seconds remaining for players to take the queue."], NS.CommFlare.Title, seconds))
 	end

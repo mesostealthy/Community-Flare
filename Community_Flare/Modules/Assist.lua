@@ -65,7 +65,7 @@ end
 function NS:UpdateAssistButton()
 	-- show appropriate stuff
 	if (NS.faction ~= 0) then return end
-	if (NS.db.global.AssistFrame.locked == true) then
+	if (NS.db.global.AssistFrame.locked) then
 		-- disable
 		NS.AssistButton.Background:SetAlpha(0)
 		NS.AssistButton.Header.Background:SetAlpha(0)
@@ -131,7 +131,7 @@ end
 function NS:CreateAssistButton()
 	-- already initialized?
 	if (NS.faction ~= 0) then return end
-	if (NS.AssistButton.initialized == true) then
+	if (NS.AssistButton.initialized) then
 		-- finished
 		return
 	end
@@ -184,7 +184,7 @@ function NS:CreateAssistButton()
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- locked?
-			if (NS.db.global.AssistFrame.locked == true) then
+			if (NS.db.global.AssistFrame.locked) then
 				-- finished
 				return
 			end
@@ -209,7 +209,7 @@ function NS:CreateAssistButton()
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- locked?
-			if (NS.db.global.AssistFrame.locked == true) then
+			if (NS.db.global.AssistFrame.locked) then
 				-- show header background
 				self.Header.Background:SetAlpha(1)
 				self.Header.Text:SetAlpha(1)
@@ -226,7 +226,7 @@ function NS:CreateAssistButton()
 		-- not in combat?
 		if (not InCombatLockdown()) then
 			-- locked?
-			if (NS.db.global.AssistFrame.locked == true) then
+			if (NS.db.global.AssistFrame.locked) then
 				-- show header background
 				self.Header.Background:SetAlpha(0)
 				self.Header.Text:SetAlpha(0)
@@ -242,7 +242,7 @@ function NS:CreateAssistButton()
 			-- right click?
 			if (button == "RightButton") then
 				-- toggle lock
-				if (NS.db.global.AssistFrame.locked == true) then
+				if (NS.db.global.AssistFrame.locked) then
 					-- enable
 					NS.db.global.AssistFrame.locked = nil
 				else
@@ -351,7 +351,7 @@ function NS:ShowAssistButton()
 	else
 		-- in instance?
 		local inInstance, instanceType = IsInInstance()
-		if (inInstance == true) then
+		if (inInstance) then
 			-- pvp?
 			if (instanceType == "pvp") then
 				-- get main assist
@@ -422,14 +422,14 @@ local function OnEvent(self, event, ...)
 		local isInitialLogin, isReloadingUi = ...
 
 		-- initial login or reloading?
-		if ((isInitialLogin == true) or (isReloadingUi == true)) then
+		if (isInitialLogin or isReloadingUi) then
 			-- create assist button
 			NS:CreateAssistButton()
 
 			-- assist button enabled?
-			if (NS.db.global.assistButtonEnabled == true) then
+			if (NS.db.global.assistButtonEnabled) then
 				-- in battleground?
-				if (NS:IsInBattleground() == true) then
+				if (NS:IsInBattleground()) then
 					-- match state is active?
 					local duration = PvPGetActiveMatchDuration()
 					if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
@@ -442,13 +442,13 @@ local function OnEvent(self, event, ...)
 	-- player regen enabled?
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
+		if (NS.db.global.assistButtonEnabled) then
 			-- hide assist button?
-			if (NS.CommFlare.CF.RegenJobs["HideAssistButton"] == true) then
+			if (NS.CommFlare.CF.RegenJobs["HideAssistButton"]) then
 				-- hide
 				NS.CommFlare.CF.RegenJobs["HideAssistButton"] = nil
 				NS:HideAssistButton()
-			elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"] == true) then
+			elseif (NS.CommFlare.CF.RegenJobs["ShowAssistButton"]) then
 				-- show
 				NS.CommFlare.CF.RegenJobs["ShowAssistButton"] = nil
 				NS:ShowAssistButton()
@@ -457,9 +457,9 @@ local function OnEvent(self, event, ...)
 	-- player roles assigned?
 	elseif (event == "PLAYER_ROLES_ASSIGNED") then
 		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
+		if (NS.db.global.assistButtonEnabled) then
 			-- in battleground?
-			if (NS:IsInBattleground() == true) then
+			if (NS:IsInBattleground()) then
 				-- match state is not complete?
 				if (PvPGetActiveMatchState() ~= Enum.PvPMatchState.Complete) then
 					-- show assist button
@@ -470,7 +470,7 @@ local function OnEvent(self, event, ...)
 	-- pvp match complete?
 	elseif (event == "PVP_MATCH_COMPLETE") then
 		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
+		if (NS.db.global.assistButtonEnabled) then
 			-- assist button shown?
 			if (NS.AssistButton:IsShown()) then
 				-- hide assist button
@@ -480,7 +480,7 @@ local function OnEvent(self, event, ...)
 	-- zone changed new area?
 	elseif (event == "ZONE_CHANGED_NEW_AREA") then
 		-- assist button enabled?
-		if (NS.db.global.assistButtonEnabled == true) then
+		if (NS.db.global.assistButtonEnabled) then
 			-- assist button shown?
 			if (NS.AssistButton:IsShown()) then
 				-- check zone type

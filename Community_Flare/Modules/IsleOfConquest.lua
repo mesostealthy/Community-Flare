@@ -99,7 +99,6 @@ function NS:Process_IsleOfConquest_POIs()
 						NS.CommFlare.CF.IOC.HordeGlaivesUp = 0 -- reset zero
 						NS.CommFlare.CF.IOC.AllianceGlaivesUp = 0 -- reset zero
 						NS.CommFlare.CF.IOC.DocksFlag = id
-						NS:Cancel_Active_Timers(L["Glaive Thrower"])
 						NS:Capping_Stop_Bars(L["Glaive Thrower"])
 
 						-- process all docks
@@ -144,7 +143,7 @@ function NS:Process_IsleOfConquest_Vehicles(mapID)
 			-- glaive thrower?
 			if (info.name == L["Glaive Thrower"]) then
 				-- is alive?
-				if (info.isAlive == true) then
+				if (info.isAlive) then
 					-- increase
 					numGlaives = numGlaives + 1
 				end

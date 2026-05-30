@@ -21,7 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.41.001:
--Slayer's Rise: Bleeds don't show in sequential matches after player a Slayer's Rise.
--Level 90 check should not ask to kick upon inviting a non-cached player's level.
--Some internal optimizations.
+v2.42.001:
+-Pass out Assistant during matches if you've been passed Raid Leadership.

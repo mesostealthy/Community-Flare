@@ -63,6 +63,7 @@ end
 -- attach widget frames
 function NS:SlayersRise_Attach_WidgetFrames()
 	-- has widget frames?
+	if (NS.faction ~= 0) then return end
 	if (UIWidgetTopCenterContainerFrame and UIWidgetTopCenterContainerFrame.widgetFrames) then
 		-- has score widget?
 		if (UIWidgetTopCenterContainerFrame.widgetFrames[NS.SlayerRiseScoreBar]) then
@@ -176,7 +177,7 @@ function NS:Process_SlayersRise_Messages(text)
 		return
 	end
 
-	-- assaulted shadowridge outpost?
+	-- assaulted shenzar refinery?
 	local path = {136441}
 	local lower = strlower(text)
 	if (lower:find("alliance has taken shenzar refinery")) then
@@ -187,6 +188,7 @@ function NS:Process_SlayersRise_Messages(text)
 			path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(43)
 			NS:Capping_Add_Update_Bar("Overcharged Manacell [A]", 20, path, "colorAlliance")
 		end
+	-- assaulted shadowride outpost?
 	elseif (lower:find("assaulted shadowridge outpost")) then
 		-- add new capping bar
 		path[2], path[3], path[4], path[5] = NS:GetPOITextureCoords(72)

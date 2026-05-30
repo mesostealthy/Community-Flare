@@ -31,7 +31,7 @@ function NS:Capping_Find_Bar(name, exact)
 			local label = bar:GetLabel()
 			if (label) then
 				-- exact match?
-				if (exact == true) then
+				if (exact) then
 					-- matches?
 					if (label == name) then
 						-- return bar

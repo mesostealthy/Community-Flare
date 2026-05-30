@@ -109,7 +109,7 @@ function CF_VehicleListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -182,7 +182,7 @@ end
 function CF_VehicleListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -452,7 +452,7 @@ function NS:ToggleVehicleList()
 		CF_VehicleListFrame:Hide()
 	else
 		-- debug print enabled?
-		if (NS.db.global.debugPrint == true) then
+		if (NS.db.global.debugPrint) then
 			-- list vehicles
 			NS:List_Vehicles()
 		end

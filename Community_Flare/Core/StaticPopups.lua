@@ -135,7 +135,7 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 
 			-- community auto invite enabled?
 			local text = strformat(L["You've been removed from the party for %s."], reason)
-			if (NS.charDB.profile.communityAutoInvite == true) then
+			if (NS.charDB.profile.communityAutoInvite) then
 				-- can reinvite?
 				local canReinvite = false
 				if (reason == L["being dead"]) then
@@ -147,7 +147,7 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 				end
 
 				-- can reinvite?
-				if (canReinvite == true) then
+				if (canReinvite) then
 					-- update text for info about being reinvited
 					text = strformat("%s %s", text, L["Whisper me INV and if a spot is still available, you'll be readded to the party."])
 				end

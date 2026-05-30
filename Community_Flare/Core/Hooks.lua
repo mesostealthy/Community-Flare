@@ -51,24 +51,17 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 	-- is tracked pvp?
 	local status, mapName = GetBattlefieldStatus(index)
 	local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-	if (isTracked == true) then
+	if (isTracked) then
 		-- confirm?
 		if (status == "confirm") then
 			-- has queue popped?
 			if (NS.CommFlare.CF.LocalQueues[index] and NS.CommFlare.CF.LocalQueues[index].popped and (NS.CommFlare.CF.LocalQueues[index].popped > 0)) then
-				-- has leader GUID?
-				local leaderGUID = NS.CommFlare.CF.LeaderGUID
-				if (not leaderGUID) then
-					-- use player
-					leaderGUID = NS:UnitGUID("player")
-				end
-
 				-- accepted queue?
 				local text = ""
 				local partyGUID = NS:GetPartyGUID()
-				if (acceptFlag == true) then
+				if (acceptFlag) then
 					-- mercenary?
-					if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+					if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 						-- finalize text
 						text = strformat(L["Entered Mercenary Queue For Popped %s!"], mapName)
 					else
@@ -82,7 +75,7 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 					NS.CommFlare.CF.Expiration = GetBattlefieldPortExpiration(index)
 				else
 					-- mercenary?
-					if (NS.CommFlare.CF.LocalQueues[index].mercenary == true) then
+					if (NS.CommFlare.CF.LocalQueues[index].mercenary) then
 						-- finalize text
 						text = strformat(L["Left Mercenary Queue For Popped %s!"], mapName)
 					else
@@ -91,7 +84,7 @@ local function hook_AcceptBattlefieldPort(index, acceptFlag)
 					end
 
 					-- are you group leader?
-					if (NS:IsGroupLeader() == true) then
+					if (NS:IsGroupLeader()) then
 						-- should report queue?
 						if (NS:Should_Report_Queue(LE_LFG_CATEGORY_BATTLEFIELD)) then
 							-- send to community
@@ -344,7 +337,7 @@ local function hook_PVPMatchResults_OnUpdate(self)
 	end
 
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- available?
 		if (PVPMatchResults and PVPMatchResults.content and PVPMatchResults.content.scrollCategories) then
 			-- disable tooltips for headers

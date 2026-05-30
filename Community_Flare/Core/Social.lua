@@ -136,7 +136,7 @@ function NS:Process_Popped(groupGUID)
 			local index = 1
 			for k,v in pairs(NS.CommFlare.CF.PoppedGroups) do
 				-- display popped group totals?
-				if (NS.db.global.displayPoppedGroups == true) then
+				if (NS.db.global.displayPoppedGroups) then
 					-- print group / member totals
 					print(strformat("%s: Group%d = %d Members", L["POPPED"], index, v))
 				end
@@ -180,7 +180,7 @@ function NS:Update_Group(groupGUID)
 			-- trackable?
 			local status, mapName = GetBattlefieldStatus(i)
 			local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-			if (isTracked == true) then
+			if (isTracked) then
 				-- update queue
 				NS.CommFlare.CF.SocialQueues[groupGUID].queues[i] = {
 					["name"] = mapName,
@@ -227,7 +227,7 @@ function NS:Update_Group(groupGUID)
 		-- only yourself?
 		if (count == 1) then
 			-- add leader + member
-			local playerGUID = NS:UnitGUID("player")
+			local playerGUID = NS.CommFlare.CF.PlayerGUID
 			local playerName, playerRealm = NS.CommFlare.CF.PlayerName
 			NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = 1
 			NS:Add_Group_Leader(groupGUID, playerGUID, playerName, playerRealm)
@@ -299,7 +299,7 @@ function NS:Update_Group(groupGUID)
 				-- tracked map?
 				mapName = queues[i].queueData.mapName
 				local isTracked, isEpicBattleground, isRandomBattleground, isBrawl = NS:IsTrackedPVP(mapName)
-				if (isTracked == true) then
+				if (isTracked) then
 					-- increase
 					numTrackedQueues = numTrackedQueues + 1
 
@@ -388,7 +388,7 @@ function NS:Update_Group(groupGUID)
 			if (members and (#members > 0)) then
 				-- process all members
 				NS.CommFlare.CF.SocialQueues[groupGUID].members = {}
-				NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = #members
+				NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = 1
 				for i=1, #members do
 					-- get player info
 					local playerGUID = members[i].guid
@@ -401,6 +401,12 @@ function NS:Update_Group(groupGUID)
 
 						-- add group member
 						NS:Add_Group_Member(groupGUID, i, playerGUID, data.name, data.realm)
+					end
+
+					-- not leader?
+					if (playerGUID ~= leaderGUID) then
+						-- increase
+						NS.CommFlare.CF.SocialQueues[groupGUID].numMembers = NS.CommFlare.CF.SocialQueues[groupGUID].numMembers + 1
 					end
 				end
 			else

@@ -515,7 +515,7 @@ function NS:StringToTable(method, string)
 				local status, final = NS.Libs.AceSerializer:Deserialize(two)
 
 				-- success?
-				if (status == true) then
+				if (status) then
 					-- return final
 					return final
 				end
@@ -528,7 +528,7 @@ function NS:StringToTable(method, string)
 			local status, final = NS.Libs.AceSerializer:Deserialize(two)
 
 			-- success?
-			if (status == true) then
+			if (status) then
 				-- return final
 				return final
 			end
@@ -571,15 +571,15 @@ end
 -- is in battleground?
 function NS:IsInBattleground()
 	-- in battleground?
-	if (PvPIsBattleground() == true) then
+	if (PvPIsBattleground()) then
 		-- yup
 		return true
 	-- rated battleground?
-	elseif (PvPIsRatedBattleground() == true) then
+	elseif (PvPIsRatedBattleground()) then
 		-- yup
 		return true
 	-- solo rated battleground?
-	elseif (PvPIsRatedSoloRBG() == true) then
+	elseif (PvPIsRatedSoloRBG()) then
 		-- yup
 		return true
 	end
@@ -591,35 +591,35 @@ end
 -- is in delve?
 function NS:IsInDelve()
 	-- in active delve?
-	if (NS.CommFlare.CF.InActiveDelve == true) then
+	if (NS.CommFlare.CF.InActiveDelve) then
 		-- yup
 		return true
 	end
 
 	-- is party walk in?
 	local walkin = PartyInfoIsPartyWalkIn()
-	if (walkin == true) then
+	if (walkin) then
 		-- yup
 		return true
 	end
 
 	-- delve in progress?
 	local active = PartyInfoIsDelveInProgress()
-	if (active == true) then
+	if (active) then
 		-- yup
 		return true
 	end
 
 	-- delve completed?
 	local complete = PartyInfoIsDelveComplete()
-	if (complete == true) then
+	if (complete) then
 		-- yup
 		return true
 	end
 
 	-- has active delve?
 	local active = NS:HasActiveDelve()
-	if (active == true) then
+	if (active) then
 		-- yup
 		return true
 	end
@@ -637,11 +637,10 @@ function NS:IsInvisible()
 	end
 
 	-- check Battle.NET account - has focus?
-	local playerGUID = NS:UnitGUID("player")
-	local accountInfo = NS:GetAccountInfoByGUID(playerGUID)
+	local accountInfo = NS:GetAccountInfoByGUID(NS.CommFlare.CF.PlayerGUID)
 	if (accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.hasFocus) then
 		-- has focus?
-		if (accountInfo.gameAccountInfo.hasFocus == true) then
+		if (accountInfo.gameAccountInfo.hasFocus) then
 			-- visible
 			NS.CommFlare.CF.Invisible = false
 			return false
@@ -699,7 +698,7 @@ end
 -- promote player to party leader
 function NS:PromoteToPartyLeader(player)
 	-- is player full name in party?
-	if (NS:UnitInParty(player) == true) then
+	if (NS:UnitInParty(player)) then
 		NS:PromoteToLeader(player)
 		return true
 	end
@@ -711,7 +710,7 @@ function NS:PromoteToPartyLeader(player)
 	end
 
 	-- unit is in party?
-	if (NS:UnitInParty(player) == true) then
+	if (NS:UnitInParty(player)) then
 		NS:PromoteToLeader(player)
 		return true
 	end
@@ -768,7 +767,6 @@ function NS:LoadSession()
 	NS.CommFlare.CF.ExtCrateTracker = NS.charDB.profile.ExtCrateTracker
 	NS.CommFlare.CF.TeamUnits = NS.charDB.profile.TeamUnits or {}
 	NS.CommFlare.CF.LocalQueues = NS.charDB.profile.LocalQueues or {}
-	NS.CommFlare.CF.ActiveTimers = NS.charDB.profile.ActiveTimers or {}
 	NS.CommFlare.CF.PlayerScoreCache = NS.charDB.profile.PlayerScoreCache or {}
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 	NS.CommFlare.CF.PreviousEquipSetID = NS.charDB.profile.PreviousEquipSetID or -1
@@ -779,7 +777,7 @@ function NS:LoadSession()
 	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives or 0
 
 	-- reloading?
-	if (NS.CommFlare.CF.Reloaded == true) then
+	if (NS.CommFlare.CF.Reloaded) then
 		-- load match date / times
 		NS.CommFlare.CF.MatchEndDate = NS.charDB.profile.MatchEndDate or ""
 		NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
@@ -837,13 +835,12 @@ function NS:SaveSession()
 	NS.charDB.profile.ExtCrateTracker = NS.CommFlare.CF.ExtCrateTracker
 	NS.charDB.profile.TeamUnits = NS.CommFlare.CF.TeamUnits or {}
 	NS.charDB.profile.LocalQueues = NS.CommFlare.CF.LocalQueues or {}
-	NS.charDB.profile.ActiveTimers = NS.CommFlare.CF.ActiveTimers or {}
 	NS.charDB.profile.PlayerScoreCache = NS.CommFlare.CF.PlayerScoreCache or {}
 	NS.charDB.profile.InActiveDelve = NS.CommFlare.CF.InActiveDelve or false
 	NS.charDB.profile.PreviousEquipSetID = NS.CommFlare.CF.PreviousEquipSetID or -1
 
 	-- in battleground?
-	if (NS:IsInBattleground() == true) then
+	if (NS:IsInBattleground()) then
 		-- save any settings
 		NS.charDB.profile.AB = NS.CommFlare.CF.AB or {}
 		NS.charDB.profile.ASH = NS.CommFlare.CF.ASH or {}
@@ -872,7 +869,7 @@ function NS:SaveSession()
 	end
 
 	-- debug mode?
-	if (NS.db.global.debugMode == true) then
+	if (NS.db.global.debugMode) then
 		-- save CF
 		NS.charDB.profile.CF = NS.CommFlare.CF
 	end
@@ -1017,7 +1014,7 @@ function NS:AddCommunityChatWindow(clubId, streamId)
 			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
 				-- checked?
 				local isChecked = ContainsChannel(chatWindow, channelName)
-				if (isChecked == true) then
+				if (isChecked) then
 					-- remove communities channel from chat frame
 					RemoveCommunitiesChannel(chatWindow, clubId, streamId)
 				end
@@ -1070,7 +1067,7 @@ function NS:RemoveCommunityChatWindow(clubId, streamId)
 			if ((isGuildStream ~= true) and (chatWindowIndex == 1)) then
 				-- checked?
 				local isChecked = ContainsChannel(chatWindow, channelName)
-				if (isChecked == true) then
+				if (isChecked) then
 					-- remove communities channel from chat frame
 					RemoveCommunitiesChannel(chatWindow, clubId, streamId)
 				end
@@ -1146,27 +1143,27 @@ end
 function NS:Enforce_PVP_Roles()
 	-- force tank role?
 	local isTank = false
-	if (NS.charDB.profile.forceTank == true) then
+	if (NS.charDB.profile.forceTank) then
 		-- enable
 		isTank = true
 	end
 
 	-- force healer role?
 	local isHealer = false
-	if (NS.charDB.profile.forceHealer == true) then
+	if (NS.charDB.profile.forceHealer) then
 		-- enable
 		isHealer = true
 	end
 
 	-- force dps role?
 	local isDPS = false
-	if (NS.charDB.profile.forceDPS == true) then
+	if (NS.charDB.profile.forceDPS) then
 		-- enable
 		isDPS = true
 	end
 
 	-- any roles forced?
-	if ((isTank == true) or (isHealer == true) or (isDPS == true)) then
+	if (isTank or isHealer or isDPS) then
 		-- force enable roles
 		local isLeader = GetLFGRoles()
 		SetLFGRoles(isLeader, isTank, isHealer, isDPS)
@@ -1184,7 +1181,7 @@ function NS:Enforce_PVP_Roles()
 		-- quick join role selection shown?
 		if (QuickJoinRoleSelectionFrame:IsShown()) then
 			-- is tank?
-			if (isTank == true) then
+			if (isTank) then
 				-- not checked?
 				if (QuickJoinRoleSelectionFrame.RoleButtonTank.CheckButton:GetChecked() ~= true) then
 					-- click button
@@ -1193,7 +1190,7 @@ function NS:Enforce_PVP_Roles()
 			end
 
 			-- is healer?
-			if (isHealer == true) then
+			if (isHealer) then
 				-- not checked?
 				if (QuickJoinRoleSelectionFrame.RoleButtonHealer.CheckButton:GetChecked() ~= true) then
 					-- click button
@@ -1202,7 +1199,7 @@ function NS:Enforce_PVP_Roles()
 			end
 
 			-- is dps?
-			if (isDPS == true) then
+			if (isDPS) then
 				-- not checked?
 				if (QuickJoinRoleSelectionFrame.RoleButtonDPS.CheckButton:GetChecked() ~= true) then
 					-- click button
@@ -1247,7 +1244,7 @@ function NS:GetPartyGUID()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (NS:UnitExists(unit) == true) then
+			if (NS:UnitExists(unit)) then
 				-- using partyX
 			else
 				-- player
@@ -1295,7 +1292,7 @@ function NS:GetPartyUnit(player)
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (NS:UnitExists(unit) == true) then
+			if (NS:UnitExists(unit)) then
 				-- using partyX
 			else
 				-- player
@@ -1333,7 +1330,7 @@ function NS:GetPartyLeader()
 		for i=1, GetNumGroupMembers() do
 			-- unit exists?
 			local unit = "party" .. i
-			if (NS:UnitExists(unit) == true) then
+			if (NS:UnitExists(unit)) then
 				-- using partyX
 			else
 				-- player
@@ -1370,7 +1367,7 @@ function NS:GetPartyLeaderGUID()
 		for i=1, GetNumGroupMembers() do 
 			-- unit exists?
 			local unit = "party" .. i
-			if (NS:UnitExists(unit) == true) then
+			if (NS:UnitExists(unit)) then
 				-- using partyX
 			else
 				-- player
@@ -1386,7 +1383,7 @@ function NS:GetPartyLeaderGUID()
 	end
 
 	-- solo atm
-	return NS:UnitGUID("player")
+	return NS.CommFlare.CF.PlayerGUID
 end
 
 -- get max party count
@@ -1454,7 +1451,7 @@ end
 function NS:GetMemberCount()
 	-- process all
 	local count = 0
-	for k,v in pairs(NS.db.global.members) do
+	for _,member in pairs(NS.db.global.members) do
 		-- increase
 		count = count + 1
 	end
@@ -1562,7 +1559,7 @@ function NS:PopupBox(dlg, ...)
 	end
 
 	-- show popup?
-	if (showPopup == true) then
+	if (showPopup) then
 		-- show the popup box
 		local dialog = StaticPopup_Show(dlg, ...)
 		if (dialog) then
@@ -1582,7 +1579,7 @@ end
 -- process talents check
 function NS:Process_Talents_Check(sender)
 	-- no shared community?
-	if (NS:Has_Shared_Community(sender) == false) then
+	if (not NS:Has_Shared_Community(sender)) then
 		-- finished
 		return
 	end
@@ -1621,7 +1618,7 @@ end
 -- process version check
 function NS:Process_Version_Check(sender)
 	-- no shared community?
-	if (NS:Has_Shared_Community(sender) == false) then
+	if (not NS:Has_Shared_Community(sender)) then
 		-- finished
 		return
 	end
@@ -1655,20 +1652,20 @@ function NS:Setup_Report_Channels()
 	if (NS.charDB.profile.communityMain > 1) then
 		-- process all report list
 		NS.CommFlare.CF.ReportChannels = {}
-		for k,v in pairs(NS.charDB.profile.communityReportList) do
+		for clubId,v in pairs(NS.charDB.profile.communityReportList) do
 			-- verify channel setup
 			local streamId = 1
-			local channelName = GetCommunitiesChannelName(k, streamId)
+			local channelName = GetCommunitiesChannelName(clubId, streamId)
 			local id, name = GetChannelName(channelName)
 			if ((id > 0) and (name ~= nil)) then
 				-- enable report channel
-				NS.CommFlare.CF.ReportChannels[k] = id
+				NS.CommFlare.CF.ReportChannels[clubId] = id
 
 				-- increase
 				count = count + 1
 			else
 				-- disable report channel
-				NS.CommFlare.CF.ReportChannels[k] = nil
+				NS.CommFlare.CF.ReportChannels[clubId] = nil
 			end
 		end
 
@@ -1690,7 +1687,7 @@ function NS:Send_Report_Messages(message)
 	if (message) then
 		-- count report channels
 		local count = 0
-		for k,v in pairs(NS.CommFlare.CF.ReportChannels) do
+		for clubId,_ in pairs(NS.CommFlare.CF.ReportChannels) do
 			-- increase
 			count = count + 1
 		end
@@ -1698,13 +1695,13 @@ function NS:Send_Report_Messages(message)
 		-- has channels to report to?
 		if (count > 0) then
 			-- process all
-			for k,v in pairs(NS.CommFlare.CF.ReportChannels) do
+			for _,channel in pairs(NS.CommFlare.CF.ReportChannels) do
 				-- send channel messsage (hardware click acquired)
-				NS:SendMessage("CHANNEL", message, v)
+				NS:SendMessage("CHANNEL", message, channel)
 			end
 
 			-- treat guild as community?
-			if (NS.charDB.profile.addGuildMembers == true) then
+			if (NS.charDB.profile.addGuildMembers) then
 				-- are you in a guild?
 				if (IsInGuild()) then
 					-- send message
@@ -1724,7 +1721,7 @@ function NS:Rebuild_Database_Members()
 	-- process club members again
 	print(L["Rebuilding community database member list."])
 	local status = NS:Process_Club_Members()
-	if (status == true) then
+	if (status) then
 		-- display members found
 		print(NS:Total_Database_Members())
 
@@ -1762,12 +1759,12 @@ function NS:Process_Party_States(isDead, isOffline)
 				end
 
 				-- are they dead/ghost?
-				if ((isDead == true) and (NS:UnitIsDeadOrGhost(unit) == true)) then
+				if (isDead and NS:UnitIsDeadOrGhost(unit)) then
 					-- kick them
 					reason = L["being dead"]
 					kickPlayer = true
 				-- are they offline?
-				elseif ((isOffline == true) and (NS:UnitIsConnected(unit) ~= true)) then
+				elseif (isOffline and (NS:UnitIsConnected(unit) ~= true)) then
 					-- kick them
 					reason = L["being offline"]
 					kickPlayer = true
@@ -1785,9 +1782,9 @@ function NS:Process_Party_States(isDead, isOffline)
 				end
 
 				-- should kick?
-				if (reason and (kickPlayer == true)) then
+				if (reason and kickPlayer) then
 					-- are you leader?
-					if (NS:IsGroupLeader() == true) then
+					if (NS:IsGroupLeader()) then
 						-- ask to kick?
 						NS:PopupBox("CommunityFlare_Kick_Dialog", player, reason)
 						return
@@ -1838,7 +1835,7 @@ function NS:Queue_Check_Role_Chosen()
 			-- role not chosen?
 			if (not NS.CommFlare.CF.RoleChosen[player] or (NS.CommFlare.CF.RoleChosen[player] ~= true)) then
 				-- are you leader?
-				if (NS:IsGroupLeader() == true) then
+				if (NS:IsGroupLeader()) then
 					-- ask to kick?
 					NS:PopupBox("CommunityFlare_Kick_Dialog", player, L["role not being chosen"])
 				end
@@ -1903,10 +1900,10 @@ end
 -- run performance tests
 function NS:Run_Performance_Tests()
 	-- process all tests
-	for k,v in pairs(Enum.AddOnProfilerMetric) do
+	for key,metric in pairs(Enum.AddOnProfilerMetric) do
 		-- get addon metric
-		local metric = AddOnProfilerGetAddOnMetric(ADDON_NAME, v)
-		print(strformat("%s: %s = %s", NS.CommFlare.Title, tostring(k), tostring(metric)))
+		local result = AddOnProfilerGetAddOnMetric(ADDON_NAME, metric)
+		print(strformat("%s: %s = %s", NS.CommFlare.Title, tostring(key), tostring(result)))
 	end
 end
 
@@ -1961,7 +1958,7 @@ function NS:Enforce_Binding_Rules()
 	if (InCombatLockdown() ~= true) then
 		-- in battleground?
 		local action, changes, status = nil, 0, nil
-		if (NS:IsInBattleground() == true) then
+		if (NS:IsInBattleground()) then
 			-- has target nearest enemy key?
 			if (NS.CommFlare.CF.TargetNearestEnemy) then
 				-- binding action for target nearest enemy not target nearest enemy?
@@ -1969,7 +1966,7 @@ function NS:Enforce_Binding_Rules()
 				if (action ~= "TARGETNEARESTENEMYPLAYER") then
 					-- save
 					status = SetBinding(NS.CommFlare.CF.TargetNearestEnemy, "TARGETNEARESTENEMYPLAYER")
-					if (status == true) then
+					if (status) then
 						-- increase
 						changes = changes + 1
 					end
@@ -1980,7 +1977,7 @@ function NS:Enforce_Binding_Rules()
 				if (action ~= "TARGETPREVIOUSENEMYPLAYER") then
 					-- save
 					status = SetBinding(NS.CommFlare.CF.TargetPreviousEnemy, "TARGETPREVIOUSENEMYPLAYER")
-					if (status == true) then
+					if (status) then
 						-- increase
 						changes = changes + 1
 					end
@@ -2001,7 +1998,7 @@ function NS:Enforce_Binding_Rules()
 				if (action ~= "TARGETNEARESTENEMY") then
 					-- save
 					status = SetBinding(NS.CommFlare.CF.TargetNearestEnemy, "TARGETNEARESTENEMY")
-					if (status == true) then
+					if (status) then
 						-- increase
 						changes = changes + 1
 					end
@@ -2012,7 +2009,7 @@ function NS:Enforce_Binding_Rules()
 				if (action ~= "TARGETPREVIOUSENEMY") then
 					-- save
 					status = SetBinding(NS.CommFlare.CF.TargetPreviousEnemy, "TARGETPREVIOUSENEMY")
-					if (status == true) then
+					if (status) then
 						-- increase
 						changes = changes + 1
 					end
@@ -2200,44 +2197,12 @@ function NS:RemoteRangeCheckSpell(classType, spellType, spellID)
 	end
 end
 
--- cancel active timers
-function NS:Cancel_Active_Timers(name)
-	-- has active timers?
-	if (NS.CommFlare.CF.ActiveTimers and next(NS.CommFlare.CF.ActiveTimers)) then
-		-- process all timers
-		for k,v in pairs(NS.CommFlare.CF.ActiveTimers) do
-			-- no name?
-			local shouldCancel = false
-			if (not name) then
-				-- cancel
-				shouldCancel = true
-			-- name matches?
-			elseif (v.name == name) then
-				-- cancel
-				shouldCancel = true
-			end
-
-			-- should cancel?
-			if (shouldCancel == true) then
-				-- timer exists?
-				if (v.timer) then
-					-- cancel timer
-					v.timer:Cancel()
-				end
-
-				-- clear active timer
-				NS.CommFlare.CF.ActiveTimers[k] = nil
-			end
-		end
-	end
-end
-
 -- hide stuff in vehicles
 function NS:HideStuffInVehicles(type)
 	-- all or cdm?
 	if ((type == "all") or (type == "cdm")) then
 		-- hide CDM while inside vehicles?
-		if (NS.db.global.cdmHideInVehiclesPvP == true) then
+		if (NS.db.global.cdmHideInVehiclesPvP) then
 			-- cooldown manager enabled?
 			NS.CommFlare.CF.CDMEnabled = GetCVar("cooldownViewerEnabled")
 			if (NS.CommFlare.CF.CDMEnabled) then
@@ -2253,7 +2218,7 @@ function NS:ShowStuffInVehicles(type)
 	-- all or cdm?
 	if ((type == "all") or (type == "cdm")) then
 		-- hide CDM while inside vehicles?
-		if (NS.db.global.cdmHideInVehiclesPvP == true) then
+		if (NS.db.global.cdmHideInVehiclesPvP) then
 			-- cooldown manager enabled?
 			if (NS.CommFlare.CF.CDMEnabled) then
 				-- enable cooldown manager

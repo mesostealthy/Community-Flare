@@ -19,6 +19,10 @@ local strmatch                                    = _G.string.match
 local tinsert                                     = _G.table.insert
 local tsort                                       = _G.table.sort
 
+-- local variables
+local kosAlerts = {}
+local playerScores = {}
+
 -- check score board for KOS
 function NS:CheckScoreBoardForKos()
 	-- not created?
@@ -42,18 +46,29 @@ function NS:CheckScoreBoardForKos()
 	end
 
 	-- should refresh?
-	if (bRefresh == true) then
+	if (bRefresh) then
 		-- match engaged?
-		local kosAlerts = {}
+		wipe(kosAlerts)
 		local status = PvPGetActiveMatchState()
 		if (status == Enum.PvPMatchState.Engaged) then
+			-- process all scores
+			wipe(playerScores)
+			local numScores = GetNumBattlefieldScores()
+			for i=1, numScores do
+				-- get score info
+				local info = NS:GetScoreInfo(i)
+				if (info and info.name and not issecretvalue(info.name)) then
+					-- add player
+					playerScores[info.name] = true
+				end
+			end
+
 			-- process all
-			for guid, player in pairs(NS.db.global.KosList) do
+			for guid,player in pairs(NS.db.global.KosList) do
 				-- not already alerted?
 				if (not NS.CommFlare.CF.KosAlerted[guid]) then
-					-- get score info by guid
-					local info = NS:GetScoreInfoByPlayerGuid(guid)
-					if (info and info.name) then
+					-- player in match?
+					if (playerScores[player]) then
 						-- process member guid
 						NS:Process_MemberGUID(guid, player)
 

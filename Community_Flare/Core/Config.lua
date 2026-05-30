@@ -57,6 +57,7 @@ local GlobalDefaults = {
 		members = {},
 		ApplicantLists = {},
 		AssistFrame = {},
+		KosList = {},
 		MemberGUIDs = {},
 		MemberNotes = {},
 		SocialQueues = {},
@@ -156,7 +157,6 @@ local CharDefaults = {
 		PreviousEquipSetID = -1,
 
 		-- tables
-		ActiveTimers = {},
 		communityLeadersList = {},
 		communityLogList = {},
 		LocalQueues = {},
@@ -183,7 +183,7 @@ local function Set_Add_Guild_Members(info, value)
 	NS.charDB.profile.addGuildMembers = value
 
 	-- add members?
-	if (NS.charDB.profile.addGuildMembers == true) then
+	if (NS.charDB.profile.addGuildMembers) then
 		-- add all members
 		NS:Add_All_Club_Members_By_ClubID(clubId)
 	-- remove members?
@@ -310,7 +310,7 @@ local function Setup_Other_Community_List(info)
 			end
 
 			-- add to list?
-			if (add == true) then
+			if (add) then
 				-- add club
 				list[v.clubId] = v.name
 				NS.CommFlare.CF.ClubCount = NS.CommFlare.CF.ClubCount + 1
@@ -398,7 +398,7 @@ local function Other_Community_Set_Item(info, key, value)
 		end
 
 		-- true value?
-		if (value == true) then
+		if (value) then
 			-- set the value
 			NS.charDB.profile.communityList[key] = value
 
@@ -496,7 +496,7 @@ local function Community_Set_Reporter(info, value)
 	NS.charDB.profile.communityReporter = value
 
 	-- enabled?
-	if (NS.charDB.profile.communityReporter == true) then
+	if (NS.charDB.profile.communityReporter) then
 		-- update report list enabled / disabled status
 		Community_Report_List_Disabled()
 	end
@@ -566,7 +566,7 @@ local function Community_List_Set_Item(info, key, value)
 		end
 
 		-- true value?
-		if (value == true) then
+		if (value) then
 			-- set the value
 			NS.charDB.profile.communityLeadersList[key] = value
 		else
@@ -595,7 +595,7 @@ local function Community_List_Set_Item(info, key, value)
 		end
 
 		-- true value?
-		if (value == true) then
+		if (value) then
 			-- set the value
 			NS.charDB.profile.communityLogList[key] = value
 		else
@@ -617,7 +617,7 @@ local function Community_List_Set_Item(info, key, value)
 		end
 
 		-- true value?
-		if (value == true) then
+		if (value) then
 			-- set the value
 			NS.charDB.profile.communityReportList[key] = value
 
@@ -823,7 +823,7 @@ StaticPopupDialogs["CommunityFlare_ReloadUI_Required_Dialog"] = {
 -- set community readd channels
 local function Community_Readd_Channels_Set(info, value)
 	-- enabled?
-	if (value == true) then
+	if (value) then
 		-- save value
 		NS.charDB.profile.alwaysReaddChannels = value
 	else
@@ -839,7 +839,7 @@ end
 -- set community right click menu
 local function Community_Right_Click_Menu_Set(info, value)
 	-- enabled?
-	if (value == true) then
+	if (value) then
 		-- save value
 		NS.charDB.profile.communityRightClickMenu = value
 
@@ -855,12 +855,12 @@ end
 -- set block game menu hot keys (reload when disabled)
 local function Block_Game_Menu_Hot_Keys_Set(info, value)
 	-- enabled?
-	if (value == true) then
+	if (value) then
 		-- save value
 		NS.charDB.profile.blockGameMenuHotKeys = value
 
 		-- in battleground?
-		if (NS:IsInBattleground() == true) then
+		if (NS:IsInBattleground()) then
 			-- enable block game menu hooks
 			NS:Setup_BlockGameMenuHooks()
 		end
@@ -875,7 +875,7 @@ end
 local function Check_Tank_Available()
 	-- get available roles
 	local hasTank, hasHealer, hasDPS = NS:UnitGetAvailableRoles("player")
-	if (hasTank == true) then
+	if (hasTank) then
 		-- enabled
 		return false
 	else
@@ -906,7 +906,7 @@ end
 local function Check_Healer_Available()
 	-- get available roles
 	local hasTank, hasHealer, hasDPS = NS:UnitGetAvailableRoles("player")
-	if (hasHealer == true) then
+	if (hasHealer) then
 		-- enabled
 		return false
 	else
@@ -2095,7 +2095,7 @@ function NS:MigrateSettings()
 		end
 
 		-- updated?
-		if (updated == true) then
+		if (updated) then
 			-- update database
 			NS.charDB.profile.LastMigrate = time()
 		end

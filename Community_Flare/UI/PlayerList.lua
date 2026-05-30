@@ -181,7 +181,7 @@ function CF_PlayerListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -315,7 +315,7 @@ end
 function CF_PlayerListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -386,7 +386,7 @@ function CF_PlayerListMixin:UpdatePlayerList()
 			end
 
 			-- displayed?
-			if (display == true) then
+			if (display) then
 				-- kos target?
 				local player = v .. "@" .. k
 				if (NS.db.global.KosList and NS.db.global.KosList[k]) then
@@ -490,7 +490,7 @@ function CF_PlayerListMixin:OnUpdate()
 	end
 
 	-- updated?
-	if (NS.CommFlare.CF.PlayerListUpdated == true) then
+	if (NS.CommFlare.CF.PlayerListUpdated) then
 		-- update list
 		NS.CommFlare.CF.PlayerListUpdated = false
 		CF_PlayerListFrame:UpdateList()
@@ -674,7 +674,7 @@ function CF_PlayerListEntryMixin:OnEnter()
 			-- refresh 1 second
 			TimerAfter(1, function()
 				-- tooltip shown?
-				if (show_tooltip == true) then
+				if (show_tooltip) then
 					-- call again
 					self:OnEnter()
 				end
@@ -700,7 +700,7 @@ function CF_PlayerListEntryMixin:SetPlayer(info)
 		self.PlayerFrame.Name:SetText(strformat("%s", info.player))
 
 		-- kos?
-		if (info.kos and (info.kos == true)) then
+		if (info.kos) then
 			-- green
 			self.PlayerFrame.Name:SetTextColor(0, 1, 0)
 		else
@@ -1037,7 +1037,7 @@ local function RefreshPlayerName(guid, old_player)
 		end
 
 		-- updated?
-		if (updated == true) then
+		if (updated) then
 			-- refresh list
 			CF_PlayerListFrame:RefreshList()
 		end

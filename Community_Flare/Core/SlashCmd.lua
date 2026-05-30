@@ -17,6 +17,7 @@ local DateAndTimeGetServerTimeLocal               = _G.C_DateAndTime.GetServerTi
 local ipairs                                      = _G.ipairs
 local pairs                                       = _G.pairs
 local print                                       = _G.print
+local wipe                                        = _G.wipe
 local bitband                                     = _G.bit.band
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
@@ -25,7 +26,7 @@ local strsplit                                    = _G.string.split
 -- process slash command
 local function Community_Flare_Slash_Command(input)
 	-- version check?
-	if (NS:IsOutdatedVersion() == true) then
+	if (NS:IsOutdatedVersion()) then
 		-- finished
 		return
 	end
@@ -77,7 +78,7 @@ local function Community_Flare_Slash_Command(input)
 		NS:ToggleCommunityList()
 	elseif (lower == "debug") then
 		-- debug mode enabled?
-		if (NS.db.global.debugMode == true) then
+		if (NS.db.global.debugMode) then
 			-- expose local tables for debug purposes
 			CommFlare_DB = NS.db
 			CommFlare_CF = NS.CommFlare.CF
@@ -161,7 +162,7 @@ local function Community_Flare_Slash_Command(input)
 	elseif (lower == "refresh") then
 		-- process club members
 		local status = NS:Process_Club_Members()
-		if (status == true) then
+		if (status) then
 			-- refreshed database
 			print(strformat(L["%s: Refreshed members database! %d members found."], NS.CommFlare.Title, NS:GetMemberCount()))
 		else
@@ -231,12 +232,12 @@ local function Community_Flare_Slash_Command(input)
 			-- clubs?
 			if (second == "clubs") then
 				-- reset clubs database
-				NS.db.global.clubs = {}
+				wipe(NS.db.global.clubs)
 				print(strformat("%s: %s", NS.CommFlare.Title, L["Cleared clubs database!"]))
 			-- members?
 			elseif (second == "members") then
 				-- reset members database
-				NS.db.global.members = {}
+				wipe(NS.db.global.members)
 				print(strformat("%s: %s", NS.CommFlare.Title, L["Cleared members database!"]))
 			-- positions?
 			elseif (second == "positions") then
@@ -332,7 +333,7 @@ local function Community_Flare_Slash_Command(input)
 						-- newer?
 						if (v.spawnUID > spawnUID) then
 							-- debug print enabled?
-							if (NS.db.global.debugPrint == true) then
+							if (NS.db.global.debugPrint) then
 								-- display time between crates
 								print(strformat("%s: %d", L["Time Between"], v.spawnUID - spawnUID))
 							end
@@ -389,7 +390,7 @@ local function Community_Flare_Slash_Command(input)
 		else
 			-- in battleground?
 			local timer = 0
-			if (NS:IsInBattleground() == true) then
+			if (NS:IsInBattleground()) then
 				-- battlefield score needs updating?
 				if (PVPMatchScoreboard.selectedTab ~= 1) then
 					-- update battlefield score

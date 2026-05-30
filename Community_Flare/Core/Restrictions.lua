@@ -1339,14 +1339,14 @@ function NS:SendMessage(sender, msg, channel)
 		-- raid?
 		elseif (sender == "RAID") then
 			-- in raid?
-			if (IsInRaid() == true) then
+			if (IsInRaid()) then
 				-- send to raid
 				SendChatMessage(msg, "RAID")
 			end
 		-- raid warning?
 		elseif (sender == "RAID_WARNING") then
 			-- in raid?
-			if (IsInRaid() == true) then
+			if (IsInRaid()) then
 				-- send to raid warning
 				SendChatMessage(msg, "RAID_WARNING")
 			end

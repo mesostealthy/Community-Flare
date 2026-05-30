@@ -24,6 +24,7 @@ local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
+local wipe                                        = _G.wipe
 local mabs                                        = _G.math.abs
 local matan2                                      = _G.math.atan2
 local mdeg                                        = _G.math.deg
@@ -308,7 +309,7 @@ end
 function NS:CheckForWarSupplyCrateAlerts(list)
 	-- in instance?
 	local inInstance, instanceType = IsInInstance()
-	if (inInstance == true) then
+	if (inInstance) then
 		-- finished
 		return
 	end
@@ -330,7 +331,7 @@ function NS:CheckForWarSupplyCrateAlerts(list)
 						if (not NS:Check_For_Invalid_War_Crate_Position(mapID, info.x, info.y)) then
 							-- logging war crate locations?
 							NS.CommFlare.CF.VignetteWarnings[vignetteID] = time()
-							if (NS.db.global.logWarCrateLocations == true) then
+							if (NS.db.global.logWarCrateLocations) then
 								-- has crate dropped?
 								local hasDropped = NS:HasWarSupplyCrateDropped(vignetteID)
 								if (hasDropped) then
@@ -535,7 +536,7 @@ function NS:CheckForWarSupplyCrateAlerts(list)
 		-- no ready crate tracker?
 		if ((not NS.Libs.RCT) and (NS.CommFlare.CF.ExtCrateTracker == false)) then
 			-- clear all raid warnings
-			NS.CommFlare.CF.VignetteWarnings = {}
+			wipe(NS.CommFlare.CF.VignetteWarnings)
 
 			-- remove all war supply crate waypoints
 			NS:TomTomRemoveWaypoints(NS.WAR_SUPPLY_CRATE)

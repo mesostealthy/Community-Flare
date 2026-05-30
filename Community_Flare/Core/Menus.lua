@@ -198,7 +198,7 @@ function NS:Setup_Context_Menus()
 	end
 
 	-- community right click menu enabled?
-	if (NS.charDB.profile.communityRightClickMenu == true) then
+	if (NS.charDB.profile.communityRightClickMenu) then
 		-- not already enabled?
 		if (communities_menu == false) then
 			-- add community context menu

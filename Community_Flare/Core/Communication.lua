@@ -65,7 +65,7 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 					if (NS.CommFlare.CF.UpgradeDisplayed == false) then
 						-- updated version?
 						local updated = NS:Compare_Version(args[2])
-						if (updated == true) then
+						if (updated) then
 							-- updated version
 							print(strformat(L["%s version %s update available. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title, args[2]))
 
@@ -80,7 +80,7 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 				NS:Debug_Print(strformat("%s: WAR_SUPPLY_CRATE = %s; %s = %s", NS.CommFlare.Title, tostring(sender), tostring(distribution), tostring(args[4])))
 
 				-- logging war crate locations?
-				if (NS.db.global.logWarCrateLocations == true) then
+				if (NS.db.global.logWarCrateLocations) then
 					-- found all data?
 					local mapID, timestamp, vignetteGUID, x, y = strsplit(",", args[4])
 					if (mapID and timestamp and vignetteGUID and x and y) then
@@ -141,11 +141,11 @@ function NS:Process_OnCommReceived(prefix, message, distribution, sender)
 				-- party or raid message?
 				if ((distribution == "PARTY") or (distribution == "RAID")) then
 					-- notified when party member changes zones?
-					if (NS.db.global.notifyPartyZoneChanges == true) then
+					if (NS.db.global.notifyPartyZoneChanges) then
 						-- are you in a party?
 						if (IsInGroup()) then
 							-- are you group leader?
-							if (NS:IsGroupLeader() == true) then
+							if (NS:IsGroupLeader()) then
 								-- has map name?
 								local mapID, mapName = strsplit(":", message)
 								if (not mapName) then

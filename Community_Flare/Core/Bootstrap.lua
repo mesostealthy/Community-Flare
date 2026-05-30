@@ -141,7 +141,6 @@ NS.CommFlare.CF = {
 
 	-- tables
 	ActiveWidgets = {},
-	ActiveTimers = {},
 	Announcements = {},
 	AuraData = {},
 	CappingBars = {},
@@ -252,7 +251,7 @@ end
 -- handle pending invite confirmations
 local function hook_HandlePendingInviteConfirmation(invite)
 	-- mercenary queued?
-	if (NS:Battleground_IsMercenaryQueued() == true) then
+	if (NS:Battleground_IsMercenaryQueued()) then
 		-- get next pending invite
 		local invite = GetNextPendingInviteConfirmation()
 		if (invite) then

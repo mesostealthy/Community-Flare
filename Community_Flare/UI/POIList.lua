@@ -111,7 +111,7 @@ function CF_POIListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -184,7 +184,7 @@ end
 function CF_POIListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -522,7 +522,7 @@ function NS:TogglePOIList()
 		CF_POIListFrame:Hide()
 	else
 		-- debug print enabled?
-		if (NS.db.global.debugPrint == true) then
+		if (NS.db.global.debugPrint) then
 			-- list pois
 			NS:List_POIs()
 		end

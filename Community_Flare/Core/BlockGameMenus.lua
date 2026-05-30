@@ -37,7 +37,7 @@ local hook_ToggleProfessionsBook_installed = false
 -- process group finder micro button clicked
 local function hook_LFDMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowGroupFinderFrame = true
 	end
@@ -55,7 +55,7 @@ end
 -- process group finder toggle
 local function hook_PVEFrame_ToggleFrame(sidePanelName, selection)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = PVEFrame:IsShown()
 		if (isShown == false) then
@@ -86,7 +86,7 @@ end
 -- process main menu micro button on mouse down
 local function hook_MainMenuMicroButton_OnMouseDown()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- inside pvp content?
 		local isArena = PvPIsArena()
 		local isBrawl = PvPIsInBrawl()
@@ -104,7 +104,7 @@ end
 -- process game menu on show
 local function hook_GameMenuFrame_OnShow()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- inside pvp content?
 		local isArena = PvPIsArena()
 		local isBrawl = PvPIsInBrawl()
@@ -128,7 +128,7 @@ end
 -- process game menu on hide
 local function hook_GameMenuFrame_OnHide()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- disabled
 		NS.CommFlare.CF.AllowMainMenu = false
 	end
@@ -137,7 +137,7 @@ end
 -- process achievement micro button clicked
 local function hook_AchievementMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowAchievementFrame = true
 	end
@@ -155,7 +155,7 @@ end
 -- process achievement toggle
 local function hook_ToggleAchievementFrame(stats)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not loaded yet?
 		if (not AchievementFrame) then
 			-- load achievement framework
@@ -192,7 +192,7 @@ end
 -- process character micro button clicked
 local function hook_CharacterMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowCharacterFrame = true
 	end
@@ -273,7 +273,7 @@ end
 -- process character toggle
 local function hook_ToggleCharacter(tab, onlyShow)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = CharacterFrame:IsShown()
 		if (isShown == false) then
@@ -304,7 +304,7 @@ end
 -- process collections micro button clicked
 local function hook_CollectionsMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowCollectionsFrame = true
 	end
@@ -322,7 +322,7 @@ end
 -- process collections toggle
 local function hook_ToggleCollectionsJournal(tabIndex)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not loaded yet?
 		if (not CollectionsJournal) then
 			-- load collections framework
@@ -359,7 +359,7 @@ end
 -- process adventure guide micro button clicked
 local function hook_EJMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowAdvGuideFrame = true
 	end
@@ -377,7 +377,7 @@ end
 -- process adventure guide toggle
 local function hook_ToggleEncounterJournal(tabIndex)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not loaded yet?
 		if (not EncounterJournal) then
 			-- load adventure guide framework
@@ -414,7 +414,7 @@ end
 -- process friends toggle
 local function hook_ToggleFriendsFrame(tab)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = FriendsFrame:IsShown()
 		if (isShown == false) then
@@ -445,7 +445,7 @@ end
 -- process guild micro button clicked
 local function hook_GuildMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowGuildFrame = true
 	end
@@ -463,7 +463,7 @@ end
 -- process guild toggle
 local function hook_ToggleGuildFrame()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not loaded yet?
 		if (not CommunitiesFrame) then
 			-- load communities framework
@@ -500,7 +500,7 @@ end
 -- process housing micro button clicked
 local function hook_HousingMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowHousingFrame = true
 	end
@@ -518,7 +518,7 @@ end
 -- process housing dashboard toggle
 local function hook_HousingFramesUtil_ToggleHousingDashboard()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = HousingDashboardFrame:IsShown()
 		if (isShown == false) then
@@ -549,7 +549,7 @@ end
 -- process player spells micro button clicked
 local function hook_PlayerSpellsMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowPlayerSpellsFrame = true
 	end
@@ -567,7 +567,7 @@ end
 -- process player spells toggle
 local function hook_PlayerSpellsUtil_TogglePlayerSpellsFrame(suggestedTab, inspectUnit)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = PlayerSpellsFrame:IsShown()
 		if (isShown == false) then
@@ -598,7 +598,7 @@ end
 -- process spell book toggle
 local function hook_PlayerSpellsUtil_ToggleSpellBookFrame(spellBookCategory)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = PlayerSpellsFrame:IsShown()
 		if (isShown == false) then
@@ -629,7 +629,7 @@ end
 -- process class talent or spec toggle
 local function hook_PlayerSpellsUtil_ToggleClassTalentOrSpecFrame()
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not shown?
 		local isShown = PlayerSpellsFrame:IsShown()
 		if (isShown == false) then
@@ -660,7 +660,7 @@ end
 -- process profession micro button clicked
 local function hook_ProfessionMicroButton_OnClick(self, ...)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- allowed
 		NS.CommFlare.CF.AllowProfessionsBookFrame = true
 	end
@@ -678,7 +678,7 @@ end
 -- process professions toggle
 local function hook_ToggleProfessionsBook(bookType)
 	-- block game menu hot keys enabled?
-	if (NS.charDB.profile.blockGameMenuHotKeys == true) then
+	if (NS.charDB.profile.blockGameMenuHotKeys) then
 		-- not loaded yet?
 		if (not ProfessionsBookFrame) then
 			-- load talent framework

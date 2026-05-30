@@ -24,8 +24,12 @@ local pairs                                       = _G.pairs
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
+local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 local tinsert                                     = _G.table.insert
+
+-- local variables
+local entries = {}
 
 -- get queue type prefix
 function NS:GetQueueTypePrefix(category)
@@ -58,7 +62,7 @@ end
 -- should report queue?
 function NS:Should_Report_Queue(category)
 	-- community reporter enabled?
-	if (NS.charDB.profile.communityReporter == true) then
+	if (NS.charDB.profile.communityReporter) then
 		-- battlefield?
 		if (category and (category == LE_LFG_CATEGORY_BATTLEFIELD)) then
 			--  yes
@@ -66,28 +70,28 @@ function NS:Should_Report_Queue(category)
 		-- dungeon?
 		elseif (category and (category == LE_LFG_CATEGORY_LFD)) then
 			-- enabled?
-			if (NS.db.global.communityReportDungeons == true) then
+			if (NS.db.global.communityReportDungeons) then
 				-- yes
 				return true
 			end
 		-- raid finder?
 		elseif (category and (category == LE_LFG_CATEGORY_RF)) then
 			-- enabled?
-			if (NS.db.global.communityReportRaids == true) then
+			if (NS.db.global.communityReportRaids) then
 				-- yes
 				return true
 			end
 		-- flex raid?
 		elseif (category and (category == LE_LFG_CATEGORY_FLEXRAID)) then
 			-- enabled?
-			if (NS.db.global.communityReportRaids == true) then
+			if (NS.db.global.communityReportRaids) then
 				-- yes
 				return true
 			end
 		-- raid?
 		elseif (category and (category == LE_LFG_CATEGORY_LFR)) then
 			-- enabled?
-			if (NS.db.global.communityReportRaids == true) then
+			if (NS.db.global.communityReportRaids) then
 				-- yes
 				return true
 			end
@@ -117,7 +121,7 @@ function NS:Update_Queue_Status(category, index)
 			-- should report queue?
 			if (NS:Should_Report_Queue(category)) then
 				-- are you group leader?
-				if (NS:IsGroupLeader() == true) then
+				if (NS:IsGroupLeader()) then
 					-- finalize text
 					local text = nil
 					local count = NS:GetGroupCountText()
@@ -177,7 +181,7 @@ function NS:Update_Queue_Status(category, index)
 			-- should report queue?
 			if (NS:Should_Report_Queue(category)) then
 				-- are you group leader?
-				if (NS:IsGroupLeader() == true) then
+				if (NS:IsGroupLeader()) then
 					-- player is horde?
 					local faction = L["N/A"]
 					if (NS.faction == Enum.PvPFaction.Horde) then
@@ -280,7 +284,7 @@ function NS:Update_Queue_Status(category, index)
 				-- should report queue?
 				if (NS:Should_Report_Queue(category)) then
 					-- are you group leader?
-					if (NS:IsGroupLeader() == true) then
+					if (NS:IsGroupLeader()) then
 						-- player is horde?
 						local faction = L["N/A"]
 						if (NS.faction == Enum.PvPFaction.Horde) then
@@ -323,7 +327,7 @@ function NS:Update_Queue_Status(category, index)
 		local mode, submode = GetLFGMode(category)
 		if (mode) then
 			-- raid finder?
-			local entries = {}
+			wipe(entries)
 			local entryIDs = NS:GetAllEntriesForCategory(category)
 			if (category == LE_LFG_CATEGORY_RF) then
 				-- process all
@@ -367,7 +371,7 @@ function NS:Update_Queue_Status(category, index)
 		if (not instanceName) then
 			-- get brawl info
 			local brawlInfo
-			if (PvPIsInBrawl() == true) then
+			if (PvPIsInBrawl()) then
 				brawlInfo = PvPGetActiveBrawlInfo()
 			else
 				brawlInfo = PvPGetAvailableBrawlInfo()
@@ -378,7 +382,7 @@ function NS:Update_Queue_Status(category, index)
 		end
 
 		-- queued?
-		if (queued == true) then
+		if (queued) then
 			-- just entering queue?
 			if (not NS.CommFlare.CF.LocalQueues[index] or not NS.CommFlare.CF.LocalQueues[index].name or (NS.CommFlare.CF.LocalQueues[index].name == "")) then
 				-- add to queues
@@ -402,7 +406,7 @@ function NS:Update_Queue_Status(category, index)
 				-- brawl?
 				if (prefix == "Brawl") then
 					-- warn when honor capped?
-					if (NS.db.global.warningHonorCapped == true) then
+					if (NS.db.global.warningHonorCapped) then
 						-- get honor info
 						local info = NS:GetCurrencyInfo(1792)
 						if (info and info.quantity and info.maxQuantity) then
@@ -426,7 +430,7 @@ function NS:Update_Queue_Status(category, index)
 				-- should report queue?
 				if (NS:Should_Report_Queue(category)) then
 					-- are you group leader?
-					if (NS:IsGroupLeader() == true) then
+					if (NS:IsGroupLeader()) then
 						-- delay some
 						TimerAfter(0.5, function()
 							-- report joined queue with estimated time
@@ -474,7 +478,7 @@ function NS:Update_LFG_Status(event)
 	end
 
 	-- process all
-	local entries = {}
+	wipe(entries)
 	for category=1, NUM_LE_LFG_CATEGORYS do
 		-- get lfg mode
 		local mode, submode = GetLFGMode(category)

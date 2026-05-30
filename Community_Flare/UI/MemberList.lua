@@ -199,7 +199,7 @@ function CF_MemberListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -272,7 +272,7 @@ end
 function CF_MemberListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -339,7 +339,7 @@ function CF_MemberListMixin:UpdateMemberList()
 				end
 
 				-- displayed?
-				if (display == true) then
+				if (display) then
 					-- insert
 					local data = strformat("%s@%s", tostring(k), tostring(v.guid))
 					tinsert(self.MemberList, data)
@@ -434,7 +434,7 @@ function CF_MemberListMixin:OnUpdate()
 	end
 
 	-- updated?
-	if (NS.CommFlare.CF.MemberListUpdated == true) then
+	if (NS.CommFlare.CF.MemberListUpdated) then
 		-- update list
 		NS.CommFlare.CF.MemberListUpdated = false
 		CF_MemberListFrame:UpdateList()

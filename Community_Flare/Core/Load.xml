@@ -29,5 +29,4 @@
 	<Script file="Widgets.lua" />
 	<Script file="SlashCmd.lua" />
 	<Script file="Events.lua" />
-	<Script file="Timers.lua" />
 </Ui>

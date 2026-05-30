@@ -120,7 +120,7 @@ local decorQuests = {
 -- process accepted quest
 function NS:ProcessAcceptedQuest(questID)
 	-- housing add quest way points enabled?
-	if (NS.db.global.housingAddQuestWayPoints == true) then
+	if (NS.db.global.housingAddQuestWayPoints) then
 		-- decor quest?
 		if (decorQuests[questID]) then
 			-- found x/y?

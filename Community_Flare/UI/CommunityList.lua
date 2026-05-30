@@ -178,7 +178,7 @@ function CF_CommunityListCloseButtonMixin:OnClick(button)
 		local parent = self:GetParentFrame()
 		if (parent) then
 			-- currently shown?
-			if (parent:IsShown() == true) then
+			if (parent:IsShown()) then
 				-- hide
 				parent:Hide()
 			end
@@ -251,7 +251,7 @@ end
 function CF_CommunityListMixin:RefreshListDisplay()
 	-- found parent frame?
 	local frame = self:GetParentFrame()
-	if (frame:IsShown() == true) then
+	if (frame:IsShown()) then
 		-- create data provider
 		local dataProvider = CreateDataProvider()
 
@@ -322,7 +322,7 @@ function CF_CommunityListMixin:UpdateCommunityList()
 			end
 
 			-- displayed?
-			if (display == true) then
+			if (display) then
 				-- insert
 				local data = strformat("%s@%d", name, tonumber(k))
 				tinsert(self.CommunityList, data)
@@ -402,7 +402,7 @@ function CF_CommunityListMixin:OnUpdate()
 	end
 
 	-- updated?
-	if (NS.CommFlare.CF.CommunityListUpdated == true) then
+	if (NS.CommFlare.CF.CommunityListUpdated) then
 		-- update list
 		NS.CommFlare.CF.CommunityListUpdated = false
 		CF_CommunityListFrame:UpdateList()
@@ -516,7 +516,7 @@ function CF_CommunityListEntryMixin:OnEnter()
 			end
 
 			-- has cross faction
-			if (club.crossFaction == true) then
+			if (club.crossFaction) then
 				-- add cross faction
 				GameTooltip:AddLine("Cross Faction: Yes", 1, 1, 1)
 			end
@@ -627,7 +627,7 @@ function UnitPopupCFViewMemberListButtonMixin:OnClick(contextData)
 	if (contextData and contextData.info) then
 		-- show set community note dialog
 		local status = CF_MemberListFrame:SetClubID(contextData.info.clubId)
-		if (status == true) then
+		if (status) then
 			-- already shown?
 			if (CF_MemberListFrame:IsShown()) then
 				-- refresh member list

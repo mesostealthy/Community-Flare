@@ -86,7 +86,7 @@ function NS:UpdateVehicles()
 	end
 
 	-- get vehicles
-	NS.CommFlare.CF.VehicleList = {}
+	wipe(NS.CommFlare.CF.VehicleList)
 	local vehicles = NS:GetBattlefieldVehicles(mapID)
 	if (not vehicles) then
 		-- not found
