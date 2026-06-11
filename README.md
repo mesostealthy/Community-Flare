@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.42.001:
--Pass out Assistant during matches if you've been passed Raid Leadership.
+v2.43.001:
+-Misc. Bugfixes, properly reports when Q'ing as Mercenary again.

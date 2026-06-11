@@ -1528,7 +1528,13 @@ function NS:CheckForAura(unit, type, auraName)
 	-- save global variable if aura is active
 	NS.CommFlare.CF.HasAura = false
 	local info = UnitAuras_GetAuraDataBySpellName(unit, auraName, type)
-	if (info and info[1]) then
+	if (info) then
+		-- more than one?
+		if (info[1]) then
+			-- use this
+			info = info[1]
+		end
+
 		-- not created?
 		if (not NS.CommFlare.CF.AuraData) then
 			-- initialize
@@ -1537,10 +1543,10 @@ function NS:CheckForAura(unit, type, auraName)
 
 		-- found aura / save data
 		NS.CommFlare.CF.HasAura = true
-		NS.CommFlare.CF.AuraData.name = info[1].name
-		NS.CommFlare.CF.AuraData.duration = info[1].duration
-		NS.CommFlare.CF.AuraData.expirationTime = info[1].expirationTime
-		NS.CommFlare.CF.AuraData.timeLeft = info[1].expirationTime - GetTime()
+		NS.CommFlare.CF.AuraData.name = info.name
+		NS.CommFlare.CF.AuraData.duration = info.duration
+		NS.CommFlare.CF.AuraData.expirationTime = info.expirationTime
+		NS.CommFlare.CF.AuraData.timeLeft = info.expirationTime - GetTime()
 	end
 end
 

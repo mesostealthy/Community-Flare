@@ -14,7 +14,6 @@ local DeclineQuest                                = _G.DeclineQuest
 local FlashClientIcon                             = _G.FlashClientIcon
 local GenericTraitUI_LoadUI                       = _G.GenericTraitUI_LoadUI
 local GetAchievementCriteriaInfoByID              = _G.GetAchievementCriteriaInfoByID
-local GetAutoCompletePresenceID                   = _G.GetAutoCompletePresenceID
 local GetBattlefieldWinner                        = _G.GetBattlefieldWinner
 local GetCVar                                     = _G.GetCVar
 local GetCVarDefault                              = _G.GetCVarDefault
@@ -50,7 +49,7 @@ local StaticPopup_FindVisible                     = _G.StaticPopup_FindVisible
 local StaticPopup_Hide                            = _G.StaticPopup_Hide
 local StaticPopup1Text                            = _G.StaticPopup1Text
 local ToggleFrame                                 = _G.ToggleFrame
-local AddOnsLoadAddOn                             = _G.C_AddOns.LoadAddOn
+local GetAutoCompletePresenceID                   = _G.C_AutoComplete.GetAutoCompletePresenceID
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassColorGetClassColor                     = _G.C_ClassColor.GetClassColor
 local ColorUtilWrapTextInColorCode                = _G.C_ColorUtil.WrapTextInColorCode
@@ -2846,6 +2845,10 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 				end
 			end
 		end
+	end
+
+	-- player?
+	if (unitTarget == "player") then
 	end
 end
 
