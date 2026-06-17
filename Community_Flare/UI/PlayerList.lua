@@ -151,6 +151,12 @@ function CF_PlayerListFrameMixin:OnDragStop()
 	NS:SaveWindowPosition(self)
 end
 
+-- mark list dirty
+function CF_PlayerListFrameMixin:MarkPlayerListDirty()
+	-- mark list dirty
+	self.PlayerListFrame.PlayerList:MarkPlayerListDirty()
+end
+
 -- update list
 function CF_PlayerListFrameMixin:UpdateList()
 	-- update
@@ -266,11 +272,11 @@ function CF_PlayerListAddKosButtonMixin:OnClick(button)
 					realm = GetRealmName()
 				end
 
-				-- not added to MemberGUIDs?
+				-- not added?
 				local player = strformat("%s-%s", name, realm)
-				if (NS.db.global.MemberGUIDs and not NS.db.global.MemberGUIDs[guid]) then
-					-- add user to MemberGUIDs
-					NS.db.global.MemberGUIDs[guid] = player
+				if (NS.PlayerGUIDs and not NS.PlayerGUIDs[guid]) then
+					-- add user
+					NS.PlayerGUIDs[guid] = player
 				end
 
 				-- add user to kos list
@@ -371,9 +377,9 @@ function CF_PlayerListMixin:UpdatePlayerList()
 	self.PlayerList = {}
 
 	-- find count
-	if (NS.db.global.MemberGUIDs) then
+	if (NS.PlayerGUIDs) then
 		-- process all
-		for k,v in pairs(NS.db.global.MemberGUIDs) do
+		for k,v in pairs(NS.PlayerGUIDs) do
 			-- has search text?
 			local display = true
 			if (searchText and (searchText ~= "")) then
@@ -423,9 +429,9 @@ function CF_PlayerListMixin:UpdateCount()
 
 	-- find player count
 	local playerCount = 0
-	if (NS.db.global.MemberGUIDs) then
+	if (NS.PlayerGUIDs) then
 		-- process all
-		for k,v in pairs(NS.db.global.MemberGUIDs) do
+		for k,v in pairs(NS.PlayerGUIDs) do
 			-- increase
 			playerCount = playerCount + 1
 		end
@@ -553,8 +559,7 @@ function CF_PlayerListEntryMixin:OnClick(button)
 		-- toggle drop down menu
 		--local playersList = self:GetParentFrame()
 		--playersList:SetSelectedEntryForDropDown(self)
-		--ToggleDropDownMenu(1, nil, playersList.EntryDropDown, self, 0, 0)
-
+		--ToggleDropDownMenu(1, nil, playersList.EntryDropDown, self, 0, 0) 
 
 		-- has player?
 		local text = "Player"
@@ -581,15 +586,15 @@ end
 local show_tooltip = false
 function CF_PlayerListEntryMixin:OnEnter()
 	-- has member guid?
-	if (NS.db.global.MemberGUIDs) then
+	if (NS.PlayerGUIDs) then
 		-- get player info by guid
 		local info = NS:GetPlayerInfoByGUID(self.guid)
 		if (info) then
 			-- updated?
 			local player = info.player
-			if (NS.db.global.MemberGUIDs[self.guid] and (NS.db.global.MemberGUIDs[self.guid] ~= player)) then
-				-- check for old member?
-				NS:Process_MemberGUID(self.guid, player)
+			if (NS.PlayerGUIDs[self.guid] and (NS.PlayerGUIDs[self.guid] ~= player)) then
+				-- process player guid
+				NS:Process_PlayerGUID(self.guid, player)
 
 				-- refresh list
 				CF_PlayerListFrame:RefreshList()
@@ -630,7 +635,7 @@ function CF_PlayerListEntryMixin:OnEnter()
 				end
 
 				-- has community member info?
-				local member = NS:Get_Community_Member(NS.db.global.MemberGUIDs[self.guid])
+				local member = NS:Get_Community_Member(NS.PlayerGUIDs[self.guid])
 				if (member and member.clubs) then
 					-- process all clubs
 					for k,v in pairs(member.clubs) do
@@ -659,6 +664,31 @@ function CF_PlayerListEntryMixin:OnEnter()
 				show_tooltip = true
 				GameTooltip:Show()
 			end
+		-- deleted?
+		elseif (info == false) then
+			-- found kos?
+			local guid = self.guid
+			if (NS.db.global.KosList[guid]) then
+				-- update
+				NS.db.global.KosList[guid] = nil
+			end
+
+			-- found note?
+			if (NS.db.global.MemberNotes[guid]) then
+				-- delete
+				NS.db.global.MemberNotes[guid] = nil
+			end
+
+			-- found player?
+			if (NS.PlayerGUIDs and NS.PlayerGUIDs[self.guid]) then
+				-- delete
+				NS.PlayerGUIDs[guid] = nil
+			end
+
+			-- refresh list
+			CF_PlayerListFrame:RefreshList()
+
+		-- retry
 		else
 			-- start tooltip
 			GameTooltip:SetOwner(self)
@@ -887,10 +917,10 @@ function UnitPopupCFDeletePlayerButtonMixin:OnClick(contextData)
 			NS.db.global.KosList[guid] = nil
 		end
 
-		-- added to MemberGUIDs?
-		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
+		-- added?
+		if (NS.PlayerGUIDs and NS.PlayerGUIDs[guid]) then
 			-- delete
-			NS.db.global.MemberGUIDs[guid] = nil
+			NS.PlayerGUIDs[guid] = nil
 		end
 
 		-- refresh list
@@ -990,7 +1020,72 @@ local function RefreshPlayerName(guid, old_player)
 
 	-- get player info by guid
 	local info = NS:GetPlayerInfoByGUID(guid)
-	if (not info) then
+	if (info) then
+		-- has name updated?
+		local player = info.player
+		if (player and (player ~= old_player)) then
+			-- found player?
+			local updated = false
+			if (NS.PlayerGUIDs and NS.PlayerGUIDs[guid]) then
+				-- found kos?
+				if (NS.db.global.KosList[guid]) then
+					-- update
+					NS.db.global.KosList[guid] = player
+				end
+
+				-- update
+				NS.PlayerGUIDs[guid] = player
+				updated = true
+			end
+
+			-- found old member?
+			if (NS.db.global.members[old_player]) then
+				-- move member
+				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
+				wipe(NS.db.global.members[old_player])
+				NS.db.global.members[old_player] = nil
+				updated = true
+			end
+
+			-- found old history?
+			if (NS.db.global.history[old_player]) then
+				-- move history
+				NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
+				wipe(NS.db.global.history[old_player])
+				NS.db.global.history[old_player] = nil
+				updated = true
+			end
+
+			-- updated?
+			if (updated) then
+				-- refresh list
+				CF_PlayerListFrame:RefreshList()
+			end
+		end
+	-- deleted?
+	elseif (info == false) then
+		-- found kos?
+		if (NS.db.global.KosList[guid]) then
+			-- update
+			NS.db.global.KosList[guid] = nil
+		end
+
+		-- found note?
+		if (NS.db.global.MemberNotes[guid]) then
+			-- delete
+			NS.db.global.MemberNotes[guid] = nil
+		end
+
+		-- found player?
+		if (NS.PlayerGUIDs and NS.PlayerGUIDs[self.guid]) then
+			-- delete
+			NS.PlayerGUIDs[guid] = nil
+		end
+
+		-- refresh list
+		CF_PlayerListFrame:RefreshList()
+	-- retry
+	else
 		-- increase
 		refresh_retries = refresh_retries + 1
 		if (refresh_retries >= 5) then
@@ -1004,43 +1099,6 @@ local function RefreshPlayerName(guid, old_player)
 			RefreshPlayerName(guid, old_player)
 		end)
 		return
-	end
-
-	-- has name updated?
-	local player = info.player
-	if (player and (player ~= old_player)) then
-		-- kos target?
-		local updated = false
-		if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
-			-- update player
-			NS.db.global.MemberGUIDs[guid] = player
-			NS.db.global.KosList[guid] = player
-			updated = true
-		end
-
-		-- check for old member
-		if (NS.db.global.members[old_player]) then
-			-- move member
-			NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
-			wipe(NS.db.global.members[old_player])
-			NS.db.global.members[old_player] = nil
-			updated = true
-		end
-
-		-- check for old history
-		if (NS.db.global.history[old_player]) then
-			-- move history
-			NS.db.global.history[player] = CopyTable(NS.db.global.history[old_player])
-			wipe(NS.db.global.history[old_player])
-			NS.db.global.history[old_player] = nil
-			updated = true
-		end
-
-		-- updated?
-		if (updated) then
-			-- refresh list
-			CF_PlayerListFrame:RefreshList()
-		end
 	end
 end
 

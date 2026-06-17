@@ -8,7 +8,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local BNGetFriendIndex                            = _G.BNGetFriendIndex
-local BNInviteFriend                              = _G.BNInviteFriend
+local BattleNetInviteFriend                       = _G.C_BattleNet.InviteFriend
 local BNRequestInviteFriend                       = _G.BNRequestInviteFriend
 local GetBattlefieldEstimatedWaitTime             = _G.GetBattlefieldEstimatedWaitTime
 local GetBattlefieldPortExpiration                = _G.GetBattlefieldPortExpiration
@@ -301,6 +301,13 @@ function NS:Has_Battleground_Popped()
 	return nil, nil
 end
 
+-- wipe battleground tables
+function NS:Wipe_Battleground_Tables()
+	-- wipe all tables
+	wipe(NS.CommFlare.FullRoster)
+	wipe(NS.CommFlare.EnemyPlayerDetails)
+end
+
 -- initialize battleground status
 function NS:Initialize_Battleground_Status()
 	-- reset stuff
@@ -323,8 +330,6 @@ function NS:Initialize_Battleground_Status()
 	wipe(NS.CommFlare.CF.WSG)
 	wipe(NS.CommFlare.CF.DisplayedLists)
 	wipe(NS.CommFlare.CF.EnemyPlayerPIDs)
-	wipe(NS.CommFlare.CF.EnemyPlayerDetails)
-	wipe(NS.CommFlare.CF.FullRoster)
 	wipe(NS.CommFlare.CF.KosAlerted)
 	wipe(NS.CommFlare.CF.LogListPlayers)
 	wipe(NS.CommFlare.CF.MapInfo)
@@ -343,6 +348,9 @@ function NS:Initialize_Battleground_Status()
 	NS.CommFlare.CF.PreviousNumScores = 0
 	NS.CommFlare.CF.RaidLeadPassed = false
 	NS.CommFlare.CF.Reloaded = false
+
+	-- wipe battleground tables
+	NS:Wipe_Battleground_Tables()
 
 	-- not in chat messaging lockdown?
 	if (not InChatMessagingLockdown()) then
@@ -1248,7 +1256,7 @@ function NS:Promote_Battleground_Player(name, player)
 	end
 end
 
--- reset battlegrouind stuff
+-- reset battleground stuff
 function NS:Reset_Battleground_Stuff()
 	-- initialize community stuff
 	NS.CommFlare.CF.CommCount = 0
@@ -1358,7 +1366,7 @@ function NS:Update_Raid_Roster_Stuff(bLockdown, bPromote)
 
 				-- get community member
 				local playerGUID = UnitGUID(unit)
-				NS:Process_MemberGUID(playerGUID, player)
+				NS:Process_PlayerGUID(playerGUID, player)
 				local member = NS:Get_Community_Member(player)
 				if (member and member.clubs) then
 					-- mercenary?
@@ -1548,7 +1556,7 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 			-- player is NOT AI?
 			if (info.honorLevel > 0) then
 				-- get community member
-				NS:Process_MemberGUID(info.guid, player)
+				NS:Process_PlayerGUID(info.guid, player)
 				local member = NS:Get_Community_Member(player)
 				if (member and member.clubs) then
 					-- same faction as player?
@@ -1988,7 +1996,7 @@ function NS:Process_Auto_Invite(sender)
 									-- get invite type
 									local inviteType = GetDisplayedInviteType(accountInfo.playerGuid)
 									if ((inviteType == "INVITE") or (inviteType == "SUGGEST_INVITE")) then
-										BNInviteFriend(accountInfo.gameAccountID)
+										BattleNetInviteFriend(accountInfo.gameAccountID)
 									elseif (inviteType == "REQUEST_INVITE") then
 										BNRequestInviteFriend(accountInfo.gameAccountID)
 									end

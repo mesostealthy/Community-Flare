@@ -17,7 +17,9 @@ local UnitSex                                     = _G.UnitSex
 local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
 local hooksecurefunc                              = _G.hooksecurefunc
 local issecretvalue                               = _G.issecretvalue
+local pairs                                       = _G.pairs
 local print                                       = _G.print
+local type                                        = _G.type
 local strformat                                   = _G.string.format
 
 -- local varaibles
@@ -89,7 +91,7 @@ local function EN_UnitPID(unit)
 end
 
 -- find player bar by unit
-function NS:BGE_Find_PlayerBar_By_Unit(unitToken)
+local function BGE_Find_PlayerBar_By_Unit(unitToken)
 	-- not installed?
 	if (NS.faction ~= 0) then return end
 	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
@@ -102,7 +104,7 @@ function NS:BGE_Find_PlayerBar_By_Unit(unitToken)
 end
 
 -- get unit data
-function NS:BGE_GetUnitData(unitToken)
+local function BGE_GetUnitData(unitToken)
 	-- get name plate for unit
 	if (NS.faction ~= 0) then return nil end
 	local namePlate = GetNamePlateForUnit(unitToken)
@@ -112,7 +114,7 @@ function NS:BGE_GetUnitData(unitToken)
 	end
 
 	-- find player bar
-	local playerBar = NS:BGE_Find_PlayerBar_By_Unit(unitToken)
+	local playerBar = BGE_Find_PlayerBar_By_Unit(unitToken)
 	if (not playerBar) then
 		-- failed
 		return nil
@@ -135,20 +137,20 @@ function NS:BGE_GetUnitData(unitToken)
 	local fullPID, basePID, corePID, classGenderPID, classPID = EN_UnitPID(unitToken)
 	if (fullPID and (fullPID > 0)) then
 		-- not found yet?
-		if (not NS.CommFlare.CF.EnemyPlayerDetails[player]) then
+		if (not NS.CommFlare.EnemyPlayerDetails[player]) then
 			-- copy table
-			NS.CommFlare.CF.EnemyPlayerDetails[player] = CopyTable(playerBar.PlayerDetails)
+			NS.CommFlare.EnemyPlayerDetails[player] = CopyTable(playerBar.PlayerDetails)
 		else
 			-- merge table
-			MergeTable(NS.CommFlare.CF.EnemyPlayerDetails[player], playerBar.PlayerDetails)
+			MergeTable(NS.CommFlare.EnemyPlayerDetails[player], playerBar.PlayerDetails)
 		end
 
 		-- save PID's
-		NS.CommFlare.CF.EnemyPlayerDetails[player].fullPID = fullPID
-		NS.CommFlare.CF.EnemyPlayerDetails[player].basePID = basePID
-		NS.CommFlare.CF.EnemyPlayerDetails[player].corePID = corePID
-		NS.CommFlare.CF.EnemyPlayerDetails[player].classGenderPID = classGenderPID
-		NS.CommFlare.CF.EnemyPlayerDetails[player].classPID = classPID
+		NS.CommFlare.EnemyPlayerDetails[player].fullPID = fullPID
+		NS.CommFlare.EnemyPlayerDetails[player].basePID = basePID
+		NS.CommFlare.EnemyPlayerDetails[player].corePID = corePID
+		NS.CommFlare.EnemyPlayerDetails[player].classGenderPID = classGenderPID
+		NS.CommFlare.EnemyPlayerDetails[player].classPID = classPID
 
 		-- not found yet?
 		if (not NS.CommFlare.CF.EnemyPlayerPIDs[fullPID]) then
@@ -186,18 +188,18 @@ local function BattleGroundEnemies_Enemies_PlayerBar_PostClick(frame, button)
 
 	-- not already calculated?
 	local unitToken = "target"
-	if (not NS.CommFlare.CF.EnemyPlayerDetails[player].fullPID) then
+	if (not NS.CommFlare.EnemyPlayerDetails[player].fullPID) then
 		-- target exists?
 		if (UnitExists(unitToken)) then
 			-- get details / info
 			local localizedRaceName, englishRaceName, raceID = UnitRace(unitToken)
-			NS.CommFlare.CF.EnemyPlayerDetails[player].raceID = raceID
+			NS.CommFlare.EnemyPlayerDetails[player].raceID = raceID
 			local fullPID, basePID, corePID, classGenderPID, classPID = EN_UnitPID(unitToken)
-			NS.CommFlare.CF.EnemyPlayerDetails[player].fullPID = fullPID
-			NS.CommFlare.CF.EnemyPlayerDetails[player].basePID = basePID
-			NS.CommFlare.CF.EnemyPlayerDetails[player].corePID = corePID
-			NS.CommFlare.CF.EnemyPlayerDetails[player].classGenderPID = classGenderPID
-			NS.CommFlare.CF.EnemyPlayerDetails[player].classPID = classPID
+			NS.CommFlare.EnemyPlayerDetails[player].fullPID = fullPID
+			NS.CommFlare.EnemyPlayerDetails[player].basePID = basePID
+			NS.CommFlare.EnemyPlayerDetails[player].corePID = corePID
+			NS.CommFlare.EnemyPlayerDetails[player].classGenderPID = classGenderPID
+			NS.CommFlare.EnemyPlayerDetails[player].classPID = classPID
 
 			-- valid PID?
 			if (fullPID) then
@@ -229,7 +231,7 @@ local function BattleGroundEnemies_Enemies_PlayerBar_PostClick(frame, button)
 end
 
 -- process enemies after player source update
-function NS:BGE_Enemies_AfterPlayerSourceUpdate()
+local function BGE_Enemies_AfterPlayerSourceUpdate()
 	-- has enemy players?
 	if (NS.faction ~= 0) then return end
 	if (BattleGroundEnemies.Enemies.PlayerList and (BattleGroundEnemies.Enemies.NumPlayers > 0)) then
@@ -243,18 +245,18 @@ function NS:BGE_Enemies_AfterPlayerSourceUpdate()
 				local player = playerDetails and playerDetails.PlayerName or nil
 				if (not issecretvalue(player)) then
 					-- new enemy player?
-					if (not NS.CommFlare.CF.EnemyPlayerDetails[player]) then
+					if (not NS.CommFlare.EnemyPlayerDetails[player]) then
 						-- copy table
-						NS.CommFlare.CF.EnemyPlayerDetails[player] = CopyTable(playerDetails)
+						NS.CommFlare.EnemyPlayerDetails[player] = CopyTable(playerDetails)
 					else
 						-- merge table
-						MergeTable(NS.CommFlare.CF.EnemyPlayerDetails[player], playerDetails)
+						MergeTable(NS.CommFlare.EnemyPlayerDetails[player], playerDetails)
 					end
 
 					-- save player details
 					local classID = NS:Get_Class(playerDetails.PlayerClass)
-					NS.CommFlare.CF.EnemyPlayerDetails[player].classID = classID
-					NS.CommFlare.CF.EnemyPlayerDetails[player].bar = playerBar
+					NS.CommFlare.EnemyPlayerDetails[player].classID = classID
+					NS.CommFlare.EnemyPlayerDetails[player].bar = playerBar
 				end
 
 				-- playerBar:PostClick not hooked?
@@ -282,7 +284,7 @@ function NS:BattleGroundEnemies_SetupHooks()
 		-- hook BattleGroundEnemies.Enemies:AfterPlayerSourceUpdate()
 		hooksecurefunc(BattleGroundEnemies.Enemies, "AfterPlayerSourceUpdate", function()
 			-- process enemies after player source update
-			NS:BGE_Enemies_AfterPlayerSourceUpdate()
+			BGE_Enemies_AfterPlayerSourceUpdate()
 		end)
 
 		-- create event handler frame
@@ -297,7 +299,7 @@ function NS:BattleGroundEnemies_SetupHooks()
 			if (event == "NAME_PLATE_UNIT_ADDED") then
 				-- get name plate for unit
 				local unitToken = ...
-				NS:BGE_GetUnitData(unitToken)
+				BGE_GetUnitData(unitToken)
 			-- name plate unit removed?
 			elseif (event == "NAME_PLATE_UNIT_REMOVED") then
 				-- cached?
@@ -313,13 +315,95 @@ function NS:BattleGroundEnemies_SetupHooks()
 			-- player target changed?
 			elseif (event == "PLAYER_TARGET_CHANGED") then
 				-- get unit data
-				NS:BGE_GetUnitData("target")
+				BGE_GetUnitData("target")
 			end
 		end)
 
 		-- installed
 		hooks_BattleGroundEnemies_installed = true
 	end
+end
+
+-- get player history
+function NS:BGE_GetPlayerHistory(player)
+	-- not installed?
+	if (NS.faction ~= 0) then return end
+	if (not BattleGroundEnemiesDB or not BattleGroundEnemiesDB.global or not BattleGroundEnemiesDB.global.PlayerHistory) then
+		-- failed
+		return nil
+	end
+
+	-- found player?
+	if (BattleGroundEnemiesDB.global.PlayerHistory[player]) then
+		-- return data
+		return BattleGroundEnemiesDB.global.PlayerHistory[player]
+	end
+
+	-- failed
+	return nil
+end
+
+-- find players
+function NS:BGE_FindPlayers(criteria)
+	-- not installed?
+	if (NS.faction ~= 0) then return end
+	if (not BattleGroundEnemiesDB or not BattleGroundEnemiesDB.global or not BattleGroundEnemiesDB.global.PlayerHistory) then
+		-- failed
+		return nil
+	end
+
+	-- sanity check?
+	if (not criteria or (type(criteria) ~= "table")) then
+		-- failed
+		return nil
+	end
+
+	-- partial matches?
+	local exact = true
+	if (criteria["partial"]) then
+		-- partial matches allowed
+		exact = false
+	end
+
+	-- guild?
+	local count = 0
+	local list = nil
+	if (criteria["guild"] and (criteria["guild"] ~= "")) then
+		-- process all
+		list = {}
+		local guildName = criteria["guild"]
+		local bgPlayers = BattleGroundEnemiesDB.global.PlayerHistory
+		for player,data in pairs(bgPlayers) do
+			-- has guild name?
+			local matched = false
+			if (data.GuildName) then
+				-- exact match?
+				if (exact) then
+					-- found match?
+					if (data.GuildName == guildName) then
+						-- matched
+						matched = true
+					end
+				else
+					-- found match?
+					if (data.GuildName:find(guildName)) then
+						-- matched
+						matched = true
+					end
+				end
+
+				-- matched?
+				if (matched) then
+					-- add
+					list[player] = data
+					count = count + 1
+				end
+			end
+		end
+	end
+
+	-- return data
+	return count, list
 end
 
 -- fully loaded

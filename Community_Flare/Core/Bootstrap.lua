@@ -111,6 +111,7 @@ NS.CommFlare.CF = {
 	NumHordeGlaives = 0,
 	NumScores = 0,
 	PassLeadWarning = 0,
+	PlayerFactionID = -1,
 	PlayerRank = 0,
 	PlayerRealmID = 0,
 	Position = 0,
@@ -154,8 +155,6 @@ NS.CommFlare.CF = {
 	CommunityLeaders = {},
 	DisplayedLists = {},
 	EnemyPlayerPIDs = {},
-	EnemyPlayerDetails = {},
-	FullRoster = {},
 	KosAlerted = {},
 	KosList = {},
 	LocalData = {},
@@ -220,6 +219,10 @@ NS.CommFlare.CF = {
 	WSG = {},
 }
 
+-- initialize tables (potentially contain secrets)
+NS.CommFlare.EnemyPlayerDetails = {}
+NS.CommFlare.FullRoster = {}
+
 -- updated during lockdown
 NS.CommFlare.Updated = {
 	Club_Added = {},
@@ -240,7 +243,7 @@ NS.CommFlare.InterfaceVersion = select(4, GetBuildInfo())
 -- is outdated version?
 function NS:IsOutdatedVersion()
 	-- past supported version?
-	if (NS.CommFlare.InterfaceVersion > 120005) then
+	if (NS.CommFlare.InterfaceVersion > 120007) then
 		-- out of date
 		print(strformat(L["%s is out of date. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title))
 		return true

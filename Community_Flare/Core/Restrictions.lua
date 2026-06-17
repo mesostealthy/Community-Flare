@@ -7,15 +7,13 @@ if (not L or not NS.CommFlare) then return end
  
 -- localize stuff
 local _G                                          = _G
-local DemoteAssistant                             = _G.DemoteAssistant
 local GetPlayerInfoByGUID                         = _G.GetPlayerInfoByGUID
 local GetRaidRosterInfo                           = _G.GetRaidRosterInfo
 local GetSpecializationInfoForClassID             = _G.GetSpecializationInfoForClassID
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local PromoteToAssistant                          = _G.PromoteToAssistant
-local PromoteToLeader                             = _G.PromoteToLeader
 local UnitCanAttack                               = _G.UnitCanAttack
+local UnitClassBase                               = _G.UnitClassBase
 local UnitExists                                  = _G.UnitExists
 local UnitFactionGroup                            = _G.UnitFactionGroup
 local UnitFullName                                = _G.UnitFullName
@@ -69,11 +67,15 @@ local CanSetUserWaypointOnMap                     = _G.C_Map.CanSetUserWaypointO
 local SetUserWaypoint                             = _G.C_Map.SetUserWaypoint
 local GetPOITextureCoords                         = _G.C_Minimap.GetPOITextureCoords
 local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
+local DemoteAssistant                             = _G.C_PartyInfo.DemoteAssistant
 local GetInviteReferralInfo                       = _G.C_PartyInfo.GetInviteReferralInfo
 local InviteUnit                                  = _G.C_PartyInfo.InviteUnit
 local IsPartyFull                                 = _G.C_PartyInfo.IsPartyFull
 local LeaveParty                                  = _G.C_PartyInfo.LeaveParty
+local PromoteToAssistant                          = _G.C_PartyInfo.PromoteToAssistant
+local PromoteToLeader                             = _G.C_PartyInfo.PromoteToLeader
 local SetRestrictPings                            = _G.C_PartyInfo.SetRestrictPings
+local UninviteUnit                                = _G.C_PartyInfo.UninviteUnit
 local PlayerInfoGetRace                           = _G.C_PlayerInfo.GetRace
 local GetBattlefieldVehicles                      = _G.C_PvP.GetBattlefieldVehicles
 local GetBattlegroundInfo                         = _G.C_PvP.GetBattlegroundInfo
@@ -151,6 +153,12 @@ function NS:GetPlayerInfoByGUID(guid)
 		-- get player info
 		local localizedClass, englishClass, localizedRace, englishRace, sex, name, realm = GetPlayerInfoByGUID(guid)
 		if (not localizedClass or not localizedRace or not name or (name == "")) then
+			-- invalid character?
+			if ((englishClass == "WARRIOR") and (englishRace == "") and (sex == 1) and (name == "") and (realm == "") and not localizedRace) then
+				-- deleted
+				return false
+			end
+
 			-- failed
 			return nil
 		end
@@ -192,37 +200,6 @@ function NS:GetPlayerInfoByGUID(guid)
 	return data
 end
 
--- demote assistant
-function NS:DemoteAssistant(player)
-	-- sanity checks
-	if (not player or issecretvalue(player) or (player == "")) then
-		-- failed
-		return nil
-	end
-
-	-- in combat lockdown?
-	if (InCombatLockdown()) then
-		-- not initialized?
-		if (not NS.CommFlare.CF.RegenJobs["DemoteAssistant"]) then
-			-- initialize
-			NS.CommFlare.CF.RegenJobs["DemoteAssistant"] = {}
-		end
-
-		-- not already set for demote?
-		local list = NS.CommFlare.CF.RegenJobs["DemoteAssistant"]
-		if (not list[player]) then
-			-- save for demote later
-			list[player] = true
-		end			
-
-		-- finished
-		return nil
-	end
-
-	-- success
-	return DemoteAssistant(player)
-end
-
 -- get raid roster info
 function NS:GetRaidRosterInfo(raidIndex)
 	-- get raid roster info
@@ -250,56 +227,6 @@ function NS:GetSpecializationInfoForClassID(classID, index, ...)
 	return GetSpecializationInfoForClassID(classID, index, ...)
 end
 
--- promote to assistant
-function NS:PromoteToAssistant(player)
-	-- sanity checks
-	if (not player or issecretvalue(player) or (player == "")) then
-		-- failed
-		return nil
-	end
-
-	-- in combat lockdown?
-	if (InCombatLockdown()) then
-		-- not initialized?
-		if (not NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]) then
-			-- initialize
-			NS.CommFlare.CF.RegenJobs["PromoteToAssistant"] = {}
-		end
-
-		-- not already set for promote?
-		local list = NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]
-		if (not list[player]) then
-			-- save for promote later
-			list[player] = true
-		end			
-
-		-- finished
-		return nil
-	end
-
-	-- success
-	return PromoteToAssistant(player)
-end
-
--- promote to leader
-function NS:PromoteToLeader(player)
-	-- sanity checks
-	if (not player or issecretvalue(player) or (player == "")) then
-		-- failed
-		return nil
-	end
-
-	-- in combat lockdown?
-	if (InCombatLockdown()) then
-		-- promote to leader later
-		NS.CommFlare.CF.RegenJobs["PromoteToLeader"] = player
-		return nil
-	end
-
-	-- success
-	return PromoteToLeader(player)
-end
-
 -- unit can attack
 function NS:UnitCanAttack(unitToken1, unitToken2)
 	-- sanity checks
@@ -310,6 +237,18 @@ function NS:UnitCanAttack(unitToken1, unitToken2)
 
 	-- success
 	return UnitCanAttack(unitToken1, unitToken2)
+end
+
+-- unit class base
+function NS:UnitClassBase(unitToken)
+	-- sanity checks
+	if (not unitToken or issecretvalue(unitToken)) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UnitClassBase(unitToken)
 end
 
 -- unit exists
@@ -1010,6 +949,37 @@ end
 -- C_PartyInfo
 ----------------------------------------------------------------------------------------------------------
 
+-- demote assistant
+function NS:DemoteAssistant(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- not initialized?
+		if (not NS.CommFlare.CF.RegenJobs["DemoteAssistant"]) then
+			-- initialize
+			NS.CommFlare.CF.RegenJobs["DemoteAssistant"] = {}
+		end
+
+		-- not already set for demote?
+		local list = NS.CommFlare.CF.RegenJobs["DemoteAssistant"]
+		if (not list[player]) then
+			-- save for demote later
+			list[player] = true
+		end			
+
+		-- finished
+		return nil
+	end
+
+	-- success
+	return DemoteAssistant(player)
+end
+
 -- get invite referral info
 function NS:GetInviteReferralInfo(inviteGUID)
 	-- sanity checks
@@ -1058,6 +1028,56 @@ function NS:LeaveParty(category)
 	return LeaveParty(category)
 end
 
+-- promote to assistant
+function NS:PromoteToAssistant(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- not initialized?
+		if (not NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]) then
+			-- initialize
+			NS.CommFlare.CF.RegenJobs["PromoteToAssistant"] = {}
+		end
+
+		-- not already set for promote?
+		local list = NS.CommFlare.CF.RegenJobs["PromoteToAssistant"]
+		if (not list[player]) then
+			-- save for promote later
+			list[player] = true
+		end			
+
+		-- finished
+		return nil
+	end
+
+	-- success
+	return PromoteToAssistant(player)
+end
+
+-- promote to leader
+function NS:PromoteToLeader(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- in combat lockdown?
+	if (InCombatLockdown()) then
+		-- promote to leader later
+		NS.CommFlare.CF.RegenJobs["PromoteToLeader"] = player
+		return nil
+	end
+
+	-- success
+	return PromoteToLeader(player)
+end
+
 -- set restrict pings
 function NS:SetRestrictPings(restrictTo)
 	-- sanity checks
@@ -1075,6 +1095,18 @@ function NS:SetRestrictPings(restrictTo)
 
 	-- success
 	return SetRestrictPings(restrictTo)
+end
+
+-- uninvite unit
+function NS:UninviteUnit(player)
+	-- sanity checks
+	if (not player or issecretvalue(player) or (player == "")) then
+		-- failed
+		return nil
+	end
+
+	-- success
+	return UninviteUnit(player)
 end
 
 ----------------------------------------------------------------------------------------------------------

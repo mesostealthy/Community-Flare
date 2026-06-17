@@ -342,9 +342,9 @@ end
 function CF_CommunityListMixin:UpdateCount()
 	-- find community count
 	local communityCount = 0
-	if (NS.db.global.MemberGUIDs) then
+	if (NS.PlayerGUIDs) then
 		-- process all
-		for k,v in pairs(NS.db.global.MemberGUIDs) do
+		for k,v in pairs(NS.PlayerGUIDs) do
 			-- increase
 			communityCount = communityCount + 1
 		end

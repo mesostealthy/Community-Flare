@@ -559,7 +559,7 @@ function NS.CommFlare:CLUB_INVITATIONS_RECEIVED_FOR_CLUB(msg, ...)
 			-- save applicant
 			local player = info.player
 			applicantList[player] = entry.playerGUID
-			NS:Process_MemberGUID(entry.playerGUID, player)
+			NS:Process_PlayerGUID(entry.playerGUID, player)
 		end
 	end
 end
@@ -602,7 +602,7 @@ function NS.CommFlare:CLUB_MEMBER_PRESENCE_UPDATED(msg, ...)
 			-- get member info
 			local mi = NS:GetClubMemberInfo(clubId, memberId)
 			if (mi and mi.name and (mi.name ~= "")) then
-				-- build proper name
+				-- force name-realm format
 				local player = mi.name
 				if (not strmatch(player, "-")) then
 					-- add realm name
@@ -1237,7 +1237,7 @@ end
 function NS.CommFlare:LFG_ROLE_CHECK_ROLE_CHOSEN(msg, ...)
 	local name, isTank, isHealer, isDamage = ...
 
-	-- build proper name
+	-- force name-realm format
 	local player = name
 	if (not strmatch(player, "-")) then
 		-- add realm name
@@ -1381,9 +1381,9 @@ function NS.CommFlare:NAME_PLATE_UNIT_ADDED(msg, ...)
 		local guid = NS:UnitGUID(unit)
 		if (guid and not issecretvalue(guid)) then
 			-- cached memberGUID?
-			if (NS.db.global.MemberGUIDs[guid]) then
+			if (NS.PlayerGUIDs[guid]) then
 				-- cached member?
-				local player = NS.db.global.MemberGUIDs[guid]
+				local player = NS.PlayerGUIDs[guid]
 				if (NS.db.global.members[player]) then
 					-- honor level updated?
 					local honorLevel = NS:UnitHonorLevel(unit)
@@ -1554,6 +1554,7 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS.CommFlare.CF.PlayerGUID = NS:UnitGUID("player")
 	local classColor = ClassColorGetClassColor(className)
 	NS.CommFlare.CF.PlayerFaction = NS:UnitFactionGroup("player")
+	NS.CommFlare.CF.PlayerFactionID = NS.CommFlare.CF.PlayerFaction == FACTION_ALLIANCE and 1 or 0
 	NS.CommFlare.CF.PlayerClassColor = classColor:GenerateHexColor()
 	NS.CommFlare.CF.PlayerServerName = strgsub(GetRealmName(), "%s+", "")
 	NS.CommFlare.CF.PlayerFullName = strformat("%s-%s", NS.CommFlare.CF.PlayerName, NS.CommFlare.CF.PlayerServerName)
@@ -1829,6 +1830,9 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	else
 		-- pvp?
 		if (NS.CommFlare.CF.InstanceType == "pvp") then
+			-- always reset
+			NS.CommFlare.CF.KosRefreshTime = 0
+
 			-- match state is active?
 			local duration = PvPGetActiveMatchDuration()
 			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
@@ -1854,6 +1858,9 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 					-- calculate
 					NS.CommFlare.CF.MatchStartDate = date(nil, NS.CommFlare.CF.MatchStartTime)
 				end
+
+				-- wipe battleground tables
+				NS:Wipe_Battleground_Tables()
 			end
 		else
 			-- always reset
@@ -2846,10 +2853,6 @@ function NS.CommFlare:UNIT_AURA(msg, ...)
 			end
 		end
 	end
-
-	-- player?
-	if (unitTarget == "player") then
-	end
 end
 
 -- process unit died
@@ -3080,7 +3083,10 @@ function NS.CommFlare:UPDATE_BATTLEFIELD_SCORE(msg)
 
 		-- save previous numscores
 		NS.CommFlare.CF.PreviousNumScores = numScores
+	end
 
+	-- in battleground?
+	if (NS:IsInBattleground()) then
 		-- check score board for KOS
 		NS:CheckScoreBoardForKos()
 	end

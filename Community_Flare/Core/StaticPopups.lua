@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local FocusActiveWindow                           = _G.ChatFrameUtil.FocusActiveWindow
-local UninviteUnit                                = _G.UninviteUnit
 local StaticPopup_StandardEditBoxOnEscapePressed  = _G.StaticPopup_StandardEditBoxOnEscapePressed
 local pairs                                       = _G.pairs
 local print                                       = _G.print
@@ -131,7 +130,7 @@ StaticPopupDialogs["CommunityFlare_Kick_Dialog"] = {
 		if (player and reason and (player ~= "") and (reason ~= "")) then
 			-- uninvite user
 			print(strformat("%s %s", L["Uninviting ..."], player))
-			UninviteUnit(player, reason or L["AFK"])
+			NS:UninviteUnit(player, reason or L["AFK"])
 
 			-- community auto invite enabled?
 			local text = strformat(L["You've been removed from the party for %s."], reason)

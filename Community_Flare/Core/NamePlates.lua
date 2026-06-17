@@ -8,8 +8,13 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CreateFrame                                 = _G.CreateFrame
-local UnitClassBase                               = _G.UnitClassBase
 local GetNamePlateForUnit                         = _G.C_NamePlate.GetNamePlateForUnit
+local issecretvalue                               = _G.issecretvalue
+local print                                       = _G.print
+local wipe                                        = _G.wipe
+
+-- global variables
+NS.CommFlare.ActiveNamePlates = {}
 
 -- BGE: dump all player details
 function NS:BGE_Dump_Player_Details(unitToken, field)
@@ -44,28 +49,6 @@ function NS:BGE_GetPlayerDetails(unitToken)
 	return playerButton and playerButton.PlayerDetails or nil
 end
 
--- BGE: get player role
-function NS:BGE_GetPlayerRole(unitToken)
-	-- not installed?
-	if (NS.faction ~= 0) then return end
-	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
-		-- failed
-		return nil
-	end
-
-	-- get player button / details / role
-	local playerButton = BattleGroundEnemies:GetPlayerbuttonByUnitID(unitToken, "Enemies")
-	local playerDetails = playerButton and playerButton.PlayerDetails or nil
-	local playerRole = playerDetails and playerDetails.PlayerRole or nil
-	if (not issecretvalue(playerRole)) then
-		-- success
-		return playerRole
-	end
-
-	-- failed
-	return nil
-end
-
 -- is valid unit token
 function NS:IsValidUnitToken(unitToken)
 	-- not player?
@@ -98,27 +81,38 @@ end
 function NS:GetUnitRole(unitToken)
 	-- check only damage classes first
 	if (NS.faction ~= 0) then return nil end
-	local className, classID = UnitClassBase(unitToken)
+	local className, classID = NS:UnitClassBase(unitToken)
 	if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
 		-- damager
 		return "DAMAGER"
 	end
 
-	-- try getting role from BattleGroundEnemies
-	local role = NS:BGE_GetPlayerRole(unitToken)
-	if (role) then
-		-- healer?
-		if (role == "HEALER") then
-			-- return role
-			return role
-		-- tank?
-		elseif (role == "TANK") then
-			-- return role
-			return role
-		-- damager?
-		elseif (role == "DAMAGER") then
-			-- return role
-			return role
+	-- get player details
+	local playerDetails = NS:BGE_GetPlayerDetails(unitToken)
+	if (playerDetails and playerDetails.PlayerName and not issecretvalue(playerDetails.PlayerName)) then
+		-- found active name plate?
+		if (NS.CommFlare.ActiveNamePlates[unitToken]) then
+			-- save player details
+			NS.CommFlare.ActiveNamePlates[unitToken].data = playerDetails
+			NS.CommFlare.ActiveNamePlates[unitToken].name = playerDetails.PlayerName
+		end
+
+		-- found non-secret role?
+		local playerRole = playerDetails and playerDetails.PlayerRole or nil
+		if (not issecretvalue(playerRole)) then
+			-- healer?
+			if (playerRole == "HEALER") then
+				-- return role
+				return playerRole
+			-- tank?
+			elseif (playerRole == "TANK") then
+				-- return role
+				return playerRole
+			-- damager?
+			elseif (playerRole == "DAMAGER") then
+				-- return role
+				return playerRole
+			end
 		end
 	end
 
@@ -229,6 +223,7 @@ local function OnEvent(self, event, ...)
 		local unitToken = ...
 		local namePlate = GetNamePlateForUnit(unitToken)
 		if (not namePlate) then return end
+		NS.CommFlare.ActiveNamePlates[unitToken] = { namePlate = namePlate }
 		NS:UpdateRoleIcon(unitToken, namePlate)
 	-- name plate unit removed?
 	elseif (event == "NAME_PLATE_UNIT_REMOVED") then
@@ -237,6 +232,11 @@ local function OnEvent(self, event, ...)
 		local namePlate = GetNamePlateForUnit(unitToken)
 		if (not namePlate) then return end
 		if (namePlate.roleIcon) then namePlate.roleIcon:Hide() end
+		if (NS.CommFlare.ActiveNamePlates[unitToken]) then
+			-- delete
+			wipe(NS.CommFlare.ActiveNamePlates[unitToken])
+			NS.CommFlare.ActiveNamePlates[unitToken] = nil
+		end
 	end
 end
 

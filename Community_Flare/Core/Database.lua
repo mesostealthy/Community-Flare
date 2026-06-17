@@ -401,8 +401,8 @@ function NS:Is_Community_Leader(name)
 	return false
 end
 
--- process member guid
-function NS:Process_MemberGUID(guid, player)
+-- process player guid
+function NS:Process_PlayerGUID(guid, player)
 	-- no guid?
 	if (not guid or issecretvalue(guid) or (guid == "")) then
 		-- failed
@@ -422,11 +422,11 @@ function NS:Process_MemberGUID(guid, player)
 	end
 
 	-- database created?
-	if (NS.db.global and NS.db.global.MemberGUIDs) then
+	if (NS.db.global and NS.PlayerGUIDs) then
 		-- new / updated?
-		if (not NS.db.global.MemberGUIDs[guid] or (NS.db.global.MemberGUIDs[guid] ~= player)) then
+		if (not NS.PlayerGUIDs[guid] or (NS.PlayerGUIDs[guid] ~= player)) then
 			-- check for old member?
-			local old_player = NS.db.global.MemberGUIDs[guid]
+			local old_player = NS.PlayerGUIDs[guid]
 			if (NS.db.global.members[old_player]) then
 				-- move member
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
@@ -501,7 +501,10 @@ function NS:Process_MemberGUID(guid, player)
 			end
 
 			-- update member guid
-			NS.db.global.MemberGUIDs[guid] = player
+			NS.PlayerGUIDs[guid] = player
+
+			-- mark player list dirty
+			CF_PlayerListFrame:MarkPlayerListDirty()
 			return true
 		end
 	end
@@ -530,9 +533,9 @@ function NS:Verify_MemberGUID(guid)
 	elseif (info.player) then
 		-- updated?
 		local player = info.player
-		if (NS.db.global.MemberGUIDs[guid] and (NS.db.global.MemberGUIDs[guid] ~= player)) then
+		if (NS.PlayerGUIDs[guid] and (NS.PlayerGUIDs[guid] ~= player)) then
 			-- check for old member
-			local old_player = NS.db.global.MemberGUIDs[guid]
+			local old_player = NS.PlayerGUIDs[guid]
 			if (NS.db.global.members[old_player]) then
 				-- move member
 				NS.db.global.members[player] = CopyTable(NS.db.global.members[old_player])
@@ -549,7 +552,7 @@ function NS:Verify_MemberGUID(guid)
 			end
 
 			-- update member guid
-			NS.db.global.MemberGUIDs[guid] = player
+			NS.PlayerGUIDs[guid] = player
 			NS.CommFlare.CF.PlayerListUpdated = true
 
 			-- updated
@@ -639,8 +642,8 @@ end
 function NS:Cleanup_Stuff()
 	-- process all
 	local count = 0
-	NS.db.global.MemberGUIDs = NS.db.global.MemberGUIDs or {}
-	for k,v in pairs(NS.db.global.MemberGUIDs) do
+	NS.PlayerGUIDs = NS.PlayerGUIDs or {}
+	for k,v in pairs(NS.PlayerGUIDs) do
 		-- invalid key?
 		local space = strmatch(v, " ")
 		local parts = { strsplit("-", k) }
@@ -658,7 +661,7 @@ function NS:Cleanup_Stuff()
 			end
 
 			-- delete member guid
-			NS.db.global.MemberGUIDs[k] = nil
+			NS.PlayerGUIDs[k] = nil
 		end
 
 		-- has extra?
@@ -666,7 +669,7 @@ function NS:Cleanup_Stuff()
 		if (extra or space) then
 			-- update member guid
 			local player = strformat("%s-%s", name, realm)
-			NS.db.global.MemberGUIDs[k] = player
+			NS.PlayerGUIDs[k] = player
 
 			-- check for old member?
 			if (NS.db.global.members[v]) then
@@ -827,9 +830,9 @@ function NS:Cleanup_Stuff()
 		end
 
 		-- updated?
-		if (not NS.db.global.MemberGUIDs[v.guid] or (NS.db.global.MemberGUIDs[v.guid] ~= k)) then
+		if (not NS.PlayerGUIDs[v.guid] or (NS.PlayerGUIDs[v.guid] ~= k)) then
 			-- save / update member guid / name
-			NS.db.global.MemberGUIDs[v.guid] = k
+			NS.PlayerGUIDs[v.guid] = k
 		end
 	end
 
@@ -843,11 +846,11 @@ function NS:Cleanup_Stuff()
 	end
 
 	-- process all
-	for k,v in pairs(NS.db.global.MemberGUIDs) do
+	for k,v in pairs(NS.PlayerGUIDs) do
 		-- not current?
 		if (NS.db.global.members[v] and NS.db.global.members[v].guid and (NS.db.global.members[v].guid ~= k)) then
 			-- delete
-			NS.db.global.MemberGUIDs[k] = nil
+			NS.PlayerGUIDs[k] = nil
 		end
 
 		-- updated KOS?
@@ -1406,8 +1409,8 @@ function NS:Add_Member(clubId, info, rebuild)
 		NS:Update_First_Seen(player)
 	end
 
-	-- process member guid
-	NS:Process_MemberGUID(info.guid, player)
+	-- process player guid
+	NS:Process_PlayerGUID(info.guid, player)
 
 	-- rebuild leaders?
 	if (rebuild) then
@@ -2180,9 +2183,9 @@ function NS:Find_Community_Member_By_GUID(guid)
 	end
 
 	-- check inside database
-	if (NS.db.global.MemberGUIDs and NS.db.global.MemberGUIDs[guid]) then
+	if (NS.PlayerGUIDs and NS.PlayerGUIDs[guid]) then
 		-- check inside database
-		local player = NS.db.global.MemberGUIDs[guid]
+		local player = NS.PlayerGUIDs[guid]
 		if (player and (player ~= "") and NS.db.global and NS.db.global.members and NS.db.global.members[player]) then
 			-- success
 			return NS.db.global.members[player]
@@ -2289,7 +2292,7 @@ end
 function NS.CommFlare:Prune_Database()
 	-- process all
 	local count = 0
-	for k,v in pairs(NS.db.global.MemberGUIDs) do
+	for k,v in pairs(NS.PlayerGUIDs) do
 		-- not community member?
 		if (not NS.db.global.members[v]) then
 			-- not KOS / no member note?
@@ -2301,7 +2304,7 @@ function NS.CommFlare:Prune_Database()
 				end
 
 				-- delete
-				NS.db.global.MemberGUIDs[k] = nil
+				NS.PlayerGUIDs[k] = nil
 
 				-- increase
 				count = count + 1
@@ -2311,7 +2314,7 @@ function NS.CommFlare:Prune_Database()
 
 	-- process all
 	local members = CopyTable(NS.db.global.members)
-	for k,v in pairs(NS.db.global.MemberGUIDs) do
+	for k,v in pairs(NS.PlayerGUIDs) do
 		-- delete
 		members[v] = nil
 	end
@@ -2333,9 +2336,9 @@ function NS.CommFlare:Prune_Database()
 					-- increase
 					count = count + 1
 				else
-					-- update MemberGUIDs
-					local old_player = NS.db.global.MemberGUIDs[v.guid]
-					NS.db.global.MemberGUIDs[v.guid] = player
+					-- update
+					local old_player = NS.PlayerGUIDs[v.guid]
+					NS.PlayerGUIDs[v.guid] = player
 
 					-- has old member?
 					if (NS.db.global.members[old_player]) then

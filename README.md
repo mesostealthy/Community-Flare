@@ -21,5 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.43.001:
--Misc. Bugfixes, properly reports when Q'ing as Mercenary again.
+v2.44.001:
+-Updated TOC for v12.0.7 patch.
+-Updated Libraries.

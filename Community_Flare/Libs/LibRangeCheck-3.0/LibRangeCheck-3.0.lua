@@ -40,7 +40,7 @@ License: MIT
 -- @class file
 -- @name LibRangeCheck-3.0
 local MAJOR_VERSION = "LibRangeCheck-3.0"
-local MINOR_VERSION = 999
+local MINOR_VERSION = 34
 
 ---@class lib
 local lib, oldminor = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)
@@ -4665,8 +4665,3 @@ end
 --- END CallbackHandler stuff
 
 lib:activate()
-
--- mesostealthy's custom function to get tables for spells
-function lib:GetSpellTables()
-	return FriendSpells, HarmSpells, ResSpells, PetSpells
-end

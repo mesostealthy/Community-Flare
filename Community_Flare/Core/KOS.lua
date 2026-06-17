@@ -39,13 +39,14 @@ function NS:CheckScoreBoardForKos()
 	else
 		-- calculate difference
 		local diff = time() - NS.CommFlare.CF.KosRefreshTime
-		if (diff > 30) then
+		if (diff > 10) then
 			-- refresh
 			bRefresh = true
 		end
 	end
 
 	-- should refresh?
+	local numEnemies = 0
 	if (bRefresh) then
 		-- match engaged?
 		wipe(kosAlerts)
@@ -58,8 +59,16 @@ function NS:CheckScoreBoardForKos()
 				-- get score info
 				local info = NS:GetScoreInfo(i)
 				if (info and info.name and not issecretvalue(info.name)) then
+					-- force name-realm format
+					local player = info.name
+					if (not strmatch(player, "-")) then
+						-- add realm name
+						player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+					end
+
 					-- add player
-					playerScores[info.name] = true
+					NS.CommFlare.FullRoster[player] = info
+					playerScores[player] = true
 				end
 			end
 
@@ -69,8 +78,8 @@ function NS:CheckScoreBoardForKos()
 				if (not NS.CommFlare.CF.KosAlerted[guid]) then
 					-- player in match?
 					if (playerScores[player]) then
-						-- process member guid
-						NS:Process_MemberGUID(guid, player)
+						-- process player guid
+						NS:Process_PlayerGUID(guid, player)
 
 						-- insert
 						NS.CommFlare.CF.KosAlerted[guid] = player
@@ -84,26 +93,20 @@ function NS:CheckScoreBoardForKos()
 			for i=1, numScores do
 				local info = NS:GetScoreInfo(i)
 				if (info and info.name and not issecretvalue(info.name)) then
-					-- force name-realm format
-					local player = info.name
-					if (not strmatch(player, "-")) then
-						-- player is NOT AI?
-						if (issecretvalue(info.honorLevel) or (info.honorLevel > 0)) then
-							-- add realm name
-							player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
-						end
-					end
-
-					-- add roster
-					NS.CommFlare.CF.FullRoster[player] = info
-
 					-- has guid?
+					local player = info.name
 					if (info.guid and not issecretvalue(info.guid)) then
 						-- player is NOT AI?
 						if (info.honorLevel > 0) then
-							-- process member guid
+							-- force name-realm format
+							if (not strmatch(player, "-")) then
+								-- add realm name
+								player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+							end
+
+							-- process player guid
 							local guid = info.guid
-							NS:Process_MemberGUID(guid, player)
+							NS:Process_PlayerGUID(guid, player)
 
 							-- KOS target?
 							if (NS.db.global.KosList[guid]) then
@@ -115,38 +118,50 @@ function NS:CheckScoreBoardForKos()
 								end
 							end
 						end
+
+						-- enemy team?
+						if (info.faction ~= NS.CommFlare.CF.PlayerFactionID) then
+							-- increase
+							numEnemies = numEnemies + 1
+						end
+					end
+
+					-- add player
+					NS.CommFlare.FullRoster[player] = info
+				end
+			end
+		end
+
+		-- found enemies?
+		if (numEnemies > 0) then
+			-- any alerts?
+			if (#kosAlerts > 0) then
+				-- sort
+				tsort(kosAlerts)
+
+				-- process all
+				local text = nil
+				for k,v in ipairs(kosAlerts) do
+					-- first?
+					if (not text) then
+						-- initialize
+						text = v
+					else
+						-- append
+						text = strformat("%s, %s", text, v)
 					end
 				end
-			end
-		end
 
-		-- any alerts?
-		if (#kosAlerts > 0) then
-			-- sort
-			tsort(kosAlerts)
-
-			-- process all
-			local text = nil
-			for k,v in ipairs(kosAlerts) do
-				-- first?
-				if (not text) then
-					-- initialize
-					text = v
-				else
-					-- append
-					text = strformat("%s, %s", text, v)
+				-- has text?
+				if (text) then
+					-- issue local raid warning (with raid warning audio sound)
+					RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat("KOS: %s", text))
 				end
 			end
 
-			-- has text?
-			if (text) then
-				-- issue local raid warning (with raid warning audio sound)
-				RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", strformat("KOS: %s", text))
-			end
+			-- update time
+			NS.CommFlare.CF.KosRefreshTime = time()
 		end
-
-		-- update time
-		NS.CommFlare.CF.KosRefreshTime = time()
 	end
 end
 

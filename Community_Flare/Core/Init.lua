@@ -46,6 +46,8 @@ local AddOnProfilerGetAddOnMetric                 = _G.C_AddOnProfiler.GetAddOnM
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveConfigID
 local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
+local EncodingUtilDeserializeJSON                 = _G.C_EncodingUtil.DeserializeJSON
+local EncodingUtilSerializeJSON                   = _G.C_EncodingUtil.SerializeJSON
 local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
 local EquipmentSetGetNumEquipmentSets             = _G.C_EquipmentSet.GetNumEquipmentSets
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
@@ -92,6 +94,40 @@ function CommunityFlare_GetVar(name)
 
 	-- nothing
 	return nil
+end
+
+-- has secret value?
+function NS:HasSecretValue(t, checked)
+	-- initialize?
+	checked = checked or {}
+
+	-- already checked?
+	if (checked[t]) then
+		-- already checked
+		return false
+	end
+
+	-- process all
+	checked[t] = true
+	for k, v in pairs(t) do
+		-- secret value?
+		if (issecretvalue(v)) then
+			-- yes
+			return true
+		end
+
+		-- recursively check tables
+		if (type(v) == "table") then
+			-- check recursively
+			if (NS:HasSecretValue(v, checked)) then
+				-- yes
+				return true
+			end
+		end
+	end
+
+	-- no
+	return false
 end
 
 -- sort table keys
@@ -756,6 +792,26 @@ function NS:LoadSession()
 	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
 	NS.CommFlare.CF.WarCrateLocations = NS.db.global.WarCrateLocations or {}
 
+	-- old database?
+	if (NS.db.global.MemberGUIDs) then
+		-- copy table
+		NS.PlayerGUIDs = CopyTable(NS.db.global.MemberGUIDs)
+
+		-- encode
+		local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or {}
+		if (playerGUIDs) then
+			-- save player guids
+			NS.db.global.PlayerGUIDs = playerGUIDs
+		end
+
+		-- delete
+		wipe(NS.db.global.MemberGUIDs)
+		NS.db.global.MemberGUIDs = nil
+	else
+		-- deserialize
+		NS.PlayerGUIDs = EncodingUtilDeserializeJSON(NS.db.global.PlayerGUIDs) or {}
+	end
+
 	-- load profile stuff
 	NS.CommFlare.CF.zoneUID = NS.charDB.profile.zoneUID or nil
 	NS.CommFlare.CF.serverID = NS.charDB.profile.serverID or nil
@@ -822,6 +878,13 @@ function NS:SaveSession()
 	-- save global stuff
 	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 	NS.db.global.WarCrateLocations = NS.CommFlare.CF.WarCrateLocations or {}
+
+	-- encode
+	local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or {}
+	if (playerGUIDs) then
+		-- save player guids
+		NS.db.global.PlayerGUIDs = playerGUIDs
+	end
 
 	-- save profile stuff
 	NS.charDB.profile.SavedTime = time()
