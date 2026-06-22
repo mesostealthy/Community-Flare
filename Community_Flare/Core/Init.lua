@@ -75,6 +75,7 @@ local strgsub                                     = _G.string.gsub
 local strmatch                                    = _G.string.match
 local strsplit                                    = _G.string.split
 local strsub                                      = _G.string.sub
+local tconcat                                     = _G.table.concat
 local tinsert                                     = _G.table.insert
 local tsort                                       = _G.table.sort
 
@@ -827,43 +828,47 @@ function NS:LoadSession()
 	NS.CommFlare.CF.InActiveDelve = NS.charDB.profile.InActiveDelve or false
 	NS.CommFlare.CF.PreviousEquipSetID = NS.charDB.profile.PreviousEquipSetID or -1
 
-	-- load match log stuff
-	NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount or 0
-	NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives or 0
-	NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives or 0
+	-- in battleground?
+	if (NS:IsInBattleground()) then
+		-- load battleground specific data
+		NS.CommFlare.CF.AB = NS.charDB.profile.AB or {}
+		NS.CommFlare.CF.ASH = NS.charDB.profile.ASH or {}
+		NS.CommFlare.CF.AV = NS.charDB.profile.AV or {}
+		NS.CommFlare.CF.BFG = NS.charDB.profile.BFG or {}
+		NS.CommFlare.CF.DHR = NS.charDB.profile.DHR or {}
+		NS.CommFlare.CF.DWG = NS.charDB.profile.DWG or {}
+		NS.CommFlare.CF.EOTS = NS.charDB.profile.EOTS or {}
+		NS.CommFlare.CF.IOC = NS.charDB.profile.IOC or {}
+		NS.CommFlare.CF.SLR = NS.charDB.profile.SLR or {}
+		NS.CommFlare.CF.SSH = NS.charDB.profile.SSH or {}
+		NS.CommFlare.CF.SSM = NS.charDB.profile.SSM or {}
+		NS.CommFlare.CF.SSvTM = NS.charDB.profile.SSvTM or {}
+		NS.CommFlare.CF.TOK = NS.charDB.profile.TOK or {}
+		NS.CommFlare.CF.TWP = NS.charDB.profile.TWP or {}
+		NS.CommFlare.CF.WG = NS.charDB.profile.WG or {}
+		NS.CommFlare.CF.WSG = NS.charDB.profile.WSG or {}
+	end
 
 	-- reloading?
 	if (NS.CommFlare.CF.Reloaded) then
 		-- load match date / times
+		NS.CommFlare.CF.LogListCount = NS.charDB.profile.LogListCount or 0
 		NS.CommFlare.CF.MatchEndDate = NS.charDB.profile.MatchEndDate or ""
 		NS.CommFlare.CF.MatchEndTime = NS.charDB.profile.MatchEndTime or 0
 		NS.CommFlare.CF.MatchStartDate = NS.charDB.profile.MatchStartDate or ""
 		NS.CommFlare.CF.MatchStartTime = NS.charDB.profile.MatchStartTime or 0
+		NS.CommFlare.CF.NumAllyGlaives = NS.charDB.profile.NumAllyGlaives or 0
+		NS.CommFlare.CF.NumHordeGlaives = NS.charDB.profile.NumHordeGlaives or 0
 	else
 		-- reset match date / times
+		NS.CommFlare.CF.LogListCount = 0
 		NS.CommFlare.CF.MatchEndDate = ""
 		NS.CommFlare.CF.MatchEndTime = 0
 		NS.CommFlare.CF.MatchStartDate = ""
 		NS.CommFlare.CF.MatchStartTime = 0
+		NS.CommFlare.CF.NumAllyGlaives = 0
+		NS.CommFlare.CF.NumHordeGlaives = 0
 	end
-
-	-- load battleground specific data
-	NS.CommFlare.CF.AB = NS.charDB.profile.AB or {}
-	NS.CommFlare.CF.ASH = NS.charDB.profile.ASH or {}
-	NS.CommFlare.CF.AV = NS.charDB.profile.AV or {}
-	NS.CommFlare.CF.BFG = NS.charDB.profile.BFG or {}
-	NS.CommFlare.CF.DHR = NS.charDB.profile.DHR or {}
-	NS.CommFlare.CF.DWG = NS.charDB.profile.DWG or {}
-	NS.CommFlare.CF.EOTS = NS.charDB.profile.EOTS or {}
-	NS.CommFlare.CF.IOC = NS.charDB.profile.IOC or {}
-	NS.CommFlare.CF.SLR = NS.charDB.profile.SLR or {}
-	NS.CommFlare.CF.SSH = NS.charDB.profile.SSH or {}
-	NS.CommFlare.CF.SSM = NS.charDB.profile.SSM or {}
-	NS.CommFlare.CF.SSvTM = NS.charDB.profile.SSvTM or {}
-	NS.CommFlare.CF.TOK = NS.charDB.profile.TOK or {}
-	NS.CommFlare.CF.TWP = NS.charDB.profile.TWP or {}
-	NS.CommFlare.CF.WG = NS.charDB.profile.WG or {}
-	NS.CommFlare.CF.WSG = NS.charDB.profile.WSG or {}
 
 	-- get MapID
 	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
@@ -927,8 +932,8 @@ function NS:SaveSession()
 		NS.charDB.profile.MatchEndTime = NS.CommFlare.CF.MatchEndTime or 0
 		NS.charDB.profile.MatchStartDate = NS.CommFlare.CF.MatchStartDate or ""
 		NS.charDB.profile.MatchStartTime = NS.CommFlare.CF.MatchStartTime or 0
-		NS.charDB.profile.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives
-		NS.charDB.profile.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives
+		NS.charDB.profile.NumAllyGlaives = NS.CommFlare.CF.NumAllyGlaives or 0
+		NS.charDB.profile.NumHordeGlaives = NS.CommFlare.CF.NumHordeGlaives or 0
 	end
 
 	-- debug mode?
@@ -2470,6 +2475,41 @@ function NS:GetMouseoverSpecialization()
 
 	-- return specialization
 	return specialization
+end
+
+-- format time string
+function NS:Format_Time_String(total_seconds)
+	-- calculate time
+	local label
+	local parts = {}
+	local hours = mfloor(total_seconds / 3600)
+	local minutes = mfloor((total_seconds % 3600) / 60)
+	local seconds = mfloor(total_seconds % 60)
+
+	-- found hours?
+	if (hours > 0) then
+		-- insert hours
+		label = (hours == 1) and L["hour"] or L["hours"]
+		tinsert(parts, hours .. " " .. label)
+	end
+
+	-- found minutes?
+	if (minutes >= 0) then
+		-- insert minutes
+		label = (minutes == 1) and L["minute"] or L["minutes"]
+		tinsert(parts, minutes .. " " .. label)
+	end
+
+	-- found seconds?
+	if (seconds >= 0) then
+		-- insert seconds
+		label = (seconds == 1) and L["second"] or L["seconds"]
+		tinsert(parts, seconds .. " " .. label)
+	end
+
+	-- return duration
+	local duration = tconcat(parts, ", ")
+	return duration
 end
 
 -- fully loaded

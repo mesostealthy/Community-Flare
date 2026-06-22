@@ -1531,6 +1531,16 @@ function NS.CommFlare:PLAYER_ENTERING_BATTLEGROUND(msg)
 	-- debug print
 	local status = PvPGetActiveMatchState()
 	NS:Debug_Print(strformat("%s: PLAYER_ENTERING_BATTLEGROUND = %d", NS.CommFlare.Title, tonumber(status)))
+
+	-- get MapID
+	NS.CommFlare.CF.MapID = NS:GetBestMapForUnit("player")
+	if (NS.CommFlare.CF.MapID) then
+		-- get map info
+		NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
+
+		-- initialize
+		NS:Initialize_Battleground_Status()
+	end
 end
 
 -- process player entering world
@@ -1833,9 +1843,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 			-- always reset
 			NS.CommFlare.CF.KosRefreshTime = 0
 
-			-- match state is active?
+			-- engaged?
 			local duration = PvPGetActiveMatchDuration()
-			if (PvPGetActiveMatchState() == Enum.PvPMatchState.Engaged) then
+			local status = PvPGetActiveMatchState()
+			if (status == Enum.PvPMatchState.Engaged) then
 				-- match is active state?
 				NS.CommFlare.CF.MatchStatus = 1
 				NS.CommFlare.CF.PassLeadWarning = 0
@@ -1861,6 +1872,10 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 				-- wipe battleground tables
 				NS:Wipe_Battleground_Tables()
+			-- not engaged?
+			elseif (status < Enum.PvPMatchState.Engaged) then
+				-- initialize
+				NS:Initialize_Battleground_Status()
 			end
 		else
 			-- always reset

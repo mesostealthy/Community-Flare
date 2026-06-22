@@ -1855,15 +1855,14 @@ function NS:Log_Match_Roster()
 				NS.CommFlare.CF.MapInfo = NS:GetMapInfo(NS.CommFlare.CF.MapID)
 			end
 
-			-- calculate time
-			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.MatchEndTime - NS.CommFlare.CF.MatchStartTime
-			NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-			NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
+			-- calculate time / duration
+			local total_seconds = NS.CommFlare.CF.MatchEndTime - NS.CommFlare.CF.MatchStartTime
+			local duration = NS:Format_Time_String(total_seconds)
 
 			-- build entry
 			local entry = {
 				["timestamp"] = time(),
-				["duration"] = strformat("%d minutes, %d seconds", tonumber(NS.CommFlare.CF.Timer.Minutes), tonumber(NS.CommFlare.CF.Timer.Seconds)),
+				["duration"] = duration,
 				["message"] = strformat(L["Date: %s; MapName: %s; Raid Leader: %s; Player: %s; Roster: %s"],
 					tostring(NS.CommFlare.CF.MatchStartDate), tostring(NS.CommFlare.CF.MapInfo.name),
 					tostring(NS.CommFlare.CF.RaidLeader), tostring(NS.CommFlare.CF.PlayerFullName),
@@ -2088,11 +2087,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 			local count = NS:GetGroupCountText()
 			NS.CommFlare.CF.Timer.MilliSeconds = GetBattlefieldEstimatedWaitTime(index)
 			if (NS.CommFlare.CF.Timer.MilliSeconds > 0) then
-				-- calculate minutes / seconds
-				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
 				-- player is horde?
 				local faction = L["N/A"]
 				if (NS.faction == Enum.PvPFaction.Horde) then
@@ -2121,8 +2115,9 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- add time waited
-				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
-				text = strformat("%s %s: %s!", text, L["Estimated Wait"], time_waited)
+				local total_seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
+				local duration = NS:Format_Time_String(total_seconds)
+				text = strformat("%s %s: %s!", text, L["Estimated Wait"], duration)
 			else
 				-- increase
 				NS.CommFlare.CF.EstimatedWaitTime = NS.CommFlare.CF.EstimatedWaitTime + 1
@@ -2206,11 +2201,6 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				-- get estimated time
 				NS.CommFlare.CF.Timer.MilliSeconds = averageWait * 1000
 
-				-- calculate minutes / seconds
-				NS.CommFlare.CF.Timer.Seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
-				NS.CommFlare.CF.Timer.Minutes = mfloor(NS.CommFlare.CF.Timer.Seconds / 60)
-				NS.CommFlare.CF.Timer.Seconds = NS.CommFlare.CF.Timer.Seconds - (NS.CommFlare.CF.Timer.Minutes * 60)
-
 				-- player is horde?
 				local faction = L["N/A"]
 				if (NS.faction == Enum.PvPFaction.Horde) then
@@ -2234,8 +2224,9 @@ function NS:Report_Joined_With_Estimated_Time(index)
 				end
 
 				-- add time waited
-				local time_waited = strformat(L["%d minutes, %d seconds"], NS.CommFlare.CF.Timer.Minutes, NS.CommFlare.CF.Timer.Seconds)
-				text = strformat("%s %s: %s!", text, L["Estimated Wait"], time_waited)
+				local total_seconds = mfloor(NS.CommFlare.CF.Timer.MilliSeconds / 1000)
+				local duration = NS:Format_Time_String(total_seconds)
+				text = strformat("%s %s: %s!", text, L["Estimated Wait"], duration)
 
 				-- add tanks / heals / dps counts
 				NS:Verify_Role_Counts()

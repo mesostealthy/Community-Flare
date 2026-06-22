@@ -9,15 +9,18 @@ if (not L or not NS.CommFlare) then return end
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
 local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local ipairs                                      = _G.ipairs
 local issecretvalue                               = _G.issecretvalue
 local pairs                                       = _G.pairs
+local print                                       = _G.print
 local time                                        = _G.time
 local tonumber                                    = _G.tonumber
 local wipe                                        = _G.wipe
 local strformat                                   = _G.string.format
 local strlower                                    = _G.string.lower
+local tinsert                                     = _G.table.insert
 
 -- constant values
 NS.SlayerRiseScoreBar = 7002
@@ -150,9 +153,13 @@ function NS:SlayersRise_Initialize()
 	NS.CommFlare.CF.SLR.ShadowRidgeOutpostDestroyed = false
 	NS.CommFlare.CF.SLR.StareaterPavilionDestroyed = false
 	NS.CommFlare.CF.SLR.AllianceSparringGrounds = false
-	NS.CommFlare.CF.SLR.HordeSparringGrounds = false
 	NS.CommFlare.CF.SLR.AllianceTheHusk = false
+	NS.CommFlare.CF.SLR.HordeSparringGrounds = false
 	NS.CommFlare.CF.SLR.HordeTheHusk = false
+	NS.CommFlare.CF.SLR.PrevAllianceSparringGrounds = false
+	NS.CommFlare.CF.SLR.PrevAllianceTheHusk = false
+	NS.CommFlare.CF.SLR.PrevHordeSparringGrounds = false
+	NS.CommFlare.CF.SLR.PrevHordeTheHusk = false
 	NS.AttachedFrames = false
 
 	-- get initial scores
@@ -261,12 +268,22 @@ function NS:Process_SlayersRise_POIs()
 					if (info.atlasName == "capPTs-stadium-alliance") then
 						-- 1 HORDE point bleed
 						NS.CommFlare.CF.SLR.HordePointsBleed = NS.CommFlare.CF.SLR.HordePointsBleed + 1
-						NS.CommFlare.CF.SLR.AllianceTheHusk = true
+
+						-- not capped yet?
+						if (not NS.CommFlare.CF.SLR.AllianceTheHusk) then
+							-- capped!
+							NS.CommFlare.CF.SLR.AllianceTheHusk = true
+						end
 					-- horde controlled?
 					elseif (info.atlasName == "capPts-stadium-horde") then
 						-- 1 ALLIANCE point bleed
 						NS.CommFlare.CF.SLR.AlliancePointsBleed = NS.CommFlare.CF.SLR.AlliancePointsBleed + 1
-						NS.CommFlare.CF.SLR.HordeTheHusk = true
+
+						-- not capped yet?
+						if (not NS.CommFlare.CF.SLR.HordeTheHusk) then
+							-- capped!
+							NS.CommFlare.CF.SLR.HordeTheHusk = true
+						end
 					end
 				-- sparring grounds?
 				elseif (info.areaPoiID == 8381) then
@@ -387,16 +404,80 @@ function NS:Process_SlayersRise_Vignettes()
 end
 
 -- process slayer's rise widget
-function NS:Process_SlayersRise_Widget(widgetInfo)
+function NS:Process_SlayersRise_Widget(info)
 	-- score remaining?
 	if (NS.faction ~= 0) then return end
-	if (widgetInfo.widgetID == NS.SlayerRiseScoreBar) then
-		-- get double status bar info
-		local data = NS:GetDoubleStatusBarWidgetVisualizationInfo(NS.SlayerRiseScoreBar)
-		if (data and data.leftBarValue and data.rightBarValue) then
+	if (info.widgetID == NS.SlayerRiseScoreBar) then
+		-- get widget data
+		local data = NS:GetWidgetData(info)
+		if (data) then
+			-- invalid previous left score?
+			local leftBarValue = tonumber(data.leftBarValue)
+			if (not NS.CommFlare.CF.SLR.PrevLeftScore or (NS.CommFlare.CF.SLR.PrevLeftScore < 0)) then
+				-- initialize
+				NS.CommFlare.CF.SLR.PrevLeftScore = leftBarValue
+			end
+
+			-- valid left score?
+			if (NS.CommFlare.CF.SLR.PrevLeftScore > 0) then
+				-- decreased by 50+?
+				local diff = NS.CommFlare.CF.SLR.PrevLeftScore - leftBarValue
+				if ((diff >= 50) and (diff < 100)) then
+					-- give time for Bunkers/Towers to burn
+					TimerAfter(0.5, function()
+						-- sparring grounds / the husk not newly capped?
+						local SLR = NS.CommFlare.CF.SLR
+						if ((SLR.PrevHordeSparringGrounds == SLR.HordeSparringGrounds) and (SLR.PrevHordeTheHusk == SLR.HordeTheHusk)) then
+							-- notifications enabled?
+							if (NS.db.global.slrNotifications ~= 1) then
+								-- issue local raid warning (with raid warning audio sound)
+								local message = strformat(L["%s has been killed."], L["Griefseer"])
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+							end
+						end
+					end)
+
+					-- update
+					NS.CommFlare.CF.SLR.PrevHordeSparringGrounds = NS.CommFlare.CF.SLR.HordeSparringGrounds
+					NS.CommFlare.CF.SLR.PrevHordeTheHusk = NS.CommFlare.CF.SLR.HordeTheHusk
+				end
+			end
+
+			-- invalid previous right score?
+			local rightBarValue = tonumber(data.rightBarValue)
+			if (not NS.CommFlare.CF.SLR.PrevRightScore or (NS.CommFlare.CF.SLR.PrevRightScore < 0)) then
+				-- initialize
+				NS.CommFlare.CF.SLR.PrevRightScore = rightBarValue
+			end
+
+			-- valid right score?
+			if (NS.CommFlare.CF.SLR.PrevRightScore > 0) then
+				-- decreased by 50+?
+				local diff = NS.CommFlare.CF.SLR.PrevRightScore - rightBarValue
+				if ((diff >= 50) and (diff < 100)) then
+					-- give time for Bunkers/Towers to burn
+					TimerAfter(0.5, function()
+						-- sparring grounds / the husk not newly capped?
+						local SLR = NS.CommFlare.CF.SLR
+						if ((SLR.PrevAllianceSparringGrounds == SLR.AllianceSparringGrounds) and (SLR.PrevAllianceTheHusk == SLR.AllianceTheHusk)) then
+							-- notifications enabled?
+							if (NS.db.global.slrNotifications ~= 1) then
+								-- issue local raid warning (with raid warning audio sound)
+								local message = strformat(L["%s has been killed."], L["Hateseer"])
+								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+							end
+						end
+					end)
+
+					-- update
+					NS.CommFlare.CF.SLR.PrevAllianceSparringGrounds = NS.CommFlare.CF.SLR.AllianceSparringGrounds
+					NS.CommFlare.CF.SLR.PrevAllianceTheHusk = NS.CommFlare.CF.SLR.AllianceTheHusk
+				end
+			end
+
 			-- update
-			NS.CommFlare.CF.SLR.PrevLeftScore = tonumber(data.leftBarValue)
-			NS.CommFlare.CF.SLR.PrevRightScore = tonumber(data.rightBarValue)
+			NS.CommFlare.CF.SLR.PrevLeftScore = leftBarValue
+			NS.CommFlare.CF.SLR.PrevRightScore = rightBarValue
 		end
 	end
 end

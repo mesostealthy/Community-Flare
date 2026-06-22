@@ -302,8 +302,14 @@ L["Restoration"] = true
 L["Vengeance"] = true
 L["being dead"] = true
 L["being offline"] = true
+L["hour"] = true
+L["hours"] = true
+L["minute"] = true
+L["minutes"] = true
 L["not being max level"] = true
 L["role not being chosen"] = true
+L["second"] = true
+L["seconds"] = true
 
 -- Menus.lua
 L["Applicant"] = true
@@ -453,8 +459,10 @@ L["Dumping POIs:"] = true
 L["Map ID: Not Found"] = true
 
 -- SlayersRise.lua
+L["Griefseer"] = true
 L["Griefspine Ultradon"] = true
 L["Hatecrusher Ultradon"] = true
+L["Hateseer"] = true
 
 -- Social.lua
 L["POPPED"] = true

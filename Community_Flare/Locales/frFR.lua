@@ -302,8 +302,14 @@ L["Restoration"] = "Restoration"
 L["Vengeance"] = "Vengeance"
 L["being dead"] = "être mort"
 L["being offline"] = "être hors ligne"
+L["hour"] = "heure"
+L["hours"] = "heures"
+L["minute"] = "minute"
+L["minutes"] = "minutes"
 L["not being max level"] = "ne pas être au niveau maximum"
 L["role not being chosen"] = "rôle non choisi"
+L["second"] = "second"
+L["seconds"] = "seconds"
 
 -- Menus.lua
 L["Applicant"] = "Demandeur"
@@ -453,8 +459,10 @@ L["Dumping POIs:"] = "Verser des POI :"
 L["Map ID: Not Found"] = "Identification de carte: Pas trouvé"
 
 -- SlayersRise.lua
+L["Griefseer"] = "Oracle du chagrin"
 L["Griefspine Ultradon"] = "Ultradon peinéchine"
 L["Hatecrusher Ultradon"] = "Ultradon brise-haine"
+L["Hateseer"] = "Oracle de la haine"
 
 -- Social.lua
 L["POPPED"] = "ÉCLATÉ"
