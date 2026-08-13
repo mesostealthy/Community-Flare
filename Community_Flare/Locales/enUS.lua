@@ -497,8 +497,12 @@ L["Delete Player"] = true
 L["GUID"] = true
 L["Player List Manager"] = true
 L["Refresh Player Name"] = true
+L["Remove Healer Status"] = true
 L["Remove KOS"] = true
+L["Remove Tank Status"] = true
+L["Set Healer Status"] = true
 L["Set Player Note"] = true
+L["Set Tank Status"] = true
 
 -- POIList.lua
 L["%d POIs"] = true

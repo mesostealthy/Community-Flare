@@ -21,6 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.45.001:
--Internal changes for time durations.
--Minor updates for Slayer's Rise.
+v2.50.001:
+-UPDATES: Too many changes to list individually for v12.1! (Likely more bugs to fix, but basic functionality restored!)
+-TOC updated for v12.1.0!

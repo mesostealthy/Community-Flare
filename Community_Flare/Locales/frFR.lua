@@ -497,8 +497,12 @@ L["Delete Player"] = "Supprimer le joueur"
 L["GUID"] = "GUID"
 L["Player List Manager"] = "Gestionnaire de liste de joueurs"
 L["Refresh Player Name"] = "Actualiser le nom du joueur"
+L["Remove Healer Status"] = "Supprimer le statut de soigneur"
 L["Remove KOS"] = "Supprimer KOS"
+L["Remove Tank Status"] = "Supprimer le statut du réservoir"
+L["Set Healer Status"] = "Définir le statut de soigneur"
 L["Set Player Note"] = "Définir la note du joueur"
+L["Set Tank Status"] = "Définir l'état du réservoir"
 
 -- POIList.lua
 L["%d POIs"] = "%d points d'intérêt"

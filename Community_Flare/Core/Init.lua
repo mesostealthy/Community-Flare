@@ -34,7 +34,6 @@ local IsInGuild                                   = _G.IsInGuild
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
 local PlaySoundFile                               = _G.PlaySoundFile
-local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
 local RemoveCommunitiesChannel                    = _G.ChatFrameUtil.RemoveCommunitiesChannel
 local SaveBindings                                = _G.SaveBindings
 local SetBinding                                  = _G.SetBinding
@@ -504,76 +503,6 @@ function NS:Sanity_Checks()
 		-- initialize
 		NS.CommFlare.CF.LocalData.NumDPS = 0
 	end
-end
-
--- convert table to string
-function NS:TableToString(method, table)
-	-- all loaded?
-	if (method and NS.Libs.AceSerializer) then
-		-- LibDeflate
-		if (method == "LibDeflate") then
-			-- has lib deflate?
-			if (NS.Libs.LibDeflate) then
-				-- serialize and compress
-				local one = NS.Libs.AceSerializer:Serialize(table)
-				local two = NS.Libs.LibDeflate:CompressDeflate(one, {level = 9})
-				local final = NS.Libs.LibDeflate:EncodeForPrint(two)
-
-				-- return final
-				return final
-			end
-		-- LibCompressHuffman?
-		elseif (method == "LibCompressHuffman") then
-			-- serialize and compress
-			local one = NS.Libs.AceSerializer:Serialize(table)
-			local two = NS.Libs.LibCompress:CompressHuffman(one)
-			local final = NS.Libs.LibCompress.Encoder:Encode(two)
-
-			-- return final
-			return final
-		end
-	end
-
-	-- failed
-	return nil
-end
-
--- convert string to table
-function NS:StringToTable(method, string)
-	-- all loaded?
-	if (method and NS.Libs.AceSerializer) then
-		-- LibDeflate
-		if (method == "LibDeflate") then
-			-- has lib deflate?
-			if (NS.Libs.LibDeflate) then
-				-- decode, decompress, deserialize
-				local one = NS.Libs.LibDeflate:DecodeForPrint(string)
-				local two = NS.Libs.LibDeflate:DecompressDeflate(one)
-				local status, final = NS.Libs.AceSerializer:Deserialize(two)
-
-				-- success?
-				if (status) then
-					-- return final
-					return final
-				end
-			end
-		-- LibCompressHuffman?
-		elseif (method == "LibCompressHuffman") then
-			-- decode, decompress, deserialize
-			local one = NS.Libs.LibCompress.Encoder:Decode(string)
-			local two = NS.Libs.LibCompress:Decompress(one)
-			local status, final = NS.Libs.AceSerializer:Deserialize(two)
-
-			-- success?
-			if (status) then
-				-- return final
-				return final
-			end
-		end
-	end
-
-	-- failed
-	return nil
 end
 
 -- get club member info

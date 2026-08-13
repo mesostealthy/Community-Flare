@@ -423,9 +423,25 @@ function NS:Build_Training_Grounds()
 					elseif (instanceID == 727) then
 						-- set prefix
 						prefix = "TGSSM"
+					-- ruins of lordaeron?
+					elseif (instanceID == 572) then
+						-- set prefix
+						prefix = "ROLTG"
+					-- tol'viron arena?
+					elseif (instanceID == 980) then
+						-- set prefix
+						prefix = "TVATG"
+					-- nagrand arena?
+					elseif (instanceID == 1505) then
+						-- set prefix
+						prefix = "NATG"
+					-- hook point?
+					elseif (instanceID == 1825) then
+						-- set prefix
+						prefix = "HPTG"
 					else
 						-- new training grounds map
-						print("TODO: New Training Grounds Map added!")
+						print("TODO: New Training Grounds Map added!", instanceID, info[1])
 					end
 				else
 					-- random

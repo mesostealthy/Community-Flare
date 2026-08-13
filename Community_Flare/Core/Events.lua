@@ -38,7 +38,7 @@ local IsMounted                                   = _G.IsMounted
 local IsInRaid                                    = _G.IsInRaid
 local LoggingCombat                               = _G.LoggingCombat
 local PVPMatchScoreboard                          = _G.PVPMatchScoreboard
-local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local RespondToInviteConfirmation                 = _G.RespondToInviteConfirmation
 local Screenshot                                  = _G.Screenshot
@@ -362,7 +362,7 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 						-- issue local raid warning (with raid warning audio sound)
 						FlashClientIcon()
 						local message = L["War Supply Crate is flying in now!"]
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", message)
+						RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
 
 						-- notify group?
 						if (NS.db.global.notifyGroupWarCrates) then
@@ -1488,7 +1488,7 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 			-- should warn?
 			if (shouldWarn) then
 				-- you are the new party leader
-				RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["YOU ARE CURRENTLY THE NEW GROUP LEADER"])
+				RaidNotice_AddMessage(RaidWarningFrame, L["YOU ARE CURRENTLY THE NEW GROUP LEADER"], ChatTypeInfo["RAID_WARNING"])
 			end
 		end
 	end
@@ -1581,7 +1581,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 
 	-- setup hooks
 	NS:Battlefield_SetupHooks()
-	NS:BattleGroundEnemies_SetupHooks()
 	NS:CommunityGuild_SetupHooks()
 	NS:REPorter_SetupHooks()
 
@@ -2832,44 +2831,6 @@ function NS.CommFlare:UI_INFO_MESSAGE(msg, ...)
 	end
 end
 
--- process unit aura
-function NS.CommFlare:UNIT_AURA(msg, ...)
-	local unitTarget, updateInfo = ...
-
-	-- not midnight?
-	if (NS.CommFlare.isMidnight == false) then
-		-- check for player
-		if (unitTarget == "player") then
-			-- in battleground?
-			if (NS:IsInBattleground()) then
-				-- any added auras?
-				if (updateInfo.addedAuras) then
-					-- process all added auras
-					for _,aura in ipairs(updateInfo.addedAuras) do
-						-- reported for inactive?
-						if (aura.spellId == 94028) then
-							-- issue local raid warning (with raid warning audio sound)
-							FlashClientIcon()
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: REPORTED INACTIVE!\nGet into combat quickly!"])
-						-- mercenary contract?
-						elseif ((aura.spellId == 193472) or (aura.spellId == 193475)) then
-							-- are you in a party?
-							if (IsInGroup() and not IsInRaid()) then
-								-- send party message
-								NS:SendMessage("PARTY", strformat(L["I currently have the %s buff! (Are we mercing?)"], L["Mercenary Contract"]))
-							end
-						-- shadow rift?
-						elseif (aura.spellId == 353293) then
-							-- issue local raid warning (with raid warning audio sound)
-							RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: SHADOW RIFT!\nCast immunity or run out of the circle!"])
-						end
-					end
-				end
-			end
-		end
-	end
-end
-
 -- process unit died
 function NS.CommFlare:UNIT_DIED(msg, ...)
 	local unitGUID = ...
@@ -2984,14 +2945,14 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to hearthstone?"])
+						RaidNotice_AddMessage(RaidWarningFrame, L["Are you really sure you want to hearthstone?"], ChatTypeInfo["RAID_WARNING"])
 					end
 				-- teleporting?
 				elseif (NS.CommFlare.TeleportSpells[spellID]) then
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["Are you really sure you want to teleport?"])
+						RaidNotice_AddMessage(RaidWarningFrame, L["Are you really sure you want to teleport?"], ChatTypeInfo["RAID_WARNING"])
 					end
 				end
 			end
@@ -3398,7 +3359,6 @@ function NS.CommFlare:OnEnable()
 	self:RegisterEvent("READY_CHECK_FINISHED")
 	self:RegisterEvent("SOCIAL_QUEUE_UPDATE")
 	self:RegisterEvent("UI_INFO_MESSAGE")
-	self:RegisterEvent("UNIT_AURA")
 	self:RegisterEvent("UNIT_DIED")
 	self:RegisterEvent("UNIT_ENTERED_VEHICLE")
 	self:RegisterEvent("UNIT_EXITED_VEHICLE")
@@ -3484,7 +3444,6 @@ function NS.CommFlare:OnDisable()
 	self:UnregisterEvent("READY_CHECK_FINISHED")
 	self:UnregisterEvent("SOCIAL_QUEUE_UPDATE")
 	self:UnregisterEvent("UI_INFO_MESSAGE")
-	self:UnregisterEvent("UNIT_AURA")
 	self:UnregisterEvent("UNIT_DIED")
 	self:UnregisterEvent("UNIT_ENTERED_VEHICLE")
 	self:UnregisterEvent("UNIT_EXITED_VEHICLE")

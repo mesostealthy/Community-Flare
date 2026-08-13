@@ -31,8 +31,6 @@ NS.Libs = {
 	AceDB = LibStub("AceDB-3.0"),
 	AceDBOptions = LibStub("AceDBOptions-3.0"),
 	AceSerializer = LibStub("AceSerializer-3.0"),
-	LibCompress = LibStub("LibCompress"),
-	LibDeflate = LibStub("LibDeflate"),
 	LibCandyBar = LibStub("LibCandyBar-3.0"),
 	LibSharedMedia = LibStub("LibSharedMedia-3.0"),
 }
@@ -243,7 +241,7 @@ NS.CommFlare.InterfaceVersion = select(4, GetBuildInfo())
 -- is outdated version?
 function NS:IsOutdatedVersion()
 	-- past supported version?
-	if (NS.CommFlare.InterfaceVersion > 120007) then
+	if (NS.CommFlare.InterfaceVersion > 120100) then
 		-- out of date
 		print(strformat(L["%s is out of date. Download the latest version from Curseforge or Wago!"], NS.CommFlare.Title))
 		return true
@@ -292,16 +290,8 @@ end
 
 -- on initialize
 function NS.CommFlare:OnInitialize()
-	-- get interface version
-	NS.CommFlare.isMidnight = false
-	if (NS.CommFlare.InterfaceVersion >= 120000) then
-		-- midnight
-		NS.CommFlare.isMidnight = true
-	end
-
 	-- load libraries
 	NS.Libs.LibRangeCheck = LibStub("LibRangeCheck-3.0")
-	NS.Libs.LibCompress.Encoder = NS.Libs.LibCompress:GetAddonEncodeTable()
 
 	-- create config options
 	NS:CreateConfigOptions()

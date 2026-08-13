@@ -25,8 +25,9 @@ local InCombatLockdown                            = _G.InCombatLockdown
 local IsAddOnLoaded                               = _G.C_AddOns.IsAddOnLoaded
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
+local LoadAddOnWithErrorHandling                  = _G.LoadAddOnWithErrorHandling
 local PVPReadyDialog                              = _G.PVPReadyDialog
-local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
 local UnitIsMercenary                             = _G.UnitIsMercenary
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
@@ -2284,11 +2285,11 @@ function NS:Update_Battlefield_Status(index)
 							-- capped?
 							if (diff == 0) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Honor capped! Please spend some!"])
+								RaidNotice_AddMessage(RaidWarningFrame, L["WARNING: Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
 							-- close to capping?
 							elseif (diff < 2500) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
+								RaidNotice_AddMessage(RaidWarningFrame, L["WARNING: Close to Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
 							end
 						end
 					end
@@ -2304,7 +2305,7 @@ function NS:Update_Battlefield_Status(index)
 						local uid = NS:TomTomAddWaypointByMapID(2339, "Maara War Mode PVP Vendor", "0.6020", "0.7000") -- Maara NPC in Dornogal
 
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Low or out of War Mode PVP Items! Go get some!"])
+						RaidNotice_AddMessage(RaidWarningFrame, L["WARNING: Low or out of War Mode PVP Items! Go get some!"], ChatTypeInfo["RAID_WARNING"])
 					end
 				end
 
@@ -2365,7 +2366,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = strformat(L["Queue for %s has paused!"], mapName)
 							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", text)
+								RaidNotice_AddMessage(RaidWarningFrame, text, ChatTypeInfo["RAID_WARNING"])
 
 								-- check for offline players
 								NS:Process_Party_States(false, true)
@@ -2391,7 +2392,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = strformat(L["Queue for %s has resumed!"], mapName)
 							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", text)
+								RaidNotice_AddMessage(RaidWarningFrame, text, ChatTypeInfo["RAID_WARNING"])
 							else
 								-- display warning
 								print(strformat("%s: %s", NS.CommFlare.Title, text))
@@ -2587,7 +2588,7 @@ function NS:Initialize_Queue_Session()
 	local loaded, finished = IsAddOnLoaded("Blizzard_PVPUI")
 	if (loaded ~= true) then
 		-- load Blizzard_PVPUI
-		UIParentLoadAddOn("Blizzard_PVPUI")
+		LoadAddOnWithErrorHandling("Blizzard_PVPUI")
 	end
 
 	-- is tracked pvp?

@@ -619,6 +619,12 @@ function CF_PlayerListEntryMixin:OnEnter()
 					GameTooltip:AddLine(strformat("Race: %s", info.localizedRace), 1, 1, 1)
 				end
 
+				-- has role?
+				if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+					-- add role
+					GameTooltip:AddLine(strformat("Role: %s", NS.db.global.PlayerDB[player].role), 1, 1, 1)
+				end
+
 				-- create player location from guid
 				local playerLocation = PlayerLocation:CreateFromGUID(self.guid)
 				if (playerLocation) then
@@ -761,7 +767,7 @@ function CF_PlayerListEntryMixin:Init(elementData)
 	end
 end
 
--- update name frame
+-- update player frame
 function CF_PlayerListEntryMixin:UpdatePlayerFrame()
 	-- update name frame
 	local playerFrame = self.PlayerFrame
@@ -772,7 +778,7 @@ function CF_PlayerListEntryMixin:UpdatePlayerFrame()
 	playerFrame:SetWidth(130)
 end
 
--- create add kos mixin
+-- create mixin
 UnitPopupCFAddKosButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
 
 -- get parent frame
@@ -781,9 +787,9 @@ function UnitPopupCFAddKosButtonMixin:GetParentFrame()
 	return self:GetParent():GetParent()
 end
 
--- can show add kos?
+-- can show?
 function UnitPopupCFAddKosButtonMixin:CanShow(contextData)
-	-- has context data?
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- found guid?
 		local info = contextData.info
@@ -800,15 +806,15 @@ function UnitPopupCFAddKosButtonMixin:CanShow(contextData)
 	return true
 end
 
--- get add kos text
+-- get text
 function UnitPopupCFAddKosButtonMixin:GetText()
 	-- return text
 	return L["Add KOS"]
 end
 
--- add kos on click
+-- on click
 function UnitPopupCFAddKosButtonMixin:OnClick(contextData)
-	-- has context data?
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
 		if (not NS.db.global.KosList) then
@@ -829,7 +835,249 @@ function UnitPopupCFAddKosButtonMixin:OnClick(contextData)
 	end
 end
 
--- create remove kos mixin
+-- create mixin
+UnitPopupCFSetHealerButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFSetHealerButtonMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- can show?
+function UnitPopupCFSetHealerButtonMixin:CanShow(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- found player?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+			-- healer / tank?
+			if ((NS.db.global.PlayerDB[player].role == "HEALER") or (NS.db.global.PlayerDB[player].role == "TANK")) then
+				-- hide
+				return false
+			end
+		end
+	end
+
+	-- show
+	return true
+end
+
+-- get text
+function UnitPopupCFSetHealerButtonMixin:GetText()
+	-- return text
+	return L["Set Healer Status"]
+end
+
+-- on click
+function UnitPopupCFSetHealerButtonMixin:OnClick(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- not already added?
+		local player = contextData.info.player
+		if (not NS.db.global.PlayerDB[player]) then
+			-- create
+			NS.db.global.PlayerDB[player] = {}
+		end
+
+		-- add role
+		NS.db.global.PlayerDB[player].role = "HEALER"
+	end
+end
+
+-- create mixin
+UnitPopupCFRemoveHealerButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFRemoveHealerButtonMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- can show?
+function UnitPopupCFRemoveHealerButtonMixin:CanShow(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- found player / healer role?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+			-- healer?
+			if (NS.db.global.PlayerDB[player].role == "HEALER") then
+				-- show
+				return true
+			end
+		end
+	end
+
+	-- hide
+	return false
+end
+
+-- get text
+function UnitPopupCFRemoveHealerButtonMixin:GetText()
+	-- return text
+	return L["Remove Healer Status"]
+end
+
+-- on click
+function UnitPopupCFRemoveHealerButtonMixin:OnClick(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- healer role?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and (NS.db.global.PlayerDB[player].role == "HEALER")) then
+			-- remove role
+			NS.db.global.PlayerDB[player].role = nil
+		end
+	end
+end
+
+-- create mixin
+UnitPopupCFSetTankButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFSetTankButtonMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- can show?
+function UnitPopupCFSetTankButtonMixin:CanShow(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- found player?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+			-- healer / tank?
+			if ((NS.db.global.PlayerDB[player].role == "HEALER") or (NS.db.global.PlayerDB[player].role == "TANK")) then
+				-- hide
+				return false
+			end
+		end
+	end
+
+	-- show
+	return true
+end
+
+-- get text
+function UnitPopupCFSetTankButtonMixin:GetText()
+	-- return text
+	return L["Set Tank Status"]
+end
+
+-- on click
+function UnitPopupCFSetTankButtonMixin:OnClick(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- not already added?
+		local player = contextData.info.player
+		if (not NS.db.global.PlayerDB[player]) then
+			-- create
+			NS.db.global.PlayerDB[player] = {}
+		end
+
+		-- add role
+		NS.db.global.PlayerDB[player].role = "TANK"
+	end
+end
+
+-- create mixin
+UnitPopupCFRemoveTankButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFRemoveTankButtonMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- can show?
+function UnitPopupCFRemoveTankButtonMixin:CanShow(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- found player / healer role?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+			-- healer?
+			if (NS.db.global.PlayerDB[player].role == "TANK") then
+				-- show
+				return true
+			end
+		end
+	end
+
+	-- hide
+	return false
+end
+
+-- get text
+function UnitPopupCFRemoveTankButtonMixin:GetText()
+	-- return text
+	return L["Remove Tank Status"]
+end
+
+-- on click
+function UnitPopupCFRemoveTankButtonMixin:OnClick(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.PlayerDB) then
+			-- initialize
+			NS.db.global.PlayerDB = {}
+		end
+
+		-- tank role?
+		local player = contextData.info.player
+		if (NS.db.global.PlayerDB[player] and (NS.db.global.PlayerDB[player].role == "TANK")) then
+			-- remove role
+			NS.db.global.PlayerDB[player].role = nil
+		end
+	end
+end
+
+-- create mixin
 UnitPopupCFRemoveKosButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
 
 -- get parent frame
@@ -838,9 +1086,9 @@ function UnitPopupCFRemoveKosButtonMixin:GetParentFrame()
 	return self:GetParent():GetParent()
 end
 
--- can show remove kos?
+-- can show?
 function UnitPopupCFRemoveKosButtonMixin:CanShow(contextData)
-	-- has context data?
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- found guid?
 		local info = contextData.info
@@ -857,15 +1105,15 @@ function UnitPopupCFRemoveKosButtonMixin:CanShow(contextData)
 	return false
 end
 
--- get remove kos text
+-- get text
 function UnitPopupCFRemoveKosButtonMixin:GetText()
 	-- return text
 	return L["Remove KOS"]
 end
 
--- remove kos on click
+-- on click
 function UnitPopupCFRemoveKosButtonMixin:OnClick(contextData)
-	-- has context data?
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
 		if (not NS.db.global.KosList) then
@@ -885,50 +1133,7 @@ function UnitPopupCFRemoveKosButtonMixin:OnClick(contextData)
 	end
 end
 
--- create delete player mixin
-UnitPopupCFDeletePlayerButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
-
--- get parent frame
-function UnitPopupCFDeletePlayerButtonMixin:GetParentFrame()
-	-- get frame
-	return self:GetParent():GetParent()
-end
-
--- get delete player text
-function UnitPopupCFDeletePlayerButtonMixin:GetText()
-	-- return text
-	return L["Delete Player"]
-end
-
--- delete player on click
-function UnitPopupCFDeletePlayerButtonMixin:OnClick(contextData)
-	-- has context data?
-	if (contextData and contextData.info) then
-		-- kos list not created yet?
-		if (not NS.db.global.KosList) then
-			-- create
-			NS.db.global.KosList = {}
-		end
-
-		-- already added?
-		local guid = contextData.info.guid
-		if (NS.db.global.KosList[guid]) then
-			-- delete
-			NS.db.global.KosList[guid] = nil
-		end
-
-		-- added?
-		if (NS.PlayerGUIDs and NS.PlayerGUIDs[guid]) then
-			-- delete
-			NS.PlayerGUIDs[guid] = nil
-		end
-
-		-- refresh list
-		CF_PlayerListFrame:RefreshList()
-	end
-end
-
--- create set player note mixin
+-- create mixin
 UnitPopupCFSetPlayerNoteButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
 
 -- get parent frame
@@ -937,15 +1142,15 @@ function UnitPopupCFSetPlayerNoteButtonMixin:GetParentFrame()
 	return self:GetParent():GetParent()
 end
 
--- get set player note text
+-- get text
 function UnitPopupCFSetPlayerNoteButtonMixin:GetText()
 	-- return text
 	return L["Set Player Note"]
 end
 
--- set player note on click
+-- on click
 function UnitPopupCFSetPlayerNoteButtonMixin:OnClick(contextData)
-	-- has context data?
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
@@ -963,24 +1168,24 @@ end
 UnitPopupMenuCFPlayers = CreateFromMixins(UnitPopupTopLevelMenuMixin)
 UnitPopupManager:RegisterMenu("CF_PLAYER_LIST", UnitPopupMenuCFPlayers)
 
--- copy player name mixin
-UnitPopupCFCopyPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+-- create mixin
+UnitPopupCFCopyPlayerNameButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
 
 -- get parent frame
-function UnitPopupCFCopyPlayerNameMixin:GetParentFrame()
+function UnitPopupCFCopyPlayerNameButtonMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent()
 end
 
--- get set player note text
-function UnitPopupCFCopyPlayerNameMixin:GetText()
+-- get text
+function UnitPopupCFCopyPlayerNameButtonMixin:GetText()
 	-- return text
 	return L["Copy Player Name"]
 end
 
--- copy player note on click
-function UnitPopupCFCopyPlayerNameMixin:OnClick(contextData)
-	-- has context data?
+-- on click
+function UnitPopupCFCopyPlayerNameButtonMixin:OnClick(contextData)
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- create context data
 		local data = { 
@@ -994,17 +1199,17 @@ function UnitPopupCFCopyPlayerNameMixin:OnClick(contextData)
 	end
 end
 
--- copy player name mixin
-UnitPopupCFRefreshPlayerNameMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+-- create mixin
+UnitPopupCFRefreshPlayerNameButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
 
 -- get parent frame
-function UnitPopupCFRefreshPlayerNameMixin:GetParentFrame()
+function UnitPopupCFRefreshPlayerNameButtonMixin:GetParentFrame()
 	-- get frame
 	return self:GetParent():GetParent()
 end
 
--- get set player note text
-function UnitPopupCFRefreshPlayerNameMixin:GetText()
+-- get text
+function UnitPopupCFRefreshPlayerNameButtonMixin:GetText()
 	-- return text
 	return L["Refresh Player Name"]
 end
@@ -1102,9 +1307,9 @@ local function RefreshPlayerName(guid, old_player)
 	end
 end
 
--- copy player note on click
-function UnitPopupCFRefreshPlayerNameMixin:OnClick(contextData)
-	-- has context data?
+-- on click
+function UnitPopupCFRefreshPlayerNameButtonMixin:OnClick(contextData)
+	-- sanity check?
 	if (contextData and contextData.info) then
 		-- refresh player name
 		refresh_retries = 0
@@ -1114,20 +1319,67 @@ function UnitPopupCFRefreshPlayerNameMixin:OnClick(contextData)
 	end
 end
 
+-- create mixin
+UnitPopupCFDeletePlayerButtonMixin = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+-- get parent frame
+function UnitPopupCFDeletePlayerButtonMixin:GetParentFrame()
+	-- get frame
+	return self:GetParent():GetParent()
+end
+
+-- get text
+function UnitPopupCFDeletePlayerButtonMixin:GetText()
+	-- return text
+	return L["Delete Player"]
+end
+
+-- on click
+function UnitPopupCFDeletePlayerButtonMixin:OnClick(contextData)
+	-- sanity check?
+	if (contextData and contextData.info) then
+		-- kos list not created yet?
+		if (not NS.db.global.KosList) then
+			-- create
+			NS.db.global.KosList = {}
+		end
+
+		-- already added?
+		local guid = contextData.info.guid
+		if (NS.db.global.KosList[guid]) then
+			-- delete
+			NS.db.global.KosList[guid] = nil
+		end
+
+		-- added?
+		if (NS.PlayerGUIDs and NS.PlayerGUIDs[guid]) then
+			-- delete
+			NS.PlayerGUIDs[guid] = nil
+		end
+
+		-- refresh list
+		CF_PlayerListFrame:RefreshList()
+	end
+end
+
 -- get entries
 function UnitPopupMenuCFPlayers:GetEntries()
 	-- return menu buttons
 	return {
 		UnitPopupCFAddKosButtonMixin,
+		UnitPopupCFSetHealerButtonMixin,
+		UnitPopupCFRemoveHealerButtonMixin,
+		UnitPopupCFSetTankButtonMixin,
+		UnitPopupCFRemoveTankButtonMixin,
 		UnitPopupCFRemoveKosButtonMixin,
-		UnitPopupCFDeletePlayerButtonMixin,
 		UnitPopupCFSetPlayerNoteButtonMixin,
-		UnitPopupCFCopyPlayerNameMixin,
-		UnitPopupCFRefreshPlayerNameMixin,
+		UnitPopupCFCopyPlayerNameButtonMixin,
+		UnitPopupCFRefreshPlayerNameButtonMixin,
+		UnitPopupCFDeletePlayerButtonMixin,
 	}
 end
 
--- search box on escape pressed
+-- on escape pressed
 function CF_PlayerListSearchBox_OnEscapePressed(self)
 	-- clear text
 	self:SetText("")
@@ -1135,7 +1387,7 @@ function CF_PlayerListSearchBox_OnEscapePressed(self)
 	scrollPercentage = nil
 end
 
--- search box on enter pressed
+-- on enter pressed
 function CF_PlayerListSearchBox_OnEnterPressed(self)
 	-- refresh list
 	self:ClearFocus()
@@ -1143,7 +1395,7 @@ function CF_PlayerListSearchBox_OnEnterPressed(self)
 	scrollPercentage = nil
 end
 
--- search box on edited focus lost
+-- on edited focus lost
 function CF_PlayerListSearchBox_OnEditFocusLost(self)
 	-- text cleared?
 	if (self:GetText() == "") then
@@ -1159,7 +1411,7 @@ function CF_PlayerListSearchBox_OnEditFocusLost(self)
 	end
 end
 
--- search box on edit focus gained
+-- edit focus gained
 function CF_PlayerListSearchBox_OnEditFocusGained(self)
 	-- gained
 	self.Instructions:SetText("")
@@ -1167,7 +1419,7 @@ function CF_PlayerListSearchBox_OnEditFocusGained(self)
 	self.clearButton:Show()
 end
 
--- search box on text changed
+-- on text changed
 function CF_PlayerListSearchBox_OnTextChanged(self)
 	-- save search text
 	searchText = self:GetText()

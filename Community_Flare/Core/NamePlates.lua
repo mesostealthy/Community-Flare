@@ -16,39 +16,6 @@ local wipe                                        = _G.wipe
 -- global variables
 NS.CommFlare.ActiveNamePlates = {}
 
--- BGE: dump all player details
-function NS:BGE_Dump_Player_Details(unitToken, field)
-	-- not installed?
-	if (NS.faction ~= 0) then return end
-	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
-		-- failed
-		return nil
-	end
-
-	-- get player button / details / field
-	local playerButton = BattleGroundEnemies:GetPlayerbuttonByUnitID(unitToken, "Enemies")
-	local playerDetails = playerButton and playerButton.PlayerDetails or nil
-	if (playerDetails and playerDetails[field]) then
-		-- display
-		print(field, "=", playerDetails[field])
-		DevTools_Dump(playerDetails)
-	end
-end
-
--- BGE: get player details
-function NS:BGE_GetPlayerDetails(unitToken)
-	-- not installed?
-	if (NS.faction ~= 0) then return end
-	if (not BattleGroundEnemies or not BattleGroundEnemies.GetPlayerbuttonByUnitID) then
-		-- failed
-		return nil
-	end
-
-	-- get player button / details / role
-	local playerButton = BattleGroundEnemies:GetPlayerbuttonByUnitID(unitToken, "Enemies")
-	return playerButton and playerButton.PlayerDetails or nil
-end
-
 -- is valid unit token
 function NS:IsValidUnitToken(unitToken)
 	-- not player?
@@ -64,95 +31,9 @@ function NS:IsValidUnitToken(unitToken)
 		return nil
 	end
 
-	-- unit is mind controlled?
-	if (NS:UnitIsPossessed(unitToken)) then
-		-- same faction as player?
-		if (NS:UnitFactionGroup(unitToken) == NS.CommFlare.CF.PlayerFaction) then
-			-- failed
-			return nil
-		end
-	end
-
 	-- success
 	return true
 end
-
--- get unit role
-function NS:GetUnitRole(unitToken)
-	-- check only damage classes first
-	if (NS.faction ~= 0) then return nil end
-	local className, classID = NS:UnitClassBase(unitToken)
-	if ((className == "HUNTER") or (className == "MAGE") or (className == "ROGUE") or (className == "WARLOCK")) then
-		-- damager
-		return "DAMAGER"
-	end
-
-	-- get player details
-	local playerDetails = NS:BGE_GetPlayerDetails(unitToken)
-	if (playerDetails and playerDetails.PlayerName and not issecretvalue(playerDetails.PlayerName)) then
-		-- found active name plate?
-		if (NS.CommFlare.ActiveNamePlates[unitToken]) then
-			-- save player details
-			NS.CommFlare.ActiveNamePlates[unitToken].data = playerDetails
-			NS.CommFlare.ActiveNamePlates[unitToken].name = playerDetails.PlayerName
-		end
-
-		-- found non-secret role?
-		local playerRole = playerDetails and playerDetails.PlayerRole or nil
-		if (not issecretvalue(playerRole)) then
-			-- healer?
-			if (playerRole == "HEALER") then
-				-- return role
-				return playerRole
-			-- tank?
-			elseif (playerRole == "TANK") then
-				-- return role
-				return playerRole
-			-- damager?
-			elseif (playerRole == "DAMAGER") then
-				-- return role
-				return playerRole
-			end
-		end
-	end
-
-	-- monk?
-	if (className == "MONK") then
-		-- check power type
-		local powerType = NS:UnitPowerType(unitToken)
-		if (powerType == 0) then
-			-- healer
-			return "HEALER"
-		else
-			-- check power max
-			local powerMax = NS:UnitPowerMax(unitToken, 12)
-			if (powerMax == 4) then
-				-- tank
-				return "TANK"
-			end
-		end
-	-- priest?
-	elseif (className == "PRIEST") then
-		-- check power type
-		local powerType = NS:UnitPowerType(unitToken)
-		if (powerType ~= 13) then
-			-- healer
-			return "HEALER"
-		end
-	-- shaman?
-	elseif (className == "SHAMAN") then
-		-- check power type
-		local powerType = NS:UnitPowerType(unitToken)
-		if (powerType ~= 11) then
-			-- healer
-			return "HEALER"
-		end
-	end
-
-	-- unknown
-	return nil
-end
-
 
 -- update role icon
 function NS:UpdateRoleIcon(unitToken, namePlate, role)
@@ -180,32 +61,31 @@ function NS:UpdateRoleIcon(unitToken, namePlate, role)
 
 	-- is valid unit token
 	if (NS:IsValidUnitToken(unitToken)) then
-		-- no role yet?
-		if (not role) then
-			-- get unit role
-			role = NS:GetUnitRole(unitToken)
+		-- same realm as player?
+		local player, realm = UnitName(unitToken)
+		local realmRelationship = UnitRealmRelationship(unitToken)
+		if (realmRelationship == LE_REALM_RELATION_SAME) then
+			-- player with same realm
+			player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+		else
+			-- player with different realm
+			player = strformat("%s-%s", player, realm)
 		end
 
-		-- found role now?
-		if (role) then
+		-- found player role?
+		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
 			-- healer?
-			if (role == "HEALER") then
+			if (NS.db.global.PlayerDB[player].role == "HEALER") then
 				-- show healer
 				namePlate.roleIcon:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
 				namePlate.roleIcon:Show()
 				return true
 			-- tank?
-			elseif (role == "TANK") then
+			elseif (NS.db.global.PlayerDB[player].role == "TANK") then
 				-- show tank
 				namePlate.roleIcon:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
 				namePlate.roleIcon:Show()
 				return true
-			-- damager?
-			--[[elseif (role == "DAMAGER") then
-				-- show dps
-				namePlate.roleIcon:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\damager.tga")
-				namePlate.roleIcon:Show()
-				return true]]--
 			end
 		end
 	end

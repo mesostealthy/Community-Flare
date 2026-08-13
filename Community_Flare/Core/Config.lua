@@ -59,6 +59,7 @@ local GlobalDefaults = {
 		AssistFrame = {},
 		KosList = {},
 		MemberNotes = {},
+		PlayerDB = {},
 		PlayerGUIDs = {},
 		SocialQueues = {},
 		WarCrateLocations = {},

@@ -13,7 +13,7 @@ local GetLFGMode                                  = _G.GetLFGMode
 local GetLFGQueuedList                            = _G.GetLFGQueuedList
 local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
-local RaidWarningFrame_OnEvent                    = _G.RaidWarningFrame_OnEvent
+local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
 local PvPGetActiveBrawlInfo                       = _G.C_PvP.GetActiveBrawlInfo
 local PvPGetAvailableBrawlInfo                    = _G.C_PvP.GetAvailableBrawlInfo
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
@@ -416,11 +416,11 @@ function NS:Update_Queue_Status(category, index)
 								-- capped?
 								if (diff == 0) then
 									-- issue local raid warning (with raid warning audio sound)
-									RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Honor capped! Please spend some!"])
+									RaidNotice_AddMessage(RaidWarningFrame, L["WARNING: Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
 								-- close to capping?
 								elseif (diff < 2500) then
 									-- issue local raid warning (with raid warning audio sound)
-									RaidWarningFrame_OnEvent(RaidBossEmoteFrame, "CHAT_MSG_RAID_WARNING", L["WARNING: Close to Honor capped! Please spend some!"])
+									RaidNotice_AddMessage(RaidWarningFrame, L["WARNING: Close to Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
 								end
 							end
 						end
