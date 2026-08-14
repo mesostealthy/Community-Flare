@@ -21,6 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.50.001:
--UPDATES: Too many changes to list individually for v12.1! (Likely more bugs to fix, but basic functionality restored!)
--TOC updated for v12.1.0!
+v2.51.001:
+-MORE BUGFIXES! Probably still more to fix as well! This update was quite CRAPPY for addons once again!

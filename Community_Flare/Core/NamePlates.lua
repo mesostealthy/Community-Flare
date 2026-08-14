@@ -66,10 +66,10 @@ function NS:UpdateRoleIcon(unitToken, namePlate, role)
 		local realmRelationship = UnitRealmRelationship(unitToken)
 		if (realmRelationship == LE_REALM_RELATION_SAME) then
 			-- player with same realm
-			player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
+			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
 		else
 			-- player with different realm
-			player = strformat("%s-%s", player, realm)
+			player = player .. "-" .. realm
 		end
 
 		-- found player role?
