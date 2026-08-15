@@ -38,7 +38,7 @@ local IsMounted                                   = _G.IsMounted
 local IsInRaid                                    = _G.IsInRaid
 local LoggingCombat                               = _G.LoggingCombat
 local PVPMatchScoreboard                          = _G.PVPMatchScoreboard
-local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
+local RaidWarningUtil                             = _G.RaidWarningUtil
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local RespondToInviteConfirmation                 = _G.RespondToInviteConfirmation
 local Screenshot                                  = _G.Screenshot
@@ -362,7 +362,7 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 						-- issue local raid warning (with raid warning audio sound)
 						FlashClientIcon()
 						local message = L["War Supply Crate is flying in now!"]
-						RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
+						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
 
 						-- notify group?
 						if (NS.db.global.notifyGroupWarCrates) then
@@ -1488,7 +1488,7 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 			-- should warn?
 			if (shouldWarn) then
 				-- you are the new party leader
-				RaidNotice_AddMessage(RaidWarningFrame, L["YOU ARE CURRENTLY THE NEW GROUP LEADER"], ChatTypeInfo["RAID_WARNING"])
+				RaidWarningUtil.AddMessage(L["YOU ARE CURRENTLY THE NEW GROUP LEADER"], ChatTypeInfo["RAID_WARNING"])
 			end
 		end
 	end
@@ -2945,14 +2945,14 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidNotice_AddMessage(RaidWarningFrame, L["Are you really sure you want to hearthstone?"], ChatTypeInfo["RAID_WARNING"])
+						RaidWarningUtil.AddMessage(L["Are you really sure you want to hearthstone?"], ChatTypeInfo["RAID_WARNING"])
 					end
 				-- teleporting?
 				elseif (NS.CommFlare.TeleportSpells[spellID]) then
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidNotice_AddMessage(RaidWarningFrame, L["Are you really sure you want to teleport?"], ChatTypeInfo["RAID_WARNING"])
+						RaidWarningUtil.AddMessage(L["Are you really sure you want to teleport?"], ChatTypeInfo["RAID_WARNING"])
 					end
 				end
 			end

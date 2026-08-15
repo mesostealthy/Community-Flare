@@ -73,7 +73,7 @@ function NS:UpdateRoleIcon(unitToken, namePlate, role)
 		end
 
 		-- found player role?
-		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (not issecretvalue(player) and NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
 			-- healer?
 			if (NS.db.global.PlayerDB[player].role == "HEALER") then
 				-- show healer

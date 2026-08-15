@@ -8,7 +8,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local GetNumBattlefieldScores                     = _G.GetNumBattlefieldScores
-local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
+local RaidWarningUtil                             = _G.RaidWarningUtil
 local PvPGetActiveMatchState                      = _G.C_PvP.GetActiveMatchState
 local ipairs                                      = _G.ipairs
 local issecretvalue                               = _G.issecretvalue
@@ -155,7 +155,7 @@ function NS:CheckScoreBoardForKos()
 				-- has text?
 				if (text) then
 					-- issue local raid warning (with raid warning audio sound)
-					RaidNotice_AddMessage(RaidWarningFrame, strformat("KOS: %s", text), ChatTypeInfo["RAID_WARNING"])
+					RaidWarningUtil.AddMessage(strformat("KOS: %s", text), ChatTypeInfo["RAID_WARNING"])
 				end
 			end
 

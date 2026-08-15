@@ -12,7 +12,7 @@ local FlashClientIcon                             = _G.FlashClientIcon
 local IsInGroup                                   = _G.IsInGroup
 local IsInInstance                                = _G.IsInInstance
 local IsInRaid                                    = _G.IsInRaid
-local RaidNotice_AddMessage                       = _G.RaidNotice_AddMessage
+local RaidWarningUtil                             = _G.RaidWarningUtil.AddMessage
 local MapClearUserWaypoint                        = _G.C_Map.ClearUserWaypoint
 local MapGetUserWaypointHyperlink                 = _G.C_Map.GetUserWaypointHyperlink
 local TimerAfter                                  = _G.C_Timer.After
@@ -438,7 +438,7 @@ function NS:CheckForWarSupplyCrateAlerts(list)
 										-- issue local raid warning (with raid warning audio sound)
 										FlashClientIcon()
 										local message = NS.WAR_SUPPLY_CRATES[vignetteID]
-										RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
+										RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
 
 										-- notify group?
 										if (NS.db.global.notifyGroupWarCrates) then
