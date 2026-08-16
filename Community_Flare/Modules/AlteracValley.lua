@@ -8,7 +8,7 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local RaidWarningUtil                             = _G.RaidWarningUtil.AddMessage
+local RaidWarningUtil                             = _G.RaidWarningUtil
 local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs

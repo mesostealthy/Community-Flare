@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.52.001:
--EVEN MORE BUGFIXES: Ashran fixes among other things!
+v2.53.001:
+-BUGFIXES: v12.1.0 - Day 4 of fixes!
