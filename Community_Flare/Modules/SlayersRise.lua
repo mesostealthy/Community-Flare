@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local RaidWarningUtil                             = _G.RaidWarningUtil
 local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local ipairs                                      = _G.ipairs
@@ -393,8 +392,7 @@ function NS:Process_SlayersRise_Vignettes()
 						-- notifications enabled?
 						if (NS.db.global.slrNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], info.name)
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], info.name))
 						end
 					end
 				end
@@ -431,8 +429,7 @@ function NS:Process_SlayersRise_Widget(info)
 							-- notifications enabled?
 							if (NS.db.global.slrNotifications ~= 1) then
 								-- issue local raid warning (with raid warning audio sound)
-								local message = strformat(L["%s has been killed."], L["Griefseer"])
-								RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(strformat(L["%s has been killed."], L["Griefseer"]))
 							end
 						end
 					end)
@@ -463,8 +460,7 @@ function NS:Process_SlayersRise_Widget(info)
 							-- notifications enabled?
 							if (NS.db.global.slrNotifications ~= 1) then
 								-- issue local raid warning (with raid warning audio sound)
-								local message = strformat(L["%s has been killed."], L["Hateseer"])
-								RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(strformat(L["%s has been killed."], L["Hateseer"]))
 							end
 						end
 					end)

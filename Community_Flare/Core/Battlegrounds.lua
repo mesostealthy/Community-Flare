@@ -27,7 +27,6 @@ local IsInGroup                                   = _G.IsInGroup
 local IsInRaid                                    = _G.IsInRaid
 local LoadAddOnWithErrorHandling                  = _G.LoadAddOnWithErrorHandling
 local PVPReadyDialog                              = _G.PVPReadyDialog
-local RaidWarningUtil                             = _G.RaidWarningUtil
 local UnitIsMercenary                             = _G.UnitIsMercenary
 local InChatMessagingLockdown                     = _G.C_ChatInfo.InChatMessagingLockdown
 local PvPIsInBrawl                                = _G.C_PvP.IsInBrawl
@@ -2285,11 +2284,11 @@ function NS:Update_Battlefield_Status(index)
 							-- capped?
 							if (diff == 0) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningUtil.AddMessage(L["WARNING: Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(L["WARNING: Honor capped! Please spend some!"])
 							-- close to capping?
 							elseif (diff < 2500) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningUtil.AddMessage(L["WARNING: Close to Honor capped! Please spend some!"], ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(L["WARNING: Close to Honor capped! Please spend some!"])
 							end
 						end
 					end
@@ -2305,7 +2304,7 @@ function NS:Update_Battlefield_Status(index)
 						local uid = NS:TomTomAddWaypointByMapID(2339, "Maara War Mode PVP Vendor", "0.6020", "0.7000") -- Maara NPC in Dornogal
 
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningUtil.AddMessage(L["WARNING: Low or out of War Mode PVP Items! Go get some!"], ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(L["WARNING: Low or out of War Mode PVP Items! Go get some!"])
 					end
 				end
 
@@ -2366,7 +2365,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = strformat(L["Queue for %s has paused!"], mapName)
 							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningUtil.AddMessage(text, ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(text)
 
 								-- check for offline players
 								NS:Process_Party_States(false, true)
@@ -2392,7 +2391,7 @@ function NS:Update_Battlefield_Status(index)
 							local text = strformat(L["Queue for %s has resumed!"], mapName)
 							if (NS:IsGroupLeader()) then
 								-- issue local raid warning (with raid warning audio sound)
-								RaidWarningUtil.AddMessage(text, ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(text)
 							else
 								-- display warning
 								print(strformat("%s: %s", NS.CommFlare.Title, text))

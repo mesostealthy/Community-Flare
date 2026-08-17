@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local RaidWarningUtil                             = _G.RaidWarningUtil
 local TimerAfter                                  = _G.C_Timer.After
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
@@ -253,8 +252,7 @@ function NS:Process_AlteracValley_Vignettes()
 						-- notifications enabled?
 						if (NS.db.global.avNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], info.name)
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], info.name))
 						end
 					end
 				end
@@ -294,8 +292,7 @@ function NS:Process_AlteracValley_Widget(info)
 						-- notifications enabled?
 						if (NS.db.global.avNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], L["Captain Balinda Stonehearth"])
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], L["Captain Balinda Stonehearth"]))
 						end
 					-- increased?
 					elseif (leftBarValue > NS.CommFlare.CF.AV.PrevLeftScore) then
@@ -325,8 +322,7 @@ function NS:Process_AlteracValley_Widget(info)
 						-- notifications enabled?
 						if (NS.db.global.avNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], L["Captain Galvangar"])
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], L["Captain Galvangar"]))
 						end
 					-- increased?
 					elseif (rightBarValue > NS.CommFlare.CF.AV.PrevRightScore) then

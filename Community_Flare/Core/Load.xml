@@ -19,6 +19,7 @@
 	<Script file="NamePlates.lua" />
 	<Script file="POIs.lua" />
 	<Script file="Quests.lua" />
+	<Script file="RaidWarning.lua" />
 	<Script file="Social.lua" />
 	<Script file="Specialization.lua" />
 	<Script file="StaticPopups.lua" />

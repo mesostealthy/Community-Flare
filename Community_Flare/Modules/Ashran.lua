@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local RaidWarningUtil                             = _G.RaidWarningUtil.AddMessage
 local VignetteInfoGetVignettes                    = _G.C_VignetteInfo.GetVignettes
 local pairs                                       = _G.pairs
 local time                                        = _G.time
@@ -86,8 +85,7 @@ function NS:Process_Ashran_POIs()
 							-- notifications enabled?
 							if (NS.db.global.ashranNotifications ~= 1) then
 								-- issue local raid warning (with raid warning audio sound)
-								local message = strformat(L["%s has spawned."], data.name)
-								RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+								NS:RaidWarning(strformat(L["%s has spawned."], data.name))
 							end
 						end
 					end
@@ -117,8 +115,7 @@ function NS:Process_Ashran_POIs()
 						-- notifications enabled?
 						if (NS.db.global.ashranNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], info.name)
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], info.name))
 						end
 					end
 				end
@@ -179,8 +176,7 @@ function NS:Process_Ashran_Vignettes()
 						-- notifications enabled?
 						if (NS.db.global.ashranNotifications ~= 1) then
 							-- issue local raid warning (with raid warning audio sound)
-							local message = strformat(L["%s has been killed."], info.name)
-							RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+							NS:RaidWarning(strformat(L["%s has been killed."], info.name))
 						end
 					end
 				end
@@ -217,8 +213,7 @@ function NS:Process_Ashran_Widget(info)
 					-- notifications enabled?
 					if (NS.db.global.ashranNotifications ~= 1) then
 						-- issue local raid warning (with raid warning audio sound)
-						local message = strformat(L["%s has been killed."], L["Rylai Crestfall"])
-						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(strformat(L["%s has been killed."], L["Rylai Crestfall"]))
 					end
 				end
 			end
@@ -243,8 +238,7 @@ function NS:Process_Ashran_Widget(info)
 					-- notifications enabled?
 					if (NS.db.global.ashranNotifications ~= 1) then
 						-- issue local raid warning (with raid warning audio sound)
-						local message = strformat(L["%s has been killed."], L["Jeron Emberfall"])
-						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(strformat(L["%s has been killed."], L["Jeron Emberfall"]))
 					end
 				end
 			end

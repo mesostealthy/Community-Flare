@@ -38,7 +38,6 @@ local IsMounted                                   = _G.IsMounted
 local IsInRaid                                    = _G.IsInRaid
 local LoggingCombat                               = _G.LoggingCombat
 local PVPMatchScoreboard                          = _G.PVPMatchScoreboard
-local RaidWarningUtil                             = _G.RaidWarningUtil
 local RequestBattlefieldScoreData                 = _G.RequestBattlefieldScoreData
 local RespondToInviteConfirmation                 = _G.RespondToInviteConfirmation
 local Screenshot                                  = _G.Screenshot
@@ -362,7 +361,7 @@ function NS.CommFlare:CHAT_MSG_MONSTER_SAY(msg, ...)
 						-- issue local raid warning (with raid warning audio sound)
 						FlashClientIcon()
 						local message = L["War Supply Crate is flying in now!"]
-						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(message)
 
 						-- notify group?
 						if (NS.db.global.notifyGroupWarCrates) then
@@ -1488,7 +1487,7 @@ function NS.CommFlare:PARTY_LEADER_CHANGED(msg)
 			-- should warn?
 			if (shouldWarn) then
 				-- you are the new party leader
-				RaidWarningUtil.AddMessage(L["YOU ARE CURRENTLY THE NEW GROUP LEADER"], ChatTypeInfo["RAID_WARNING"])
+				NS:RaidWarning(L["YOU ARE CURRENTLY THE NEW GROUP LEADER"])
 			end
 		end
 	end
@@ -2945,14 +2944,14 @@ function NS.CommFlare:UNIT_SPELLCAST_START(msg, ...)
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningUtil.AddMessage(L["Are you really sure you want to hearthstone?"], ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(L["Are you really sure you want to hearthstone?"])
 					end
 				-- teleporting?
 				elseif (NS.CommFlare.TeleportSpells[spellID]) then
 					-- raid warning?
 					if (NS.db.global.warningLeavingBG == 2) then
 						-- issue local raid warning (with raid warning audio sound)
-						RaidWarningUtil.AddMessage(L["Are you really sure you want to teleport?"], ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(L["Are you really sure you want to teleport?"])
 					end
 				end
 			end

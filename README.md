@@ -21,5 +21,6 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.53.001:
--BUGFIXES: v12.1.0 - Day 4 of fixes!
+v2.54.001:
+-BUGFIXES: Hopefully fixed Raid Warning messages during matches!
+--NOTE: Full customization will be coming soon to move the window as well as custom fonts, etc.

@@ -8,7 +8,6 @@ if (not L or not NS.CommFlare) then return end
 -- localize stuff
 local _G                                          = _G
 local CopyTable                                   = _G.CopyTable
-local RaidWarningUtil                             = _G.RaidWarningUtil
 local pairs                                       = _G.pairs
 local print                                       = _G.print
 local time                                        = _G.time
@@ -229,8 +228,7 @@ function NS:Process_IsleOfConquest_Widget(info)
 					-- notifications enabled?
 					if (NS.db.global.iocNotifications ~= 1) then
 						-- issue local raid warning (with raid warning audio sound)
-						local message = strformat(L["%s has been killed."], L["Alliance Gate"])
-						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(strformat(L["%s has been killed."], L["Alliance Gate"]))
 					end
 				-- increased?
 				elseif (leftBarValue > NS.CommFlare.CF.IOC.PrevLeftScore) then
@@ -260,8 +258,7 @@ function NS:Process_IsleOfConquest_Widget(info)
 					-- notifications enabled?
 					if (NS.db.global.iocNotifications ~= 1) then
 						-- issue local raid warning (with raid warning audio sound)
-						local message = strformat(L["%s has been killed."], L["Horde Gate"])
-						RaidWarningUtil.AddMessage(message, ChatTypeInfo["RAID_WARNING"])
+						NS:RaidWarning(strformat(L["%s has been killed."], L["Horde Gate"]))
 					end
 				-- increased?
 				elseif (rightBarValue > NS.CommFlare.CF.IOC.PrevRightScore) then
