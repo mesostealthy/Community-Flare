@@ -136,6 +136,7 @@ function NS:GetPlayerInfoByGUID(guid)
 			name = name,
 			realm = realm,
 			player = player,
+			updated = time(),
 		}
 	else
 		-- empty?
@@ -190,6 +191,7 @@ function NS:GetPlayerInfoByGUID(guid)
 			name = name,
 			realm = realm,
 			player = player,
+			updated = time(),
 		}
 
 		-- save cached data

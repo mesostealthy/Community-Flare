@@ -403,6 +403,12 @@ end
 
 -- process player guid
 function NS:Process_PlayerGUID(guid, player)
+	-- sanity check
+	if (not NS.db.global) then
+		-- failed
+		return false
+	end
+
 	-- no guid?
 	if (not guid or issecretvalue(guid) or (guid == "")) then
 		-- failed
@@ -421,8 +427,8 @@ function NS:Process_PlayerGUID(guid, player)
 		player = strformat("%s-%s", player, NS.CommFlare.CF.PlayerServerName)
 	end
 
-	-- database created?
-	if (NS.db.global and NS.PlayerGUIDs) then
+	-- player GUID database created?
+	if (NS.PlayerGUIDs) then
 		-- new / updated?
 		if (not NS.PlayerGUIDs[guid] or (NS.PlayerGUIDs[guid] ~= player)) then
 			-- check for old member?
@@ -642,7 +648,6 @@ end
 function NS:Cleanup_Stuff()
 	-- process all
 	local count = 0
-	NS.PlayerGUIDs = NS.PlayerGUIDs or {}
 	for k,v in pairs(NS.PlayerGUIDs) do
 		-- invalid key?
 		local space = strmatch(v, " ")

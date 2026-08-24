@@ -62,6 +62,7 @@ local GlobalDefaults = {
 		PlayerDB = {},
 		PlayerGUIDs = {},
 		SocialQueues = {},
+		Versions = {},
 		WarCrateLocations = {},
 		WindowPositions = {},
 

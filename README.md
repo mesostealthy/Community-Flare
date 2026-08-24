@@ -21,6 +21,7 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.54.001:
--BUGFIXES: Hopefully fixed Raid Warning messages during matches!
---NOTE: Full customization will be coming soon to move the window as well as custom fonts, etc.
+v2.55.001:
+-Raid Warnings from Community Flare use a separate system and now uses Font Size 20 by default.
+--Later on, will have configuration to change the Font / size / edit mode to drag the location.
+--BUGFIXES: More and more lua errors fixed.

@@ -1452,6 +1452,7 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 	NS.CommFlare.CF.PlayerInfo = NS:GetScoreInfoByPlayerGuid(NS.CommFlare.CF.PlayerGUID)
 
 	-- process all scores
+	local currentTime = time()
 	for i=1, GetNumBattlefieldScores() do
 		-- get score info (if capable)
 		local info = NS:GetScoreInfo(i)
@@ -1490,6 +1491,31 @@ function NS:Update_Scoreboard_Stuff(bPromote)
 			elseif (info.roleAssigned and (info.roleAssigned == 4)) then
 				-- healer found
 				NS.CommFlare.CF.IsHealer = true
+			end
+
+			-- player database created?
+			if (NS.PlayerDB) then
+				-- not created?
+				if (not NS.PlayerDB[player]) then
+					-- create
+					NS.PlayerDB[player] = {}
+				end
+
+				-- healer?
+				if (NS.CommFlare.CF.IsHealer) then
+					-- save healer
+					NS.PlayerDB[player].RL = "HEALER"
+				-- tank?
+				elseif (NS.CommFlare.CF.IsTank) then
+					-- save tank
+					NS.PlayerDB[player].RL = "TANK"
+				end
+
+				-- update player stuff
+				NS.PlayerDB[player].C = info.classToken
+				NS.PlayerDB[player].HL = info.honorLevel
+				NS.PlayerDB[player].RN = info.raceName
+				NS.PlayerDB[player].T = currentTime
 			end
 
 			-- alliance faction?

@@ -719,16 +719,35 @@ end
 -- load session variables
 function NS:LoadSession()
 	-- load global stuff
+	NS.CommFlare.CF.Versions = NS.db.global.Versions or {}
 	NS.CommFlare.CF.SocialQueues = NS.db.global.SocialQueues or {}
 	NS.CommFlare.CF.WarCrateLocations = NS.db.global.WarCrateLocations or {}
 
-	-- old database?
-	if (NS.db.global.MemberGUIDs) then
-		-- copy table
-		NS.PlayerGUIDs = CopyTable(NS.db.global.MemberGUIDs)
+	-- no PlayerDB version?
+	NS.db.global.PlayerDB2 = nil
+	local version = NS.db.global.Versions["PlayerDB"]
+	if (not version) then
+		-- assume table format
+		NS.PlayerDB = CopyTable(NS.db.global.PlayerDB) or {}
 
 		-- encode
-		local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or {}
+		local playerDB = EncodingUtilSerializeJSON(NS.PlayerDB) or nil
+		if (playerDB) then
+			-- save player database
+			NS.db.global.PlayerDB = playerDB
+		end
+	else
+		-- deserialize
+		NS.PlayerDB = EncodingUtilDeserializeJSON(NS.db.global.PlayerDB) or {}
+	end
+
+	-- old MemberGUIDs?
+	if (NS.db.global.MemberGUIDs) then
+		-- copy table
+		NS.PlayerGUIDs = CopyTable(NS.db.global.MemberGUIDs) or {}
+
+		-- encode
+		local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or nil
 		if (playerGUIDs) then
 			-- save player guids
 			NS.db.global.PlayerGUIDs = playerGUIDs
@@ -810,14 +829,24 @@ end
 -- save session variables
 function NS:SaveSession()
 	-- save global stuff
+	NS.db.global.Versions = NS.CommFlare.CF.Versions or {}
 	NS.db.global.SocialQueues = NS.CommFlare.CF.SocialQueues or {}
 	NS.db.global.WarCrateLocations = NS.CommFlare.CF.WarCrateLocations or {}
 
-	-- encode
-	local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or {}
+	-- encode PlayerDB
+	local playerDB = EncodingUtilSerializeJSON(NS.PlayerDB) or nil
+	if (playerDB) then
+		-- save player database
+		NS.db.global.PlayerDB = playerDB
+		NS.db.global.Versions["PlayerDB"] = 1
+	end	
+
+	-- encode PlayerGUIDs
+	local playerGUIDs = EncodingUtilSerializeJSON(NS.PlayerGUIDs) or nil
 	if (playerGUIDs) then
 		-- save player guids
 		NS.db.global.PlayerGUIDs = playerGUIDs
+		NS.db.global.Versions["PlayerGUIDs"] = 1
 	end
 
 	-- save profile stuff

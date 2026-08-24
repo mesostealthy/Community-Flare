@@ -64,7 +64,7 @@ function NS:UpdateRoleIcon(unitToken, namePlate, role)
 		-- same realm as player?
 		local player, realm = UnitName(unitToken)
 		local realmRelationship = UnitRealmRelationship(unitToken)
-		if (realmRelationship == LE_REALM_RELATION_SAME) then
+		if ((realmRelationship == LE_REALM_RELATION_SAME) or not realm) then
 			-- player with same realm
 			player = player .. "-" .. NS.CommFlare.CF.PlayerServerName
 		else
@@ -73,15 +73,15 @@ function NS:UpdateRoleIcon(unitToken, namePlate, role)
 		end
 
 		-- found player role?
-		if (not issecretvalue(player) and NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (not issecretvalue(player) and NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 			-- healer?
-			if (NS.db.global.PlayerDB[player].role == "HEALER") then
+			if (NS.PlayerDB[player].RL == "HEALER") then
 				-- show healer
 				namePlate.roleIcon:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\healer.tga")
 				namePlate.roleIcon:Show()
 				return true
 			-- tank?
-			elseif (NS.db.global.PlayerDB[player].role == "TANK") then
+			elseif (NS.PlayerDB[player].RL == "TANK") then
 				-- show tank
 				namePlate.roleIcon:SetTexture("Interface\\AddOns\\Community_Flare\\Media\\tank.tga")
 				namePlate.roleIcon:Show()

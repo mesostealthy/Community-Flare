@@ -620,9 +620,9 @@ function CF_PlayerListEntryMixin:OnEnter()
 				end
 
 				-- has role?
-				if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+				if (NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 					-- add role
-					GameTooltip:AddLine(strformat("Role: %s", NS.db.global.PlayerDB[player].role), 1, 1, 1)
+					GameTooltip:AddLine(strformat("Role: %s", NS.PlayerDB[player].RL), 1, 1, 1)
 				end
 
 				-- create player location from guid
@@ -849,16 +849,16 @@ function UnitPopupCFSetHealerButtonMixin:CanShow(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- found player?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 			-- healer / tank?
-			if ((NS.db.global.PlayerDB[player].role == "HEALER") or (NS.db.global.PlayerDB[player].role == "TANK")) then
+			if ((NS.PlayerDB[player].RL == "HEALER") or (NS.PlayerDB[player].RL == "TANK")) then
 				-- hide
 				return false
 			end
@@ -880,20 +880,20 @@ function UnitPopupCFSetHealerButtonMixin:OnClick(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- not already added?
 		local player = contextData.info.player
-		if (not NS.db.global.PlayerDB[player]) then
+		if (not NS.PlayerDB[player]) then
 			-- create
-			NS.db.global.PlayerDB[player] = {}
+			NS.PlayerDB[player] = {}
 		end
 
 		-- add role
-		NS.db.global.PlayerDB[player].role = "HEALER"
+		NS.PlayerDB[player].RL = "HEALER"
 	end
 end
 
@@ -911,16 +911,16 @@ function UnitPopupCFRemoveHealerButtonMixin:CanShow(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- found player / healer role?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 			-- healer?
-			if (NS.db.global.PlayerDB[player].role == "HEALER") then
+			if (NS.PlayerDB[player].RL == "HEALER") then
 				-- show
 				return true
 			end
@@ -942,16 +942,16 @@ function UnitPopupCFRemoveHealerButtonMixin:OnClick(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- healer role?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and (NS.db.global.PlayerDB[player].role == "HEALER")) then
+		if (NS.PlayerDB[player] and (NS.PlayerDB[player].RL == "HEALER")) then
 			-- remove role
-			NS.db.global.PlayerDB[player].role = nil
+			NS.PlayerDB[player].RL = nil
 		end
 	end
 end
@@ -970,16 +970,16 @@ function UnitPopupCFSetTankButtonMixin:CanShow(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- found player?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 			-- healer / tank?
-			if ((NS.db.global.PlayerDB[player].role == "HEALER") or (NS.db.global.PlayerDB[player].role == "TANK")) then
+			if ((NS.PlayerDB[player].RL == "HEALER") or (NS.PlayerDB[player].RL == "TANK")) then
 				-- hide
 				return false
 			end
@@ -1001,20 +1001,20 @@ function UnitPopupCFSetTankButtonMixin:OnClick(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- not already added?
 		local player = contextData.info.player
-		if (not NS.db.global.PlayerDB[player]) then
+		if (not NS.PlayerDB[player]) then
 			-- create
-			NS.db.global.PlayerDB[player] = {}
+			NS.PlayerDB[player] = {}
 		end
 
 		-- add role
-		NS.db.global.PlayerDB[player].role = "TANK"
+		NS.PlayerDB[player].RL = "TANK"
 	end
 end
 
@@ -1032,16 +1032,16 @@ function UnitPopupCFRemoveTankButtonMixin:CanShow(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- found player / healer role?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and NS.db.global.PlayerDB[player].role) then
+		if (NS.PlayerDB[player] and NS.PlayerDB[player].RL) then
 			-- healer?
-			if (NS.db.global.PlayerDB[player].role == "TANK") then
+			if (NS.PlayerDB[player].RL == "TANK") then
 				-- show
 				return true
 			end
@@ -1063,16 +1063,16 @@ function UnitPopupCFRemoveTankButtonMixin:OnClick(contextData)
 	-- sanity check?
 	if (contextData and contextData.info) then
 		-- kos list not created yet?
-		if (not NS.db.global.PlayerDB) then
+		if (not NS.PlayerDB) then
 			-- initialize
-			NS.db.global.PlayerDB = {}
+			NS.PlayerDB = {}
 		end
 
 		-- tank role?
 		local player = contextData.info.player
-		if (NS.db.global.PlayerDB[player] and (NS.db.global.PlayerDB[player].role == "TANK")) then
+		if (NS.PlayerDB[player] and (NS.PlayerDB[player].RL == "TANK")) then
 			-- remove role
-			NS.db.global.PlayerDB[player].role = nil
+			NS.PlayerDB[player].RL = nil
 		end
 	end
 end

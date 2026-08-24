@@ -1577,6 +1577,8 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	NS:Build_Classes()
 	NS:Build_Spells()
 	NS:Build_Training_Grounds()
+	NS.PlayerDB = NS.PlayerDB or {}
+	NS.PlayerGUIDs = NS.PlayerGUIDs or {}
 
 	-- setup hooks
 	NS:Battlefield_SetupHooks()

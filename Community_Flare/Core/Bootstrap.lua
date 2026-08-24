@@ -181,6 +181,7 @@ NS.CommFlare.CF = {
 	TeamUnits = {},
 	TransmissionCheck = {},
 	VehicleList = {},
+	Versions = {},
 	VignetteWarnings = {},
 	WaitForUpdate = {},
 	WarCrateLocations = {},
