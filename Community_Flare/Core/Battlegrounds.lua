@@ -42,7 +42,6 @@ local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
 local wipe                                        = _G.wipe
-local bitbor                                      = _G.bit.bor
 local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strmatch                                    = _G.string.match
@@ -260,6 +259,30 @@ end
 
 -- verify roles count
 function NS:Verify_Role_Counts()
+	-- sanity checks?
+	if (not NS.CommFlare.CF.LocalData) then
+		-- initialize
+		NS.CommFlare.CF.LocalData = {}
+	end
+
+	-- invalid num dps?
+	if (not NS.CommFlare.CF.LocalData.NumDPS) then
+		-- initialize
+		NS.CommFlare.CF.LocalData.NumDPS = 0
+	end
+
+	-- invalid num healers?
+	if (not NS.CommFlare.CF.LocalData.NumHealers) then
+		-- initialize
+		NS.CommFlare.CF.LocalData.NumHealers = 0
+	end
+
+	-- invalid num tanks?
+	if (not NS.CommFlare.CF.LocalData.NumTanks) then
+		-- initialize
+		NS.CommFlare.CF.LocalData.NumTanks = 0
+	end
+
 	-- no specializations found? (probably solo Q)
 	if ((NS.CommFlare.CF.LocalData.NumTanks == 0) and (NS.CommFlare.CF.LocalData.NumHealers == 0) and (NS.CommFlare.CF.LocalData.NumDPS == 0)) then
 		-- get pvp roles

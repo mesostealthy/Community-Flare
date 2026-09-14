@@ -1,4 +1,3 @@
-
 -- initialize
 local LibStub = LibStub
 local ADDON_NAME, NS = ...
@@ -74,6 +73,7 @@ local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local bitband                                     = _G.bit.band
 local bitbnot                                     = _G.bit.bnot
+local bitbor                                      = _G.bit.bor
 local mfloor                                      = _G.math.floor
 local mmin                                        = _G.math.min
 local strfind                                     = _G.string.find
@@ -1588,48 +1588,6 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 	-- add get range check spell/s
 	NS:AddRangeCheckSpell("DEATHKNIGHT", "Friend", 410358)
 
-	-- in pvp content?
-	NS.CommFlare.CF.InInstance, NS.CommFlare.CF.InstanceType = IsInInstance()
-	if (NS.CommFlare.CF.InInstance and (NS.CommFlare.CF.InstanceType == "pvp")) then
-		-- has pvp equipment set?
-		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
-			-- can use equipment sets?
-			if (CanUseEquipmentSets()) then
-				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
-				if (name and (isEquipped == false)) then
-					-- not in combat lockdown?
-					NS.CommFlare.CF.PreviousEquipSetID = NS:GetCurrentEquipmentSetID()
-					if (not InCombatLockdown()) then
-						-- equip pvp gear equipment set
-						NS:UseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
-					else
-						-- set regen options bit
-						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
-					end
-				end
-			end
-		end
-	else
-		-- has previous equip set ID?
-		if (NS.CommFlare.CF.PreviousEquipSetID ~= -1) then
-			-- can use equipment sets?
-			if (CanUseEquipmentSets()) then
-				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.CommFlare.CF.PreviousEquipSetID)
-				if (name and (isEquipped == false)) then
-					-- not in combat lockdown?
-					if (not InCombatLockdown()) then
-						-- equip pvp gear equipment set
-						NS:UseEquipmentSet(NS.CommFlare.CF.PreviousEquipSetID)
-						NS.CommFlare.CF.PreviousEquipSetID = -1
-					else
-						-- set regen options bit
-						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
-					end
-				end
-			end
-		end
-	end
-
 	-- initial login or reloading?
 	if (isInitialLogin or isReloadingUi) then
 		-- check for external addons
@@ -1895,6 +1853,12 @@ function NS.CommFlare:PLAYER_ENTERING_WORLD(msg, ...)
 		-- has now run once
 		NS.CommFlare.CF.RunOnce = true
 	end
+
+	-- wait some
+	TimerAfter(5, function()
+		-- check and set equipment by zone
+		NS:CheckAndSetEquipmentByZone()
+	end)
 end
 
 -- process player login

@@ -47,7 +47,7 @@ local ClassTalentsGetActiveConfigID               = _G.C_ClassTalents.GetActiveC
 local ClassTalentsGetActiveHeroTalentSpec         = _G.C_ClassTalents.GetActiveHeroTalentSpec
 local EncodingUtilDeserializeJSON                 = _G.C_EncodingUtil.DeserializeJSON
 local EncodingUtilSerializeJSON                   = _G.C_EncodingUtil.SerializeJSON
-local EquipmentSetCanUseEquipmentSets             = _G.C_EquipmentSet.CanUseEquipmentSets
+local CanUseEquipmentSets                         = _G.C_EquipmentSet.CanUseEquipmentSets
 local EquipmentSetGetNumEquipmentSets             = _G.C_EquipmentSet.GetNumEquipmentSets
 local PartyInfoGetRestrictPings                   = _G.C_PartyInfo.GetRestrictPings
 local PartyInfoIsDelveComplete                    = _G.C_PartyInfo.IsDelveComplete
@@ -56,6 +56,7 @@ local PartyInfoIsPartyWalkIn                      = _G.C_PartyInfo.IsPartyWalkIn
 local PvPIsBattleground                           = _G.C_PvP.IsBattleground
 local PvPIsRatedBattleground                      = _G.C_PvP.IsRatedBattleground
 local PvPIsRatedSoloRBG                           = _G.C_PvP.IsRatedSoloRBG
+local TimerAfter                                  = _G.C_Timer.After
 local UnitAuras_GetAuraDataBySpellName            = _G.C_UnitAuras.GetAuraDataBySpellName
 local ipairs                                      = _G.ipairs
 local issecretvalue                               = _G.issecretvalue
@@ -67,6 +68,7 @@ local tonumber                                    = _G.tonumber
 local tostring                                    = _G.tostring
 local type                                        = _G.type
 local wipe                                        = _G.wipe
+local bitbor                                      = _G.bit.bor
 local mfloor                                      = _G.math.floor
 local strformat                                   = _G.string.format
 local strgmatch                                   = _G.string.gmatch
@@ -2263,7 +2265,7 @@ end
 -- get current equipment set ID
 function NS:GetCurrentEquipmentSetID()
 	-- can use equipment sets?
-	if (EquipmentSetCanUseEquipmentSets()) then
+	if (CanUseEquipmentSets()) then
 		-- process all
 		for i=0, EquipmentSetGetNumEquipmentSets() do
 			-- is equipped?
@@ -2468,6 +2470,52 @@ function NS:Format_Time_String(total_seconds)
 	-- return duration
 	local duration = tconcat(parts, ", ")
 	return duration
+end
+
+-- check and set equipment by zone
+function NS:CheckAndSetEquipmentByZone()
+	-- in pvp content?
+	NS.CommFlare.CF.InInstance, NS.CommFlare.CF.InstanceType = IsInInstance()
+	if (NS.CommFlare.CF.InInstance and (NS.CommFlare.CF.InstanceType == "pvp")) then
+		-- has pvp equipment set?
+		if (NS.charDB.profile.pvpGearEquipmentSet ~= -1) then
+			-- can use equipment sets?
+			if (CanUseEquipmentSets()) then
+				-- check if not equipped yet?
+				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.charDB.profile.pvpGearEquipmentSet)
+				if (name and (isEquipped == false)) then
+					-- not in combat lockdown?
+					NS.CommFlare.CF.PreviousEquipSetID = NS:GetCurrentEquipmentSetID()
+					if (not InCombatLockdown()) then
+						-- equip pvp gear equipment set
+						local result = NS:UseEquipmentSet(NS.charDB.profile.pvpGearEquipmentSet)
+					else
+						-- set regen options bit
+						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
+					end
+				end
+			end
+		end
+	else
+		-- has previous equip set ID?
+		if (NS.CommFlare.CF.PreviousEquipSetID ~= -1) then
+			-- can use equipment sets?
+			if (CanUseEquipmentSets()) then
+				local name, iconFileID, setID, isEquipped = NS:GetEquipmentSetInfo(NS.CommFlare.CF.PreviousEquipSetID)
+				if (name and (isEquipped == false)) then
+					-- not in combat lockdown?
+					if (not InCombatLockdown()) then
+						-- equip previous equipment set
+						NS:UseEquipmentSet(NS.CommFlare.CF.PreviousEquipSetID)
+						NS.CommFlare.CF.PreviousEquipSetID = -1
+					else
+						-- set regen options bit
+						NS.CommFlare.CF.RegenOptions = bitbor(NS.CommFlare.CF.RegenOptions, 1)
+					end
+				end
+			end
+		end
+	end
 end
 
 -- fully loaded
