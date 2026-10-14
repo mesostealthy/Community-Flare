@@ -21,5 +21,5 @@ Quite a few other Quality of Life features and/or parts of the above core that i
 Latest Updates:
 -----------------------
 
-v2.56.001:
--Mostly more bugfixes, the auto Equip PVP sets while in PVP instances should be working again as well.
+v2.60.001:
+-TOC updated to v12.1.5.

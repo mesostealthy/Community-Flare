@@ -1,7 +1,7 @@
-## Interface: 120100
+## Interface: 120105
 ## Title: Community Flare
-## Version: v2.56.001
-## X-Build: 256001
+## Version: v2.60.001
+## X-Build: 260001
 ## Author: Mesostealthy
 ## Category: Community Flare
 ## SavedVariables: CommunityFlareDB
